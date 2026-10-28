@@ -1,0 +1,328 @@
+
+/* Sección */
+.agenda {
+  padding: 105px 0 115px;
+  background-color: #faf7f2;
+}
+
+.agenda-contenedor {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 0.9fr);
+  align-items: start;
+  gap: 65px;
+}
+
+/* Encabezado */
+.agenda-encabezado {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 18px 0 28px;
+}
+
+.agenda-titulo {
+  margin: 0;
+  color: #231f20;
+  font-size: clamp(40px, 3.5vw, 54px);
+  line-height: 1.1;
+}
+
+.agenda-calendario {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+  color: #b98a06;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.agenda-calendario:hover {
+  color: #231f20;
+}
+
+/* Eventos */
+.agenda-eventos {
+  display: flex;
+  flex-direction: column;
+}
+
+.agenda-evento {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 108px;
+  padding: 15px 0;
+  border-bottom: 1px solid #ddd3c5;
+}
+
+.agenda-fecha {
+  display: flex;
+  width: 66px;
+  height: 76px;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #231f20;
+}
+
+.agenda-fecha-dia {
+  color: #e2ad11;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.agenda-fecha-mes {
+  margin-top: 4px;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+
+.agenda-evento-informacion {
+  min-width: 0;
+  flex: 1;
+}
+
+.agenda-evento-categoria {
+  margin: 0 0 5px;
+  color: #b98a06;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.agenda-evento-titulo {
+  margin: 0;
+  color: #231f20;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.agenda-evento-detalle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin: 7px 0 0;
+  color: #6b6162;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.agenda-evento-separador {
+  margin: 0 2px;
+}
+
+.agenda-evento-flecha {
+  flex-shrink: 0;
+  color: #231f20;
+}
+
+/* Nota inferior */
+.agenda-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 24px 0 0;
+  color: #6b6162;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.agenda-nota svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #b98a06;
+}
+
+/* Columna lateral */
+.agenda-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Avisos */
+.agenda-avisos {
+  padding: 25px 26px;
+  background-color: #ffffff;
+  box-shadow: 0 8px 24px rgba(23, 20, 21, 0.06);
+}
+
+.agenda-avisos-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #ddd3c5;
+}
+
+.agenda-avisos-encabezado svg {
+  color: #9e1b22;
+}
+
+.agenda-avisos-encabezado h3 {
+  margin: 0;
+  color: #231f20;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 25px;
+  font-weight: 600;
+}
+
+.agenda-aviso {
+  padding: 15px 0;
+  border-bottom: 1px solid #ddd3c5;
+}
+
+.agenda-aviso:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.agenda-aviso-fecha {
+  margin: 0;
+  color: #9e1b22;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.agenda-aviso-texto {
+  margin: 7px 0 0;
+  color: #231f20;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* Boletín */
+.agenda-boletin {
+  padding: 28px;
+  background-color: #231f20;
+  color: #ffffff;
+}
+
+.agenda-boletin > svg {
+  color: #e2ad11;
+}
+
+.agenda-boletin-etiqueta {
+  margin: 14px 0 9px;
+  color: #e2ad11;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.agenda-boletin-titulo {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.agenda-boletin-descripcion {
+  margin: 12px 0 18px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.agenda-boletin-boton {
+  display: inline-flex;
+  min-height: 39px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 10px 17px;
+  background-color: #e2ad11;
+  color: #231f20;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Tablets */
+@media (max-width: 1023px) {
+  .agenda {
+    padding: 85px 0;
+  }
+
+  .agenda-contenedor {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 30px;
+  }
+
+  .agenda-encabezado {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .agenda-calendario {
+    margin-bottom: 0;
+  }
+
+  .agenda-avisos {
+    padding: 20px;
+  }
+}
+
+/* Móviles */
+@media (max-width: 767px) {
+  .agenda {
+    padding: 75px 0;
+  }
+
+  .agenda-contenedor {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .agenda-titulo {
+    font-size: 44px;
+  }
+
+  .agenda-evento {
+    gap: 12px;
+  }
+
+  .agenda-fecha {
+    width: 58px;
+    height: 68px;
+  }
+
+  .agenda-fecha-dia {
+    font-size: 30px;
+  }
+
+  .agenda-evento-titulo {
+    font-size: 22px;
+  }
+
+  .agenda-evento-detalle {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 390px) {
+  .agenda-titulo {
+    font-size: 39px;
+  }
+
+  .agenda-evento-titulo {
+    font-size: 20px;
+  }
+}

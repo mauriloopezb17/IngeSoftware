@@ -1,5 +1,5 @@
 
-import { CircleDot, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import {
   anchoContenido,
@@ -8,16 +8,36 @@ import {
 
 import { proclamas } from '../../data/datosParroquia.js';
 
+import '../../styles/Proclamas.css';
+
+function AnillosMatrimoniales() {
+  return (
+    <svg
+      width="25"
+      height="25"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="9" cy="14" r="5" />
+      <circle cx="15" cy="14" r="5" />
+      <path d="M12 5 14 3 16 5 14 7Z" />
+      <path d="M14 7v2" />
+    </svg>
+  );
+}
+
 function Proclamas() {
   return (
-    <section className="bg-goldPale py-24 md:py-[100px]">
-      <div
-        className={`${anchoContenido} grid items-center gap-12 lg:grid-cols-[460px_1fr] lg:gap-20`}
-      >
-        {/* Información sobre las proclamas */}
-        <div>
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-white text-goldDark">
-            <CircleDot size={29} />
+    <section id="proclamas" className="proclamas">
+      <div className={`${anchoContenido} proclamas-contenedor`}>
+        <div className="proclamas-informacion">
+          <div className="proclamas-icono">
+            <AnillosMatrimoniales />
           </div>
 
           <TituloSeccion
@@ -25,42 +45,38 @@ function Proclamas() {
             title="Quieren unirse en el sacramento del matrimonio"
           />
 
-          <p className="mt-6 text-sm leading-[1.8] text-muted md:text-base">
+          <p className="proclamas-descripcion">
             Si alguien conoce algún impedimento por el cual estas
             parejas no puedan contraer matrimonio, está obligado
             a comunicarlo al párroco o en secretaría.
           </p>
 
-          <p className="mt-5 flex items-center gap-2 text-sm font-semibold text-goldDark">
+          <a href="#proclamas-listado" className="proclamas-enlace">
             Ver historial de proclamas
-            <ArrowRight size={16} />
-          </p>
+            <ArrowRight size={15} />
+          </a>
         </div>
 
-        {/* Listado de proclamas matrimoniales */}
-        <div className="rounded bg-white px-6 py-4 shadow-soft md:px-10">
+        <div id="proclamas-listado" className="proclamas-tarjeta">
           {proclamas.map(([personas, fecha, etiqueta]) => (
-            <div
-              key={personas}
-              className="flex flex-wrap items-center justify-between gap-3 border-b border-ink/10 py-6"
-            >
-              <div>
-                <h3 className="font-display text-[23px] font-semibold leading-snug">
+            <article key={personas} className="proclamas-fila">
+              <div className="proclamas-datos">
+                <h3 className="proclamas-nombres">
                   {personas}
                 </h3>
 
-                <p className="mt-1 text-sm text-muted">
+                <p className="proclamas-fecha">
                   {fecha}
                 </p>
               </div>
 
-              <span className="whitespace-nowrap bg-goldPale px-3 py-2 text-[11px] font-bold uppercase text-goldDark">
+              <span className="proclamas-etiqueta">
                 {etiqueta}
               </span>
-            </div>
+            </article>
           ))}
 
-          <p className="py-4 text-xs text-muted">
+          <p className="proclamas-nota">
             Nombres ficticios — datos de ejemplo para el prototipo.
           </p>
         </div>

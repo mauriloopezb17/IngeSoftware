@@ -1,31 +1,181 @@
+import { useState } from 'react';
 
 import {
   Clock3,
   Phone,
   MessageCircle,
-  ChevronDown,
   Search,
   ArrowRight,
-  AtSign,
-  Camera,
-  Play,
+  Menu,
+  X,
 } from 'lucide-react';
+
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaYoutube,
+} from 'react-icons/fa';
 
 import { anchoContenido } from './ElementosComunes.jsx';
 
 import logoBlanco from '../../assets/parroquia/logos/logo-horizontal-blanco.svg';
 
+import '../../styles/Encabezado.css';
+
+const redesSociales = [
+  {
+    nombre: 'Facebook',
+    enlace: 'https://www.facebook.com/profile.php?id=100064836665037',
+    icono: FaFacebookF,
+  },
+  {
+    nombre: 'Instagram',
+    enlace: 'https://www.instagram.com/senor_de_la_exaltacion',
+    icono: FaInstagram,
+  },
+  {
+    nombre: 'YouTube',
+    enlace: 'https://www.youtube.com/@ArquidiocesisdeLaPaz/videos',
+    icono: FaYoutube,
+  },
+];
+
+const enlacesNavegacion = [
+  { nombre: 'Nosotros', enlace: '#nosotros' },
+  { nombre: 'Sacramentos', enlace: '#sacramentos' },
+  { nombre: 'Comunidad', enlace: '#comunidad' },
+  { nombre: 'Noticias', enlace: '#noticias' },
+  { nombre: 'Calendario', enlace: '#agenda' },
+  { nombre: 'Contacto', enlace: '#contacto' },
+];
+
+const seccionesBusqueda = [
+  {
+    nombre: 'Inicio',
+    descripcion: 'Portada de la parroquia',
+    enlace: '#inicio',
+    palabrasClave: 'portada principal',
+  },
+  {
+    nombre: 'Nosotros',
+    descripcion: 'Conoce nuestra parroquia',
+    enlace: '#nosotros',
+    palabrasClave: 'quienes somos historia parroco pasionistas',
+  },
+  {
+    nombre: 'Horarios de misa',
+    descripcion: 'Misas, confesiones y atención',
+    enlace: '#horarios',
+    palabrasClave: 'horarios misas confesiones adoracion secretaria',
+  },
+  {
+    nombre: 'Sacramentos y catequesis',
+    descripcion: 'Bautismo, comunión, confirmación y más',
+    enlace: '#sacramentos',
+    palabrasClave: 'bautismo comunion confirmacion matrimonio uncion requisitos',
+  },
+  {
+    nombre: 'Calendario',
+    descripcion: 'Próximos eventos parroquiales',
+    enlace: '#agenda',
+    palabrasClave: 'agenda actividades encuentros eventos',
+  },
+  {
+    nombre: 'Vida parroquial',
+    descripcion: 'Noticias y actividades de la parroquia',
+    enlace: '#noticias',
+    palabrasClave: 'noticias pastoral familiar publicaciones',
+  },
+  {
+    nombre: 'Proclamas matrimoniales',
+    descripcion: 'Avisos de próximos matrimonios',
+    enlace: '#proclamas',
+    palabrasClave: 'bodas matrimonio proclamas',
+  },
+  {
+    nombre: 'Video institucional',
+    descripcion: 'Recorrido por nuestro templo',
+    enlace: '#video-institucional',
+    palabrasClave: 'video templo recorrido',
+  },
+  {
+    nombre: 'Grupos y pastorales',
+    descripcion: 'Participa en nuestra comunidad',
+    enlace: '#comunidad',
+    palabrasClave: 'grupos monaguillos coro catequistas pastoral',
+  },
+  {
+    nombre: 'Nuestras comunidades',
+    descripcion: 'Sedes y comunidades pasionistas',
+    enlace: '#comunidades',
+    palabrasClave: 'comunidades sedes capillas',
+  },
+  {
+    nombre: 'Contacto',
+    descripcion: 'Dirección, teléfono y Messenger',
+    enlace: '#contacto',
+    palabrasClave: 'contacto ubicacion direccion correo telefono messenger',
+  },
+];
+
+const normalizarTexto = (texto) =>
+  texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
 function Encabezado() {
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const [buscadorAbierto, setBuscadorAbierto] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+
+  const cerrarMenu = () => {
+    setMenuAbierto(false);
+    setBuscadorAbierto(false);
+    setBusqueda('');
+  };
+
+  const alternarBuscador = () => {
+    setBuscadorAbierto((actual) => !actual);
+    setBusqueda('');
+    setMenuAbierto(false);
+  };
+
+  const termino = normalizarTexto(busqueda);
+
+  const resultados = termino
+    ? seccionesBusqueda.filter((seccion) =>
+        normalizarTexto(
+          `${seccion.nombre} ${seccion.descripcion} ${seccion.palabrasClave}`
+        ).includes(termino)
+      )
+    : seccionesBusqueda;
+
+  const buscarSeccion = (evento) => {
+    evento.preventDefault();
+
+    if (!termino || resultados.length === 0) return;
+
+    const destino = resultados[0].enlace;
+
+    cerrarMenu();
+
+    window.location.hash = destino;
+  };
+
   return (
-    <>
-      {/* Barra superior de información */}
-      <div className="border-b border-white/10 bg-deep/70">
-        <div
-          className={`${anchoContenido} flex min-h-11 items-center justify-between gap-3 text-[11px] text-white/85 md:text-sm`}
-        >
-          {/* Horario destacado */}
-          <div className="flex items-center gap-2">
-            <Clock3 size={15} className="shrink-0" />
+    <div
+      className="encabezado"
+      onKeyDown={(evento) => {
+        if (evento.key === 'Escape') cerrarMenu();
+      }}
+    >
+      {/* Barra superior */}
+      <div className="encabezado-superior">
+        <div className={`${anchoContenido} encabezado-superior-contenido`}>
+          <div className="encabezado-aviso">
+            <Clock3 size={15} />
 
             <span>
               Hoy, sábado: Santa Misa 7:00 · 18:00
@@ -33,84 +183,180 @@ function Encabezado() {
             </span>
           </div>
 
-          {/* Contacto y redes sociales */}
-          <div className="hidden items-center gap-5 lg:flex">
-            <span className="flex items-center gap-2 whitespace-nowrap">
+          <div className="encabezado-contactos">
+            <a
+              href="tel:+59122784937"
+              className="encabezado-contacto"
+              aria-label="Llamar a la parroquia"
+            >
               <Phone size={15} />
-              (2) 278 0000
-            </span>
+              <span>(2) 278 4937</span>
+            </a>
 
-            <span className="flex items-center gap-2 whitespace-nowrap">
+            <span
+              className="encabezado-whatsapp"
+              title="Número de WhatsApp pendiente de confirmación"
+            >
               <MessageCircle size={15} />
-              WhatsApp Secretaría
+              <span>WhatsApp Secretaría</span>
             </span>
 
-            <span className="h-4 w-px bg-white/40" />
+            <span className="encabezado-separador" />
 
-            {/* Iconos provisionales para redes sociales */}
-            <div className="flex items-center gap-4">
-              <AtSign size={16} />
-              <Camera size={16} />
-              <Play size={16} />
+            <div className="encabezado-redes">
+              {redesSociales.map(({ nombre, enlace, icono: Icono }) => (
+                <a
+                  key={nombre}
+                  href={enlace}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Visitar ${nombre}`}
+                  title={nombre}
+                >
+                  <Icono size={15} />
+                </a>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Encabezado principal */}
-      <header
-        className={`${anchoContenido} flex min-h-[110px] items-center justify-between gap-5 border-b border-white/20 text-white`}
-      >
-        {/* Logotipo oficial */}
-        <div className="flex shrink-0 items-center">
+      {/* Navegación principal */}
+      <header className={`${anchoContenido} encabezado-principal`}>
+        <a
+          href="#inicio"
+          className="encabezado-logo-enlace"
+          onClick={cerrarMenu}
+          aria-label="Volver al inicio"
+        >
           <img
             src={logoBlanco}
             alt="Parroquia Señor de la Exaltación"
-            className="h-auto w-[170px] object-contain md:w-[205px]"
+            className="encabezado-logo"
           />
-        </div>
+        </a>
 
-        {/* Navegación visual */}
         <nav
+          id="menu-navegacion"
+          className={`encabezado-navegacion ${
+            menuAbierto ? 'encabezado-navegacion-abierta' : ''
+          }`}
           aria-label="Navegación principal"
-          className="hidden items-center gap-5 text-[13px] font-medium lg:flex"
         >
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            Nosotros
-            <ChevronDown size={14} />
-          </span>
-
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            Sacramentos
-            <ChevronDown size={14} />
-          </span>
-
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            Comunidad
-            <ChevronDown size={14} />
-          </span>
-
-          <span>Noticias</span>
-          <span>Calendario</span>
-          <span>Contacto</span>
+          {enlacesNavegacion.map(({ nombre, enlace }) => (
+            <a
+              key={nombre}
+              href={enlace}
+              className="encabezado-enlace"
+              onClick={cerrarMenu}
+            >
+              {nombre}
+            </a>
+          ))}
         </nav>
 
-        {/* Búsqueda y botón destacado */}
-        <div className="hidden items-center gap-4 xl:flex">
-          <Search size={19} className="shrink-0" />
+        <div className="encabezado-acciones">
+          <button
+            type="button"
+            className="encabezado-buscar"
+            onClick={alternarBuscador}
+            aria-label={buscadorAbierto ? 'Cerrar buscador' : 'Buscar en la página'}
+            aria-expanded={buscadorAbierto}
+            aria-controls="buscador-parroquia"
+            title="Buscar en la página"
+          >
+            {buscadorAbierto ? <X size={19} /> : <Search size={19} />}
+          </button>
 
-          <span className="static-cta whitespace-nowrap">
+          <a
+            href="#horarios"
+            className="encabezado-boton-horarios"
+            onClick={cerrarMenu}
+          >
             Horarios de misa
             <ArrowRight size={17} />
-          </span>
-        </div>
+          </a>
 
-        {/* Menú visual para móviles */}
-        <span className="text-xs font-semibold uppercase tracking-widest text-gold lg:hidden">
-          Menú
-        </span>
+          <button
+            type="button"
+            className="encabezado-boton-menu"
+            onClick={() => {
+              setMenuAbierto((actual) => !actual);
+                        setBuscadorAbierto(false);
+            }}
+            aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={menuAbierto}
+            aria-controls="menu-navegacion"
+          >
+            {menuAbierto ? <X size={23} /> : <Menu size={23} />}
+            <span>Menú</span>
+          </button>
+        </div>
       </header>
-    </>
+
+      {/* Buscador de secciones */}
+      {buscadorAbierto && (
+        <div
+          id="buscador-parroquia"
+          className="encabezado-buscador-panel"
+        >
+          <form
+            className="encabezado-buscador-formulario"
+            onSubmit={buscarSeccion}
+            role="search"
+          >
+            <Search size={19} />
+
+            <input
+              type="search"
+              className="encabezado-buscador-input"
+              placeholder="Buscar horarios, sacramentos, comunidad..."
+              aria-label="Buscar secciones de la parroquia"
+              value={busqueda}
+              onChange={(evento) => setBusqueda(evento.target.value)}
+              autoFocus
+            />
+
+            <button
+              type="submit"
+              className="encabezado-buscador-enviar"
+              disabled={!termino || resultados.length === 0}
+            >
+              Buscar
+              <ArrowRight size={16} />
+            </button>
+          </form>
+
+          <div className="encabezado-buscador-resultados">
+            <p className="encabezado-buscador-etiqueta">
+              {termino ? 'Resultados de búsqueda' : 'Explorar secciones'}
+            </p>
+
+            {resultados.length > 0 ? (
+              resultados.map((seccion) => (
+                <a
+                  key={seccion.enlace}
+                  href={seccion.enlace}
+                  className="encabezado-buscador-resultado"
+                  onClick={cerrarMenu}
+                >
+                  <span>
+                    <strong>{seccion.nombre}</strong>
+                    <small>{seccion.descripcion}</small>
+                  </span>
+
+                  <ArrowRight size={16} />
+                </a>
+              ))
+            ) : (
+              <p className="encabezado-buscador-vacio">
+                No encontramos esa sección. Prueba con otra palabra.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

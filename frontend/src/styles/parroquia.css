@@ -1,0 +1,118 @@
+
+/* Títulos */
+.serif-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* Etiquetas de sección */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: #b98a06;
+}
+
+.eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 2px;
+  flex-shrink: 0;
+  background-color: #e2ad11;
+}
+
+.eyebrow.justify-center {
+  justify-content: center;
+}
+
+/* Botón principal */
+.static-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+
+  min-height: 44px;
+  padding: 0.8rem 1.4rem;
+
+  border: none;
+  background-color: #e2ad11;
+  color: #231f20;
+
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* Botón secundario */
+.static-cta-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+
+  min-height: 44px;
+  padding: 0.8rem 1.4rem;
+
+  border: 1px solid currentColor;
+  background-color: transparent;
+  color: inherit;
+
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* Controles visuales */
+.visual-control {
+  cursor: default;
+}
+
+/* Marcadores de imágenes */
+.placeholder {
+  background: linear-gradient(
+    135deg,
+    rgba(35, 31, 32, 0.9),
+    rgba(74, 67, 68, 0.78)
+  );
+}
+
+/* Sombras */
+.shadow-soft {
+  box-shadow: 0 12px 35px rgba(23, 20, 21, 0.15);
+}
+
+/* Selección de texto */
+::selection {
+  background-color: #e2ad11;
+  color: #231f20;
+}
+
+/* Pantallas pequeñas */
+@media (max-width: 640px) {
+  .static-cta,
+  .static-cta-outline {
+    padding: 0.75rem 1rem;
+    font-size: 0.7rem;
+  }
+
+  .eyebrow {
+    font-size: 0.65rem;
+    letter-spacing: 0.16em;
+  }
+}

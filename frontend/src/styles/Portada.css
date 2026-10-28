@@ -1,0 +1,257 @@
+
+/* Portada */
+.portada {
+  width: 100%;
+}
+
+.portada-fondo {
+  isolation: isolate;
+}
+
+.portada-contenido {
+  position: relative;
+}
+
+.portada-botones a {
+  text-decoration: none;
+}
+
+.portada-boton-secundario {
+  color: #ffffff;
+}
+
+/* Video institucional */
+.portada-video-wrap {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 2rem;
+}
+
+.portada-video-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.65rem 1.25rem 0.65rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
+  background: rgba(23, 20, 21, 0.16);
+  color: #ffffff;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.portada-video-chip:hover {
+  background: rgba(23, 20, 21, 0.3);
+  border-color: rgba(255, 255, 255, 0.95);
+}
+
+.portada-video-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.05rem;
+  height: 3.05rem;
+  border-radius: 999px;
+  background-color: #e2ad11;
+  color: #231f20;
+  flex-shrink: 0;
+}
+
+.portada-video-texto {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  line-height: 1.15;
+}
+
+.portada-video-titulo {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.portada-video-subtitulo {
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* Accesos rápidos */
+.portada-accesos {
+  position: relative;
+  z-index: 20;
+  margin-top: -58px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border-radius: 4px;
+  background: #ffffff;
+  box-shadow: 0 12px 35px rgba(23, 20, 21, 0.15);
+}
+
+.portada-acceso {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 1rem;
+  min-height: 106px;
+  padding: 1.5rem 1.75rem;
+  border-right: 1px solid #ddd3c5;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.portada-acceso:last-child {
+  border-right: none;
+}
+
+.portada-acceso:hover {
+  background-color: #faf7f2;
+}
+
+.portada-acceso-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background-color: #fbf1d3;
+  color: #b98a06;
+  flex-shrink: 0;
+}
+
+.portada-acceso-texto {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.portada-acceso-titulo {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #231f20;
+  line-height: 1.2;
+}
+
+.portada-acceso-subtitulo {
+  font-size: 0.95rem;
+  color: #6b6162;
+  line-height: 1.35;
+}
+
+/* Accesibilidad */
+.portada a:focus-visible,
+.portada-video-chip:focus-visible {
+  outline: 2px solid #e2ad11;
+  outline-offset: 4px;
+}
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .portada-accesos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: -40px;
+  }
+
+  .portada-acceso:nth-child(2) {
+    border-right: none;
+  }
+
+  .portada-acceso:nth-child(-n + 2) {
+    border-bottom: 1px solid #ddd3c5;
+  }
+}
+
+/* Móviles */
+@media (max-width: 768px) {
+  .portada-fondo {
+    min-height: 760px;
+  }
+
+  .portada-contenido {
+    padding-top: 105px;
+  }
+
+  .portada-titulo {
+    font-size: clamp(52px, 10vw, 76px);
+  }
+
+  .portada-descripcion {
+    max-width: 540px;
+    font-size: 15px;
+  }
+
+  .portada-video-wrap {
+    justify-content: flex-start;
+    padding-top: 1.5rem;
+  }
+
+  .portada-video-chip {
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .portada-fondo {
+    min-height: 720px;
+  }
+
+  .portada-contenido {
+    padding-top: 85px;
+  }
+
+  .portada-titulo {
+    font-size: clamp(48px, 12vw, 64px);
+  }
+
+  .portada-descripcion {
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .portada-botones {
+    gap: 12px;
+  }
+
+  .portada-botones a {
+    font-size: 11px;
+  }
+
+  .portada-accesos {
+    grid-template-columns: 1fr;
+    margin-top: -28px;
+  }
+
+  .portada-acceso {
+    min-height: 85px;
+    padding: 16px 20px;
+    border-right: none;
+    border-bottom: 1px solid #ddd3c5;
+  }
+
+  .portada-acceso:last-child {
+    border-bottom: none;
+  }
+
+  .portada-video-titulo {
+    font-size: 0.95rem;
+  }
+
+  .portada-video-subtitulo {
+    font-size: 0.85rem;
+  }
+}
+
+/* Animaciones reducidas */
+@media (prefers-reduced-motion: reduce) {
+  .portada-acceso,
+  .portada-video-chip {
+    transition: none;
+  }
+}

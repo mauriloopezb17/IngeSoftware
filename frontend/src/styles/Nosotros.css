@@ -1,0 +1,250 @@
+
+/* Sección principal */
+.nosotros {
+  padding: 120px 0;
+  background-color: #faf7f2;
+}
+
+.nosotros-contenedor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 80px;
+}
+
+/* Fotografía principal */
+.nosotros-imagen-contenedor {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  margin-right: auto;
+  padding: 0 36px 42px 0;
+}
+
+.nosotros-marco {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  bottom: 20px;
+  left: 20px;
+  border: 1px solid #e2ad11;
+}
+
+.nosotros-imagen {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 450px;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Tarjeta Pasionistas */
+.nosotros-tarjeta {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  width: 190px;
+  padding: 18px;
+  background-color: #231f20;
+  color: #ffffff;
+  box-shadow: 0 12px 28px rgba(23, 20, 21, 0.15);
+}
+
+.nosotros-tarjeta-etiqueta {
+  margin: 0 0 5px;
+  color: #e2ad11;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.nosotros-tarjeta-titulo {
+  margin: 0 0 6px;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 25px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.nosotros-tarjeta-descripcion {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Información */
+.nosotros-informacion {
+  min-width: 0;
+}
+
+.nosotros-descripcion {
+  margin-top: 24px;
+  color: #6b6162;
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+/* Cita */
+.nosotros-cita {
+  margin: 28px 0;
+  padding-left: 18px;
+  border-left: 3px solid #e2ad11;
+}
+
+.nosotros-cita-texto {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 27px;
+  font-style: italic;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #231f20;
+}
+
+.nosotros-cita-autor {
+  display: block;
+  margin-top: 10px;
+  color: #6b6162;
+  font-size: 12px;
+  font-style: normal;
+}
+
+/* Párroco y botón */
+.nosotros-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.nosotros-parroco {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Fotografía circular del P. Gregorio */
+.nosotros-avatar {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid #e2ad11;
+  border-radius: 50%;
+  background-color: #ddd3c5;
+}
+
+.nosotros-avatar-imagen {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 30%;
+}
+
+.nosotros-parroco-nombre {
+  margin: 0;
+  color: #231f20;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.nosotros-parroco-cargo {
+  margin: 4px 0 0;
+  color: #6b6162;
+  font-size: 12px;
+}
+
+.nosotros-boton {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border: 1px solid #231f20;
+  background-color: transparent;
+  color: #231f20;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* Tablets */
+@media (max-width: 1023px) {
+  .nosotros {
+    padding: 90px 0;
+  }
+
+  .nosotros-contenedor {
+    gap: 36px;
+  }
+
+  .nosotros-imagen {
+    height: 390px;
+  }
+
+  .nosotros-tarjeta {
+    width: 170px;
+    padding: 15px;
+  }
+}
+
+/* Móviles */
+@media (max-width: 767px) {
+  .nosotros {
+    padding: 80px 0;
+  }
+
+  .nosotros-contenedor {
+    grid-template-columns: 1fr;
+    gap: 56px;
+  }
+
+  .nosotros-imagen-contenedor {
+    max-width: 430px;
+    margin: 0 auto;
+  }
+
+  .nosotros-imagen {
+    height: 380px;
+  }
+
+  .nosotros-informacion {
+    width: 100%;
+  }
+
+  .nosotros-descripcion {
+    font-size: 14px;
+  }
+
+  .nosotros-cita-texto {
+    font-size: 25px;
+  }
+}
+
+@media (max-width: 390px) {
+  .nosotros-imagen {
+    height: 330px;
+  }
+
+  .nosotros-tarjeta {
+    width: 155px;
+    padding: 12px;
+  }
+
+  .nosotros-tarjeta-titulo {
+    font-size: 22px;
+  }
+
+  .nosotros-pie {
+    align-items: flex-start;
+  }
+}

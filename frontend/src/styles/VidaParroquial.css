@@ -1,0 +1,259 @@
+
+/* Sección */
+.vida-parroquial {
+  padding: 95px 0 105px;
+  background-color: #ffffff;
+}
+
+/* Encabezado */
+.vida-parroquial-encabezado {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 36px;
+}
+
+.vida-parroquial-titulo {
+  margin: 15px 0 0;
+  color: #231f20;
+  font-size: clamp(40px, 3.8vw, 56px);
+  line-height: 1.1;
+}
+
+/* Controles */
+.vida-parroquial-controles {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-bottom: 5px;
+}
+
+.vida-parroquial-control {
+  display: flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddd3c5;
+  border-radius: 50%;
+  background-color: #ffffff;
+  color: #231f20;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.vida-parroquial-control-activo,
+.vida-parroquial-control:hover:not(:disabled) {
+  border-color: #231f20;
+  background-color: #231f20;
+  color: #ffffff;
+}
+
+.vida-parroquial-control:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+/* Tarjetas */
+.vida-parroquial-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.vida-parroquial-tarjeta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+
+.vida-parroquial-imagen-contenedor {
+  width: 100%;
+  aspect-ratio: 1.5 / 1;
+  overflow: hidden;
+  background-color: #f2ece3;
+}
+
+.vida-parroquial-imagen {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Imagen y enlace de Facebook */
+.vida-parroquial-imagen-enlace {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.vida-parroquial-imagen-afiche {
+  object-fit: contain;
+  background-color: #008f8b;
+}
+
+.vida-parroquial-imagen-enlace:hover .vida-parroquial-imagen {
+  opacity: 0.92;
+}
+
+/* Contenido */
+.vida-parroquial-contenido {
+  display: flex;
+  min-height: 190px;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: 15px;
+}
+
+.vida-parroquial-metadatos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: #6b6162;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.vida-parroquial-categoria {
+  color: #b98a06;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.vida-parroquial-separador {
+  width: 17px;
+  height: 1px;
+  background-color: #ddd3c5;
+}
+
+.vida-parroquial-tarjeta-titulo {
+  margin: 13px 0 0;
+  color: #231f20;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.vida-parroquial-descripcion {
+  margin: 12px 0 16px;
+  color: #6b6162;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.vida-parroquial-enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: auto;
+  color: #b98a06;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+a.vida-parroquial-enlace:hover {
+  color: #231f20;
+}
+
+.vida-parroquial-enlace-inactivo {
+  color: #6b6162;
+  font-weight: 500;
+}
+
+/* Indicadores */
+.vida-parroquial-indicadores {
+  display: flex;
+  gap: 6px;
+  margin-top: 30px;
+}
+
+.vida-parroquial-indicador {
+  width: 7px;
+  height: 5px;
+  border: 0;
+  background-color: #d1ccc5;
+  cursor: pointer;
+}
+
+.vida-parroquial-indicador-activo {
+  width: 27px;
+  background-color: #e2ad11;
+}
+
+.vida-parroquial-control:focus-visible,
+.vida-parroquial-indicador:focus-visible,
+.vida-parroquial-imagen-enlace:focus-visible,
+.vida-parroquial-enlace:focus-visible {
+  outline: 2px solid #b98a06;
+  outline-offset: 3px;
+}
+
+/* Tablets */
+@media (max-width: 1023px) {
+  .vida-parroquial {
+    padding: 80px 0;
+  }
+
+  .vida-parroquial-tarjetas {
+    gap: 15px;
+  }
+
+  .vida-parroquial-tarjeta-titulo {
+    font-size: 24px;
+  }
+}
+
+/* Móviles */
+@media (max-width: 767px) {
+  .vida-parroquial {
+    padding: 70px 0;
+  }
+
+  .vida-parroquial-encabezado {
+    align-items: center;
+  }
+
+  .vida-parroquial-titulo {
+    font-size: 42px;
+  }
+
+  .vida-parroquial-tarjetas {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .vida-parroquial-imagen-contenedor {
+    aspect-ratio: 1.6 / 1;
+  }
+
+  .vida-parroquial-contenido {
+    min-height: 0;
+  }
+
+  .vida-parroquial-tarjeta-titulo {
+    font-size: 29px;
+  }
+}
+
+@media (max-width: 390px) {
+  .vida-parroquial-titulo {
+    font-size: 36px;
+  }
+
+  .vida-parroquial-control {
+    width: 33px;
+    height: 33px;
+  }
+}

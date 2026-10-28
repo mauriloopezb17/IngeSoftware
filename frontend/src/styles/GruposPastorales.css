@@ -1,0 +1,167 @@
+
+/* Sección */
+.grupos-pastorales {
+  padding: 100px 0;
+  background-color: #f2ece3;
+}
+
+.grupos-contenedor {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.3fr);
+  align-items: center;
+  gap: 80px;
+}
+
+/* Presentación */
+.grupos-informacion {
+  max-width: 390px;
+}
+
+.grupos-titulo {
+  margin-top: 18px;
+  color: #231f20;
+  font-size: clamp(42px, 4vw, 58px);
+  line-height: 1.05;
+}
+
+.grupos-descripcion {
+  margin-top: 20px;
+  color: #6b6162;
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.grupos-boton {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 26px;
+  padding: 12px 20px;
+  background-color: #231f20;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: background-color 0.2s ease;
+}
+
+.grupos-boton:hover {
+  background-color: #4a4344;
+}
+
+.grupos-boton:focus-visible {
+  outline: 2px solid #b98a06;
+  outline-offset: 3px;
+}
+
+/* Tarjetas */
+.grupos-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.grupos-tarjeta {
+  display: flex;
+  min-height: 92px;
+  align-items: center;
+  gap: 15px;
+  padding: 18px;
+  background-color: #ffffff;
+  box-shadow: 0 8px 22px rgba(23, 20, 21, 0.06);
+}
+
+/* Iconos */
+.grupos-icono {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #f6eee7;
+  color: #b5532f;
+}
+
+.grupos-icono svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.8;
+}
+
+/* Información de los grupos */
+.grupos-tarjeta-informacion {
+  min-width: 0;
+}
+
+.grupos-tarjeta-informacion h3 {
+  margin: 0;
+  color: #231f20;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.grupos-tarjeta-informacion p {
+  margin: 4px 0 0;
+  color: #6b6162;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Tablets */
+@media (max-width: 1023px) {
+  .grupos-pastorales {
+    padding: 80px 0;
+  }
+
+  .grupos-contenedor {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 35px;
+  }
+
+  .grupos-tarjeta {
+    gap: 10px;
+    padding: 14px;
+  }
+}
+
+/* Móviles */
+@media (max-width: 767px) {
+  .grupos-pastorales {
+    padding: 70px 0;
+  }
+
+  .grupos-contenedor {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .grupos-informacion {
+    max-width: 100%;
+  }
+
+  .grupos-titulo {
+    font-size: 46px;
+  }
+}
+
+@media (max-width: 480px) {
+  .grupos-tarjetas {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .grupos-tarjeta {
+    min-height: 76px;
+    padding: 14px 18px;
+  }
+
+  .grupos-titulo {
+    font-size: 42px;
+  }
+}
