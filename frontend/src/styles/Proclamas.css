@@ -1,0 +1,187 @@
+
+/* Sección */
+.proclamas {
+  padding: 100px 0;
+  background-color: #fbf1d3;
+}
+
+.proclamas-contenedor {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: 80px;
+}
+
+/* Información */
+.proclamas-informacion {
+  max-width: 420px;
+}
+
+.proclamas-icono {
+  display: flex;
+  width: 46px;
+  height: 46px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  color: #b98a06;
+}
+
+.proclamas-descripcion {
+  margin: 22px 0 0;
+  color: #6b6162;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.proclamas-enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  color: #b98a06;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.proclamas-enlace:hover {
+  color: #231f20;
+}
+
+.proclamas-enlace:focus-visible {
+  outline: 2px solid #b98a06;
+  outline-offset: 4px;
+}
+
+/* Tarjeta */
+.proclamas-tarjeta {
+  min-width: 0;
+  padding: 12px 26px;
+  border-radius: 3px;
+  background-color: #ffffff;
+  box-shadow: 0 10px 28px rgba(23, 20, 21, 0.08);
+}
+
+.proclamas-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 21px 0;
+  border-bottom: 1px solid #e5ddd2;
+}
+
+.proclamas-datos {
+  min-width: 0;
+  flex: 1;
+}
+
+.proclamas-nombres {
+  margin: 0;
+  color: #231f20;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 25px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.proclamas-fecha {
+  margin: 6px 0 0;
+  color: #6b6162;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Etiquetas */
+.proclamas-etiqueta {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+  border-radius: 20px;
+  background-color: #fbf1d3;
+  color: #231f20;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.proclamas-fila:first-child .proclamas-etiqueta {
+  background-color: #e2ad11;
+}
+
+/* Nota inferior */
+.proclamas-nota {
+  margin: 0;
+  padding: 15px 0 5px;
+  color: #8a8080;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* Tablets */
+@media (max-width: 1023px) {
+  .proclamas {
+    padding: 85px 0;
+  }
+
+  .proclamas-contenedor {
+    gap: 35px;
+  }
+
+  .proclamas-tarjeta {
+    padding: 10px 18px;
+  }
+
+  .proclamas-nombres {
+    font-size: 22px;
+  }
+
+  .proclamas-etiqueta {
+    padding: 6px 9px;
+    font-size: 9px;
+  }
+}
+
+/* Móviles */
+@media (max-width: 767px) {
+  .proclamas {
+    padding: 75px 0;
+  }
+
+  .proclamas-contenedor {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .proclamas-informacion {
+    max-width: 100%;
+  }
+
+  .proclamas-tarjeta {
+    padding: 10px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .proclamas-fila {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px 0;
+  }
+
+  .proclamas-nombres {
+    font-size: 24px;
+  }
+
+  .proclamas-etiqueta {
+    font-size: 10px;
+  }
+}

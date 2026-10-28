@@ -1,9 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap');
+
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap");
 
 @import "tailwindcss";
 
+/* Colores y fuentes */
+@theme {
+  --color-gold: #e2ad11;
+  --color-goldDark: #b98a06;
+  --color-goldPale: #fbf1d3;
+
+  --color-ink: #231f20;
+  --color-deep: #171415;
+  --color-charcoal: #4a4344;
+  --color-muted: #6b6162;
+
+  --color-cream: #faf7f2;
+  --color-stone: #f2ece3;
+  --color-borderSoft: #ddd3c5;
+
+  --color-terracotta: #b5532f;
+  --color-redParish: #9e1b22;
+
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Montserrat", Arial, sans-serif;
+}
+
+/* Estilos globales */
 :root {
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
   color: #231f20;
   background-color: #faf7f2;
 
@@ -18,8 +42,8 @@ html {
 }
 
 body {
-  margin: 0;
   min-width: 320px;
+  margin: 0;
 }
 
 #root {

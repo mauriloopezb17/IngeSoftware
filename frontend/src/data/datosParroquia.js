@@ -4,10 +4,10 @@ import {
   Church,
   Clock3,
   BookOpen,
-  Heart,
-  CircleDot,
-  Users,
-  HeartHandshake,
+  Droplet,
+  Sun,
+  Flame,
+  HeartPulse,
 } from 'lucide-react';
 
 // Horarios de atención y celebraciones
@@ -48,33 +48,33 @@ export const horarios = [
 export const sacramentos = [
   {
     name: 'Bautismo',
-    icon: Cross,
-    text: 'El comienzo del camino de fe y la bienvenida a la comunidad cristiana.',
+    icon: Droplet,
+    text: 'Charla pre-bautismal el primer sábado de cada mes. Padres y padrinos se inscriben en secretaría.',
   },
   {
     name: 'Primera Comunión',
-    icon: BookOpen,
-    text: 'Preparación para recibir por primera vez el cuerpo de Cristo.',
+    icon: Sun,
+    text: 'Catequesis de dos años para niños desde los 8 años. Inscripciones de febrero a marzo.',
   },
   {
     name: 'Confirmación',
-    icon: Heart,
-    text: 'Fortalecemos nuestra fe y compromiso con el Espíritu Santo.',
+    icon: Flame,
+    text: 'Preparación para jóvenes desde los 15 años y adultos que deseen completar su iniciación.',
   },
   {
     name: 'Matrimonio',
-    icon: CircleDot,
-    text: 'Acompañamos a las parejas en su camino hacia el sacramento.',
+    icon: null,
+    text: 'Cursillo prematrimonial, presentación de documentos y proclamas con tres meses de anticipación.',
   },
   {
     name: 'Catequesis de adultos',
-    icon: Users,
-    text: 'Un espacio de formación y encuentro para crecer en la fe.',
+    icon: BookOpen,
+    text: 'Formación para adultos que desean recibir los sacramentos o profundizar su fe.',
   },
   {
     name: 'Unción de los enfermos',
-    icon: HeartHandshake,
-    text: 'Oración, consuelo y acompañamiento en momentos de dificultad.',
+    icon: HeartPulse,
+    text: 'Visita a enfermos y adultos mayores en domicilio. Coordinar por teléfono o WhatsApp.',
   },
 ];
 
@@ -83,30 +83,34 @@ export const eventos = [
   {
     day: '31',
     month: 'OCT',
-    title: 'Encuentro de jóvenes',
-    detail: 'Salón parroquial · 16:00',
-    tag: 'Comunidad',
+    title: 'Vigilia de Todos los Santos',
+    hora: '19:00',
+    lugar: 'Templo parroquial',
+    tag: 'Liturgia',
   },
   {
     day: '01',
     month: 'NOV',
-    title: 'Solemnidad de Todos los Santos',
-    detail: 'Templo parroquial · Horarios de misa',
-    tag: 'Celebración',
+    title: 'Todos los Santos',
+    hora: '8:00 – 10:00 – 12:00',
+    lugar: 'Templo parroquial',
+    tag: 'Solemnidad',
   },
   {
     day: '02',
     month: 'NOV',
     title: 'Conmemoración de los Fieles Difuntos',
-    detail: 'Templo parroquial · Celebraciones especiales',
+    hora: '19:00',
+    lugar: 'Templo parroquial',
     tag: 'Liturgia',
   },
   {
     day: '07',
     month: 'NOV',
-    title: 'Jornada de pastoral parroquial',
-    detail: 'Ambientes parroquiales · 09:00',
-    tag: 'Pastoral',
+    title: 'Charla pre-bautismal para padres y padrinos',
+    hora: '9:30',
+    lugar: 'Salón parroquial',
+    tag: 'Catequesis',
   },
 ];
 
@@ -147,16 +151,38 @@ export const proclamas = [
 
 // Noticias de la parroquia
 export const noticias = [
-  [
-    '19 OCT 2026',
-    'Nuestra comunidad celebra un nuevo encuentro parroquial',
-  ],
-  [
-    '18 OCT 2026',
-    'La pastoral social continúa acompañando a las familias',
-  ],
-  [
-    '11 OCT 2026',
-    'Jóvenes comparten una jornada de fe y comunidad',
-  ],
+  {
+    categoria: 'Sacramentos',
+    fecha: '18 OCT 2026',
+    titulo: 'Primeras comuniones: 42 niños recibieron a Jesús',
+    descripcion:
+      'Una jornada de fiesta para toda la comunidad, acompañada por catequistas y familias.',
+    descripcionImagen:
+      'Crucifijo en el interior del templo parroquial',
+    imagen: 'crucifijo',
+    enlace: null,
+  },
+  {
+    categoria: 'Comunidad',
+    fecha: '11 OCT 2026',
+    titulo: 'Encuentro de monaguillos de la Vicaría Sur',
+    descripcion:
+      'Más de 60 monaguillos compartieron una jornada de formación, juego y oración.',
+    descripcionImagen:
+      'Vista exterior de la Parroquia Señor de la Exaltación',
+    imagen: 'exterior',
+    enlace: null,
+  },
+  {
+    categoria: 'Pastoral Familiar',
+    fecha: '30 OCT 2026',
+    titulo: 'Encuentro de Pastoral Familiar: Cuando la muerte llega a la familia',
+    descripcion:
+      'Un espacio para reflexionar sobre la pérdida de un ser querido y encontrar acompañamiento desde la fe. Viernes 30 de octubre a las 19:30, en el Salón San Gabriel.',
+    descripcionImagen:
+      'Afiche del encuentro de Pastoral Familiar sobre el duelo y la pérdida de un ser querido',
+    imagen: 'pastoral',
+    enlace:
+      'https://www.facebook.com/photo.php?fbid=1568791201958754&set=pb.100064836665037.-2207520000&type=3',
+  },
 ];

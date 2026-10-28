@@ -1,14 +1,47 @@
-import { Play, ArrowRight, Clapperboard } from 'lucide-react';
+
+import { useRef, useState } from 'react';
+import {
+  Play,
+  Pause,
+  ExternalLink,
+  Clapperboard,
+} from 'lucide-react';
+
 import {
   anchoContenido,
   TituloSeccion,
-  MarcadorVisual,
 } from './ElementosComunes.jsx';
 
+import imagenAltar from '../../assets/parroquia/imagenes/altar.webp';
+import videoParroquia from '../../assets/parroquia/videos/portada-final.mp4';
+
+import '../../styles/VideoInstitucional.css';
+
+const canalYoutube = 'https://www.youtube.com/@ArquidiocesisdeLaPaz';
+
 function VideoInstitucional() {
+  const videoRef = useRef(null);
+  const [reproduciendo, setReproduciendo] = useState(false);
+
+  const alternarReproduccion = async () => {
+    const video = videoRef.current;
+
+    if (!video) return;
+
+    if (video.paused) {
+      try {
+        await video.play();
+      } catch (error) {
+        console.error('No se pudo reproducir el video:', error);
+      }
+    } else {
+      video.pause();
+    }
+  };
+
   return (
-    <section className="bg-deep py-24 md:py-[120px]">
-      <div className={`${anchoContenido} text-center`}>
+    <section id="video-institucional" className="video-institucional">
+      <div className={`${anchoContenido} video-institucional-contenedor`}>
         <TituloSeccion
           overline="Conoce nuestro templo"
           title="Un recorrido por nuestra parroquia"
@@ -16,35 +49,59 @@ function VideoInstitucional() {
           light
         />
 
-        <div className="relative mx-auto mt-12 aspect-video max-w-[1000px] overflow-hidden rounded">
-          <MarcadorVisual
-            label="MINIATURA VIDEO · REEMPLAZAR"
-            className="absolute inset-0 h-full w-full"
+        <div className="video-institucional-reproductor">
+          <video
+            ref={videoRef}
+            className="video-institucional-video"
+            src={videoParroquia}
+            poster={imagenAltar}
+            preload="metadata"
+            playsInline
+            onPlay={() => setReproduciendo(true)}
+            onPause={() => setReproduciendo(false)}
+            onEnded={() => setReproduciendo(false)}
           />
 
-          <div className="absolute inset-0 bg-deep/35" />
+          <button
+            type="button"
+            className={`video-institucional-reproducir ${
+              reproduciendo ? 'video-institucional-reproduciendo' : ''
+            }`}
+            onClick={alternarReproduccion}
+            aria-label={reproduciendo ? 'Pausar video' : 'Reproducir video'}
+          >
+            {reproduciendo ? (
+              <Pause size={29} fill="currentColor" />
+            ) : (
+              <Play size={29} fill="currentColor" />
+            )}
+          </button>
 
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gold text-ink shadow-soft">
-              <Play fill="currentColor" size={35} />
-            </div>
-          </div>
-
-          <div className="absolute bottom-6 left-6 flex items-center gap-2 text-xs text-white md:text-sm">
-            <Clapperboard size={20} />
-            <span>Recorrido aéreo y del templo · 3:20</span>
+          <div className="video-institucional-descripcion">
+            <Clapperboard size={16} />
+            <span>Recorrido aéreo y del templo · 0:30</span>
           </div>
         </div>
 
-        <div className="visual-control mt-12 flex flex-wrap justify-center gap-4">
-          <span className="static-cta">
-            Ver video
-            <ArrowRight size={17} />
-          </span>
+        <div className="video-institucional-acciones">
+          <a
+            href={`${canalYoutube}/videos`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="video-institucional-boton-principal"
+          >
+            Ver en YouTube
+            <ExternalLink size={16} />
+          </a>
 
-          <span className="static-cta-outline text-white">
-            Conocer más
-          </span>
+          <a
+            href={`${canalYoutube}?sub_confirmation=1`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="video-institucional-boton-secundario"
+          >
+            Suscribirse al canal
+          </a>
         </div>
       </div>
     </section>
