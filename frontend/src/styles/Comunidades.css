@@ -18,7 +18,7 @@
 
 .comunidades-titulo {
   margin: 15px 0 0;
-  color: #231f20;
+  color: var(--color-ink);
   font-size: clamp(42px, 4vw, 58px);
   line-height: 1.1;
 }
@@ -26,7 +26,7 @@
 .comunidades-descripcion {
   max-width: 550px;
   margin: 16px auto 0;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 14px;
   line-height: 1.8;
 }
@@ -41,20 +41,20 @@
 .comunidades-tarjeta {
   min-width: 0;
   overflow: hidden;
-  border: 1px solid #ddd3c5;
+  border: 1px solid var(--color-borderSoft);
   border-radius: 3px;
   background-color: #ffffff;
 }
 
 .comunidades-tarjeta-principal {
-  border-color: #e2ad11;
+  border-color: var(--color-gold);
 }
 
 .comunidades-imagen-contenedor {
   width: 100%;
   aspect-ratio: 1.8 / 1;
   overflow: hidden;
-  background-color: #4a4344;
+  background-color: var(--color-charcoal);
 }
 
 .comunidades-imagen,
@@ -73,7 +73,7 @@
   background: linear-gradient(
     135deg,
     #514643,
-    #231f20
+    var(--color-ink)
   );
 }
 
@@ -84,7 +84,7 @@
 
 .comunidades-tipo {
   margin: 0 0 10px;
-  color: #b98a06;
+  color: var(--color-goldDark);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.15em;
@@ -93,7 +93,7 @@
 
 .comunidades-nombre {
   margin: 0;
-  color: #231f20;
+  color: var(--color-ink);
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 28px;
   font-weight: 600;
@@ -105,7 +105,7 @@
   align-items: center;
   gap: 6px;
   margin: 12px 0;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 12px;
 }
 
@@ -113,19 +113,19 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #b98a06;
+  color: var(--color-goldDark);
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
 }
 
 a.comunidades-enlace:hover {
-  color: #231f20;
+  color: var(--color-ink);
   text-decoration: underline;
 }
 
 a.comunidades-enlace:focus-visible {
-  outline: 2px solid #b98a06;
+  outline: 2px solid var(--color-goldDark);
   outline-offset: 3px;
 }
 
