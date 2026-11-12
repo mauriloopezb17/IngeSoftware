@@ -2,7 +2,7 @@
 /* Sección */
 .contacto {
   padding: 110px 0;
-  background-color: #faf7f2;
+  background-color: var(--color-cream);
 }
 
 .contacto-contenedor {
@@ -19,7 +19,7 @@
   width: 100%;
   min-height: 375px;
   overflow: hidden;
-  background-color: #f2ece3;
+  background-color: var(--color-stone);
   cursor: pointer;
   text-decoration: none;
 }
@@ -83,12 +83,12 @@
   align-items: center;
   gap: 8px;
   transform: translate(-50%, -50%);
-  color: #9e1b22;
+  color: var(--color-redParish);
 }
 
 .contacto-mapa-etiqueta {
   padding: 10px 14px;
-  background-color: #231f20;
+  background-color: var(--color-ink);
   color: #ffffff;
   font-size: 12px;
   font-weight: 600;
@@ -98,7 +98,7 @@
 }
 
 .contacto-mapa:hover .contacto-mapa-etiqueta {
-  background-color: #4a4344;
+  background-color: var(--color-charcoal);
 }
 
 /* Información */
@@ -108,7 +108,7 @@
 
 .contacto-titulo {
   margin: 18px 0 28px;
-  color: #231f20;
+  color: var(--color-ink);
   font-size: clamp(44px, 4vw, 60px);
   line-height: 1.05;
 }
@@ -133,13 +133,13 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background-color: #fbf1d3;
-  color: #b98a06;
+  background-color: var(--color-goldPale);
+  color: var(--color-goldDark);
 }
 
 .contacto-dato-titulo {
   margin: 0 0 4px;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -148,7 +148,7 @@
 
 .contacto-dato-valor {
   margin: 0;
-  color: #231f20;
+  color: var(--color-ink);
   font-size: 14px;
   font-weight: 600;
   line-height: 1.5;
@@ -163,7 +163,7 @@
 }
 
 .contacto-dato-enlace:hover {
-  color: #b98a06;
+  color: var(--color-goldDark);
   text-decoration: underline;
 }
 
@@ -197,9 +197,9 @@
 }
 
 .contacto-boton-principal {
-  border: 1px solid #e2ad11;
-  background-color: #e2ad11;
-  color: #231f20;
+  border: 1px solid var(--color-gold);
+  background-color: var(--color-gold);
+  color: var(--color-ink);
 }
 
 .contacto-boton-principal:hover {
@@ -208,20 +208,20 @@
 }
 
 .contacto-boton-secundario {
-  border: 1px solid #231f20;
+  border: 1px solid var(--color-ink);
   background-color: transparent;
-  color: #231f20;
+  color: var(--color-ink);
 }
 
 .contacto-boton-secundario:hover {
-  background-color: #231f20;
+  background-color: var(--color-ink);
   color: #ffffff;
 }
 
 /* Aviso informativo */
 .contacto-aviso {
   margin-top: 16px;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 11px;
   line-height: 1.5;
 }
@@ -231,7 +231,7 @@
 .contacto-dato-enlace:focus-visible,
 .contacto-boton-principal:focus-visible,
 .contacto-boton-secundario:focus-visible {
-  outline: 2px solid #b98a06;
+  outline: 2px solid var(--color-goldDark);
   outline-offset: 4px;
 }
 

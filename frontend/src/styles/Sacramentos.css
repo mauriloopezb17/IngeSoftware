@@ -2,7 +2,7 @@
 /* Sección */
 .sacramentos {
   padding: 100px 0 110px;
-  background-color: #f2ece3;
+  background-color: var(--color-stone);
 }
 
 /* Encabezado */
@@ -39,13 +39,13 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 22px;
-  background-color: #231f20;
-  color: #e2ad11;
+  background-color: var(--color-ink);
+  color: var(--color-gold);
 }
 
 .sacramentos-tarjeta-titulo {
   margin: 0;
-  color: #231f20;
+  color: var(--color-ink);
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 29px;
   font-weight: 600;
@@ -54,7 +54,7 @@
 
 .sacramentos-tarjeta-descripcion {
   margin: 12px 0 18px;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 13px;
   line-height: 1.65;
 }
@@ -65,19 +65,19 @@
   align-items: center;
   gap: 8px;
   margin-top: auto;
-  color: #b98a06;
+  color: var(--color-goldDark);
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
 }
 
 .sacramentos-enlace:hover {
-  color: #231f20;
+  color: var(--color-ink);
 }
 
 .sacramentos-enlace:focus-visible,
 .sacramentos-boton:focus-visible {
-  outline: 2px solid #b98a06;
+  outline: 2px solid var(--color-goldDark);
   outline-offset: 4px;
 }
 
@@ -94,7 +94,7 @@
   justify-content: center;
   gap: 10px;
   padding: 12px 22px;
-  background-color: #231f20;
+  background-color: var(--color-ink);
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
@@ -103,7 +103,7 @@
 }
 
 .sacramentos-boton:hover {
-  background-color: #4a4344;
+  background-color: var(--color-charcoal);
 }
 
 /* Tablets */

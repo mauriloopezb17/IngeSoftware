@@ -18,7 +18,7 @@
   letter-spacing: 0.22em;
   line-height: 1.5;
   text-transform: uppercase;
-  color: #b98a06;
+  color: var(--color-goldDark);
 }
 
 .eyebrow::before {
@@ -27,7 +27,7 @@
   width: 24px;
   height: 2px;
   flex-shrink: 0;
-  background-color: #e2ad11;
+  background-color: var(--color-gold);
 }
 
 .eyebrow.justify-center {
@@ -45,8 +45,8 @@
   padding: 0.8rem 1.4rem;
 
   border: none;
-  background-color: #e2ad11;
-  color: #231f20;
+  background-color: var(--color-gold);
+  color: var(--color-ink);
 
   font-family: "Montserrat", sans-serif;
   font-size: 0.75rem;
@@ -99,8 +99,8 @@
 
 /* Selección de texto */
 ::selection {
-  background-color: #e2ad11;
-  color: #231f20;
+  background-color: var(--color-gold);
+  color: var(--color-ink);
 }
 
 /* Pantallas pequeñas */

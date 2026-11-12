@@ -4,7 +4,7 @@
 @import "tailwindcss";
 
 /* Colores y fuentes */
-@theme {
+@theme static {
   --color-gold: #e2ad11;
   --color-goldDark: #b98a06;
   --color-goldPale: #fbf1d3;
