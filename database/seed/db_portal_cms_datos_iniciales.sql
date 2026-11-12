@@ -70,6 +70,32 @@ INSERT INTO usuario (rol_id, sede_id, nombre_completo, correo, hash_contrasena) 
 -- queda lo redactado por Marketing hasta que el Párroco lo aprueba o lo rechaza.
 INSERT INTO estado_publicacion (nombre) VALUES ('Borrador'), ('Publicado'), ('Archivado'), ('En revisión');
 
+-- Archivos multimedia actuales de la landing (frontend/src/assets/parroquia/). La url es relativa y
+-- apunta a /media/seed/<archivo> (la Sección B los moverá a frontend/public/media/seed/).
+-- tamano_bytes, ancho_px y alto_px son los valores reales de cada archivo (leídos con fs y sharp;
+-- el ancho y alto del video salen de la cabecera del MP4). Subidos por el Administrador (desarrollo).
+-- "pastoral-familiar.jpg" es el nombre nuevo del archivo "pastoral familiar.jpg".
+-- No se registran los logos SVG: son parte del diseño (Encabezado y PiePagina), no contenido editable.
+INSERT INTO archivo_multimedia (sede_id, subido_por, nombre_original, url, tipo_mime, tamano_bytes, ancho_px, alto_px, texto_alternativo) VALUES
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), (SELECT id FROM usuario WHERE correo = 'admin@parroquia.test'),
+   'exterior-parroquia.webp', '/media/seed/exterior-parroquia.webp', 'image/webp', 243828, 1878, 1057,
+   'Vista exterior de la Parroquia Señor de la Exaltación'),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), (SELECT id FROM usuario WHERE correo = 'admin@parroquia.test'),
+   'crucifijo.webp', '/media/seed/crucifijo.webp', 'image/webp', 110004, 1888, 1059,
+   'Crucifijo en el interior del templo parroquial'),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), (SELECT id FROM usuario WHERE correo = 'admin@parroquia.test'),
+   'altar.webp', '/media/seed/altar.webp', 'image/webp', 176770, 1879, 1057,
+   'Altar del templo parroquial adornado con flores rojas y blancas, con un tríptico de icono al lado derecho'),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), (SELECT id FROM usuario WHERE correo = 'admin@parroquia.test'),
+   'padre_gregorio.jpg', '/media/seed/padre_gregorio.jpg', 'image/jpeg', 194874, 1366, 2048,
+   'P. Gregorio, C.P., párroco'),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), (SELECT id FROM usuario WHERE correo = 'admin@parroquia.test'),
+   'pastoral-familiar.jpg', '/media/seed/pastoral-familiar.jpg', 'image/jpeg', 185283, 1137, 1383,
+   'Afiche del encuentro de Pastoral Familiar sobre el duelo y la pérdida de un ser querido'),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), (SELECT id FROM usuario WHERE correo = 'admin@parroquia.test'),
+   'portada-final.mp4', '/media/seed/portada-final.mp4', 'video/mp4', 58916372, 1920, 1080,
+   'Video institucional: recorrido por el templo de la Parroquia Señor de la Exaltación');
+
 INSERT INTO tipo_bloque (codigo, nombre, esquema_validacion) VALUES
   ('hero_video', 'Portada con video', '{"type": "object", "required": ["titulo", "url_video"], "properties": {"titulo": {"type": "string"}, "subtitulo": {"type": "string"}, "url_video": {"type": "string"}, "url_poster": {"type": "string"}, "botones": {"type": "array"}}}'),
   ('texto_imagen', 'Texto con imagen', '{"type": "object", "required": ["titulo", "texto"], "properties": {"titulo": {"type": "string"}, "texto": {"type": "string"}, "url_imagen": {"type": "string"}, "posicion_imagen": {"enum": ["izquierda", "derecha"]}}}'),
