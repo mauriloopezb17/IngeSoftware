@@ -20,8 +20,15 @@ INSERT INTO rol (nombre, descripcion) VALUES
   ('Secretaría', 'Gestiona avisos, calendario, horarios y consultas del bot'),
   ('Marketing', 'Publica noticias, multimedia y contenido de difusión');
 
+-- Usuarios de DESARROLLO, uno por rol (ids: 1 Administrador, 2 Párroco, 3 Secretaría, 4 Marketing).
+-- Contraseña de desarrollo de los 4: Parroquia2026!
+-- SOLO PARA DESARROLLO Y PRUEBAS: nunca usar este seed ni esta contraseña en producción.
+-- Los hashes son argon2id reales (generados con el paquete argon2 del backend, cada uno con su sal).
 INSERT INTO usuario (rol_id, sede_id, nombre_completo, correo, hash_contrasena) VALUES
-  (3, 1, 'Secretaría Parroquial (ejemplo)', 'secretaria@pasionistas.org.bo', '$argon2id$v=19$m=65536,t=3,p=4$EJEMPLO');
+  (1, 1, 'Administrador (desarrollo)', 'admin@parroquia.test', '$argon2id$v=19$m=65536,t=3,p=4$c3E6g1XexEgEjO0MBKo/HQ$rXnD45VqH6BWmFs96H0bO/1UG7406t/KeHhKONHLOcM'),
+  (2, 1, 'Párroco (desarrollo)', 'parroco@parroquia.test', '$argon2id$v=19$m=65536,t=3,p=4$rDoYvvp0j2r4WYm11omzFA$6MZZBUQoRkZjwX+XK+pzhwvCIzvMnkQF65IVKwQ49Qw'),
+  (3, 1, 'Secretaría (desarrollo)', 'secretaria@parroquia.test', '$argon2id$v=19$m=65536,t=3,p=4$3M6EreOMkGDbZ7q4zCcefw$JfEdUYAEZpBMdfmJ6vcsxmZ/+pmymYNsOACHEc3omkc'),
+  (4, 1, 'Marketing (desarrollo)', 'marketing@parroquia.test', '$argon2id$v=19$m=65536,t=3,p=4$KXR0/bT37XF2vo2a9DLnoQ$tt+Gq/4BlTZpury+FYB+11eoOvQ8YFbYL3xd976F+G4');
 
 -- Estados de publicación (ids: 1 Borrador, 2 Publicado, 3 Archivado, 4 En revisión).
 -- "En revisión" va al final para no alterar los ids existentes: es el estado en que
