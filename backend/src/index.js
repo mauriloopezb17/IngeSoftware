@@ -1,5 +1,6 @@
 import { createApp } from './app.js';
 import { ErrorEntorno, obtenerEntorno } from './config/entorno.js';
+import { obtenerLogger } from './config/logger.js';
 
 let entorno;
 
@@ -13,16 +14,16 @@ try {
   process.exit(1);
 }
 
+const logger = obtenerLogger();
 const app = createApp();
 
 const servidor = app.listen(entorno.puerto, () => {
-  // Se reemplazará por el logger (pino) en la tarea de logging.
-  // eslint-disable-next-line no-console
-  console.info(`API escuchando en http://localhost:${entorno.puerto}`);
+  logger.info({ puerto: entorno.puerto, modo: entorno.modo }, 'API escuchando');
 });
 
 // Cierre ordenado: deja terminar las peticiones en curso antes de salir.
-function apagar() {
+function apagar(senal) {
+  logger.info({ senal }, 'Apagando la API');
   servidor.close(() => process.exit(0));
 }
 
