@@ -34,7 +34,7 @@ No se usa `PUT`. Las acciones van con verbos en infinitivo y en kebab-case.
 - **Enumeraciones fijas** (estados, tipos y roles que el código conoce): códigos en MAYÚSCULAS_CON_GUION_BAJO, como `"EN_REVISION"`, `"NOTA_DE_PRENSA"` o `"SECRETARIA"`. Junto al código se puede incluir `nombre` con el texto para mostrar.
 - **Catálogos editables** (categorías, categorías de eventos, tipos de horario, redes sociales): objetos `{ "id", "nombre", ... }`.
 - **Slugs**: minúsculas, sin acentos y con guiones (`primeras-comuniones-42-ninos`). La API los genera a partir del título si no se envían. Son únicos dentro de cada sede; si se repite uno se responde `409 CONFLICTO`.
-- **Íconos** (`servicio.icono`, `grupoPastoral.icono`): nombre del ícono de [lucide-react](https://lucide.dev/icons/) en kebab-case (`droplet`, `book-open`, `heart-handshake`). El frontend lo convierte al componente. Un nombre desconocido muestra un ícono genérico.
+- **Íconos** (`servicio.icono`, `grupoPastoral.icono` y `icono` de los bloques `tarjetas`): nombre del ícono de [lucide-react](https://lucide.dev/icons/) en kebab-case (`droplet`, `book-open`, `heart-handshake`, `clock-3`). El frontend lo convierte al componente. Un nombre desconocido muestra un ícono genérico. **Excepción:** el `icono` de las redes sociales (`facebook`, `instagram`, `youtube`…) no es de lucide, sino un identificador de la red que el portal traduce a su ícono de marca.
 - **Documentos JSONB con esquema propio** (contenido BlockNote de las publicaciones, contenido de los bloques de página y de los servicios) se transmiten **tal como se guardan**, sin traducir sus claves. Su formato está en [contenido.md](contenido.md).
 
 ### Fechas y horas

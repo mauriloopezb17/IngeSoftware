@@ -19,7 +19,7 @@ Una sede que existe pero aún no tiene contenido (ej. `resurreccion`) responde `
 | Componente (`frontend/src/components/parroquia/`)        | Endpoint                                                                                                                                           |
 | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Encabezado` (barra superior, teléfono, WhatsApp, redes) | [`GET /api/sedes/:sede`](#get-apisedessede)                                                                                                        |
-| `Portada` (título, subtítulo, video, botones)            | [`GET /api/sedes/:sede/paginas/inicio`](#get-apisedessedepaginasslug)                                                                              |
+| `Portada` (título, video, botones y accesos rápidos)     | [`GET /api/sedes/:sede/paginas/inicio`](#get-apisedessedepaginasslug)                                                                              |
 | `Nosotros` (texto, cita, párroco)                        | [`GET /api/sedes/:sede/paginas/nosotros`](#get-apisedessedepaginasslug)                                                                            |
 | `Horarios`                                               | [`GET /api/sedes/:sede/horarios`](#get-apisedessedehorarios) + textos de `configuracion` en [`GET /api/sedes/:sede`](#get-apisedessede)            |
 | `Sacramentos`                                            | [`GET /api/sedes/:sede/servicios`](#get-apisedessedeservicios) y [detalle](#get-apisedessedeserviciosslug)                                         |
@@ -28,12 +28,12 @@ Una sede que existe pero aún no tiene contenido (ej. `resurreccion`) responde `
 | `Agenda`: boletín parroquial                             | [`GET /api/sedes/:sede/boletines?porPagina=1`](#get-apisedessedeboletines)                                                                         |
 | `VidaParroquial` (noticias y notas de prensa)            | [`GET /api/sedes/:sede/publicaciones?tipo=NOTICIA,NOTA_DE_PRENSA`](#get-apisedessedepublicaciones) y [detalle](#get-apisedessedepublicacionesslug) |
 | `Proclamas`                                              | [`GET /api/sedes/:sede/proclamas`](#get-apisedessedeproclamas) e [historial](#get-apisedessedeproclamashistorial)                                  |
-| `VideoInstitucional`                                     | [`GET /api/sedes/:sede/videos`](#get-apisedessedevideos)                                                                                           |
+| `VideoInstitucional`                                     | [`GET /api/sedes/:sede/videos`](#get-apisedessedevideos); mientras no haya videos, el bloque `hero_video` de `inicio`                              |
 | `GruposPastorales`                                       | [`GET /api/sedes/:sede/grupos-pastorales`](#get-apisedessedegrupos-pastorales)                                                                     |
 | `Comunidades`                                            | [`GET /api/sedes`](#get-apisedes)                                                                                                                  |
 | `Contacto` y `PiePagina`                                 | [`GET /api/sedes/:sede`](#get-apisedessede)                                                                                                        |
 
-Las anclas de navegación (`#horarios`, `#agenda`…) y los accesos rápidos de la portada son parte del diseño y no vienen de la API.
+No vienen de la API, porque son parte del diseño: las anclas de navegación (`#horarios`, `#agenda`…), los títulos y descripciones fijos de cada sección (ej. «Sacramentos y catequesis», «Hay un lugar para ti…») y el botón «Conoce nuestra historia», que en la landing no tiene destino.
 
 ---
 
@@ -200,7 +200,7 @@ Datos institucionales, contacto, redes sociales y configuración visual de una s
 
 - `whatsapp` es `null` mientras el número no esté confirmado. El portal muestra entonces `textoWhatsapp` sin enlace.
 - `telefono` se devuelve tal como se guarda, para mostrarlo. El enlace `tel:` lo arma el portal (`tel:+59122784937`).
-- `redesSociales`: solo las redes que la sede tiene registradas, ordenadas por el `id` de la red. `icono` es el nombre del ícono de lucide-react.
+- `redesSociales`: solo las redes que la sede tiene registradas, ordenadas por el `id` de la red. `icono` es el **identificador de la red** (`facebook`, `instagram`, `youtube`, `tiktok`, `chat`), **no** un nombre de lucide: el portal lo traduce a su ícono de marca (hoy `react-icons/fa`). El enlace de YouTube del seed es el canal de la Arquidiócesis de La Paz, no uno propio de la parroquia.
 - `configuracion`: el JSONB `sede.configuracion` con **todas sus claves traducidas a camelCase**, también las anidadas (`horarios_notas.confesiones_adoracion` → `horariosNotas.confesionesAdoracion`). Las claves documentadas arriba son las que usa la landing; una sede nueva puede no tener ninguna (`"configuracion": {}`), y el portal usa entonces sus valores por defecto.
 
 ---
@@ -533,60 +533,70 @@ Los eventos pasados nunca se devuelven: el retiro es automático y no depende de
 
 Orden fijo: `fechaInicio` ascendente.
 
-**Respuesta `200`** para `GET /api/sedes/senor-de-la-exaltacion/eventos?porPagina=4` (consultado el 12/11/2026):
+**Respuesta `200`** para `GET /api/sedes/senor-de-la-exaltacion/eventos?porPagina=4` (consultado el 12/11/2026; son los eventos de la landing, que el seed fecha a 6, 7, 8 y 13 días de hoy):
 
 ```json
 {
   "datos": [
     {
-      "id": 3,
-      "titulo": "Solemnidad de Cristo Rey del Universo",
-      "descripcion": "Santa Misa solemne y procesión con el Santísimo alrededor de la plaza.",
+      "id": 1,
+      "titulo": "Vigilia de Todos los Santos",
+      "descripcion": null,
       "lugar": "Templo parroquial",
-      "fechaInicio": "2026-11-22T10:00:00-04:00",
-      "fechaFin": "2026-11-22T12:00:00-04:00",
+      "fechaInicio": "2026-11-18T19:00:00-04:00",
+      "fechaFin": null,
       "todoElDia": false,
-      "categoria": { "id": 2, "nombre": "Solemnidad", "colorHex": "#9E1B22" },
+      "categoria": {
+        "id": 1,
+        "nombre": "Liturgia",
+        "colorHex": "#E2AD11"
+      },
+      "imagen": null
+    },
+    {
+      "id": 2,
+      "titulo": "Todos los Santos",
+      "descripcion": "Horarios: 8:00 – 10:00 – 12:00",
+      "lugar": "Templo parroquial",
+      "fechaInicio": "2026-11-19T08:00:00-04:00",
+      "fechaFin": null,
+      "todoElDia": false,
+      "categoria": {
+        "id": 2,
+        "nombre": "Solemnidad",
+        "colorHex": "#9E1B22"
+      },
+      "imagen": null
+    },
+    {
+      "id": 3,
+      "titulo": "Conmemoración de los Fieles Difuntos",
+      "descripcion": null,
+      "lugar": "Templo parroquial",
+      "fechaInicio": "2026-11-20T19:00:00-04:00",
+      "fechaFin": null,
+      "todoElDia": false,
+      "categoria": {
+        "id": 1,
+        "nombre": "Liturgia",
+        "colorHex": "#E2AD11"
+      },
       "imagen": null
     },
     {
       "id": 4,
-      "titulo": "Primer domingo de Adviento: bendición de coronas",
-      "descripcion": "Trae tu corona de Adviento para bendecirla en todas las misas del domingo.",
-      "lugar": "Templo parroquial",
-      "fechaInicio": "2026-11-29T08:00:00-04:00",
-      "fechaFin": null,
-      "todoElDia": true,
-      "categoria": { "id": 1, "nombre": "Liturgia", "colorHex": "#E2AD11" },
-      "imagen": null
-    },
-    {
-      "id": 5,
       "titulo": "Charla pre-bautismal para padres y padrinos",
       "descripcion": null,
       "lugar": "Salón parroquial",
-      "fechaInicio": "2026-12-05T09:30:00-04:00",
+      "fechaInicio": "2026-11-25T09:30:00-04:00",
       "fechaFin": null,
       "todoElDia": false,
-      "categoria": { "id": 3, "nombre": "Catequesis", "colorHex": "#B5532F" },
-      "imagen": null
-    },
-    {
-      "id": 6,
-      "titulo": "Solemnidad de la Inmaculada Concepción",
-      "descripcion": null,
-      "lugar": "Templo parroquial",
-      "fechaInicio": "2026-12-08T19:00:00-04:00",
-      "fechaFin": null,
-      "todoElDia": false,
-      "categoria": { "id": 2, "nombre": "Solemnidad", "colorHex": "#9E1B22" },
-      "imagen": {
+      "categoria": {
         "id": 3,
-        "url": "/media/seed/altar.webp",
-        "textoAlternativo": "Altar del templo parroquial adornado con flores rojas y blancas, con un tríptico de icono al lado derecho",
-        "ancho": 1879,
-        "alto": 1057
-      }
+        "nombre": "Catequesis",
+        "colorHex": "#B5532F"
+      },
+      "imagen": null
     }
   ],
   "paginacion": {
@@ -599,7 +609,7 @@ Orden fijo: `fechaInicio` ascendente.
 ```
 
 - `todoElDia: true`: el portal muestra solo la fecha, sin hora.
-- La tarjeta de la landing muestra día y mes (`22 NOV`), la hora y el lugar. El portal los arma con `fechaInicio`.
+- La tarjeta de la landing muestra día y mes (`18 NOV`), la hora y el lugar. El portal los arma con `fechaInicio`. Cuando hay varias horas (ej. «8:00 – 10:00 – 12:00»), van en `descripcion`.
 
 ---
 
@@ -635,7 +645,7 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
       "id": 6,
       "tipo": { "codigo": "NOTICIA", "nombre": "Noticia" },
       "titulo": "Encuentro de Pastoral Familiar: Cuando la muerte llega a la familia",
-      "slug": "encuentro-de-pastoral-familiar-cuando-la-muerte-llega-a-la-familia",
+      "slug": "encuentro-pastoral-familiar-duelo",
       "resumen": "Un espacio para reflexionar sobre la pérdida de un ser querido y encontrar acompañamiento desde la fe. Viernes 30 de octubre a las 19:30, en el Salón San Gabriel.",
       "categoria": {
         "id": 4,
@@ -650,15 +660,15 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
         "alto": 1383
       },
       "urlExterna": "https://www.facebook.com/photo.php?fbid=1568791201958754&set=pb.100064836665037.-2207520000&type=3",
-      "destacada": true,
-      "fechaPublicacion": "2026-10-30T08:00:00-04:00",
+      "destacada": false,
+      "fechaPublicacion": "2026-10-30T12:00:00-04:00",
       "fechaExpiracion": null
     },
     {
       "id": 4,
       "tipo": { "codigo": "NOTICIA", "nombre": "Noticia" },
       "titulo": "Primeras comuniones: 42 niños recibieron a Jesús",
-      "slug": "primeras-comuniones-42-ninos-recibieron-a-jesus",
+      "slug": "primeras-comuniones-42-ninos",
       "resumen": "Una jornada de fiesta para toda la comunidad, acompañada por catequistas y familias.",
       "categoria": { "id": 1, "nombre": "Sacramentos", "slug": "sacramentos" },
       "imagenPortada": {
@@ -670,14 +680,14 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
       },
       "urlExterna": null,
       "destacada": false,
-      "fechaPublicacion": "2026-10-18T10:00:00-04:00",
+      "fechaPublicacion": "2026-10-18T12:00:00-04:00",
       "fechaExpiracion": null
     },
     {
       "id": 5,
-      "tipo": { "codigo": "NOTA_DE_PRENSA", "nombre": "Nota de prensa" },
+      "tipo": { "codigo": "NOTICIA", "nombre": "Noticia" },
       "titulo": "Encuentro de monaguillos de la Vicaría Sur",
-      "slug": "encuentro-de-monaguillos-de-la-vicaria-sur",
+      "slug": "encuentro-monaguillos-vicaria-sur",
       "resumen": "Más de 60 monaguillos compartieron una jornada de formación, juego y oración.",
       "categoria": { "id": 2, "nombre": "Comunidad", "slug": "comunidad" },
       "imagenPortada": {
@@ -689,7 +699,7 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
       },
       "urlExterna": null,
       "destacada": false,
-      "fechaPublicacion": "2026-10-11T18:30:00-04:00",
+      "fechaPublicacion": "2026-10-11T12:00:00-04:00",
       "fechaExpiracion": null
     }
   ],
@@ -702,49 +712,49 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
 }
 ```
 
-**Respuesta `200`** para `GET /api/sedes/senor-de-la-exaltacion/publicaciones?tipo=AVISO&porPagina=3` (tarjeta «Avisos parroquiales»):
+**Respuesta `200`** para `GET /api/sedes/senor-de-la-exaltacion/publicaciones?tipo=AVISO&porPagina=3` (tarjeta «Avisos parroquiales», consultado el 12/11/2026; el seed los fecha hace 1, 3 y 5 días):
 
 ```json
 {
   "datos": [
     {
-      "id": 3,
+      "id": 1,
       "tipo": { "codigo": "AVISO", "nombre": "Aviso" },
       "titulo": "Inscripciones abiertas para la catequesis de Confirmación 2027.",
-      "slug": "inscripciones-abiertas-para-la-catequesis-de-confirmacion-2027",
-      "resumen": null,
-      "categoria": { "id": 1, "nombre": "Sacramentos", "slug": "sacramentos" },
-      "imagenPortada": null,
-      "urlExterna": null,
-      "destacada": false,
-      "fechaPublicacion": "2026-10-24T09:00:00-04:00",
-      "fechaExpiracion": "2027-03-31T23:59:59-04:00"
-    },
-    {
-      "id": 2,
-      "tipo": { "codigo": "AVISO", "nombre": "Aviso" },
-      "titulo": "El 2 de noviembre la secretaría atenderá solo por la mañana.",
-      "slug": "el-2-de-noviembre-la-secretaria-atendera-solo-por-la-manana",
+      "slug": "inscripciones-confirmacion-2027",
       "resumen": null,
       "categoria": null,
       "imagenPortada": null,
       "urlExterna": null,
       "destacada": false,
-      "fechaPublicacion": "2026-10-22T09:00:00-04:00",
-      "fechaExpiracion": "2026-11-03T00:00:00-04:00"
+      "fechaPublicacion": "2026-11-11T09:00:00-04:00",
+      "fechaExpiracion": null
     },
     {
-      "id": 1,
+      "id": 2,
       "tipo": { "codigo": "AVISO", "nombre": "Aviso" },
-      "titulo": "Recibimos donaciones de víveres para la Pastoral Social hasta fin de mes.",
-      "slug": "recibimos-donaciones-de-viveres-para-la-pastoral-social-hasta-fin-de-mes",
+      "titulo": "El 2 de noviembre la secretaría atenderá solo por la mañana.",
+      "slug": "secretaria-2-de-noviembre",
       "resumen": null,
-      "categoria": { "id": 2, "nombre": "Comunidad", "slug": "comunidad" },
+      "categoria": null,
       "imagenPortada": null,
       "urlExterna": null,
       "destacada": false,
-      "fechaPublicacion": "2026-10-20T09:00:00-04:00",
-      "fechaExpiracion": "2026-11-01T00:00:00-04:00"
+      "fechaPublicacion": "2026-11-09T09:00:00-04:00",
+      "fechaExpiracion": null
+    },
+    {
+      "id": 3,
+      "tipo": { "codigo": "AVISO", "nombre": "Aviso" },
+      "titulo": "Recibimos donaciones de víveres para la Pastoral Social hasta fin de mes.",
+      "slug": "donaciones-viveres-pastoral-social",
+      "resumen": null,
+      "categoria": null,
+      "imagenPortada": null,
+      "urlExterna": null,
+      "destacada": false,
+      "fechaPublicacion": "2026-11-07T09:00:00-04:00",
+      "fechaExpiracion": null
     }
   ],
   "paginacion": {
@@ -756,16 +766,15 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
 }
 ```
 
-> Los avisos de ejemplo copian las fechas de la landing (octubre de 2026). Con `fechaExpiracion` ya pasada, la API real dejaría de devolverlos; en los mocks se pueden mostrar tal cual.
-
-- **Avisos**: el texto del aviso es el `titulo`. Normalmente no tienen `resumen` ni imagen.
+- **Avisos**: el texto del aviso es el `titulo` (y también el único párrafo de su `contenido`). No tienen `resumen` ni imagen.
+- **Noticias**: la tarjeta muestra el `resumen`.
 - **«Leer nota»**: si `urlExterna` tiene valor, el portal abre ese enlace en otra pestaña (ej. la publicación de Facebook). Si no, navega al detalle por `slug`.
 
 ## `GET /api/sedes/:sede/publicaciones/:slug`
 
 Detalle de una publicación publicada y vigente, con su `contenido` en formato BlockNote (ver [contenido.md](contenido.md)).
 
-**Respuesta `200`** para `GET /api/sedes/senor-de-la-exaltacion/publicaciones/primeras-comuniones-42-ninos-recibieron-a-jesus`:
+**Respuesta `200`** para `GET /api/sedes/senor-de-la-exaltacion/publicaciones/primeras-comuniones-42-ninos`:
 
 ```json
 {
@@ -773,7 +782,7 @@ Detalle de una publicación publicada y vigente, con su `contenido` en formato B
     "id": 4,
     "tipo": { "codigo": "NOTICIA", "nombre": "Noticia" },
     "titulo": "Primeras comuniones: 42 niños recibieron a Jesús",
-    "slug": "primeras-comuniones-42-ninos-recibieron-a-jesus",
+    "slug": "primeras-comuniones-42-ninos",
     "resumen": "Una jornada de fiesta para toda la comunidad, acompañada por catequistas y familias.",
     "categoria": { "id": 1, "nombre": "Sacramentos", "slug": "sacramentos" },
     "imagenPortada": {
@@ -785,14 +794,14 @@ Detalle de una publicación publicada y vigente, con su `contenido` en formato B
     },
     "urlExterna": null,
     "destacada": false,
-    "fechaPublicacion": "2026-10-18T10:00:00-04:00",
+    "fechaPublicacion": "2026-10-18T12:00:00-04:00",
     "fechaExpiracion": null,
     "contenido": {
       "formato": "blocknote",
       "version": 1,
       "bloques": [
         {
-          "id": "b1",
+          "id": "primeras-comuniones-42-ninos-p1",
           "type": "paragraph",
           "props": {
             "textColor": "default",
@@ -802,52 +811,7 @@ Detalle de una publicación publicada y vigente, con su `contenido` en formato B
           "content": [
             {
               "type": "text",
-              "text": "El sábado 17 de octubre, 42 niños de nuestra parroquia recibieron por primera vez a Jesús en la Eucaristía, después de dos años de catequesis.",
-              "styles": {}
-            }
-          ],
-          "children": []
-        },
-        {
-          "id": "b2",
-          "type": "heading",
-          "props": {
-            "textColor": "default",
-            "backgroundColor": "default",
-            "textAlignment": "left",
-            "level": 2
-          },
-          "content": [
-            {
-              "type": "text",
-              "text": "Una fiesta de toda la comunidad",
-              "styles": {}
-            }
-          ],
-          "children": []
-        },
-        {
-          "id": "b3",
-          "type": "paragraph",
-          "props": {
-            "textColor": "default",
-            "backgroundColor": "default",
-            "textAlignment": "left"
-          },
-          "content": [
-            {
-              "type": "text",
-              "text": "Agradecemos a los ",
-              "styles": {}
-            },
-            {
-              "type": "text",
-              "text": "catequistas",
-              "styles": { "bold": true }
-            },
-            {
-              "type": "text",
-              "text": " y a las familias que acompañaron a los niños durante su preparación.",
+              "text": "Una jornada de fiesta para toda la comunidad, acompañada por catequistas y familias.",
               "styles": {}
             }
           ],
@@ -858,6 +822,8 @@ Detalle de una publicación publicada y vigente, con su `contenido` en formato B
   }
 }
 ```
+
+El seed solo tiene un párrafo por publicación porque la landing no tiene textos más largos. En [contenido.md](contenido.md#ejemplo-completo) hay un documento con todos los tipos de bloque.
 
 **Errores:** `404 NO_ENCONTRADO` si el slug no existe en la sede, o si la publicación existe pero no está publicada o ya no está vigente. Así el portal no revela borradores.
 
@@ -1000,7 +966,7 @@ Boletines parroquiales en PDF, del más reciente al más antiguo (por `periodo`)
       "fechaPublicacion": "2026-10-03T10:00:00-04:00",
       "archivo": {
         "id": 7,
-        "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/10/boletin-octubre-2026-8f3c2a1d.pdf",
+        "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/10/8f3c2a1d-5b7e-4c90-a1f4-6d2e9b0c7a35.pdf",
         "nombreOriginal": "Boletín octubre 2026.pdf",
         "tipoMime": "application/pdf",
         "tamanoBytes": 2516582
@@ -1019,6 +985,7 @@ Boletines parroquiales en PDF, del más reciente al más antiguo (por `periodo`)
 - `periodo` es siempre el primer día del mes del boletín. Hay como máximo un boletín por sede y mes.
 - `archivo` es el **objeto archivo** (para lo que no es imagen): `{ id, url, nombreOriginal, tipoMime, tamanoBytes }`. El portal formatea el tamaño («PDF · 2,4 MB»).
 - La URL del CDN de los ejemplos es ilustrativa: la real sale de `CDN_PUBLIC_URL`.
+- El seed **no** tiene boletines, porque no hay un PDF real en el repositorio. Con el seed, este endpoint responde `"datos": []` y el portal oculta la tarjeta del boletín.
 
 ---
 
@@ -1061,10 +1028,10 @@ Videos de YouTube de la sede (RF-05). Sin paginación. Orden: primero los destac
 }
 ```
 
-- Los `youtubeVideoId` de los ejemplos son **inventados**: los mocks deben reemplazarlos por videos reales si necesitan que se reproduzcan.
+- Los `youtubeVideoId` de los ejemplos son **inventados**: los mocks deben reemplazarlos por videos reales si necesitan que se reproduzcan. El seed **no** tiene videos (la parroquia aún no tiene un video propio en YouTube), así que con el seed este endpoint responde `"datos": []`.
 - `urlVideo`, `urlInsercion` y `urlMiniatura` los arma la API a partir de `youtubeVideoId`. El portal usa `urlInsercion` en un `<iframe>`.
 - Los botones «Ver en YouTube» y «Suscribirse al canal» usan la red `YouTube` de [`GET /api/sedes/:sede`](#get-apisedessede).
-- Hoy la landing reproduce un MP4 propio (`portada-final.mp4`) en esta sección. Mientras la parroquia no publique su video en YouTube, el portal puede reutilizar el `url_video` del bloque `hero_video` de la página `inicio`.
+- Hoy la landing reproduce un MP4 propio (`portada-final.mp4`) en esta sección. Mientras la lista esté vacía, el portal usa el `url_video` y el `detalle_video` del bloque `hero_video` de la página `inicio`, con el póster `altar.webp`.
 
 ---
 
@@ -1092,7 +1059,7 @@ Páginas publicadas que van en el menú (`mostrarEnMenu = true`), ordenadas por 
 
 Una página publicada con sus bloques **visibles**, ordenados por `orden`. Cada bloque trae su `tipo` (el `codigo` de `tipo_bloque`) y su `contenido`, que cumple el esquema de ese tipo. Los formatos de cada tipo están en [contenido.md](contenido.md).
 
-**Respuesta `200`** para `GET /api/sedes/senor-de-la-exaltacion/paginas/inicio` (sección `Portada`):
+**Respuesta `200`** para `GET /api/sedes/senor-de-la-exaltacion/paginas/inicio` (sección `Portada` y sus accesos rápidos):
 
 ```json
 {
@@ -1100,9 +1067,9 @@ Una página publicada con sus bloques **visibles**, ordenados por `orden`. Cada 
     "id": 1,
     "slug": "inicio",
     "titulo": "Inicio",
-    "descripcionSeo": "Parroquia Señor de la Exaltación, Pasionistas en Obrajes, La Paz: horarios de misa, sacramentos, calendario parroquial y noticias.",
+    "descripcionSeo": null,
     "paginaPadre": null,
-    "fechaActualizacion": "2026-11-02T16:20:00-04:00",
+    "fechaActualizacion": null,
     "bloques": [
       {
         "id": 1,
@@ -1114,10 +1081,44 @@ Una página publicada con sus bloques **visibles**, ordenados por `orden`. Cada 
           "subtitulo": "Una comunidad que camina junto a Cristo crucificado y resucitado. Te esperamos en casa, con las puertas siempre abiertas.",
           "url_video": "/media/seed/portada-final.mp4",
           "url_poster": "/media/seed/exterior-parroquia.webp",
-          "texto_video": "Recorrido aéreo · 0:30",
+          "texto_video": "Video institucional",
+          "detalle_video": "Recorrido aéreo · 0:30",
           "botones": [
             { "texto": "Ver horarios de misa", "enlace": "#horarios" },
             { "texto": "Conócenos", "enlace": "#nosotros" }
+          ]
+        }
+      },
+      {
+        "id": 2,
+        "tipo": "tarjetas",
+        "orden": 2,
+        "contenido": {
+          "items": [
+            {
+              "titulo": "Horarios de Misa",
+              "subtitulo": "Toda la semana",
+              "icono": "clock-3",
+              "enlace": "#horarios"
+            },
+            {
+              "titulo": "Sacramentos",
+              "subtitulo": "Requisitos y fechas",
+              "icono": "droplet",
+              "enlace": "#sacramentos"
+            },
+            {
+              "titulo": "Calendario",
+              "subtitulo": "Próximas actividades",
+              "icono": "calendar-days",
+              "enlace": "#agenda"
+            },
+            {
+              "titulo": "Proclamas",
+              "subtitulo": "Vigentes esta semana",
+              "icono": "scroll-text",
+              "enlace": "#proclamas"
+            }
           ]
         }
       }
@@ -1134,12 +1135,12 @@ Una página publicada con sus bloques **visibles**, ordenados por `orden`. Cada 
     "id": 2,
     "slug": "nosotros",
     "titulo": "Quiénes somos",
-    "descripcionSeo": "Comunidad parroquial confiada a los Padres Pasionistas en Obrajes, La Paz.",
+    "descripcionSeo": null,
     "paginaPadre": null,
-    "fechaActualizacion": "2026-11-02T16:20:00-04:00",
+    "fechaActualizacion": null,
     "bloques": [
       {
-        "id": 2,
+        "id": 3,
         "tipo": "texto_imagen",
         "orden": 1,
         "contenido": {
@@ -1147,12 +1148,16 @@ Una página publicada con sus bloques **visibles**, ordenados por `orden`. Cada 
           "titulo": "Una casa de oración en el corazón de Obrajes",
           "texto": "Somos una comunidad parroquial confiada a los Padres Pasionistas, que desde la memoria de la Pasión de Cristo acompaña a las familias de Obrajes en la fe, los sacramentos y el servicio a los más necesitados.",
           "url_imagen": "/media/seed/crucifijo.webp",
-          "texto_alternativo": "Crucifijo en el interior de la Parroquia Señor de la Exaltación",
-          "posicion_imagen": "izquierda"
+          "posicion_imagen": "izquierda",
+          "tarjeta": {
+            "etiqueta": "Congregación de la Pasión",
+            "titulo": "Pasionistas · C.P.",
+            "descripcion": "Fundada por San Pablo de la Cruz"
+          }
         }
       },
       {
-        "id": 3,
+        "id": 4,
         "tipo": "cita",
         "orden": 2,
         "contenido": {
@@ -1161,32 +1166,15 @@ Una página publicada con sus bloques **visibles**, ordenados por `orden`. Cada 
         }
       },
       {
-        "id": 4,
+        "id": 5,
         "tipo": "tarjetas",
         "orden": 3,
         "contenido": {
-          "titulo": "Nuestro párroco",
           "items": [
             {
               "titulo": "P. Gregorio, C.P.",
-              "texto": "Párroco",
-              "url_imagen": "/media/seed/padre_gregorio.jpg",
-              "texto_alternativo": "P. Gregorio, C.P., párroco"
-            }
-          ]
-        }
-      },
-      {
-        "id": 5,
-        "tipo": "tarjetas",
-        "orden": 4,
-        "contenido": {
-          "titulo": "Congregación",
-          "items": [
-            {
-              "etiqueta": "Congregación de la Pasión",
-              "titulo": "Pasionistas · C.P.",
-              "texto": "Fundada por San Pablo de la Cruz"
+              "subtitulo": "Párroco",
+              "url_imagen": "/media/seed/padre_gregorio.jpg"
             }
           ]
         }

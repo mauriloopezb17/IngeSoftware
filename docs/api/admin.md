@@ -424,7 +424,7 @@ Calendario parroquial. Permiso de escritura: `eventos.gestionar`. Los eventos se
 
 ```json
 {
-  "id": 3,
+  "id": 5,
   "sede": {
     "id": 1,
     "nombre": "Parroquia Señor de la Exaltación",
@@ -880,7 +880,7 @@ Páginas armadas con bloques (RF-04, RNF-06). Permiso de escritura: `paginas.ges
   "fechaActualizacion": "2026-11-02T16:20:00-04:00",
   "bloques": [
     {
-      "id": 3,
+      "id": 4,
       "tipo": "cita",
       "orden": 2,
       "visible": true,
