@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { Navigate, Route, Routes } from 'react-router';
 
 import { queryClient } from '../services/queryClient.js';
+import LayoutPanel from './componentes/LayoutPanel.jsx';
 import Inicio from './paginas/Inicio.jsx';
 import InicioSesion from './paginas/InicioSesion.jsx';
 import { SesionProvider } from './sesion/SesionProvider.jsx';
@@ -16,7 +17,9 @@ function AdminApp() {
       <SesionProvider>
         <Routes>
           <Route path="login" element={<InicioSesion />} />
-          <Route path="inicio" element={<Inicio />} />
+          <Route element={<LayoutPanel />}>
+            <Route path="inicio" element={<Inicio />} />
+          </Route>
           <Route path="*" element={<Navigate to="/admin/login" replace />} />
         </Routes>
       </SesionProvider>
