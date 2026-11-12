@@ -2,7 +2,7 @@
 /* Sección */
 .horarios {
   padding: 110px 0 120px;
-  background-color: #231f20;
+  background-color: var(--color-ink);
   color: #ffffff;
 }
 
@@ -54,7 +54,7 @@
 .horarios-icono {
   flex-shrink: 0;
   margin-top: 3px;
-  color: #e2ad11;
+  color: var(--color-gold);
 }
 
 .horarios-tarjeta-titulo {
@@ -78,7 +78,7 @@
 
 .horarios-dia {
   margin: 0;
-  color: #e2ad11;
+  color: var(--color-gold);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;

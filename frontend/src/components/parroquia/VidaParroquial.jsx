@@ -9,7 +9,7 @@ import {
 import { anchoContenido } from './ElementosComunes.jsx';
 import { noticias } from '../../data/datosParroquia.js';
 
-import imagenPastoral from '../../assets/parroquia/imagenes/pastoral familiar.jpg';
+import imagenPastoral from '../../assets/parroquia/imagenes/pastoral-familiar.jpg';
 import imagenCrucifijo from '../../assets/parroquia/imagenes/crucifijo.webp';
 import imagenExterior from '../../assets/parroquia/imagenes/exterior-parroquia.webp';
 

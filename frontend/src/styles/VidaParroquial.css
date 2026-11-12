@@ -16,7 +16,7 @@
 
 .vida-parroquial-titulo {
   margin: 15px 0 0;
-  color: #231f20;
+  color: var(--color-ink);
   font-size: clamp(40px, 3.8vw, 56px);
   line-height: 1.1;
 }
@@ -35,10 +35,10 @@
   height: 38px;
   align-items: center;
   justify-content: center;
-  border: 1px solid #ddd3c5;
+  border: 1px solid var(--color-borderSoft);
   border-radius: 50%;
   background-color: #ffffff;
-  color: #231f20;
+  color: var(--color-ink);
   cursor: pointer;
   transition:
     background-color 0.2s ease,
@@ -47,8 +47,8 @@
 
 .vida-parroquial-control-activo,
 .vida-parroquial-control:hover:not(:disabled) {
-  border-color: #231f20;
-  background-color: #231f20;
+  border-color: var(--color-ink);
+  background-color: var(--color-ink);
   color: #ffffff;
 }
 
@@ -75,7 +75,7 @@
   width: 100%;
   aspect-ratio: 1.5 / 1;
   overflow: hidden;
-  background-color: #f2ece3;
+  background-color: var(--color-stone);
 }
 
 .vida-parroquial-imagen {
@@ -118,13 +118,13 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 10px;
   line-height: 1.5;
 }
 
 .vida-parroquial-categoria {
-  color: #b98a06;
+  color: var(--color-goldDark);
   font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;
@@ -133,12 +133,12 @@
 .vida-parroquial-separador {
   width: 17px;
   height: 1px;
-  background-color: #ddd3c5;
+  background-color: var(--color-borderSoft);
 }
 
 .vida-parroquial-tarjeta-titulo {
   margin: 13px 0 0;
-  color: #231f20;
+  color: var(--color-ink);
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 27px;
   font-weight: 600;
@@ -147,7 +147,7 @@
 
 .vida-parroquial-descripcion {
   margin: 12px 0 16px;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 12px;
   line-height: 1.65;
 }
@@ -157,18 +157,18 @@
   align-items: center;
   gap: 7px;
   margin-top: auto;
-  color: #b98a06;
+  color: var(--color-goldDark);
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
 }
 
 a.vida-parroquial-enlace:hover {
-  color: #231f20;
+  color: var(--color-ink);
 }
 
 .vida-parroquial-enlace-inactivo {
-  color: #6b6162;
+  color: var(--color-muted);
   font-weight: 500;
 }
 
@@ -189,14 +189,14 @@ a.vida-parroquial-enlace:hover {
 
 .vida-parroquial-indicador-activo {
   width: 27px;
-  background-color: #e2ad11;
+  background-color: var(--color-gold);
 }
 
 .vida-parroquial-control:focus-visible,
 .vida-parroquial-indicador:focus-visible,
 .vida-parroquial-imagen-enlace:focus-visible,
 .vida-parroquial-enlace:focus-visible {
-  outline: 2px solid #b98a06;
+  outline: 2px solid var(--color-goldDark);
   outline-offset: 3px;
 }
 
