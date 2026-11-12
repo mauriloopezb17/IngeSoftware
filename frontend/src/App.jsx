@@ -1,7 +1,8 @@
-import InicioParroquia from './pages/InicioParroquia.jsx';
+import { RouterProvider } from 'react-router';
+import { router } from './router.jsx';
 
 function App() {
-  return <InicioParroquia />;
+  return <RouterProvider router={router} />;
 }
 
 export default App;
