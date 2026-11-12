@@ -1,0 +1,47 @@
+# Servicios de desarrollo local: PostgreSQL 16 y Redis.
+# Las variables se pueden sobrescribir desde un archivo .env en la raíz.
+# Los valores por defecto son solo para desarrollo, nunca para producción.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: parroquia-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-parroquia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-parroquia_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-db_portal_cms}
+      CARGAR_SEED: ${CARGAR_SEED:-true}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Los scripts SQL se leen desde /database; el script de inicio se ejecuta
+      # solo la primera vez, cuando el volumen de datos está vacío.
+      - ./database:/database:ro
+      - ./database/docker/00-iniciar-portal-cms.sh:/docker-entrypoint-initdb.d/00-iniciar-portal-cms.sh:ro
+    healthcheck:
+      # Se prueba por TCP (127.0.0.1): durante la inicialización, el servidor
+      # temporal solo escucha por socket local y aún no debe darse por listo.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: parroquia-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:

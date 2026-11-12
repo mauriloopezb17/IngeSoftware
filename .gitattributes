@@ -1,0 +1,5 @@
+# Normaliza los finales de línea del repositorio.
+* text=auto eol=lf
+
+# Los scripts de shell se ejecutan dentro de contenedores Linux: siempre LF.
+*.sh text eol=lf
