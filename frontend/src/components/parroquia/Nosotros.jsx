@@ -4,8 +4,8 @@ import {
   TituloSeccion,
 } from './ElementosComunes.jsx';
 
-import imagenCrucifijo from '../../assets/parroquia/imagenes/crucifijo.webp';
-import imagenParroco from '../../assets/parroquia/imagenes/padre_gregorio.jpg';
+const imagenCrucifijo = '/media/seed/crucifijo.webp';
+const imagenParroco = '/media/seed/padre_gregorio.jpg';
 
 import '../../styles/Nosotros.css';
 

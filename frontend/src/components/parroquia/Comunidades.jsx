@@ -3,7 +3,7 @@ import { MapPin, ArrowRight } from 'lucide-react';
 
 import { anchoContenido } from './ElementosComunes.jsx';
 
-import imagenParroquia from '../../assets/parroquia/imagenes/exterior-parroquia.webp';
+const imagenParroquia = '/media/seed/exterior-parroquia.webp';
 
 import '../../styles/Comunidades.css';
 

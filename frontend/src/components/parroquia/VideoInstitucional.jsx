@@ -12,8 +12,8 @@ import {
   TituloSeccion,
 } from './ElementosComunes.jsx';
 
-import imagenAltar from '../../assets/parroquia/imagenes/altar.webp';
-import videoParroquia from '../../assets/parroquia/videos/portada-final.mp4';
+const imagenAltar = '/media/seed/altar.webp';
+const videoParroquia = '/media/seed/portada-final.mp4';
 
 import '../../styles/VideoInstitucional.css';
 

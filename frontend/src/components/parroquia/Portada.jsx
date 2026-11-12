@@ -20,8 +20,8 @@ import {
 
 import '../../styles/Portada.css';
 
-import videoPortada from '../../assets/parroquia/videos/portada-final.mp4';
-import imagenExterior from '../../assets/parroquia/imagenes/exterior-parroquia.webp';
+const videoPortada = '/media/seed/portada-final.mp4';
+const imagenExterior = '/media/seed/exterior-parroquia.webp';
 
 const accesosRapidos = [
   {

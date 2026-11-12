@@ -9,9 +9,9 @@ import {
 import { anchoContenido } from './ElementosComunes.jsx';
 import { noticias } from '../../data/datosParroquia.js';
 
-import imagenPastoral from '../../assets/parroquia/imagenes/pastoral-familiar.jpg';
-import imagenCrucifijo from '../../assets/parroquia/imagenes/crucifijo.webp';
-import imagenExterior from '../../assets/parroquia/imagenes/exterior-parroquia.webp';
+const imagenPastoral = '/media/seed/pastoral-familiar.jpg';
+const imagenCrucifijo = '/media/seed/crucifijo.webp';
+const imagenExterior = '/media/seed/exterior-parroquia.webp';
 
 import '../../styles/VidaParroquial.css';
 
