@@ -2,7 +2,7 @@
 /* Sección */
 .proclamas {
   padding: 100px 0;
-  background-color: #fbf1d3;
+  background-color: var(--color-goldPale);
 }
 
 .proclamas-contenedor {
@@ -26,12 +26,12 @@
   margin-bottom: 22px;
   border-radius: 50%;
   background-color: #ffffff;
-  color: #b98a06;
+  color: var(--color-goldDark);
 }
 
 .proclamas-descripcion {
   margin: 22px 0 0;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 14px;
   line-height: 1.8;
 }
@@ -41,18 +41,18 @@
   align-items: center;
   gap: 8px;
   margin-top: 20px;
-  color: #b98a06;
+  color: var(--color-goldDark);
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
 }
 
 .proclamas-enlace:hover {
-  color: #231f20;
+  color: var(--color-ink);
 }
 
 .proclamas-enlace:focus-visible {
-  outline: 2px solid #b98a06;
+  outline: 2px solid var(--color-goldDark);
   outline-offset: 4px;
 }
 
@@ -81,7 +81,7 @@
 
 .proclamas-nombres {
   margin: 0;
-  color: #231f20;
+  color: var(--color-ink);
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 25px;
   font-weight: 600;
@@ -90,7 +90,7 @@
 
 .proclamas-fecha {
   margin: 6px 0 0;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -103,8 +103,8 @@
   justify-content: center;
   padding: 7px 12px;
   border-radius: 20px;
-  background-color: #fbf1d3;
-  color: #231f20;
+  background-color: var(--color-goldPale);
+  color: var(--color-ink);
   font-size: 10px;
   font-weight: 700;
   text-align: center;
@@ -113,7 +113,7 @@
 }
 
 .proclamas-fila:first-child .proclamas-etiqueta {
-  background-color: #e2ad11;
+  background-color: var(--color-gold);
 }
 
 /* Nota inferior */

@@ -2,7 +2,7 @@
 /* Sección */
 .agenda {
   padding: 105px 0 115px;
-  background-color: #faf7f2;
+  background-color: var(--color-cream);
 }
 
 .agenda-contenedor {
@@ -23,7 +23,7 @@
 
 .agenda-titulo {
   margin: 0;
-  color: #231f20;
+  color: var(--color-ink);
   font-size: clamp(40px, 3.5vw, 54px);
   line-height: 1.1;
 }
@@ -34,14 +34,14 @@
   align-items: center;
   gap: 7px;
   margin-bottom: 7px;
-  color: #b98a06;
+  color: var(--color-goldDark);
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
 }
 
 .agenda-calendario:hover {
-  color: #231f20;
+  color: var(--color-ink);
 }
 
 /* Eventos */
@@ -56,7 +56,7 @@
   gap: 18px;
   min-height: 108px;
   padding: 15px 0;
-  border-bottom: 1px solid #ddd3c5;
+  border-bottom: 1px solid var(--color-borderSoft);
 }
 
 .agenda-fecha {
@@ -67,11 +67,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #231f20;
+  background-color: var(--color-ink);
 }
 
 .agenda-fecha-dia {
-  color: #e2ad11;
+  color: var(--color-gold);
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 34px;
   font-weight: 600;
@@ -93,7 +93,7 @@
 
 .agenda-evento-categoria {
   margin: 0 0 5px;
-  color: #b98a06;
+  color: var(--color-goldDark);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -102,7 +102,7 @@
 
 .agenda-evento-titulo {
   margin: 0;
-  color: #231f20;
+  color: var(--color-ink);
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 24px;
   font-weight: 600;
@@ -115,7 +115,7 @@
   align-items: center;
   gap: 5px;
   margin: 7px 0 0;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -126,7 +126,7 @@
 
 .agenda-evento-flecha {
   flex-shrink: 0;
-  color: #231f20;
+  color: var(--color-ink);
 }
 
 /* Nota inferior */
@@ -135,7 +135,7 @@
   align-items: flex-start;
   gap: 7px;
   margin: 24px 0 0;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 11px;
   line-height: 1.6;
 }
@@ -143,7 +143,7 @@
 .agenda-nota svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #b98a06;
+  color: var(--color-goldDark);
 }
 
 /* Columna lateral */
@@ -165,16 +165,16 @@
   align-items: center;
   gap: 10px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #ddd3c5;
+  border-bottom: 1px solid var(--color-borderSoft);
 }
 
 .agenda-avisos-encabezado svg {
-  color: #9e1b22;
+  color: var(--color-redParish);
 }
 
 .agenda-avisos-encabezado h3 {
   margin: 0;
-  color: #231f20;
+  color: var(--color-ink);
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 25px;
   font-weight: 600;
@@ -182,7 +182,7 @@
 
 .agenda-aviso {
   padding: 15px 0;
-  border-bottom: 1px solid #ddd3c5;
+  border-bottom: 1px solid var(--color-borderSoft);
 }
 
 .agenda-aviso:last-child {
@@ -192,7 +192,7 @@
 
 .agenda-aviso-fecha {
   margin: 0;
-  color: #9e1b22;
+  color: var(--color-redParish);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -200,7 +200,7 @@
 
 .agenda-aviso-texto {
   margin: 7px 0 0;
-  color: #231f20;
+  color: var(--color-ink);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -208,17 +208,17 @@
 /* Boletín */
 .agenda-boletin {
   padding: 28px;
-  background-color: #231f20;
+  background-color: var(--color-ink);
   color: #ffffff;
 }
 
 .agenda-boletin > svg {
-  color: #e2ad11;
+  color: var(--color-gold);
 }
 
 .agenda-boletin-etiqueta {
   margin: 14px 0 9px;
-  color: #e2ad11;
+  color: var(--color-gold);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.13em;
@@ -247,8 +247,8 @@
   justify-content: center;
   gap: 9px;
   padding: 10px 17px;
-  background-color: #e2ad11;
-  color: #231f20;
+  background-color: var(--color-gold);
+  color: var(--color-ink);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;

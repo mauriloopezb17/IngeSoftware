@@ -3,7 +3,7 @@
 .pie-pagina {
   width: 100%;
   padding: 65px 0 25px;
-  background-color: #171415;
+  background-color: var(--color-deep);
   color: rgba(255, 255, 255, 0.78);
 }
 
@@ -65,9 +65,9 @@
 }
 
 .pie-pagina-red-social:hover {
-  border-color: #e2ad11;
-  background-color: #e2ad11;
-  color: #231f20;
+  border-color: var(--color-gold);
+  background-color: var(--color-gold);
+  color: var(--color-ink);
 }
 
 /* Columnas */
@@ -87,7 +87,7 @@
 
 .pie-pagina-columna-titulo {
   margin: 0 0 17px;
-  color: #e2ad11;
+  color: var(--color-gold);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -117,7 +117,7 @@
 }
 
 .pie-pagina-enlace:hover {
-  color: #e2ad11;
+  color: var(--color-gold);
 }
 
 .pie-pagina-texto {
@@ -148,7 +148,7 @@
 .pie-pagina-logo-enlace:focus-visible,
 .pie-pagina-red-social:focus-visible,
 .pie-pagina-enlace:focus-visible {
-  outline: 2px solid #e2ad11;
+  outline: 2px solid var(--color-gold);
   outline-offset: 4px;
 }
 

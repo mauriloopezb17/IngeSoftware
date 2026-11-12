@@ -2,7 +2,7 @@
 /* Sección */
 .video-institucional {
   padding: 100px 0 110px;
-  background-color: #171415;
+  background-color: var(--color-deep);
   color: #ffffff;
 }
 
@@ -18,7 +18,7 @@
   margin: 40px auto 0;
   overflow: hidden;
   aspect-ratio: 16 / 9;
-  background-color: #231f20;
+  background-color: var(--color-ink);
 }
 
 .video-institucional-video {
@@ -41,8 +41,8 @@
   justify-content: center;
   border: 0;
   border-radius: 50%;
-  background-color: #e2ad11;
-  color: #231f20;
+  background-color: var(--color-gold);
+  color: var(--color-ink);
   cursor: pointer;
   transform: translate(-50%, -50%);
   transition:
@@ -119,9 +119,9 @@
 }
 
 .video-institucional-boton-principal {
-  border: 1px solid #e2ad11;
-  background-color: #e2ad11;
-  color: #231f20;
+  border: 1px solid var(--color-gold);
+  background-color: var(--color-gold);
+  color: var(--color-ink);
 }
 
 .video-institucional-boton-secundario {
@@ -136,8 +136,8 @@
 }
 
 .video-institucional-boton-secundario:hover {
-  border-color: #e2ad11;
-  color: #e2ad11;
+  border-color: var(--color-gold);
+  color: var(--color-gold);
 }
 
 /* Accesibilidad */

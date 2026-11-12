@@ -2,7 +2,7 @@
 /* Sección */
 .grupos-pastorales {
   padding: 100px 0;
-  background-color: #f2ece3;
+  background-color: var(--color-stone);
 }
 
 .grupos-contenedor {
@@ -19,14 +19,14 @@
 
 .grupos-titulo {
   margin-top: 18px;
-  color: #231f20;
+  color: var(--color-ink);
   font-size: clamp(42px, 4vw, 58px);
   line-height: 1.05;
 }
 
 .grupos-descripcion {
   margin-top: 20px;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 15px;
   line-height: 1.85;
 }
@@ -39,7 +39,7 @@
   gap: 12px;
   margin-top: 26px;
   padding: 12px 20px;
-  background-color: #231f20;
+  background-color: var(--color-ink);
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
@@ -49,11 +49,11 @@
 }
 
 .grupos-boton:hover {
-  background-color: #4a4344;
+  background-color: var(--color-charcoal);
 }
 
 .grupos-boton:focus-visible {
-  outline: 2px solid #b98a06;
+  outline: 2px solid var(--color-goldDark);
   outline-offset: 3px;
 }
 
@@ -84,7 +84,7 @@
   justify-content: center;
   border-radius: 50%;
   background-color: #f6eee7;
-  color: #b5532f;
+  color: var(--color-terracotta);
 }
 
 .grupos-icono svg {
@@ -100,7 +100,7 @@
 
 .grupos-tarjeta-informacion h3 {
   margin: 0;
-  color: #231f20;
+  color: var(--color-ink);
   font-size: 14px;
   font-weight: 700;
   line-height: 1.4;
@@ -108,7 +108,7 @@
 
 .grupos-tarjeta-informacion p {
   margin: 4px 0 0;
-  color: #6b6162;
+  color: var(--color-muted);
   font-size: 12px;
   line-height: 1.4;
 }
