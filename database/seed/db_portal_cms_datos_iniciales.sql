@@ -6,13 +6,48 @@ BEGIN;
 
 INSERT INTO tipo_sede (nombre) VALUES ('Parroquia'), ('Capilla');
 
-INSERT INTO sede (tipo_sede_id, sede_padre_id, nombre, slug, direccion, telefono, configuracion) VALUES
-  (1, NULL, 'Parroquia Señor de la Exaltación', 'senor-de-la-exaltacion', 'Obrajes, La Paz (dirección de ejemplo)', '(2) 278 0000',
-   '{"color_primario": "#231F20", "color_acento": "#E2AD11", "texto_barra_superior": "Hoy: Santa Misa 7:00 · 19:00", "url_video_hero": "https://s3.ejemplo/dron-0002.mp4"}'),
-  (1, NULL, 'Parroquia de la Resurrección', 'resurreccion', 'La Paz', NULL, '{}'),
-  (2, 1, 'Capilla San Pablo de la Cruz', 'capilla-san-pablo-de-la-cruz', 'La Paz', NULL, '{}');
+-- Sedes. Los datos de la sede principal salen de la landing (Encabezado, Contacto,
+-- PiePagina y Comunidades). Las otras dos solo muestran nombre, tipo y "La Paz" en la landing.
+--  * whatsapp = NULL: el número aún no está confirmado (la landing solo muestra "WhatsApp Secretaría").
+--  * Coordenadas: las del enlace de Google Maps de la landing (-16.5267952, -68.1082157),
+--    redondeadas a 6 decimales por el tipo numeric(9,6).
+--  * configuracion (JSONB) guarda lo que no tiene columna propia:
+--      color_primario / color_acento ....... colores de marca
+--      texto_barra_superior ................ aviso de la barra superior del encabezado
+--      texto_whatsapp ...................... etiqueta del WhatsApp de Secretaría (barra superior)
+--      enlace_como_llegar .................. enlace de Google Maps (Contacto y Comunidades)
+--      enlace_messenger / texto_messenger .. enlace y texto del contacto por Messenger
+--      descripcion_pie, texto_copyright,
+--      texto_creditos ...................... textos del pie de página
+INSERT INTO sede (tipo_sede_id, sede_padre_id, nombre, slug, direccion, telefono, whatsapp, correo, latitud, longitud, url_imagen_portada, configuracion) VALUES
+  (1, NULL, 'Parroquia Señor de la Exaltación', 'senor-de-la-exaltacion',
+   'Av. Héctor Ormachea N.º 167, Obrajes, La Paz', '(2) 278 4937', NULL,
+   'parroquia.exaltacion.obrajes@gmail.com', -16.526795, -68.108216,
+   '/media/seed/exterior-parroquia.webp',
+   '{
+      "color_primario": "#231F20",
+      "color_acento": "#E2AD11",
+      "texto_barra_superior": "Hoy, sábado: Santa Misa 7:00 · 18:00 (vespertina dominical)",
+      "texto_whatsapp": "WhatsApp Secretaría",
+      "enlace_como_llegar": "https://www.google.com/maps/dir/?api=1&destination=-16.5267952%2C-68.1082157",
+      "enlace_messenger": "https://www.facebook.com/profile.php?id=100064836665037",
+      "texto_messenger": "Escríbenos por Facebook Messenger",
+      "descripcion_pie": "Parroquia confiada a la Congregación de la Pasión de Jesucristo (Pasionistas). Arquidiócesis de La Paz · Vicaría Sur.",
+      "texto_copyright": "© 2026 Parroquia Señor de la Exaltación · Pasionistas Bolivia · pasionistas.org.bo",
+      "texto_creditos": "Diseño y desarrollo: CodeForge · Ingeniería de Sistemas UCB"
+    }'),
+  (1, NULL, 'Parroquia de la Resurrección', 'resurreccion', 'La Paz', NULL, NULL, NULL, NULL, NULL, NULL, '{}'),
+  (2, 1, 'Capilla San Pablo de la Cruz', 'capilla-san-pablo-de-la-cruz', 'La Paz', NULL, NULL, NULL, NULL, NULL, NULL, '{}');
 
+-- Catálogo de redes sociales (se conservan los ids; la landing solo usa Facebook, Instagram y YouTube).
 INSERT INTO red_social (nombre, icono) VALUES ('Facebook', 'facebook'), ('Instagram', 'instagram'), ('YouTube', 'youtube'), ('TikTok', 'tiktok'), ('WhatsApp', 'chat');
+
+-- Redes de la sede principal, con los mismos enlaces del Encabezado y el PiePagina de la landing.
+-- Nota: el enlace de YouTube de la landing es el canal de la Arquidiócesis de La Paz.
+INSERT INTO sede_red_social (sede_id, red_social_id, url) VALUES
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), (SELECT id FROM red_social WHERE nombre = 'Facebook'),  'https://www.facebook.com/profile.php?id=100064836665037'),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), (SELECT id FROM red_social WHERE nombre = 'Instagram'), 'https://www.instagram.com/senor_de_la_exaltacion'),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), (SELECT id FROM red_social WHERE nombre = 'YouTube'),   'https://www.youtube.com/@ArquidiocesisdeLaPaz/videos');
 
 INSERT INTO rol (nombre, descripcion) VALUES
   ('Administrador', 'Equipo técnico CodeForge / soporte'),
