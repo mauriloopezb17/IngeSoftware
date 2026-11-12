@@ -4,6 +4,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { obtenerEntorno } from './config/entorno.js';
 import { crearMiddlewareLog } from './config/logger.js';
+import { manejarErrores, rutaNoEncontrada } from './middlewares/errores.js';
 import routes from './routes/index.js';
 
 // Límite del cuerpo JSON (contrato: docs/api/convenciones.md). Los archivos tienen sus propios límites.
@@ -38,6 +39,10 @@ export function createApp() {
   app.use(cookieParser());
 
   app.use('/api', routes);
+
+  // Al final: 404 para las rutas que nadie atendió y formato del contrato para todo error.
+  app.use(rutaNoEncontrada);
+  app.use(manejarErrores);
 
   return app;
 }
