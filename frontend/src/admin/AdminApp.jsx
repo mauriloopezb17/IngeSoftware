@@ -1,12 +1,26 @@
 // Punto de entrada del panel CMS (/admin/*). Se carga de forma diferida:
-// el portal público no descarga este código.
-// Provisional: la sección del panel lo reemplaza con su propio árbol de rutas.
+// el portal público no descarga este código. Las rutas son relativas a /admin.
+import { QueryClientProvider } from '@tanstack/react-query';
+import { Navigate, Route, Routes } from 'react-router';
+
+import { queryClient } from '../services/queryClient.js';
+import Inicio from './paginas/Inicio.jsx';
+import InicioSesion from './paginas/InicioSesion.jsx';
+import { SesionProvider } from './sesion/SesionProvider.jsx';
+
 function AdminApp() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-24 font-body">
-      <h1 className="serif-title text-4xl">Panel de administración</h1>
-      <p className="mt-4 text-muted">En construcción.</p>
-    </main>
+    // Es el mismo QueryClient que monta App.jsx; se declara aquí para que el panel también
+    // funcione fuera de App (pruebas de enrutado).
+    <QueryClientProvider client={queryClient}>
+      <SesionProvider>
+        <Routes>
+          <Route path="login" element={<InicioSesion />} />
+          <Route path="inicio" element={<Inicio />} />
+          <Route path="*" element={<Navigate to="/admin/login" replace />} />
+        </Routes>
+      </SesionProvider>
+    </QueryClientProvider>
   );
 }
 
