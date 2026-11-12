@@ -93,11 +93,71 @@ INSERT INTO categoria (nombre, slug) VALUES ('Sacramentos', 'sacramentos'), ('Co
 INSERT INTO categoria_evento (nombre, color_hex) VALUES ('Liturgia', '#E2AD11'), ('Solemnidad', '#9E1B22'), ('Catequesis', '#B5532F'), ('Comunidad', '#3E9C97');
 INSERT INTO tipo_horario (nombre) VALUES ('Santa Misa'), ('Confesiones'), ('Adoración'), ('Secretaría');
 
-INSERT INTO horario (sede_id, tipo_horario_id, dia_semana, hora_inicio, hora_fin, descripcion) VALUES
-  (1, 1, 1, '07:00', NULL, NULL), (1, 1, 1, '19:00', NULL, NULL),
-  (1, 1, 6, '18:00', NULL, 'Misa vespertina dominical'),
-  (1, 1, 7, '08:00', NULL, NULL), (1, 1, 7, '10:00', NULL, NULL), (1, 1, 7, '12:00', NULL, NULL), (1, 1, 7, '19:00', NULL, NULL),
-  (1, 4, 1, '09:00', '12:00', NULL), (1, 4, 1, '15:00', '19:30', NULL);
+-- Horarios regulares de la sede principal, tal como aparecen en la tarjeta "Horarios" de la landing.
+-- dia_semana: 1 = lunes ... 7 = domingo. La sede y el tipo se buscan por slug y nombre.
+-- Total: 16 de Santa Misa + 6 de Confesiones + 1 de Adoración + 11 de Secretaría = 34 filas.
+
+-- Santa Misa, lunes a viernes: 7:00 y 19:00.
+INSERT INTO horario (sede_id, tipo_horario_id, dia_semana, hora_inicio, hora_fin, descripcion)
+SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
+       (SELECT id FROM tipo_horario WHERE nombre = 'Santa Misa'),
+       d.dia, h.hora::time, NULL, NULL
+FROM generate_series(1, 5) AS d(dia), (VALUES ('07:00'), ('19:00')) AS h(hora);
+
+-- Santa Misa, sábado: 7:00 y 18:00 (esta última es la misa vespertina dominical, marcada con * en la landing).
+INSERT INTO horario (sede_id, tipo_horario_id, dia_semana, hora_inicio, hora_fin, descripcion)
+SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
+       (SELECT id FROM tipo_horario WHERE nombre = 'Santa Misa'),
+       6, h.hora::time, NULL, h.descripcion::varchar
+FROM (VALUES ('07:00', NULL), ('18:00', 'Misa vespertina dominical')) AS h(hora, descripcion);
+
+-- Santa Misa, domingo: 8:00, 10:00, 12:00 y 19:00.
+INSERT INTO horario (sede_id, tipo_horario_id, dia_semana, hora_inicio, hora_fin, descripcion)
+SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
+       (SELECT id FROM tipo_horario WHERE nombre = 'Santa Misa'),
+       7, h.hora::time, NULL, NULL
+FROM (VALUES ('08:00'), ('10:00'), ('12:00'), ('19:00')) AS h(hora);
+
+-- Confesiones: lunes a viernes de 18:00 a 18:45 y sábado de 10:00 a 12:00.
+-- La nota de la landing ("Previo a cada misa, según disponibilidad") va en la descripción.
+INSERT INTO horario (sede_id, tipo_horario_id, dia_semana, hora_inicio, hora_fin, descripcion)
+SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
+       (SELECT id FROM tipo_horario WHERE nombre = 'Confesiones'),
+       h.dia, h.inicio::time, h.fin::time, 'Previo a cada misa, según disponibilidad'
+FROM (VALUES (1, '18:00', '18:45'), (2, '18:00', '18:45'), (3, '18:00', '18:45'),
+             (4, '18:00', '18:45'), (5, '18:00', '18:45'), (6, '10:00', '12:00')) AS h(dia, inicio, fin);
+
+-- Adoración: jueves de 19:30 a 20:30.
+INSERT INTO horario (sede_id, tipo_horario_id, dia_semana, hora_inicio, hora_fin, descripcion)
+VALUES ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
+        (SELECT id FROM tipo_horario WHERE nombre = 'Adoración'),
+        4, '19:30', '20:30', NULL);
+
+-- Secretaría parroquial, lunes a viernes: 9:00-12:00 y 15:00-19:30.
+INSERT INTO horario (sede_id, tipo_horario_id, dia_semana, hora_inicio, hora_fin, descripcion)
+SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
+       (SELECT id FROM tipo_horario WHERE nombre = 'Secretaría'),
+       d.dia, h.inicio::time, h.fin::time, NULL
+FROM generate_series(1, 5) AS d(dia), (VALUES ('09:00', '12:00'), ('15:00', '19:30')) AS h(inicio, fin);
+
+-- Secretaría parroquial, sábado: 9:00-12:00.
+INSERT INTO horario (sede_id, tipo_horario_id, dia_semana, hora_inicio, hora_fin, descripcion)
+VALUES ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
+        (SELECT id FROM tipo_horario WHERE nombre = 'Secretaría'),
+        6, '09:00', '12:00', NULL);
+
+-- Textos de la sección de horarios que no tienen columna propia: se guardan en sede.configuracion.
+--   horarios_introduccion ........ párrafo de introducción de la sección
+--   horarios_notas ............... nota al pie de cada tarjeta (confesiones_adoracion y secretaria)
+--   horarios_whatsapp_secretaria . fila "WhatsApp" de la tarjeta de Secretaría (no es un horario)
+UPDATE sede
+SET configuracion = configuracion || jsonb_build_object(
+      'horarios_introduccion', 'Horarios regulares de la parroquia. Las celebraciones especiales se publican en el calendario.',
+      'horarios_notas', jsonb_build_object(
+          'confesiones_adoracion', 'Previo a cada misa, según disponibilidad',
+          'secretaria', 'Trámites, certificados e inscripciones'),
+      'horarios_whatsapp_secretaria', 'Asistente 24/7')
+WHERE slug = 'senor-de-la-exaltacion';
 
 INSERT INTO evento (sede_id, categoria_evento_id, estado_publicacion_id, creado_por, titulo, lugar, fecha_inicio) VALUES
   (1, 1, 2, 1, 'Vigilia de Todos los Santos', 'Templo parroquial', '2026-10-31 19:00-04'),
