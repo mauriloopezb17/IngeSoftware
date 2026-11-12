@@ -185,9 +185,51 @@ SET configuracion = configuracion || jsonb_build_object(
       'horarios_whatsapp_secretaria', 'Asistente 24/7')
 WHERE slug = 'senor-de-la-exaltacion';
 
-INSERT INTO evento (sede_id, categoria_evento_id, estado_publicacion_id, creado_por, titulo, lugar, fecha_inicio) VALUES
-  (1, 1, 2, 1, 'Vigilia de Todos los Santos', 'Templo parroquial', '2026-10-31 19:00-04'),
-  (1, 3, 2, 1, 'Charla pre-bautismal para padres y padrinos', 'Salón parroquial', '2026-11-07 09:30-04');
+-- Eventos de la agenda (4, los de la landing). Las fechas son RELATIVAS a la fecha de carga del seed
+-- (current_date + N días) para que la agenda nunca quede vacía; los desfases N conservan la separación
+-- entre eventos que tiene la landing. La hora se interpreta en la zona horaria de La Paz.
+-- Los crea Secretaría y se publican directo (estado Publicado).
+-- "Todos los Santos" tiene tres horarios en la landing (8:00 – 10:00 – 12:00): inicia a las 8:00 y los
+-- horarios completos van en la descripción.
+INSERT INTO evento (sede_id, categoria_evento_id, estado_publicacion_id, creado_por, titulo, descripcion, lugar, fecha_inicio)
+SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
+       (SELECT id FROM categoria_evento WHERE nombre = e.categoria),
+       (SELECT id FROM estado_publicacion WHERE nombre = 'Publicado'),
+       (SELECT id FROM usuario WHERE correo = 'secretaria@parroquia.test'),
+       e.titulo, e.descripcion, e.lugar,
+       (current_date + e.dias + e.hora::time) AT TIME ZONE 'America/La_Paz'
+FROM (VALUES
+  ('Liturgia',   'Vigilia de Todos los Santos',                         NULL,                              'Templo parroquial', 6,  '19:00'),
+  ('Solemnidad', 'Todos los Santos',                                    'Horarios: 8:00 – 10:00 – 12:00',  'Templo parroquial', 7,  '08:00'),
+  ('Liturgia',   'Conmemoración de los Fieles Difuntos',                NULL,                              'Templo parroquial', 8,  '19:00'),
+  ('Catequesis', 'Charla pre-bautismal para padres y padrinos',         NULL,                              'Salón parroquial',  13, '09:30')
+) AS e(categoria, titulo, descripcion, lugar, dias, hora);
+
+-- Avisos parroquiales (3, los de la landing): publicaciones de tipo Aviso creadas por Secretaría y
+-- publicadas directo. La landing solo muestra una fecha y un texto, así que el texto va como título y
+-- como único párrafo del contenido (formato BlockNote). Las fechas son recientes y relativas
+-- (hace 1, 3 y 5 días, igual que 24, 22 y 20 de octubre respecto a la landing).
+INSERT INTO publicacion (sede_id, tipo_publicacion_id, estado_publicacion_id, autor_id, titulo, slug, contenido, fecha_publicacion)
+SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
+       (SELECT id FROM tipo_publicacion WHERE nombre = 'Aviso'),
+       (SELECT id FROM estado_publicacion WHERE nombre = 'Publicado'),
+       (SELECT id FROM usuario WHERE correo = 'secretaria@parroquia.test'),
+       a.texto, a.slug,
+       jsonb_build_object(
+         'formato', 'blocknote',
+         'version', 1,
+         'bloques', jsonb_build_array(jsonb_build_object(
+           'id', a.slug || '-p1',
+           'type', 'paragraph',
+           'props', jsonb_build_object('textColor', 'default', 'backgroundColor', 'default', 'textAlignment', 'left'),
+           'content', jsonb_build_array(jsonb_build_object('type', 'text', 'text', a.texto, 'styles', jsonb_build_object())),
+           'children', jsonb_build_array()))),
+       now() - a.antiguedad
+FROM (VALUES
+  ('inscripciones-confirmacion-2027',   'Inscripciones abiertas para la catequesis de Confirmación 2027.',                  interval '1 day'),
+  ('secretaria-2-de-noviembre',         'El 2 de noviembre la secretaría atenderá solo por la mañana.',                     interval '3 days'),
+  ('donaciones-viveres-pastoral-social','Recibimos donaciones de víveres para la Pastoral Social hasta fin de mes.',        interval '5 days')
+) AS a(slug, texto, antiguedad);
 
 -- Sacramentos y catequesis, en el mismo orden de la landing (el Bautismo conserva el id 1).
 --  * descripcion_corta: el texto de la tarjeta, copiado tal cual de la landing.
@@ -243,8 +285,33 @@ INSERT INTO grupo_pastoral (sede_id, nombre, horario_reunion, icono, orden) VALU
 INSERT INTO pregunta_frecuente (sede_id, servicio_id, pregunta, respuesta) VALUES
   (1, 1, '¿Qué requisitos necesito para bautizar a mi hijo?', 'Certificado de nacimiento, CI de padres y padrinos, y asistir a la charla pre-bautismal del primer sábado de cada mes.');
 
-INSERT INTO proclama (sede_id, tramite_origen_id, nombre_contrayente_1, nombre_contrayente_2, fecha_matrimonio) VALUES
-  (1, 1, 'Juan Carlos M. Q. (ejemplo)', 'María Fernanda R. V. (ejemplo)', '2026-11-14 11:00-04');
-INSERT INTO proclama_publicacion (proclama_id, numero_proclama, fecha_publicacion) VALUES (1, 1, '2026-10-25');
+-- Proclamas matrimoniales (3 parejas, las de la landing; nombres ficticios, como indica la propia landing).
+-- Ya no requieren trámite de origen (tramite_origen_id = NULL). Las fechas son RELATIVAS:
+--  * La boda cae en sábado, como en la landing: el primer sábado que queda al menos a 7 días de hoy,
+--    y las otras dos 1 y 3 semanas después (14, 21 de noviembre y 5 de diciembre en la landing).
+--  * Las proclamas se publican una por semana y la más reciente sale hoy. La pareja en "3.ª proclama"
+--    tiene 3 publicaciones (hace 14 días, hace 7 días y hoy), la de "2.ª" tiene 2 (hace 7 días y hoy)
+--    y la de "1.ª" tiene 1 (hoy).
+WITH nuevas AS (
+  INSERT INTO proclama (sede_id, tramite_origen_id, nombre_contrayente_1, nombre_contrayente_2, fecha_matrimonio)
+  SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), NULL,
+         p.contrayente_1, p.contrayente_2,
+         (current_date + ((6 - extract(isodow FROM current_date)::int + 7) % 7) + 7 + p.dias_despues + p.hora::time)
+           AT TIME ZONE 'America/La_Paz'
+  FROM (VALUES
+    ('Juan Carlos M. Q.',  'María Fernanda R. V.', 0,  '11:00'),
+    ('Diego A. Choque L.', 'Camila S. Paredes',    7,  '16:00'),
+    ('Luis F. Gutiérrez',  'Andrea Mamani C.',     21, '12:00')
+  ) AS p(contrayente_1, contrayente_2, dias_despues, hora)
+  RETURNING id, nombre_contrayente_1
+)
+INSERT INTO proclama_publicacion (proclama_id, numero_proclama, fecha_publicacion)
+SELECT n.id, pp.numero, current_date - pp.hace_dias
+FROM nuevas n
+JOIN (VALUES
+  ('Juan Carlos M. Q.',  1, 14), ('Juan Carlos M. Q.',  2, 7), ('Juan Carlos M. Q.',  3, 0),
+  ('Diego A. Choque L.', 1, 7),  ('Diego A. Choque L.', 2, 0),
+  ('Luis F. Gutiérrez',  1, 0)
+) AS pp(contrayente_1, numero, hace_dias) ON pp.contrayente_1 = n.nombre_contrayente_1;
 
 COMMIT;
