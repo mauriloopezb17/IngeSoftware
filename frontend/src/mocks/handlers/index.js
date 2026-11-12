@@ -1,14 +1,24 @@
 import { http, HttpResponse } from 'msw';
 
-// El comodín inicial permite que funcione con VITE_API_URL relativa o absoluta.
-export const api = (ruta) => `*/api${ruta}`;
+import { handlersAdmin } from '../../admin/mocks/handlers.js';
+import { api } from '../api.js';
+import { handlersPortal } from './portal.js';
 
-// Cada sección agrega aquí sus handlers, siguiendo el contrato de docs/api/.
-// Ejemplo: export const handlersPortal = [ http.get(api('/sedes/:sede/horarios'), ...) ]
+// Se reexporta para las pruebas que ya lo importan desde aquí.
+export { api };
+
+// Cada sección mantiene sus handlers en su propio archivo, siguiendo el contrato de docs/api/:
+//  * portal público (Sección B): ./portal.js
+//  * panel CMS (Sección C): ../../admin/mocks/handlers.js
 const handlersSalud = [
   http.get(api('/salud'), () =>
-    HttpResponse.json({ estado: 'ok', servicio: 'api-parroquia', fecha: new Date().toISOString() }),
+    HttpResponse.json({
+      estado: 'ok',
+      servicio: 'api-parroquia',
+      fecha: new Date().toISOString(),
+      dependencias: { baseDatos: 'ok' },
+    }),
   ),
 ];
 
-export const handlers = [...handlersSalud];
+export const handlers = [...handlersSalud, ...handlersPortal, ...handlersAdmin];
