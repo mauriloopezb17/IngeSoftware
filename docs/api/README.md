@@ -8,7 +8,8 @@ Contrato entre el backend (`backend/`), el portal público (`frontend/`) y el pa
 
 ## Índice
 
-| Documento                          | Contenido                                                                                                                         |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| [convenciones.md](convenciones.md) | Prefijo, formato JSON, fechas, envoltorio `datos`, paginación, errores, sedes y objeto imagen.                                    |
-| [publico.md](publico.md)           | Endpoints públicos del portal: sede, horarios, servicios, grupos, eventos, publicaciones, proclamas, boletines, videos y páginas. |
+| Documento                            | Contenido                                                                                                                         |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| [convenciones.md](convenciones.md)   | Prefijo, formato JSON, fechas, envoltorio `datos`, paginación, errores, sedes y objeto imagen.                                    |
+| [publico.md](publico.md)             | Endpoints públicos del portal: sede, horarios, servicios, grupos, eventos, publicaciones, proclamas, boletines, videos y páginas. |
+| [autenticacion.md](autenticacion.md) | Login, logout y usuario actual; cookie JWT, límite de intentos, roles, restricción por sede y matriz de permisos.                 |
