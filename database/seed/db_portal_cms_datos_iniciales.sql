@@ -163,9 +163,56 @@ INSERT INTO evento (sede_id, categoria_evento_id, estado_publicacion_id, creado_
   (1, 1, 2, 1, 'Vigilia de Todos los Santos', 'Templo parroquial', '2026-10-31 19:00-04'),
   (1, 3, 2, 1, 'Charla pre-bautismal para padres y padrinos', 'Salón parroquial', '2026-11-07 09:30-04');
 
+-- Sacramentos y catequesis, en el mismo orden de la landing (el Bautismo conserva el id 1).
+--  * descripcion_corta: el texto de la tarjeta, copiado tal cual de la landing.
+--  * icono: nombre de lucide-react en kebab-case. Matrimonio queda en NULL porque la landing
+--    dibuja un SVG propio de dos anillos (no hay ícono de lucide equivalente).
+--  * contenido (JSONB): {"datos": [{"etiqueta": "...", "valor": "..."}]} con los datos concretos
+--    que el texto de la tarjeta menciona, para la vista de "Ver requisitos".
+--    No se agregan requisitos que la landing no diga.
 INSERT INTO servicio (sede_id, slug, nombre, descripcion_corta, icono, contenido, orden) VALUES
-  (1, 'bautismo', 'Bautismo', 'Charla pre-bautismal el primer sábado de cada mes.', 'agua',
-   '{"requisitos": ["Certificado de nacimiento del niño", "Fotocopia de CI de padres y padrinos", "Padrinos confirmados"], "charla": {"frecuencia": "Primer sábado de cada mes", "hora": "09:30"}}', 1);
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), 'bautismo', 'Bautismo',
+   'Charla pre-bautismal el primer sábado de cada mes. Padres y padrinos se inscriben en secretaría.', 'droplet',
+   '{"datos": [
+      {"etiqueta": "Charla pre-bautismal", "valor": "Primer sábado de cada mes"},
+      {"etiqueta": "Inscripción", "valor": "Padres y padrinos se inscriben en secretaría"}]}', 1),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), 'primera-comunion', 'Primera Comunión',
+   'Catequesis de dos años para niños desde los 8 años. Inscripciones de febrero a marzo.', 'sun',
+   '{"datos": [
+      {"etiqueta": "Duración", "valor": "Catequesis de dos años"},
+      {"etiqueta": "Edad", "valor": "Niños desde los 8 años"},
+      {"etiqueta": "Inscripciones", "valor": "De febrero a marzo"}]}', 2),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), 'confirmacion', 'Confirmación',
+   'Preparación para jóvenes desde los 15 años y adultos que deseen completar su iniciación.', 'flame',
+   '{"datos": [
+      {"etiqueta": "Jóvenes", "valor": "Desde los 15 años"},
+      {"etiqueta": "Adultos", "valor": "Quienes deseen completar su iniciación cristiana"}]}', 3),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), 'matrimonio', 'Matrimonio',
+   'Cursillo prematrimonial, presentación de documentos y proclamas con tres meses de anticipación.', NULL,
+   '{"datos": [
+      {"etiqueta": "Preparación", "valor": "Cursillo prematrimonial"},
+      {"etiqueta": "Documentos", "valor": "Presentación de documentos"},
+      {"etiqueta": "Proclamas", "valor": "Con tres meses de anticipación"}]}', 4),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), 'catequesis-de-adultos', 'Catequesis de adultos',
+   'Formación para adultos que desean recibir los sacramentos o profundizar su fe.', 'book-open',
+   '{"datos": [
+      {"etiqueta": "Dirigida a", "valor": "Adultos que desean recibir los sacramentos o profundizar su fe"}]}', 5),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), 'uncion-de-los-enfermos', 'Unción de los enfermos',
+   'Visita a enfermos y adultos mayores en domicilio. Coordinar por teléfono o WhatsApp.', 'heart-pulse',
+   '{"datos": [
+      {"etiqueta": "Modalidad", "valor": "Visita a enfermos y adultos mayores en domicilio"},
+      {"etiqueta": "Coordinación", "valor": "Por teléfono o WhatsApp"}]}', 6);
+
+-- Grupos pastorales, en el orden de la landing. La landing solo muestra nombre, una línea
+-- de horario o detalle (se guarda en horario_reunion tal cual) y un ícono de lucide-react.
+-- descripcion, contacto e imagen quedan vacíos porque la landing no los tiene.
+INSERT INTO grupo_pastoral (sede_id, nombre, horario_reunion, icono, orden) VALUES
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), 'Monaguillos',      'Sábados · 10:00',     'star',            1),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), 'Coro parroquial',  'Jueves · 19:00',      'music-2',         2),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), 'Catequistas',      'Formación mensual',   'book-open',       3),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), 'Pastoral Juvenil', 'Viernes · 18:30',     'users',           4),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), 'Legión de María',  'Martes · 16:00',      'cross',           5),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), 'Pastoral social',  'Cáritas parroquial',  'heart-handshake', 6);
 
 INSERT INTO pregunta_frecuente (sede_id, servicio_id, pregunta, respuesta) VALUES
   (1, 1, '¿Qué requisitos necesito para bautizar a mi hijo?', 'Certificado de nacimiento, CI de padres y padrinos, y asistir a la charla pre-bautismal del primer sábado de cada mes.');
