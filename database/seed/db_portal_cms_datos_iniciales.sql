@@ -23,7 +23,10 @@ INSERT INTO rol (nombre, descripcion) VALUES
 INSERT INTO usuario (rol_id, sede_id, nombre_completo, correo, hash_contrasena) VALUES
   (3, 1, 'Secretaría Parroquial (ejemplo)', 'secretaria@pasionistas.org.bo', '$argon2id$v=19$m=65536,t=3,p=4$EJEMPLO');
 
-INSERT INTO estado_publicacion (nombre) VALUES ('Borrador'), ('Publicado'), ('Archivado');
+-- Estados de publicación (ids: 1 Borrador, 2 Publicado, 3 Archivado, 4 En revisión).
+-- "En revisión" va al final para no alterar los ids existentes: es el estado en que
+-- queda lo redactado por Marketing hasta que el Párroco lo aprueba o lo rechaza.
+INSERT INTO estado_publicacion (nombre) VALUES ('Borrador'), ('Publicado'), ('Archivado'), ('En revisión');
 
 INSERT INTO tipo_bloque (codigo, nombre, esquema_validacion) VALUES
   ('hero_video', 'Portada con video', '{"type": "object", "required": ["titulo", "url_video"], "properties": {"titulo": {"type": "string"}, "subtitulo": {"type": "string"}, "url_video": {"type": "string"}, "url_poster": {"type": "string"}, "botones": {"type": "array"}}}'),
@@ -42,7 +45,9 @@ INSERT INTO bloque (pagina_id, tipo_bloque_id, orden, contenido) VALUES
   (2, 4, 1, '{"texto": "Que la Pasión de Jesús esté siempre en nuestros corazones.", "autor": "Lema pasionista"}');
 
 INSERT INTO tipo_publicacion (nombre) VALUES ('Noticia'), ('Aviso'), ('Nota de prensa');
-INSERT INTO categoria (nombre, slug) VALUES ('Sacramentos', 'sacramentos'), ('Comunidad', 'comunidad'), ('Pasionistas', 'pasionistas');
+-- Categorías de publicaciones. "Pastoral Familiar" se agrega al final (id 4) para
+-- no alterar los ids existentes.
+INSERT INTO categoria (nombre, slug) VALUES ('Sacramentos', 'sacramentos'), ('Comunidad', 'comunidad'), ('Pasionistas', 'pasionistas'), ('Pastoral Familiar', 'pastoral-familiar');
 INSERT INTO categoria_evento (nombre, color_hex) VALUES ('Liturgia', '#E2AD11'), ('Solemnidad', '#9E1B22'), ('Catequesis', '#B5532F'), ('Comunidad', '#3E9C97');
 INSERT INTO tipo_horario (nombre) VALUES ('Santa Misa'), ('Confesiones'), ('Adoración'), ('Secretaría');
 
