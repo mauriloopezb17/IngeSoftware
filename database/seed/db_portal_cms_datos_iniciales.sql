@@ -104,13 +104,79 @@ INSERT INTO tipo_bloque (codigo, nombre, esquema_validacion) VALUES
   ('galeria', 'Galería de fotos', '{"type": "object", "required": ["imagenes"], "properties": {"imagenes": {"type": "array"}}}'),
   ('video_youtube', 'Video de YouTube', '{"type": "object", "required": ["youtube_video_id"], "properties": {"youtube_video_id": {"type": "string"}}}');
 
+-- Páginas editables de la sede principal (publicadas, creadas por el Administrador de desarrollo).
 INSERT INTO pagina (sede_id, estado_publicacion_id, creado_por, slug, titulo, mostrar_en_menu, orden_menu) VALUES
-  (1, 2, 1, 'inicio', 'Inicio', false, 0),
-  (1, 2, 1, 'nosotros', 'Quiénes somos', true, 1);
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), (SELECT id FROM estado_publicacion WHERE nombre = 'Publicado'),
+   (SELECT id FROM usuario WHERE correo = 'admin@parroquia.test'), 'inicio', 'Inicio', false, 0),
+  ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), (SELECT id FROM estado_publicacion WHERE nombre = 'Publicado'),
+   (SELECT id FROM usuario WHERE correo = 'admin@parroquia.test'), 'nosotros', 'Quiénes somos', true, 1);
 
+-- Bloques de la página "inicio" (portada de la landing: Portada.jsx). La página y el tipo se buscan por slug y código.
+-- Los bloques cumplen el esquema_validacion de su tipo y, además, llevan claves propias de la landing
+-- (etiqueta, texto_video, detalle_video), que el esquema permite porque no restringe propiedades adicionales.
+--  1) hero_video: título, subtítulo, video y póster (archivos de /media/seed/) y los dos botones de la portada.
+--  2) tarjetas: los 4 accesos rápidos bajo la portada, con su ícono de lucide-react en kebab-case.
 INSERT INTO bloque (pagina_id, tipo_bloque_id, orden, contenido) VALUES
-  (1, 1, 1, '{"titulo": "Señor de la Exaltación", "subtitulo": "Una comunidad que camina junto a Cristo crucificado y resucitado.", "url_video": "https://s3.ejemplo/dron-0002.mp4", "url_poster": "https://s3.ejemplo/dron-poster.jpg", "botones": [{"texto": "Ver horarios de misa", "enlace": "#horarios"}]}'),
-  (2, 4, 1, '{"texto": "Que la Pasión de Jesús esté siempre en nuestros corazones.", "autor": "Lema pasionista"}');
+  ((SELECT id FROM pagina WHERE slug = 'inicio' AND sede_id = (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion')),
+   (SELECT id FROM tipo_bloque WHERE codigo = 'hero_video'), 1,
+   '{
+      "etiqueta": "Parroquia Pasionista · Obrajes, La Paz",
+      "titulo": "Señor de la Exaltación",
+      "subtitulo": "Una comunidad que camina junto a Cristo crucificado y resucitado. Te esperamos en casa, con las puertas siempre abiertas.",
+      "url_video": "/media/seed/portada-final.mp4",
+      "url_poster": "/media/seed/exterior-parroquia.webp",
+      "texto_video": "Video institucional",
+      "detalle_video": "Recorrido aéreo · 0:30",
+      "botones": [
+        {"texto": "Ver horarios de misa", "enlace": "#horarios"},
+        {"texto": "Conócenos", "enlace": "#nosotros"}
+      ]
+    }'),
+  ((SELECT id FROM pagina WHERE slug = 'inicio' AND sede_id = (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion')),
+   (SELECT id FROM tipo_bloque WHERE codigo = 'tarjetas'), 2,
+   '{
+      "items": [
+        {"titulo": "Horarios de Misa", "subtitulo": "Toda la semana",         "icono": "clock-3",       "enlace": "#horarios"},
+        {"titulo": "Sacramentos",      "subtitulo": "Requisitos y fechas",    "icono": "droplet",       "enlace": "#sacramentos"},
+        {"titulo": "Calendario",       "subtitulo": "Próximas actividades",   "icono": "calendar-days", "enlace": "#agenda"},
+        {"titulo": "Proclamas",        "subtitulo": "Vigentes esta semana",   "icono": "scroll-text",   "enlace": "#proclamas"}
+      ]
+    }');
+
+-- Bloques de la página "nosotros" (Nosotros.jsx), en el orden de la landing:
+--  1) texto_imagen: título, descripción y foto del crucifijo (a la izquierda), con la tarjeta de la
+--     Congregación como clave propia ("tarjeta").
+--  2) cita: el lema de la Congregación Pasionista.
+--  3) tarjetas: el párroco (nombre, cargo y foto).
+-- El botón "Conoce nuestra historia" no se migra: en la landing es solo un control visual sin destino.
+INSERT INTO bloque (pagina_id, tipo_bloque_id, orden, contenido) VALUES
+  ((SELECT id FROM pagina WHERE slug = 'nosotros' AND sede_id = (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion')),
+   (SELECT id FROM tipo_bloque WHERE codigo = 'texto_imagen'), 1,
+   '{
+      "etiqueta": "Quiénes somos",
+      "titulo": "Una casa de oración en el corazón de Obrajes",
+      "texto": "Somos una comunidad parroquial confiada a los Padres Pasionistas, que desde la memoria de la Pasión de Cristo acompaña a las familias de Obrajes en la fe, los sacramentos y el servicio a los más necesitados.",
+      "url_imagen": "/media/seed/crucifijo.webp",
+      "posicion_imagen": "izquierda",
+      "tarjeta": {
+        "etiqueta": "Congregación de la Pasión",
+        "titulo": "Pasionistas · C.P.",
+        "descripcion": "Fundada por San Pablo de la Cruz"
+      }
+    }'),
+  ((SELECT id FROM pagina WHERE slug = 'nosotros' AND sede_id = (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion')),
+   (SELECT id FROM tipo_bloque WHERE codigo = 'cita'), 2,
+   '{
+      "texto": "Que la Pasión de Jesucristo esté siempre grabada en nuestros corazones.",
+      "autor": "Lema de la Congregación Pasionista"
+    }'),
+  ((SELECT id FROM pagina WHERE slug = 'nosotros' AND sede_id = (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion')),
+   (SELECT id FROM tipo_bloque WHERE codigo = 'tarjetas'), 3,
+   '{
+      "items": [
+        {"titulo": "P. Gregorio, C.P.", "subtitulo": "Párroco", "url_imagen": "/media/seed/padre_gregorio.jpg"}
+      ]
+    }');
 
 INSERT INTO tipo_publicacion (nombre) VALUES ('Noticia'), ('Aviso'), ('Nota de prensa');
 -- Categorías de publicaciones. "Pastoral Familiar" se agrega al final (id 4) para
