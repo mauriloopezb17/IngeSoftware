@@ -231,6 +231,55 @@ FROM (VALUES
   ('donaciones-viveres-pastoral-social','Recibimos donaciones de víveres para la Pastoral Social hasta fin de mes.',        interval '5 days')
 ) AS a(slug, texto, antiguedad);
 
+-- Noticias de "Vida parroquial" (3, las de la landing), en su orden. Son publicaciones de tipo Noticia,
+-- redactadas por Marketing y ya aprobadas por el Párroco (estado Publicado, con revisado_por y
+-- fecha_revision, que el CHECK exige juntos), para dejar a la vista el flujo de revisión.
+--  * La fecha de la landing es la de publicación, a las 12:00 hora de La Paz (las noticias pueden ser pasadas).
+--  * resumen: el texto de la tarjeta. contenido (BlockNote): la landing no tiene cuerpo más largo,
+--    así que es un único párrafo con ese mismo texto (sin inventar contenido).
+--  * La portada es el archivo multimedia que usa la landing (se busca por url).
+--  * url_externa: solo la noticia de Pastoral Familiar enlaza a Facebook.
+INSERT INTO publicacion (sede_id, tipo_publicacion_id, categoria_id, estado_publicacion_id, autor_id,
+                         imagen_portada_id, titulo, slug, resumen, contenido, url_externa,
+                         fecha_publicacion, revisado_por, fecha_revision)
+SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
+       (SELECT id FROM tipo_publicacion WHERE nombre = 'Noticia'),
+       (SELECT id FROM categoria WHERE nombre = n.categoria),
+       (SELECT id FROM estado_publicacion WHERE nombre = 'Publicado'),
+       (SELECT id FROM usuario WHERE correo = 'marketing@parroquia.test'),
+       (SELECT id FROM archivo_multimedia WHERE url = n.imagen),
+       n.titulo, n.slug, n.resumen,
+       jsonb_build_object(
+         'formato', 'blocknote',
+         'version', 1,
+         'bloques', jsonb_build_array(jsonb_build_object(
+           'id', n.slug || '-p1',
+           'type', 'paragraph',
+           'props', jsonb_build_object('textColor', 'default', 'backgroundColor', 'default', 'textAlignment', 'left'),
+           'content', jsonb_build_array(jsonb_build_object('type', 'text', 'text', n.resumen, 'styles', jsonb_build_object())),
+           'children', jsonb_build_array()))),
+       n.url_externa,
+       n.fecha::timestamp AT TIME ZONE 'America/La_Paz',
+       (SELECT id FROM usuario WHERE correo = 'parroco@parroquia.test'),
+       n.fecha::timestamp AT TIME ZONE 'America/La_Paz'
+FROM (VALUES
+  ('Sacramentos', '/media/seed/crucifijo.webp',
+   'primeras-comuniones-42-ninos',
+   'Primeras comuniones: 42 niños recibieron a Jesús',
+   'Una jornada de fiesta para toda la comunidad, acompañada por catequistas y familias.',
+   NULL, '2026-10-18 12:00'),
+  ('Comunidad', '/media/seed/exterior-parroquia.webp',
+   'encuentro-monaguillos-vicaria-sur',
+   'Encuentro de monaguillos de la Vicaría Sur',
+   'Más de 60 monaguillos compartieron una jornada de formación, juego y oración.',
+   NULL, '2026-10-11 12:00'),
+  ('Pastoral Familiar', '/media/seed/pastoral-familiar.jpg',
+   'encuentro-pastoral-familiar-duelo',
+   'Encuentro de Pastoral Familiar: Cuando la muerte llega a la familia',
+   'Un espacio para reflexionar sobre la pérdida de un ser querido y encontrar acompañamiento desde la fe. Viernes 30 de octubre a las 19:30, en el Salón San Gabriel.',
+   'https://www.facebook.com/photo.php?fbid=1568791201958754&set=pb.100064836665037.-2207520000&type=3', '2026-10-30 12:00')
+) AS n(categoria, imagen, slug, titulo, resumen, url_externa, fecha);
+
 -- Sacramentos y catequesis, en el mismo orden de la landing (el Bautismo conserva el id 1).
 --  * descripcion_corta: el texto de la tarjeta, copiado tal cual de la landing.
 --  * icono: nombre de lucide-react en kebab-case. Matrimonio queda en NULL porque la landing
