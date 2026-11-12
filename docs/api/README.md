@@ -8,9 +8,10 @@ Contrato entre el backend (`backend/`), el portal público (`frontend/`) y el pa
 
 ## Índice
 
-| Documento                            | Contenido                                                                                                                                                                                        |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [convenciones.md](convenciones.md)   | Prefijo, formato JSON, fechas, envoltorio `datos`, paginación, errores, sedes y objeto imagen.                                                                                                   |
-| [publico.md](publico.md)             | Endpoints públicos del portal: sede, horarios, servicios, grupos, eventos, publicaciones, proclamas, boletines, videos y páginas.                                                                |
-| [autenticacion.md](autenticacion.md) | Login, logout y usuario actual; cookie JWT, límite de intentos, roles, restricción por sede y matriz de permisos.                                                                                |
-| [admin.md](admin.md)                 | Endpoints del panel CMS (`/api/admin`): catálogos, multimedia, publicaciones, eventos, horarios, servicios, grupos, videos, sedes, proclamas, boletines, páginas y bloques, bitácora y usuarios. |
+| Documento                                        | Contenido                                                                                                                                                                                        |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [convenciones.md](convenciones.md)               | Prefijo, formato JSON, fechas, envoltorio `datos`, paginación, errores, sedes y objeto imagen.                                                                                                   |
+| [publico.md](publico.md)                         | Endpoints públicos del portal: sede, horarios, servicios, grupos, eventos, publicaciones, proclamas, boletines, videos y páginas.                                                                |
+| [autenticacion.md](autenticacion.md)             | Login, logout y usuario actual; cookie JWT, límite de intentos, roles, restricción por sede y matriz de permisos.                                                                                |
+| [admin.md](admin.md)                             | Endpoints del panel CMS (`/api/admin`): catálogos, multimedia, publicaciones, eventos, horarios, servicios, grupos, videos, sedes, proclamas, boletines, páginas y bloques, bitácora y usuarios. |
+| [estados-publicacion.md](estados-publicacion.md) | Máquina de estados (Borrador, En revisión, Publicado, Archivado), quién hace cada transición, programación y vigencia.                                                                           |

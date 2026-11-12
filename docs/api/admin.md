@@ -298,7 +298,7 @@ Todos los campos del [detalle público](publico.md#get-apisedessedepublicaciones
   "revision": null,
   "fechaCreacion": "2026-11-12T10:05:31-04:00",
   "visibleEnPortal": false,
-  "acciones": ["APROBAR", "RECHAZAR"]
+  "acciones": ["EDITAR", "APROBAR", "RECHAZAR"]
 }
 ```
 
@@ -380,7 +380,7 @@ Crea una publicación, **siempre en `BORRADOR`**. Permiso: `avisos.gestionar` pa
 
 ### `PATCH /api/admin/publicaciones/:id`
 
-Edita campos (los mismos de la creación, salvo `tipo`). Solo se permite en los estados que indica [estados-publicacion.md](estados-publicacion.md#edición-según-el-estado); fuera de ellos responde `409 CONFLICTO`.
+Edita campos (los mismos de la creación, salvo `tipo`). Solo se permite en los estados que indica [estados-publicacion.md](estados-publicacion.md#5-edición-según-el-estado); fuera de ellos responde `409 CONFLICTO`.
 
 ```json
 {
@@ -391,7 +391,7 @@ Edita campos (los mismos de la creación, salvo `tipo`). Solo se permite en los 
 
 ### `DELETE /api/admin/publicaciones/:id`
 
-Elimina definitivamente. Fuera del Administrador, solo se puede borrar una publicación en `BORRADOR` (las publicadas se archivan). Las reglas exactas están en [estados-publicacion.md](estados-publicacion.md).
+Elimina definitivamente. Solo se pueden eliminar publicaciones en `BORRADOR` o `ARCHIVADO`: las que están en revisión se rechazan y las publicadas se archivan primero. Quién puede hacerlo está en [estados-publicacion.md](estados-publicacion.md#6-eliminación).
 
 ### Acciones de estado
 
