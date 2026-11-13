@@ -49,10 +49,16 @@ export function AvisoSoloLectura({ children }) {
 }
 
 // Mensaje de confirmación tras guardar o eliminar (se anuncia a los lectores de pantalla).
-export function AvisoExito({ children }) {
+// Con el `ref` de useEnfocarAviso recibe el foco al aparecer.
+export function AvisoExito({ children, ref }) {
   if (!children) return null;
   return (
-    <p role="status" className="mt-4 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark">
+    <p
+      ref={ref}
+      role="status"
+      tabIndex={-1}
+      className="mt-4 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark outline-none focus-visible:outline-2 focus-visible:outline-goldDark"
+    >
       {children}
     </p>
   );

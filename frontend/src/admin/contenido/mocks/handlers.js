@@ -48,6 +48,15 @@ export function reiniciarMocksContenido() {
 
 const REGEX_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// URL https:// válida (como urlHttps de la API): «https://» solo, o una URL mal formada, no sirve.
+function esUrlHttps(valor) {
+  try {
+    return new URL(valor).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 const REGEX_FECHA = /^\d{4}-\d{2}-\d{2}$/;
 const REGEX_YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 
@@ -80,28 +89,38 @@ function resumenSede(sede) {
 function resolverSedeFiltro(request, usuario) {
   const parametros = new URL(request.url).searchParams;
   const slug = parametros.get('sede');
-  if (esAdministrador(usuario)) {
-    if (slug && !sedes.some((s) => s.slug === slug)) {
-      return { respuesta: error(404, 'NO_ENCONTRADO', 'La sede indicada no existe.') };
-    }
-    return { slugSede: slug || null, parametros };
-  }
+  // El Administrador filtra por el slug que pida; uno que no existe da una lista vacía, no un error.
+  if (esAdministrador(usuario)) return { slugSede: slug || null, parametros };
   if (slug && slug !== usuario.sede.slug) {
     return { respuesta: otraSede() };
   }
   return { slugSede: usuario.sede.slug, parametros };
 }
 
+// Sede de un recurso nuevo (como sedeDelRecursoNuevo de la API): los roles con sede usan la suya; el
+// Administrador, el sedeId del cuerpo o, si no lo envía, su propia sede. Sin ninguna, 400 en sedeId.
 function resolverSedeCreacion(cuerpo, usuario) {
-  if (esAdministrador(usuario) && cuerpo?.sedeId !== undefined && cuerpo.sedeId !== null) {
-    const sede = sedes.find((s) => s.id === Number(cuerpo.sedeId));
-    if (!sede) {
-      return { respuesta: errorValidacion([{ campo: 'sedeId', mensaje: 'La sede indicada no existe.' }]) };
-    }
-    return { sede: resumenSede(sede) };
+  const pedida = esAdministrador(usuario) ? (cuerpo?.sedeId ?? usuario.sede?.id) : usuario.sede?.id;
+  if (pedida === undefined || pedida === null) {
+    return { respuesta: errorValidacion([{ campo: 'sedeId', mensaje: 'Indica la sede.' }]) };
   }
-  const sedeUsuario = sedes.find((s) => s.id === usuario.sede?.id) ?? sedes[0];
-  return { sede: resumenSede(sedeUsuario) };
+  const sede = sedes.find((s) => s.id === Number(pedida));
+  if (!sede) return { respuesta: errorValidacion([{ campo: 'sedeId', mensaje: 'La sede no existe.' }]) };
+  return { sede: resumenSede(sede) };
+}
+
+const esObjetoPlano = (valor) => valor !== null && typeof valor === 'object' && !Array.isArray(valor);
+
+// `configuracion` se fusiona en profundidad, como en la API: los objetos anidados también se fusionan,
+// las listas se reemplazan y una clave con null se borra.
+function fusionarConfiguracion(base, cambios) {
+  const resultado = esObjetoPlano(base) ? { ...base } : {};
+  for (const [clave, valor] of Object.entries(cambios)) {
+    if (valor === null) delete resultado[clave];
+    else if (esObjetoPlano(valor)) resultado[clave] = fusionarConfiguracion(resultado[clave], valor);
+    else resultado[clave] = valor;
+  }
+  return resultado;
 }
 
 function leerPorId(lista, id, usuario, mensajeNoEncontrado) {
@@ -1087,6 +1106,10 @@ export const handlersContenido = [
         detalles.push({ campo: 'redesSociales', mensaje: 'Las redes sociales deben ser una lista.' });
       } else {
         redesActualizadas = [];
+        const ids = cuerpo.redesSociales.map((item) => Number(item?.redSocialId));
+        if (new Set(ids).size !== ids.length) {
+          detalles.push({ campo: 'redesSociales', mensaje: 'No puede haber redes sociales repetidas.' });
+        }
         cuerpo.redesSociales.forEach((item, i) => {
           const cat = CATALOGOS.redesSociales.find((r) => r.id === Number(item?.redSocialId));
           if (!cat) {
@@ -1094,12 +1117,29 @@ export const handlersContenido = [
             return;
           }
           const url = typeof item.url === 'string' ? item.url.trim() : '';
-          if (!url.startsWith('https://')) {
-            detalles.push({ campo: `redesSociales.${i}.url`, mensaje: 'La URL debe empezar con https://.' });
+          if (!esUrlHttps(url)) {
+            detalles.push({ campo: `redesSociales.${i}.url`, mensaje: 'La URL de la red social debe comenzar con https://.' });
             return;
           }
           redesActualizadas.push({ id: cat.id, nombre: cat.nombre, icono: cat.icono, url });
         });
+      }
+    }
+
+    let tipoNuevo;
+    if (puedeGestionarSedes && cuerpo.tipo !== undefined) {
+      tipoNuevo = CATALOGOS.tiposSede.find((t) => t.codigo === cuerpo.tipo);
+      if (!tipoNuevo) detalles.push({ campo: 'tipo', mensaje: 'El tipo de sede indicado no existe.' });
+    }
+    let padreNuevo;
+    if (puedeGestionarSedes && cuerpo.sedePadreId !== undefined) {
+      if (cuerpo.sedePadreId === null) padreNuevo = null;
+      else if (Number(cuerpo.sedePadreId) === sede.id)
+        detalles.push({ campo: 'sedePadreId', mensaje: 'Una sede no puede ser su propia sede padre.' });
+      else {
+        const padre = sedes.find((s) => s.id === Number(cuerpo.sedePadreId));
+        if (!padre) detalles.push({ campo: 'sedePadreId', mensaje: 'La sede padre indicada no existe.' });
+        else padreNuevo = resumenSede(padre);
       }
     }
 
@@ -1116,17 +1156,14 @@ export const handlersContenido = [
     }
     sede.imagenPortada = imagenPortada;
     if (redesActualizadas !== undefined) sede.redesSociales = redesActualizadas;
-    if (cuerpo.configuracion && typeof cuerpo.configuracion === 'object') {
-      const copia = { ...sede.configuracion };
-      for (const [clave, valor] of Object.entries(cuerpo.configuracion)) {
-        if (valor === null) delete copia[clave];
-        else copia[clave] = valor;
-      }
-      sede.configuracion = copia;
+    if (esObjetoPlano(cuerpo.configuracion)) {
+      sede.configuracion = fusionarConfiguracion(sede.configuracion, cuerpo.configuracion);
     }
     if (puedeGestionarSedes) {
       if (cuerpo.slug !== undefined) sede.slug = aSlug(cuerpo.slug);
       if (cuerpo.activo !== undefined) sede.activo = Boolean(cuerpo.activo);
+      if (tipoNuevo) sede.tipo = { codigo: tipoNuevo.codigo, nombre: tipoNuevo.nombre };
+      if (padreNuevo !== undefined) sede.sedePadre = padreNuevo;
     }
 
     return HttpResponse.json({ datos: sede });

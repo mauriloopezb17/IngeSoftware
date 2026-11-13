@@ -10,12 +10,13 @@ import { actualizarBoletin, CLAVE_BOLETINES, crearBoletin } from './api.js';
 import SelectorPdf from './SelectorPdf.jsx';
 
 const CAMPO_DE_ERROR = { titulo: 'titulo', periodo: 'periodo', archivoId: 'archivo' };
+const MAX_TITULO = 150; // admin.md §11
 
 function validarLocal(campos) {
   const errores = {};
   const titulo = campos.titulo.trim();
   if (!titulo) errores.titulo = 'El título es obligatorio.';
-  else if (titulo.length > 200) errores.titulo = 'El título puede tener hasta 200 caracteres.';
+  else if (titulo.length > MAX_TITULO) errores.titulo = `El título puede tener hasta ${MAX_TITULO} caracteres.`;
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(campos.periodo)) errores.periodo = 'Elige el mes y el año del boletín.';
   if (!campos.archivo) errores.archivo = 'Elige o sube el PDF del boletín.';
   return errores;
@@ -94,7 +95,7 @@ export default function FormularioBoletin({ boletin }) {
         value={campos.titulo}
         onChange={(e) => cambiar({ titulo: e.target.value })}
         error={errores.titulo}
-        maxLength={200}
+        maxLength={MAX_TITULO}
         required
         autoComplete="off"
         placeholder="Edición de noviembre 2026"
@@ -106,7 +107,10 @@ export default function FormularioBoletin({ boletin }) {
         value={campos.periodo}
         onChange={(e) => cambiar({ periodo: e.target.value })}
         error={errores.periodo}
-        ayuda="Solo puede haber un boletín por mes."
+        // Firefox de escritorio y Safari no tienen selector de mes: el campo funciona como texto, con el mismo formato.
+        placeholder="AAAA-MM"
+        pattern="\d{4}-(0[1-9]|1[0-2])"
+        ayuda="Solo puede haber un boletín por mes. Si tu navegador no muestra un selector, escribe año y mes así: 2026-11."
         required
       />
 

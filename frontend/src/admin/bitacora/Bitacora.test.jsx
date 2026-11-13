@@ -79,6 +79,20 @@ describe('visor de la bitácora de cambios', () => {
     expect(within(lista).queryByText('horario #18')).not.toBeInTheDocument();
   });
 
+  it('el subtítulo dice «todos los cambios» para el Administrador y «en tu sede» para el Párroco', async () => {
+    await entrar('admin');
+    const { unmount } = montar();
+    expect(
+      await screen.findByText('Registro de auditoría de todos los cambios realizados en el sistema.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/en tu sede/)).not.toBeInTheDocument();
+    unmount();
+
+    await entrar('parroco');
+    montar();
+    expect(await screen.findByText('Registro de auditoría de los cambios realizados en tu sede.')).toBeInTheDocument();
+  });
+
   it('Secretaría recibe 403 al intentar consultar /admin/bitacora', async () => {
     await entrar('secretaria');
     await expect(clienteHttp.get('/admin/bitacora')).rejects.toMatchObject({
@@ -87,4 +101,3 @@ describe('visor de la bitácora de cambios', () => {
     });
   });
 });
-

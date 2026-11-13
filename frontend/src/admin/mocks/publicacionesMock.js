@@ -106,6 +106,7 @@ function imagenDeBiblioteca(id) {
     textoAlternativo: archivo.textoAlternativo ?? null,
     ancho: archivo.ancho ?? null,
     alto: archivo.alto ?? null,
+    variantes: archivo.variantes ?? [],
   };
 }
 

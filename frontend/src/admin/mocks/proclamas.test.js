@@ -62,11 +62,11 @@ describe('mock de proclamas (admin.md §10)', () => {
     const sinNombre = await capturar(clienteHttp.post('/admin/proclamas', { ...base, contrayente1: ' ' }));
     expect(sinNombre.detalles[0].campo).toBe('contrayente1');
     const despues = await capturar(clienteHttp.post('/admin/proclamas', { ...base, publicaciones: [{ fecha: dia(31) }] }));
-    expect(despues.detalles[0].campo).toBe('publicaciones');
+    expect(despues.detalles[0]).toEqual({ campo: 'publicaciones.0.fecha', mensaje: 'Debe ser anterior a la fecha del matrimonio.' });
     const desordenadas = await capturar(
       clienteHttp.post('/admin/proclamas', { ...base, publicaciones: [{ fecha: dia(5) }, { fecha: dia(2) }] }),
     );
-    expect(desordenadas.detalles[0].mensaje).toMatch(/crecientes/);
+    expect(desordenadas.detalles[0]).toEqual({ campo: 'publicaciones.1.fecha', mensaje: 'Debe ser posterior a la proclama anterior.' });
   });
 
   it('agrega la siguiente publicación (la 4.ª es 409), cambia fechas y solo quita la última', async () => {
@@ -77,6 +77,7 @@ describe('mock de proclamas (admin.md §10)', () => {
     await clienteHttp.post('/admin/proclamas/3/publicaciones', { fecha: dia(9) });
     const cuarta = await capturar(clienteHttp.post('/admin/proclamas/3/publicaciones', { fecha: dia(16) }));
     expect(cuarta.estado).toBe(409);
+    expect(cuarta.message).toBe('La proclama ya tiene sus 3 publicaciones.');
 
     const anterior = await capturar(clienteHttp.patch('/admin/proclamas/3/publicaciones/2', { fecha: dia(-8) }));
     expect(anterior.estado).toBe(400);
@@ -85,8 +86,12 @@ describe('mock de proclamas (admin.md §10)', () => {
 
     const noEsUltima = await capturar(clienteHttp.delete('/admin/proclamas/3/publicaciones/1'));
     expect(noEsUltima.estado).toBe(409);
-    await clienteHttp.delete('/admin/proclamas/3/publicaciones/3');
+    expect(noEsUltima.message).toBe('Solo se puede quitar la última publicación (la 3).');
+    // 200 con la proclama actualizada, no 204 (admin.md §10).
+    const { datos: tras } = await clienteHttp.delete('/admin/proclamas/3/publicaciones/3');
+    expect(tras.publicaciones.map((p) => p.numero)).toEqual([1, 2]);
     expect((await leer(3)).publicaciones).toHaveLength(2);
+    expect((await capturar(clienteHttp.delete('/admin/proclamas/3/publicaciones/3'))).estado).toBe(404);
   });
 
   it('no elimina una proclama con publicaciones ya alcanzadas, pero sí una solo programada', async () => {
@@ -110,5 +115,13 @@ describe('mock de proclamas (admin.md §10)', () => {
     await entrar('secretaria');
     const error = await capturar(clienteHttp.patch('/admin/proclamas/3', { fechaMatrimonio: matrimonio(-6) }));
     expect(error.detalles[0].campo).toBe('fechaMatrimonio');
+  });
+
+  it('rechaza campos que no son del cuerpo y el año fuera de rango', async () => {
+    await entrar('secretaria');
+    const extra = await capturar(clienteHttp.patch('/admin/proclamas/3', { tramiteOrigenId: 5 }));
+    expect(extra.detalles).toEqual([{ campo: 'tramiteOrigenId', mensaje: 'Campo no permitido.' }]);
+    const anio = await capturar(clienteHttp.get('/admin/proclamas', { parametros: { anio: '1850' } }));
+    expect(anio.detalles[0].campo).toBe('query.anio');
   });
 });

@@ -13,7 +13,7 @@ import {
 import { situacionDe } from './situacion.js';
 
 const boton =
-  'inline-flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark';
+  'inline-flex items-center justify-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark';
 
 // Cada acción: botón, confirmación y llamada. Los botones salen de `acciones` (lo que la API dice que
 // esta sesión puede hacer): el componente no decide permisos.

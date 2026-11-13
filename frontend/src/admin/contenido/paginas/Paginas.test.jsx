@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 
 import { clienteHttp } from '../../../services/clienteHttp.js';
 import { reiniciarMocksAdmin } from '../../mocks/handlers.js';
@@ -17,13 +17,22 @@ const entrar = (rol = 'secretaria') =>
     contrasena: CONTRASENA_DESARROLLO,
   });
 
-function montar() {
+function Ubicacion() {
+  const { pathname } = useLocation();
+  return <p data-testid="ubicacion">{pathname}</p>;
+}
+
+// Páginas se monta como en AdminApp: bajo /admin/paginas/*, con sus subrutas reales.
+function montar(entrada = '/admin/paginas') {
   const cliente = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={cliente}>
       <SesionProvider>
-        <MemoryRouter initialEntries={['/admin/paginas']}>
-          <Paginas />
+        <MemoryRouter initialEntries={[entrada]}>
+          <Routes>
+            <Route path="/admin/paginas/*" element={<Paginas />} />
+          </Routes>
+          <Ubicacion />
         </MemoryRouter>
       </SesionProvider>
     </QueryClientProvider>,
@@ -88,11 +97,12 @@ describe('gestión de páginas y bloques', () => {
 
     const lista = await screen.findByRole('list', { name: 'Páginas' });
     const filaNosotros = within(lista).getByText('Quiénes somos').closest('li');
-    await u.click(within(filaNosotros).getByRole('button', { name: 'Bloques' }));
+    await u.click(within(filaNosotros).getByRole('link', { name: 'Bloques de «Quiénes somos»' }));
 
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Quiénes somos' }),
     ).toBeInTheDocument();
+    expect(screen.getByTestId('ubicacion')).toHaveTextContent('/admin/paginas/2');
     const listaBloques = await screen.findByRole('list', { name: 'Bloques de la página' });
     expect(within(listaBloques).getByText('Texto con imagen')).toBeInTheDocument();
     expect(within(listaBloques).getByText('Cita destacada')).toBeInTheDocument();
@@ -167,7 +177,7 @@ describe('gestión de páginas y bloques', () => {
 
     const lista = await screen.findByRole('list', { name: 'Páginas' });
     const filaHistoria = within(lista).getByText('Nuestra historia').closest('li');
-    await u.click(within(filaHistoria).getByRole('button', { name: 'Bloques' }));
+    await u.click(within(filaHistoria).getByRole('link', { name: 'Bloques de «Nuestra historia»' }));
 
     // Bloque galeria usando SelectorImagenes
     await u.click(await screen.findByRole('button', { name: /Agregar bloque/ }));
@@ -203,11 +213,33 @@ describe('gestión de páginas y bloques', () => {
 
     const lista = await screen.findByRole('list', { name: 'Páginas' });
     const filaInicio = within(lista).getByText('Inicio').closest('li');
-    await u.click(within(filaInicio).getByRole('button', { name: 'Ver bloques' }));
+    await u.click(within(filaInicio).getByRole('link', { name: 'Ver bloques de «Inicio»' }));
 
     expect(await screen.findByText(/solo lectura/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Agregar bloque/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Subir bloque/ })).not.toBeInTheDocument();
   });
-});
 
+  it('cada página tiene su ruta: /admin/paginas/:id se abre directo y se puede volver al listado', async () => {
+    await entrar('secretaria');
+    montar('/admin/paginas/2');
+    const u = userEvent.setup({ delay: null });
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Quiénes somos' })).toBeInTheDocument();
+    await u.click(screen.getByRole('link', { name: 'Volver a páginas' }));
+
+    const titulo = await screen.findByRole('heading', { level: 1, name: 'Páginas' });
+    expect(screen.getByTestId('ubicacion')).toHaveTextContent(/^\/admin\/paginas$/);
+    // El foco vuelve al título del listado.
+    expect(titulo).toHaveFocus();
+  });
+
+  it('una página que no existe, un id inválido o una subruta desconocida dan «página no encontrada»', async () => {
+    await entrar('secretaria');
+    for (const ruta of ['/admin/paginas/999', '/admin/paginas/abc', '/admin/paginas/2/otra']) {
+      const { unmount } = montar(ruta);
+      expect(await screen.findByRole('heading', { name: 'Página no encontrada' })).toBeInTheDocument();
+      unmount();
+    }
+  });
+});

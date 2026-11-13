@@ -1,12 +1,14 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, Loader2, UploadCloud } from 'lucide-react';
+import { Ban, FileText, UploadCloud } from 'lucide-react';
 
 import Dialogo from '../componentes/Dialogo.jsx';
 import { Cargando, ErrorConsulta } from '../componentes/EstadoConsulta.jsx';
 import Paginacion from '../componentes/Paginacion.jsx';
 import { CLAVE_MULTIMEDIA, subirArchivo } from '../multimedia/api.js';
+import BarraProgreso from '../multimedia/BarraProgreso.jsx';
 import { formatearFecha, formatearTamano } from '../multimedia/formato.js';
+import { fueCancelada } from '../multimedia/subidaXhr.js';
 import { useBiblioteca } from '../multimedia/useBiblioteca.js';
 import { tipoDelArchivo, validarArchivoCliente } from '../multimedia/validacion.js';
 import { usePermisos } from '../permisos/usePermisos.js';
@@ -21,6 +23,13 @@ export default function SelectorPdf({ seleccionadoId, onSeleccionar, onCerrar })
   const entrada = useRef(null);
   const [pagina, setPagina] = useState(1);
   const [rechazo, setRechazo] = useState('');
+  const [progreso, setProgreso] = useState(0);
+  const [nombreSubiendo, setNombreSubiendo] = useState('');
+  const control = useRef(null); // AbortController de la subida en curso
+  const botonSubir = useRef(null);
+
+  // Al cerrar el diálogo no se deja una subida huérfana.
+  useEffect(() => () => control.current?.abort(), []);
 
   const { data, isPending, isError, error, isPlaceholderData, refetch } = useBiblioteca({
     clase: 'DOCUMENTO',
@@ -30,7 +39,14 @@ export default function SelectorPdf({ seleccionadoId, onSeleccionar, onCerrar })
   });
 
   const subir = useMutation({
-    mutationFn: (archivo) => subirArchivo({ archivo }),
+    mutationFn: (archivo) => {
+      control.current = new AbortController();
+      setProgreso(0);
+      setNombreSubiendo(archivo.name);
+      return subirArchivo({ archivo, senal: control.current.signal, onProgreso: setProgreso });
+    },
+    // Tras cancelar o fallar, el botón de cancelar desaparece: el foco vuelve a «Subir un PDF».
+    onError: () => requestAnimationFrame(() => botonSubir.current?.focus()),
     onSuccess: (archivo) => {
       queryClient.invalidateQueries({ queryKey: CLAVE_MULTIMEDIA });
       onSeleccionar(archivo);
@@ -56,10 +72,11 @@ export default function SelectorPdf({ seleccionadoId, onSeleccionar, onCerrar })
   }
 
   const documentos = data?.datos ?? [];
-  const errorSubida = rechazo || (subir.error ? subir.error.message : '');
+  // Cancelar no es un fallo: no se muestra como error.
+  const errorSubida = rechazo || (subir.error && !fueCancelada(subir.error) ? subir.error.message : '');
 
   return (
-    <Dialogo titulo="PDF del boletín" onCerrar={subir.isPending ? () => {} : onCerrar} ancho="max-w-2xl">
+    <Dialogo titulo="PDF del boletín" onCerrar={onCerrar} ancho="max-w-2xl">
       {puede('multimedia.subir') && (
         <section aria-label="Subir un PDF nuevo" className="rounded-lg border border-dashed border-borderSoft p-4">
           <p className="text-sm text-charcoal">
@@ -74,19 +91,28 @@ export default function SelectorPdf({ seleccionadoId, onSeleccionar, onCerrar })
             aria-label="Archivo PDF"
             tabIndex={-1}
           />
-          <button
-            type="button"
-            onClick={() => entrada.current?.click()}
-            disabled={subir.isPending}
-            className="mt-3 flex items-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {subir.isPending ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <UploadCloud className="size-4" aria-hidden="true" />
-            )}
-            {subir.isPending ? 'Subiendo…' : 'Subir un PDF'}
-          </button>
+          {subir.isPending ? (
+            <div className="mt-3 flex flex-col gap-2">
+              <BarraProgreso nombre={nombreSubiendo} progreso={progreso} />
+              <button
+                type="button"
+                onClick={() => control.current?.abort()}
+                aria-label={`Cancelar la subida de ${nombreSubiendo}`}
+                className="flex w-fit items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
+              >
+                <Ban className="size-4" aria-hidden="true" /> Cancelar
+              </button>
+            </div>
+          ) : (
+            <button
+              ref={botonSubir}
+              type="button"
+              onClick={() => entrada.current?.click()}
+              className="mt-3 flex items-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark"
+            >
+              <UploadCloud className="size-4" aria-hidden="true" /> Subir un PDF
+            </button>
+          )}
           {errorSubida && (
             <p role="alert" className="mt-2 text-sm text-redParish">
               {errorSubida}

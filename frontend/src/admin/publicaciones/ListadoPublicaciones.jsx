@@ -7,6 +7,7 @@ import Paginacion from '../componentes/Paginacion.jsx';
 import { formatearFecha } from '../multimedia/formato.js';
 import { usePermisos } from '../permisos/usePermisos.js';
 import { AvisoSoloLectura } from '../componentes/EstadoConsulta.jsx';
+import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import AccionesEstado from './AccionesEstado.jsx';
 import { CLAVE_PUBLICACIONES, ESTADOS, listarPublicaciones, TIPO_AVISO, TIPOS_DE_ESTA_PANTALLA } from './api.js';
 import InsigniaSituacion from './InsigniaSituacion.jsx';
@@ -146,6 +147,8 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
   const ubicacion = useLocation();
   const [avisoAccion, setAvisoAccion] = useState('');
   const aviso = avisoAccion || ubicacion.state?.aviso;
+  // Archivar, restaurar o eliminar cambia o quita la fila: el foco pasa al mensaje de confirmación.
+  const avisoRef = useEnfocarAviso(aviso);
   const filtros = leerFiltros(parametros, esAvisos);
   const { puede } = usePermisos();
   const hayFiltros = Boolean(filtros.estado || (!esAvisos && filtros.tipo) || filtros.buscar || filtros.autor);
@@ -216,7 +219,12 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
       )}
 
       {aviso && (
-        <p role="status" className="mt-4 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark">
+        <p
+          ref={avisoRef}
+          role="status"
+          tabIndex={-1}
+          className="mt-4 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark outline-none focus-visible:outline-2 focus-visible:outline-goldDark"
+        >
           {aviso}
         </p>
       )}
@@ -269,31 +277,49 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
             </p>
 
             {publicaciones.length ? (
-              <div className={`overflow-x-auto rounded-lg border border-borderSoft bg-white ${isPlaceholderData ? 'opacity-60' : ''}`}>
-                <table className="w-full min-w-[40rem] text-left text-sm">
+              // `relative`: los textos solo para lectores de pantalla (sr-only, position: absolute) de las celdas se quedan
+              // dentro del recorte; sin eso la última columna ensanchaba toda la página en móvil.
+              // Con tabIndex el scroll horizontal también se alcanza con el teclado.
+              <div
+                role="region"
+                aria-label={esAvisos ? 'Tabla de avisos' : 'Tabla de publicaciones'}
+                tabIndex={0}
+                className={`relative overflow-x-auto rounded-lg border border-borderSoft bg-white focus-visible:outline-2 focus-visible:outline-goldDark ${isPlaceholderData ? 'opacity-60' : ''}`}
+              >
+                {/* En móvil se ocultan Tipo, Autor y Publicación (pasan a una línea bajo el título) para que las
+                    acciones queden a la vista sin desplazar la tabla; desde `md` salen todas las columnas. */}
+                <table className="w-full text-left text-sm md:min-w-[40rem]">
                   <caption className="sr-only">{esAvisos ? 'Avisos' : 'Publicaciones'}</caption>
                   <thead className="border-b border-borderSoft bg-stone text-xs uppercase tracking-wide text-muted">
                     <tr>
                       <th scope="col" className="px-4 py-3 font-semibold">Título</th>
-                      <th scope="col" className="px-4 py-3 font-semibold">Tipo</th>
+                      <th scope="col" className="hidden px-4 py-3 font-semibold md:table-cell">Tipo</th>
                       <th scope="col" className="px-4 py-3 font-semibold">Situación</th>
-                      <th scope="col" className="px-4 py-3 font-semibold">Autor</th>
-                      <th scope="col" className="px-4 py-3 font-semibold">Publicación</th>
+                      <th scope="col" className="hidden px-4 py-3 font-semibold md:table-cell">Autor</th>
+                      <th scope="col" className="hidden px-4 py-3 font-semibold md:table-cell">Publicación</th>
                       <th scope="col" className="px-4 py-3 font-semibold"><span className="sr-only">Acciones</span></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-borderSoft">
                     {publicaciones.map((publicacion) => (
                       <tr key={publicacion.id}>
-                        <th scope="row" className="px-4 py-3 font-semibold text-ink">
+                        <th scope="row" className="px-3 py-3 font-semibold text-ink md:px-4">
                           {publicacion.titulo}
+                          {/* Solo en móvil: lo que las columnas ocultas muestran en escritorio. */}
+                          <span className="mt-1 block text-xs font-normal text-muted md:hidden">
+                            {[
+                              publicacion.tipo.nombre,
+                              publicacion.autor.nombreCompleto,
+                              publicacion.fechaPublicacion ? formatearFecha(publicacion.fechaPublicacion) : 'Sin fecha',
+                            ].join(' · ')}
+                          </span>
                         </th>
-                        <td className="px-4 py-3 text-charcoal">{publicacion.tipo.nombre}</td>
-                        <td className="px-4 py-3">
+                        <td className="hidden px-4 py-3 text-charcoal md:table-cell">{publicacion.tipo.nombre}</td>
+                        <td className="px-3 py-3 md:px-4">
                           <InsigniaSituacion publicacion={publicacion} />
                         </td>
-                        <td className="px-4 py-3 text-charcoal">{publicacion.autor.nombreCompleto}</td>
-                        <td className="whitespace-nowrap px-4 py-3 text-charcoal">
+                        <td className="hidden px-4 py-3 text-charcoal md:table-cell">{publicacion.autor.nombreCompleto}</td>
+                        <td className="hidden whitespace-nowrap px-4 py-3 text-charcoal md:table-cell">
                           {publicacion.fechaPublicacion ? formatearFecha(publicacion.fechaPublicacion) : 'Sin fecha'}
                           {esAvisos && publicacion.fechaExpiracion && (
                             <span className="block text-xs text-muted">
@@ -301,19 +327,25 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex flex-wrap justify-end gap-2">
+                        <td className="px-3 py-3 text-right md:px-4">
+                          {/* En móvil los botones se apilan (columna estrecha); desde `sm` van en fila. */}
+                          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
                           {/* Los botones salen de `acciones`: la API dice qué puede hacer esta sesión. */}
                           {publicacion.acciones.includes('EDITAR') && (
                             <Link
                               to={`/admin/publicaciones/${publicacion.id}/editar`}
                               aria-label={`Editar «${publicacion.titulo}»`}
-                              className="inline-flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
+                              className="inline-flex items-center justify-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
                             >
                               <Pencil className="size-3.5" aria-hidden="true" /> Editar
                             </Link>
                           )}
-                          <AccionesEstado publicacion={publicacion} alTerminar={setAvisoAccion} />
+                          <AccionesEstado
+                            publicacion={publicacion}
+                            alTerminar={(mensaje) => {
+                              setAvisoAccion(mensaje);
+                            }}
+                          />
                           </div>
                         </td>
                       </tr>

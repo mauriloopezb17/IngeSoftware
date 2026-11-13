@@ -72,7 +72,7 @@ export default function Usuarios() {
   });
 
   const usuarios = usuariosQuery.data?.datos ?? [];
-  const paginacion = usuariosQuery.data?.meta?.paginacion;
+  const paginacion = usuariosQuery.data?.paginacion;
   const sedes = sedesQuery.data ?? [];
 
   return (

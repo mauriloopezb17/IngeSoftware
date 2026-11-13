@@ -87,8 +87,22 @@ export function formatearFechaCorta(fechaIso) {
 }
 
 export function formatearFechaLarga(fechaIso) {
-  const { dia, mes, anio } = obtenerPartesBolivia(fechaIso);
+  if (!fechaIso) return '';
+  const valor = /^\d{4}-\d{2}-\d{2}$/.test(fechaIso)
+    ? `${fechaIso}T12:00:00-04:00`
+    : fechaIso;
+  const { dia, mes, anio } = obtenerPartesBolivia(valor);
   return `${String(dia).padStart(2, '0')} ${MESES_CORTOS[mes]} ${anio}`;
+}
+
+export function formatearPeriodoMes(periodo) {
+  if (!periodo) return '';
+  const valor = /^\d{4}-\d{2}-\d{2}$/.test(periodo)
+    ? `${periodo}T12:00:00-04:00`
+    : periodo;
+  const { mes, anio } = obtenerPartesBolivia(valor);
+  const nombreMes = MESES_LARGOS[mes];
+  return `${nombreMes.charAt(0).toUpperCase()}${nombreMes.slice(1)} ${anio}`;
 }
 
 export function formatearHoraEvento(evento) {
