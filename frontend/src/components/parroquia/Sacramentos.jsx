@@ -1,12 +1,9 @@
-
 import { ArrowRight } from 'lucide-react';
 
-import {
-  anchoContenido,
-  TituloSeccion,
-} from './ElementosComunes.jsx';
-
-import { sacramentos } from '../../data/datosParroquia.js';
+import { anchoContenido, TituloSeccion } from './ElementosComunes.jsx';
+import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
+import { IconoDinamico } from './IconoDinamico.jsx';
+import { useServicios } from '../../hooks/index.js';
 
 import '../../styles/Sacramentos.css';
 
@@ -32,6 +29,8 @@ function AnillosMatrimonio({ size = 24, strokeWidth = 1.8 }) {
 }
 
 function Sacramentos() {
+  const { data: servicios = [], isPending, isError, refetch } = useServicios();
+
   return (
     <section id="sacramentos" className="sacramentos">
       <div className={anchoContenido}>
@@ -44,36 +43,43 @@ function Sacramentos() {
           />
         </div>
 
-        <div className="sacramentos-tarjetas">
-          {sacramentos.map(({ name, icon: Icono, text }) => (
-            <article key={name} className="sacramentos-tarjeta">
-              <div className="sacramentos-icono">
-                {Icono ? (
-                  <Icono size={24} strokeWidth={1.8} />
-                ) : (
-                  <AnillosMatrimonio size={24} strokeWidth={1.8} />
-                )}
-              </div>
+        {isPending ? (
+          <CargandoSeccion alturaMinima={440} etiqueta="Cargando sacramentos y servicios" />
+        ) : isError ? (
+          <ErrorSeccion
+            mensaje="No pudimos cargar los servicios parroquiales."
+            onReintentar={refetch}
+          />
+        ) : servicios.length === 0 ? (
+          <SinResultados mensaje="No hay servicios publicados por el momento." />
+        ) : (
+          <div className="sacramentos-tarjetas">
+            {servicios.map(({ id, nombre, descripcionCorta, icono }) => (
+              <article key={id} className="sacramentos-tarjeta">
+                <div className="sacramentos-icono">
+                  {icono ? (
+                    <IconoDinamico nombre={icono} size={24} strokeWidth={1.8} />
+                  ) : (
+                    <AnillosMatrimonio size={24} strokeWidth={1.8} />
+                  )}
+                </div>
 
-              <h3 className="sacramentos-tarjeta-titulo">
-                {name}
-              </h3>
+                <h3 className="sacramentos-tarjeta-titulo">{nombre}</h3>
 
-              <p className="sacramentos-tarjeta-descripcion">
-                {text}
-              </p>
+                <p className="sacramentos-tarjeta-descripcion">{descripcionCorta}</p>
 
-              <a
-                href="#contacto"
-                className="sacramentos-enlace"
-                aria-label={`Consultar requisitos de ${name}`}
-              >
-                Ver requisitos
-                <ArrowRight size={15} />
-              </a>
-            </article>
-          ))}
-        </div>
+                <a
+                  href="#contacto"
+                  className="sacramentos-enlace"
+                  aria-label={`Consultar requisitos de ${nombre}`}
+                >
+                  Ver requisitos
+                  <ArrowRight size={15} />
+                </a>
+              </article>
+            ))}
+          </div>
+        )}
 
         <div className="sacramentos-acciones">
           <a href="#contacto" className="sacramentos-boton">

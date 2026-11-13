@@ -1,12 +1,9 @@
-
 import { ArrowRight } from 'lucide-react';
 
-import {
-  anchoContenido,
-  TituloSeccion,
-} from './ElementosComunes.jsx';
-
-import { proclamas } from '../../data/datosParroquia.js';
+import { anchoContenido, TituloSeccion } from './ElementosComunes.jsx';
+import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
+import { useProclamas } from '../../hooks/index.js';
+import { formatearFechaBoda } from '../../utils/formatoPortal.js';
 
 import '../../styles/Proclamas.css';
 
@@ -32,6 +29,8 @@ function AnillosMatrimoniales() {
 }
 
 function Proclamas() {
+  const { data: proclamas = [], isPending, isError, refetch } = useProclamas();
+
   return (
     <section id="proclamas" className="proclamas">
       <div className={`${anchoContenido} proclamas-contenedor`}>
@@ -46,9 +45,9 @@ function Proclamas() {
           />
 
           <p className="proclamas-descripcion">
-            Si alguien conoce algún impedimento por el cual estas
-            parejas no puedan contraer matrimonio, está obligado
-            a comunicarlo al párroco o en secretaría.
+            Si alguien conoce algún impedimento por el cual estas parejas no
+            puedan contraer matrimonio, está obligado a comunicarlo al párroco o
+            en secretaría.
           </p>
 
           <a href="#proclamas-listado" className="proclamas-enlace">
@@ -58,27 +57,45 @@ function Proclamas() {
         </div>
 
         <div id="proclamas-listado" className="proclamas-tarjeta">
-          {proclamas.map(([personas, fecha, etiqueta]) => (
-            <article key={personas} className="proclamas-fila">
-              <div className="proclamas-datos">
-                <h3 className="proclamas-nombres">
-                  {personas}
-                </h3>
+          {isPending ? (
+            <CargandoSeccion
+              alturaMinima={240}
+              etiqueta="Cargando proclamas matrimoniales"
+            />
+          ) : isError ? (
+            <ErrorSeccion
+              mensaje="No pudimos cargar las proclamas matrimoniales."
+              onReintentar={refetch}
+            />
+          ) : proclamas.length === 0 ? (
+            <SinResultados mensaje="No hay proclamas vigentes esta semana." />
+          ) : (
+            <>
+              {proclamas.map(
+                ({ id, contrayente1, contrayente2, fechaMatrimonio, numeroProclama }) => (
+                  <article key={id} className="proclamas-fila">
+                    <div className="proclamas-datos">
+                      <h3 className="proclamas-nombres">
+                        {`${contrayente1} & ${contrayente2}`}
+                      </h3>
 
-                <p className="proclamas-fecha">
-                  {fecha}
-                </p>
-              </div>
+                      <p className="proclamas-fecha">
+                        {formatearFechaBoda(fechaMatrimonio)}
+                      </p>
+                    </div>
 
-              <span className="proclamas-etiqueta">
-                {etiqueta}
-              </span>
-            </article>
-          ))}
+                    <span className="proclamas-etiqueta">
+                      {`${numeroProclama}.ª proclama`}
+                    </span>
+                  </article>
+                ),
+              )}
 
-          <p className="proclamas-nota">
-            Nombres ficticios — datos de ejemplo para el prototipo.
-          </p>
+              <p className="proclamas-nota">
+                Nombres ficticios — datos de ejemplo para el prototipo.
+              </p>
+            </>
+          )}
         </div>
       </div>
     </section>
