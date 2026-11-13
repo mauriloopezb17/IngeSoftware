@@ -1,0 +1,175 @@
+/* Renderizador de bloques BlockNote del portal público */
+.bn-contenido {
+  color: var(--color-ink);
+  font-family: "Montserrat", Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.bn-contenido > * + * {
+  margin-top: 1.25rem;
+}
+
+.bn-parrafo {
+  margin: 0;
+  color: var(--color-charcoal);
+}
+
+.bn-parrafo:empty {
+  min-height: 1rem;
+}
+
+.bn-encabezado {
+  margin: 2rem 0 0.75rem;
+  color: var(--color-ink);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.bn-encabezado-2 {
+  font-size: clamp(1.75rem, 2.5vw, 2.25rem);
+}
+
+.bn-encabezado-3 {
+  font-size: clamp(1.375rem, 2vw, 1.65rem);
+}
+
+.bn-lista {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+  color: var(--color-charcoal);
+}
+
+.bn-lista-vinetas {
+  list-style-type: disc;
+}
+
+.bn-lista-numerada {
+  list-style-type: decimal;
+}
+
+.bn-lista-item + .bn-lista-item {
+  margin-top: 0.45rem;
+}
+
+.bn-lista-item > .bn-lista {
+  margin-top: 0.45rem;
+  margin-bottom: 0.25rem;
+}
+
+.bn-cita {
+  margin: 1.75rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--color-gold);
+  background-color: var(--color-stone);
+  color: var(--color-ink);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.35rem;
+  line-height: 1.5;
+}
+
+.bn-figura {
+  margin: 1.75rem 0;
+}
+
+.bn-imagen,
+.bn-video {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  background-color: var(--color-stone);
+}
+
+.bn-leyenda {
+  margin-top: 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.bn-enlace {
+  color: var(--color-goldDark);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bn-enlace:hover {
+  color: var(--color-ink);
+}
+
+/* Alineación */
+.bn-alinear-left {
+  text-align: left;
+}
+
+.bn-alinear-center {
+  text-align: center;
+}
+
+.bn-alinear-right {
+  text-align: right;
+}
+
+.bn-alinear-justify {
+  text-align: justify;
+}
+
+/* Paleta de colores BlockNote */
+.bn-texto-gray {
+  color: #6b6162;
+}
+.bn-texto-brown {
+  color: #7c4a2d;
+}
+.bn-texto-red {
+  color: #9e1b22;
+}
+.bn-texto-orange {
+  color: #b5532f;
+}
+.bn-texto-yellow {
+  color: #9a7004;
+}
+.bn-texto-green {
+  color: #2c6e49;
+}
+.bn-texto-blue {
+  color: #1d4e89;
+}
+.bn-texto-purple {
+  color: #6b3fa0;
+}
+.bn-texto-pink {
+  color: #a63a6b;
+}
+
+.bn-fondo-gray {
+  background-color: #f1efec;
+}
+.bn-fondo-brown {
+  background-color: #f4ebe4;
+}
+.bn-fondo-red {
+  background-color: #fbeaea;
+}
+.bn-fondo-orange {
+  background-color: #fcedea;
+}
+.bn-fondo-yellow {
+  background-color: #fbf1d3;
+}
+.bn-fondo-green {
+  background-color: #eaf5ee;
+}
+.bn-fondo-blue {
+  background-color: #eaf1fb;
+}
+.bn-fondo-purple {
+  background-color: #f3ecfa;
+}
+.bn-fondo-pink {
+  background-color: #fbeaf2;
+}
