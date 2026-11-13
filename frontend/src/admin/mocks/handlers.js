@@ -3,6 +3,7 @@
 import { http, HttpResponse } from 'msw';
 
 import { api } from '../../mocks/api.js';
+import { handlersEventos, reiniciarEventos } from './eventosMock.js';
 import { USO_DE_ARCHIVOS } from './multimediaDatos.js';
 import {
   buscarArchivo,
@@ -31,6 +32,7 @@ export function reiniciarMocksAdmin() {
   borrarSesionMock();
   reiniciarMultimedia();
   reiniciarPublicaciones();
+  reiniciarEventos();
 }
 
 function error(estado, codigo, mensaje, detalles = [], cabeceras = {}) {
@@ -197,4 +199,7 @@ export const handlersAdmin = [
 
   // ---- Publicaciones (docs/api/admin.md §3) ----
   ...handlersPublicaciones,
+
+  // ---- Eventos (docs/api/admin.md §4) ----
+  ...handlersEventos,
 ];
