@@ -117,7 +117,7 @@ Todos los catálogos en una sola respuesta, para llenar los selectores de los fo
 
 ## 2. Multimedia
 
-Archivos guardados en Oracle Cloud Object Storage (compatible con S3, bucket público). Su URL pública es `CDN_PUBLIC_URL` + la clave del objeto.
+Archivos guardados en Oracle Cloud Object Storage (compatible con S3, bucket público). Su URL pública es `CDN_PUBLIC_URL` + `/` + la clave del objeto; con OCI, `CDN_PUBLIC_URL` termina en `/n/<namespace>/b/<bucket>/o` (ver `backend/.env.example`).
 
 ### Objeto archivo multimedia (vista del panel)
 

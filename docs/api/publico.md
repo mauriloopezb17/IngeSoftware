@@ -181,7 +181,7 @@ Datos institucionales, contacto, redes sociales y configuración visual de una s
     "configuracion": {
       "colorPrimario": "#231F20",
       "colorAcento": "#E2AD11",
-      "textoBarraSuperior": "Hoy, sábado: Santa Misa 7:00 · 18:00 (vespertina dominical)",
+      "textoBarraSuperior": "Misas: lunes a viernes 7:00 y 19:00 · sábado 7:00 y 18:00 · domingo 8:00, 10:00, 12:00 y 19:00",
       "textoWhatsapp": "WhatsApp Secretaría",
       "enlaceComoLlegar": "https://www.google.com/maps/dir/?api=1&destination=-16.5267952%2C-68.1082157",
       "enlaceMessenger": "https://www.facebook.com/profile.php?id=100064836665037",
