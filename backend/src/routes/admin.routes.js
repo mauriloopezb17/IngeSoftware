@@ -5,6 +5,7 @@ import { Router } from 'express';
 import { autenticar } from '../middlewares/autenticar.js';
 import bibliotecaRoutes from './biblioteca.routes.js';
 import bitacoraRoutes from './bitacora.routes.js';
+import adminHorariosRoutes from './adminHorarios.routes.js';
 import multimediaRoutes from './multimedia.routes.js';
 
 const router = Router();
@@ -14,5 +15,6 @@ router.use(autenticar);
 router.use('/multimedia', multimediaRoutes);
 router.use('/multimedia', bibliotecaRoutes);
 router.use('/bitacora', bitacoraRoutes);
+router.use('/horarios', adminHorariosRoutes);
 
 export default router;
