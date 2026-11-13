@@ -24,9 +24,9 @@ describe('GruposPastorales, Comunidades y VideoInstitucional desde la API', () =
     expect(screen.getByText('Legión de María')).toBeInTheDocument();
     expect(screen.getByText('Pastoral social')).toBeInTheDocument();
 
-    expect(await screen.findByText('Parroquia Señor de la Exaltación')).toBeInTheDocument();
-    expect(screen.getByText('Parroquia de la Resurrección')).toBeInTheDocument();
-    expect(screen.getByText('Capilla San Pablo de la Cruz')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Señor de la Exaltación' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'de la Resurrección' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'San Pablo de la Cruz' })).toBeInTheDocument();
 
     expect(await screen.findByText('Recorrido aéreo y del templo · 0:30')).toBeInTheDocument();
     const videoEl = container.querySelector('video.video-institucional-video');

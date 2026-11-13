@@ -71,7 +71,7 @@ export function obtenerEventosExaltacion() {
   return [
     {
       id: 1,
-      titulo: 'Vigilia de Todos los Santos',
+      titulo: 'Adoración eucarística comunitaria',
       descripcion: null,
       lugar: 'Templo parroquial',
       fechaInicio: fechaRelativaBolivia(6, '19:00:00'),
@@ -82,7 +82,7 @@ export function obtenerEventosExaltacion() {
     },
     {
       id: 2,
-      titulo: 'Todos los Santos',
+      titulo: 'Misa de sanación',
       descripcion: 'Horarios: 8:00 – 10:00 – 12:00',
       lugar: 'Templo parroquial',
       fechaInicio: fechaRelativaBolivia(7, '08:00:00'),
@@ -93,7 +93,7 @@ export function obtenerEventosExaltacion() {
     },
     {
       id: 3,
-      titulo: 'Conmemoración de los Fieles Difuntos',
+      titulo: 'Misa por los difuntos de la comunidad',
       descripcion: null,
       lugar: 'Templo parroquial',
       fechaInicio: fechaRelativaBolivia(8, '19:00:00'),
@@ -219,8 +219,8 @@ export function obtenerPublicacionesExaltacion() {
     {
       id: 2,
       tipo: { codigo: 'AVISO', nombre: 'Aviso' },
-      titulo: 'El 2 de noviembre la secretaría atenderá solo por la mañana.',
-      slug: 'secretaria-2-de-noviembre',
+      titulo: 'El próximo lunes la secretaría atenderá solo por la mañana.',
+      slug: 'secretaria-atencion-lunes',
       resumen: null,
       categoria: null,
       imagenPortada: null,
@@ -229,8 +229,8 @@ export function obtenerPublicacionesExaltacion() {
       fechaPublicacion: fechaRelativaBolivia(-3, '09:00:00'),
       fechaExpiracion: null,
       contenido: crearContenidoBlockNote(
-        'secretaria-2-de-noviembre',
-        'El 2 de noviembre la secretaría atenderá solo por la mañana.',
+        'secretaria-atencion-lunes',
+        'El próximo lunes la secretaría atenderá solo por la mañana.',
       ),
     },
     {
