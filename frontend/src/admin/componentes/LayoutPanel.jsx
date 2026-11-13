@@ -67,31 +67,35 @@ export default function LayoutPanel() {
 
       <aside
         id="menu-panel"
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-deep transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:visible ${
+        // En escritorio la columna se estira con el contenido (el fondo llega hasta el final de la
+        // página); el menú queda pegado a la pantalla dentro de ella.
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-deep transition-transform lg:static lg:shrink-0 lg:translate-x-0 lg:visible ${
           menuAbierto ? 'visible translate-x-0' : 'invisible -translate-x-full'
         }`}
       >
-        <div className="flex items-start justify-between gap-2 border-b border-white/10 px-5 py-5">
-          <div>
-            <p className="font-display text-xl font-semibold leading-tight text-white">
-              Parroquia Señor de la Exaltación
-            </p>
-            <p className="mt-1 text-xs uppercase tracking-widest text-gold">Panel de administración</p>
+        <div data-testid="menu-fijo" className="flex h-full flex-col lg:sticky lg:top-0 lg:h-screen">
+          <div className="flex items-start justify-between gap-2 border-b border-white/10 px-5 py-5">
+            <div>
+              <p className="font-display text-xl font-semibold leading-tight text-white">
+                Parroquia Señor de la Exaltación
+              </p>
+              <p className="mt-1 text-xs uppercase tracking-widest text-gold">Panel de administración</p>
+            </div>
+            <button
+              ref={botonCerrarMenu}
+              type="button"
+              onClick={() => {
+                setMenuAbierto(false);
+                botonMenu.current?.focus();
+              }}
+              aria-label="Cerrar menú"
+              className="rounded-md p-1.5 text-cream/80 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-gold lg:hidden"
+            >
+              <X className="size-5" aria-hidden="true" />
+            </button>
           </div>
-          <button
-            ref={botonCerrarMenu}
-            type="button"
-            onClick={() => {
-              setMenuAbierto(false);
-              botonMenu.current?.focus();
-            }}
-            aria-label="Cerrar menú"
-            className="rounded-md p-1.5 text-cream/80 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-gold lg:hidden"
-          >
-            <X className="size-5" aria-hidden="true" />
-          </button>
+          <MenuLateral secciones={seccionesVisibles} alNavegar={() => setMenuAbierto(false)} />
         </div>
-        <MenuLateral secciones={seccionesVisibles}alNavegar={() => setMenuAbierto(false)} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
