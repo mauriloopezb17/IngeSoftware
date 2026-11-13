@@ -949,6 +949,20 @@ Reglas:
 - `publicaciones` es opcional al crear: hasta 3, con fechas crecientes y anteriores a `fechaMatrimonio`.
 - Una cuarta publicación o una fecha posterior al matrimonio responde `409 CONFLICTO` o `400 VALIDACION`, según el caso.
 
+Reglas adicionales:
+
+- `sedeId` (solo el Administrador): por defecto su sede; obligatorio si no tiene sede asignada. Un campo que no está en el cuerpo es `400 VALIDACION` («Campo no permitido.»).
+- Las fechas de `publicaciones` deben ser **estrictamente crecientes** y **anteriores al día del matrimonio** (en hora de Bolivia): `400 VALIDACION` con el detalle en `publicaciones.N.fecha` («Debe ser posterior a la proclama anterior.» / «Debe ser anterior a la fecha del matrimonio.»). Más de 3 publicaciones al crear es `400` en `publicaciones`.
+- `POST .../publicaciones`: la cuarta es `409 CONFLICTO` («La proclama ya tiene sus 3 publicaciones.»); una fecha que rompe el orden o pasa del matrimonio es `400 VALIDACION` en `fecha`. Responde `201` con la proclama completa y `Location` de la proclama.
+- `PATCH .../publicaciones/:numero`: aplica las mismas reglas de orden a la lista resultante (`400` en `fecha`); un `numero` que la proclama no tiene es `404 NO_ENCONTRADO`. Responde `200` con la proclama.
+- `DELETE .../publicaciones/:numero`: solo la última; otra es `409 CONFLICTO` («Solo se puede quitar la última publicación (la N).»). Responde `200` con la proclama actualizada (no `204`, porque sigue existiendo).
+- `PATCH` de la proclama: no acepta `tramiteOrigenId` ni `publicaciones`. Si cambia `fechaMatrimonio`, debe seguir siendo posterior a todas las publicaciones (`400` en `fechaMatrimonio`).
+- `tramiteOrigenId` repetido: `409 CONFLICTO` con un detalle en `tramiteOrigenId`. Varias proclamas sin trámite (`null`) son válidas.
+- `numeroProclama` es el número de la última publicación **ya alcanzada** (su fecha llegó, hoy en Bolivia o antes), o `null` si ninguna. Una proclama con solo publicaciones futuras tiene `numeroProclama: null` y `vigente: false`.
+- `GET` (lista): `vigentes=true|false`, `anio` (año de la boda, hora de Bolivia, 1900–2100) y `buscar` (en ambos nombres, sin distinguir mayúsculas ni acentos).
+- Los cambios de las publicaciones se registran en la bitácora como cambios de la entidad `proclama`: sus `datosAnteriores` y `datosNuevos` incluyen la clave `publicaciones` (`[{ numero, fecha }]`).
+- Lectura: todos los roles de la sede; `POST`, `PATCH` y `DELETE` piden `proclamas.gestionar` (Marketing recibe `403 SIN_PERMISO`).
+
 ---
 
 ## 11. Boletines
@@ -979,6 +993,15 @@ El mismo objeto del [endpoint público](publico.md#get-apisedessedeboletines), m
 
 - `periodo`: `YYYY-MM`. Se guarda como el primer día del mes. Solo puede haber un boletín por sede y mes: repetir el periodo es `409 CONFLICTO`.
 - `archivoId`: debe ser un `application/pdf` de la misma sede. Si no, `400 VALIDACION`.
+
+Reglas adicionales:
+
+- `sedeId` (solo el Administrador): por defecto su sede; obligatorio si no tiene sede asignada.
+- `titulo`: obligatorio, hasta 150 caracteres. `periodo` con otro formato que `YYYY-MM` (ej. `2026-11-01` o `2026-13`) es `400 VALIDACION`.
+- `archivoId` inexistente, de otra sede o que no es un PDF: `400 VALIDACION` en `archivoId` («Debe ser un documento PDF de la biblioteca multimedia de esta sede.» o «El archivo no es un documento PDF.»).
+- `periodo` repetido en la sede (al crear o al editar): `409 CONFLICTO` con un detalle en `periodo`. `PATCH` acepta `titulo`, `periodo` y `archivoId`; cualquier otro campo es `400`.
+- `publicadoPor` es quien creó el boletín y no cambia al editarlo. `fechaPublicacion` es el momento de la creación.
+- Lectura: todos los roles de la sede; `POST`, `PATCH` y `DELETE` piden `boletines.gestionar` (incluye a Marketing).
 
 ---
 
