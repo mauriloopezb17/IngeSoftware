@@ -35,9 +35,13 @@ describe('rutas del frontend', () => {
   });
 
   it('muestra el detalle de una noticia con su slug', async () => {
-    renderizarRuta('/noticias/primeras-comuniones');
+    renderizarRuta('/noticias/primeras-comuniones-42-ninos');
 
-    expect(await screen.findByText(/primeras-comuniones/)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Primeras comuniones: 42 niños recibieron a Jesús',
+      }),
+    ).toBeInTheDocument();
   });
 
   it('carga el panel de administración de forma diferida', async () => {
