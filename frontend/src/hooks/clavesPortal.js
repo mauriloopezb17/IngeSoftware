@@ -1,0 +1,27 @@
+// Fábrica única de query keys para los recursos públicos del portal.
+export const clavesPortal = {
+  sedes: () => ['portal', 'sedes'],
+  sede: (sede) => ['portal', 'sede', sede],
+  menuPaginas: (sede) => ['portal', 'sede', sede, 'paginas'],
+  pagina: (sede, slug) => ['portal', 'sede', sede, 'paginas', slug],
+  horarios: (sede) => ['portal', 'sede', sede, 'horarios'],
+  servicios: (sede) => ['portal', 'sede', sede, 'servicios'],
+  servicio: (sede, slug) => ['portal', 'sede', sede, 'servicios', slug],
+  eventos: (sede, filtros = {}) => ['portal', 'sede', sede, 'eventos', filtros],
+  publicaciones: (sede, filtros = {}) => ['portal', 'sede', sede, 'publicaciones', filtros],
+  publicacion: (sede, slug) => ['portal', 'sede', sede, 'publicaciones', slug],
+  boletines: (sede, filtros = {}) => ['portal', 'sede', sede, 'boletines', filtros],
+  proclamas: (sede) => ['portal', 'sede', sede, 'proclamas'],
+  historialProclamas: (sede, filtros = {}) => [
+    'portal',
+    'sede',
+    sede,
+    'proclamas',
+    'historial',
+    filtros,
+  ],
+  gruposPastorales: (sede) => ['portal', 'sede', sede, 'grupos-pastorales'],
+  videos: (sede) => ['portal', 'sede', sede, 'videos'],
+  categorias: () => ['portal', 'categorias'],
+  categoriasEvento: () => ['portal', 'categorias-evento'],
+};

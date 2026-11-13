@@ -1,107 +1,79 @@
-
-import {
-  FaFacebookF,
-  FaInstagram,
-  FaYoutube,
-} from 'react-icons/fa';
-
 import { anchoContenido } from './ElementosComunes.jsx';
+import { IconoRedSocial } from './IconoDinamico.jsx';
+import { ErrorSeccion } from './EstadoSeccion.jsx';
+import { TIPOS_HORARIO } from '../../config/sede.js';
+import { useHorarios, useSede } from '../../hooks/index.js';
+import {
+  abreviarEtiquetaDias,
+  armarHrefGmail,
+  armarHrefTelefono,
+  formatearRangoHorario,
+} from '../../utils/formatoPortal.js';
 
 import logoBlanco from '../../assets/parroquia/logos/logo-horizontal-blanco.svg';
 
 import '../../styles/PiePagina.css';
 
-const enlaceGmail =
-  'https://mail.google.com/mail/?view=cm&fs=1&to=parroquia.exaltacion.obrajes%40gmail.com';
-
 const enlacesParroquia = [
-  {
-    texto: 'Quiénes somos',
-    href: '#nosotros',
-  },
-  {
-    texto: 'Nuestra historia',
-    href: '#nosotros',
-  },
-  {
-    texto: 'El párroco',
-    href: '#nosotros',
-  },
-  {
-    texto: 'Nuestras sedes',
-    href: '#comunidades',
-  },
-  {
-    texto: 'Noticias',
-    href: '#noticias',
-  },
+  { texto: 'Quiénes somos', href: '#nosotros' },
+  { texto: 'Nuestra historia', href: '#nosotros' },
+  { texto: 'El párroco', href: '#nosotros' },
+  { texto: 'Nuestras sedes', href: '#comunidades' },
+  { texto: 'Noticias', href: '#noticias' },
 ];
 
 const enlacesServicios = [
-  {
-    texto: 'Horarios de misa',
-    href: '#horarios',
-  },
-  {
-    texto: 'Sacramentos',
-    href: '#sacramentos',
-  },
-  {
-    texto: 'Proclamas matrimoniales',
-    href: '#proclamas',
-  },
-  {
-    texto: 'Calendario',
-    href: '#agenda',
-  },
-  {
-    texto: 'Boletín parroquial',
-    href: '#agenda',
-  },
+  { texto: 'Horarios de misa', href: '#horarios' },
+  { texto: 'Sacramentos', href: '#sacramentos' },
+  { texto: 'Proclamas matrimoniales', href: '#proclamas' },
+  { texto: 'Calendario', href: '#agenda' },
+  { texto: 'Boletín parroquial', href: '#agenda' },
 ];
 
-const enlacesRedes = [
-  {
-    nombre: 'Facebook',
-    href: 'https://www.facebook.com/profile.php?id=100064836665037',
-    icono: FaFacebookF,
-  },
-  {
-    nombre: 'Instagram',
-    href: 'https://www.instagram.com/senor_de_la_exaltacion',
-    icono: FaInstagram,
-  },
-  {
-    nombre: 'YouTube',
-    href: 'https://www.youtube.com/@ArquidiocesisdeLaPaz/videos',
-    icono: FaYoutube,
-  },
-];
+function construirLineasSecretaria(gruposHorarios, sede) {
+  const lineas = [];
+  const secretaria = gruposHorarios?.find(
+    (grupo) => grupo.tipo?.nombre === TIPOS_HORARIO.SECRETARIA,
+  );
 
-const datosSecretaria = [
-  {
-    contenido: 'Lun – Vie: 9:00 – 12:00',
-    href: null,
-  },
-  {
-    contenido: '15:00 – 19:30',
-    href: null,
-  },
-  {
-    contenido: 'Sábado: 9:00 – 12:00',
-    href: null,
-  },
-  {
-    contenido: '(2) 278 4937',
-    href: 'tel:+59122784937',
-  },
-  {
-    contenido: 'parroquia.exaltacion.obrajes@gmail.com',
-    href: enlaceGmail,
-  },
-];
+  if (secretaria) {
+    for (const fila of secretaria.filas) {
+      const etiqueta = abreviarEtiquetaDias(fila.etiqueta);
+      fila.horarios.forEach((horario, indice) => {
+        const rango = formatearRangoHorario(horario.horaInicio, horario.horaFin);
+        lineas.push({
+          contenido: indice === 0 ? `${etiqueta}: ${rango}` : rango,
+          href: null,
+        });
+      });
+    }
+  }
+
+  if (sede?.telefono) {
+    lineas.push({
+      contenido: sede.telefono,
+      href: armarHrefTelefono(sede.telefono),
+    });
+  }
+
+  if (sede?.correo) {
+    lineas.push({
+      contenido: sede.correo,
+      href: armarHrefGmail(sede.correo),
+    });
+  }
+
+  return lineas;
+}
 
 function PiePagina() {
+  const { data: sede, isError, refetch } = useSede();
+  const { data: horarios } = useHorarios();
+
+  const configuracion = sede?.configuracion ?? {};
+  const redesSociales = sede?.redesSociales ?? [];
+  const datosSecretaria = construirLineasSecretaria(horarios, sede);
+
   return (
     <footer className="pie-pagina">
       <div className={anchoContenido}>
@@ -114,50 +86,51 @@ function PiePagina() {
             >
               <img
                 src={logoBlanco}
-                alt="Parroquia Señor de la Exaltación Obrajes"
+                alt={sede?.nombre || 'Parroquia Señor de la Exaltación'}
                 className="pie-pagina-logo"
               />
             </a>
 
-            <p className="pie-pagina-descripcion">
-              Parroquia confiada a la Congregación de la Pasión de
-              Jesucristo (Pasionistas). Arquidiócesis de La Paz ·
-              Vicaría Sur.
-            </p>
+            {isError ? (
+              <ErrorSeccion
+                mensaje="No pudimos cargar los datos institucionales."
+                onReintentar={refetch}
+                oscuro
+                compacta
+              />
+            ) : (
+              configuracion.descripcionPie && (
+                <p className="pie-pagina-descripcion">{configuracion.descripcionPie}</p>
+              )
+            )}
 
-            <div
-              className="pie-pagina-redes"
-              aria-label="Redes sociales"
-            >
-              {enlacesRedes.map(({ nombre, href, icono: Icono }) => (
-                <a
-                  key={nombre}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="pie-pagina-red-social"
-                  aria-label={`Abrir ${nombre}`}
-                  title={nombre}
-                >
-                  <Icono size={18} />
-                </a>
-              ))}
-            </div>
+            {redesSociales.length > 0 && (
+              <div className="pie-pagina-redes" aria-label="Redes sociales">
+                {redesSociales.map(({ nombre, url, icono }) => (
+                  <a
+                    key={nombre}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pie-pagina-red-social"
+                    aria-label={`Abrir ${nombre}`}
+                    title={nombre}
+                  >
+                    <IconoRedSocial nombre={icono} size={18} />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="pie-pagina-columnas">
             <div className="pie-pagina-columna">
-              <h3 className="pie-pagina-columna-titulo">
-                La parroquia
-              </h3>
+              <h3 className="pie-pagina-columna-titulo">La parroquia</h3>
 
               <ul className="pie-pagina-lista">
                 {enlacesParroquia.map(({ texto, href }) => (
                   <li key={texto}>
-                    <a
-                      href={href}
-                      className="pie-pagina-enlace"
-                    >
+                    <a href={href} className="pie-pagina-enlace">
                       {texto}
                     </a>
                   </li>
@@ -166,17 +139,12 @@ function PiePagina() {
             </div>
 
             <div className="pie-pagina-columna">
-              <h3 className="pie-pagina-columna-titulo">
-                Servicios
-              </h3>
+              <h3 className="pie-pagina-columna-titulo">Servicios</h3>
 
               <ul className="pie-pagina-lista">
                 {enlacesServicios.map(({ texto, href }) => (
                   <li key={texto}>
-                    <a
-                      href={href}
-                      className="pie-pagina-enlace"
-                    >
+                    <a href={href} className="pie-pagina-enlace">
                       {texto}
                     </a>
                   </li>
@@ -185,9 +153,7 @@ function PiePagina() {
             </div>
 
             <div className="pie-pagina-columna">
-              <h3 className="pie-pagina-columna-titulo">
-                Secretaría
-              </h3>
+              <h3 className="pie-pagina-columna-titulo">Secretaría</h3>
 
               <ul className="pie-pagina-lista">
                 {datosSecretaria.map(({ contenido, href }) => (
@@ -195,24 +161,14 @@ function PiePagina() {
                     {href ? (
                       <a
                         href={href}
-                        target={
-                          href.startsWith('https')
-                            ? '_blank'
-                            : undefined
-                        }
-                        rel={
-                          href.startsWith('https')
-                            ? 'noopener noreferrer'
-                            : undefined
-                        }
+                        target={href.startsWith('https') ? '_blank' : undefined}
+                        rel={href.startsWith('https') ? 'noopener noreferrer' : undefined}
                         className="pie-pagina-enlace"
                       >
                         {contenido}
                       </a>
                     ) : (
-                      <span className="pie-pagina-texto">
-                        {contenido}
-                      </span>
+                      <span className="pie-pagina-texto">{contenido}</span>
                     )}
                   </li>
                 ))}
@@ -222,14 +178,13 @@ function PiePagina() {
         </div>
 
         <div className="pie-pagina-inferior">
-          <p className="pie-pagina-copy">
-            © 2026 Parroquia Señor de la Exaltación · Pasionistas
-            Bolivia · pasionistas.org.bo
-          </p>
+          {configuracion.textoCopyright && (
+            <p className="pie-pagina-copy">{configuracion.textoCopyright}</p>
+          )}
 
-          <p className="pie-pagina-creditos">
-            Diseño y desarrollo: CodeForge · Ingeniería de Sistemas UCB
-          </p>
+          {configuracion.textoCreditos && (
+            <p className="pie-pagina-creditos">{configuracion.textoCreditos}</p>
+          )}
         </div>
       </div>
     </footer>

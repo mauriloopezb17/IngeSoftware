@@ -1,94 +1,129 @@
-
-import {
-  anchoContenido,
-  TituloSeccion,
-} from './ElementosComunes.jsx';
-
-import imagenCrucifijo from '../../assets/parroquia/imagenes/crucifijo.webp';
-import imagenParroco from '../../assets/parroquia/imagenes/padre_gregorio.jpg';
+import { anchoContenido, TituloSeccion } from './ElementosComunes.jsx';
+import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
+import { usePagina } from '../../hooks/index.js';
 
 import '../../styles/Nosotros.css';
 
 function Nosotros() {
+  const { data: pagina, isPending, isError, refetch } = usePagina('nosotros');
+
+  const bloques = pagina?.bloques ?? [];
+  const textoImagen = bloques.find((bloque) => bloque.tipo === 'texto_imagen')?.contenido;
+  const cita = bloques.find((bloque) => bloque.tipo === 'cita')?.contenido;
+  const parroco = bloques.find((bloque) => bloque.tipo === 'tarjetas')?.contenido?.items?.[0];
+
+  const parrafos = textoImagen?.texto ? textoImagen.texto.split('\n\n') : [];
+
   return (
     <section id="nosotros" className="nosotros">
       <div className={`${anchoContenido} nosotros-contenedor`}>
-        <div className="nosotros-imagen-contenedor">
-          <div className="nosotros-marco" />
-
-          <img
-            src={imagenCrucifijo}
-            alt="Crucifijo en el interior de la Parroquia Señor de la Exaltación"
-            className="nosotros-imagen"
-            loading="lazy"
-          />
-
-          <div className="nosotros-tarjeta">
-            <p className="nosotros-tarjeta-etiqueta">
-              Congregación de la Pasión
-            </p>
-
-            <p className="nosotros-tarjeta-titulo">
-              Pasionistas · C.P.
-            </p>
-
-            <p className="nosotros-tarjeta-descripcion">
-              Fundada por San Pablo de la Cruz
-            </p>
+        {isPending ? (
+          <div style={{ gridColumn: '1 / -1' }}>
+            <CargandoSeccion alturaMinima={480} etiqueta="Cargando sección nosotros" />
           </div>
-        </div>
+        ) : isError ? (
+          <div style={{ gridColumn: '1 / -1' }}>
+            <ErrorSeccion
+              mensaje="No pudimos cargar la información de nuestra parroquia."
+              onReintentar={refetch}
+            />
+          </div>
+        ) : !textoImagen && !cita && !parroco ? (
+          <div style={{ gridColumn: '1 / -1' }}>
+            <SinResultados mensaje="No hay información disponible en esta sección." />
+          </div>
+        ) : (
+          <>
+            <div className="nosotros-imagen-contenedor">
+              <div className="nosotros-marco" />
 
-        <div className="nosotros-informacion">
-          <TituloSeccion
-            overline="Quiénes somos"
-            title="Una casa de oración en el corazón de Obrajes"
-          />
-
-          <p className="nosotros-descripcion">
-            Somos una comunidad parroquial confiada a los Padres
-            Pasionistas, que desde la memoria de la Pasión de Cristo
-            acompaña a las familias de Obrajes en la fe, los sacramentos
-            y el servicio a los más necesitados.
-          </p>
-
-          <blockquote className="nosotros-cita">
-            <p className="nosotros-cita-texto">
-              “Que la Pasión de Jesucristo esté siempre grabada en
-              nuestros corazones.”
-            </p>
-
-            <cite className="nosotros-cita-autor">
-              — Lema de la Congregación Pasionista
-            </cite>
-          </blockquote>
-
-          <div className="nosotros-pie">
-            <div className="nosotros-parroco">
-              <div className="nosotros-avatar">
+              {textoImagen?.url_imagen && (
                 <img
-                  src={imagenParroco}
-                  alt="P. Gregorio, C.P., párroco"
-                  className="nosotros-avatar-imagen"
+                  src={textoImagen.url_imagen}
+                  alt={textoImagen.texto_alternativo || textoImagen.titulo}
+                  className="nosotros-imagen"
                   loading="lazy"
                 />
-              </div>
+              )}
 
-              <div>
-                <p className="nosotros-parroco-nombre">
-                  P. Gregorio, C.P.
-                </p>
+              {textoImagen?.tarjeta && (
+                <div className="nosotros-tarjeta">
+                  {textoImagen.tarjeta.etiqueta && (
+                    <p className="nosotros-tarjeta-etiqueta">
+                      {textoImagen.tarjeta.etiqueta}
+                    </p>
+                  )}
 
-                <p className="nosotros-parroco-cargo">
-                  Párroco
-                </p>
-              </div>
+                  <p className="nosotros-tarjeta-titulo">
+                    {textoImagen.tarjeta.titulo}
+                  </p>
+
+                  {textoImagen.tarjeta.descripcion && (
+                    <p className="nosotros-tarjeta-descripcion">
+                      {textoImagen.tarjeta.descripcion}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
-            <span className="nosotros-boton visual-control">
-              Conoce nuestra historia
-            </span>
-          </div>
-        </div>
+            <div className="nosotros-informacion">
+              {textoImagen && (
+                <>
+                  <TituloSeccion
+                    overline={textoImagen.etiqueta || 'Quiénes somos'}
+                    title={textoImagen.titulo}
+                  />
+
+                  {parrafos.map((parrafo, indice) => (
+                    <p key={indice} className="nosotros-descripcion">
+                      {parrafo}
+                    </p>
+                  ))}
+                </>
+              )}
+
+              {cita && (
+                <blockquote className="nosotros-cita">
+                  <p className="nosotros-cita-texto">“{cita.texto}”</p>
+
+                  {cita.autor && (
+                    <cite className="nosotros-cita-autor">— {cita.autor}</cite>
+                  )}
+                </blockquote>
+              )}
+
+              <div className="nosotros-pie">
+                {parroco && (
+                  <div className="nosotros-parroco">
+                    {parroco.url_imagen && (
+                      <div className="nosotros-avatar">
+                        <img
+                          src={parroco.url_imagen}
+                          alt={parroco.texto_alternativo || parroco.titulo}
+                          className="nosotros-avatar-imagen"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="nosotros-parroco-nombre">{parroco.titulo}</p>
+
+                      {parroco.subtitulo && (
+                        <p className="nosotros-parroco-cargo">{parroco.subtitulo}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <span className="nosotros-boton visual-control">
+                  Conoce nuestra historia
+                </span>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

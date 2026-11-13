@@ -70,6 +70,24 @@ export function imagen(
   };
 }
 
+// Objeto archivo (lo que no es imagen, ej. el PDF de un boletín):
+// { id, url, nombreOriginal, tipoMime, tamanoBytes }, o null si no hay archivo.
+export function archivo(
+  { id = null, url = null, nombreOriginal = null, tipoMime = null, tamanoBytes = null } = {},
+  cdnUrlPublica = obtenerEntorno().cdnUrlPublica,
+) {
+  const urlFinal = urlPublica(url, cdnUrlPublica);
+  if (!urlFinal) return null;
+
+  return {
+    id: id ?? null,
+    url: urlFinal,
+    nombreOriginal: nombreOriginal ?? null,
+    tipoMime: tipoMime ?? null,
+    tamanoBytes: tamanoBytes ?? null,
+  };
+}
+
 const snakeACamel = (clave) => clave.replace(/_([a-z0-9])/g, (_, letra) => letra.toUpperCase());
 
 // Traduce a camelCase todas las claves de un objeto, también las anidadas y las de objetos dentro

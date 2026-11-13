@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   aCamelCase,
+  archivo,
   formatearFecha,
   formatearFechaHora,
   formatearHora,
@@ -112,6 +113,34 @@ describe('imagen', () => {
   it('devuelve null si no hay imagen, nunca un objeto vacío', () => {
     expect(imagen({ id: null, url: null }, CDN)).toBeNull();
     expect(imagen(undefined, CDN)).toBeNull();
+  });
+});
+
+describe('archivo', () => {
+  it('arma el objeto archivo con la URL pública del bucket', () => {
+    expect(
+      archivo(
+        {
+          id: 7,
+          url: 'sedes/senor-de-la-exaltacion/2026/10/boletin.pdf',
+          nombreOriginal: 'Boletín octubre 2026.pdf',
+          tipoMime: 'application/pdf',
+          tamanoBytes: 2516582,
+        },
+        CDN,
+      ),
+    ).toEqual({
+      id: 7,
+      url: 'https://cdn.ejemplo.org/medios/sedes/senor-de-la-exaltacion/2026/10/boletin.pdf',
+      nombreOriginal: 'Boletín octubre 2026.pdf',
+      tipoMime: 'application/pdf',
+      tamanoBytes: 2516582,
+    });
+  });
+
+  it('devuelve null si no hay archivo', () => {
+    expect(archivo({ url: null }, CDN)).toBeNull();
+    expect(archivo(undefined, CDN)).toBeNull();
   });
 });
 
