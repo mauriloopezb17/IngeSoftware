@@ -733,8 +733,8 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
     {
       "id": 2,
       "tipo": { "codigo": "AVISO", "nombre": "Aviso" },
-      "titulo": "El 2 de noviembre la secretaría atenderá solo por la mañana.",
-      "slug": "secretaria-2-de-noviembre",
+      "titulo": "El próximo lunes la secretaría atenderá solo por la mañana.",
+      "slug": "secretaria-atencion-lunes",
       "resumen": null,
       "categoria": null,
       "imagenPortada": null,
