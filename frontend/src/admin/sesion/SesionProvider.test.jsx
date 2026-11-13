@@ -16,7 +16,7 @@ import { useSesion } from './SesionContexto.js';
 
 // Componente de prueba: muestra el estado de la sesión y expone botones para accionarla.
 function Sonda() {
-  const { usuario, cargando, error, iniciarSesion, cerrarSesion } = useSesion();
+  const { usuario, cargando, error, sesionVencida, iniciarSesion, renovarSesion, cerrarSesion } = useSesion();
   const consultaAjena = useQuery({
     queryKey: ['admin', 'ajena'],
     queryFn: () => clienteHttp.get('/admin/prueba'),
@@ -33,6 +33,7 @@ function Sonda() {
   return (
     <div>
       <p>{cargando ? 'cargando' : usuario ? `sesión: ${usuario.correo}` : 'sin sesión'}</p>
+      {sesionVencida && <p>sesión vencida</p>}
       {error && <p>error: {error.estado}</p>}
       {consultaAjena.error && <p>consulta ajena falló: {consultaAjena.error.estado}</p>}
       <button onClick={() => intentar('marketing@parroquia.test', CONTRASENA_DESARROLLO)}>
@@ -40,6 +41,18 @@ function Sonda() {
       </button>
       <button onClick={() => intentar('marketing@parroquia.test', 'mala')}>entrar mal</button>
       <button onClick={() => cerrarSesion()}>salir</button>
+      <button
+        onClick={() =>
+          renovarSesion(CONTRASENA_DESARROLLO).catch((e) => {
+            document.body.dataset.errorLogin = `${e.estado} ${e.codigo}`;
+          })
+        }
+      >
+        renovar
+      </button>
+      <button onClick={() => renovarSesion('mala').catch((e) => (document.body.dataset.errorLogin = `${e.estado} ${e.codigo}`))}>
+        renovar mal
+      </button>
       <button onClick={() => consultaAjena.refetch()}>consulta ajena</button>
       <button onClick={() => mutacionAjena.mutate()}>mutación ajena</button>
     </div>
@@ -131,24 +144,83 @@ describe('SesionProvider', () => {
     expect(await screen.findByText('sin sesión')).toBeInTheDocument();
   });
 
-  it('un 401 en una consulta del panel cierra la sesión en pantalla', async () => {
+  // Un 401 con el panel abierto marca la sesión como vencida, pero el usuario sigue en pantalla: sacarlo de
+  // golpe perdería lo que no guardó. El aviso del panel (AvisoSesion) ofrece volver a entrar.
+  it('un 401 en una consulta del panel marca la sesión como vencida sin sacar al usuario', async () => {
     server.use(http.get(api('/admin/prueba'), responderError(401, 'NO_AUTENTICADO')));
     montar();
     await entrar();
 
     await userEvent.click(screen.getByText('consulta ajena'));
 
-    expect(await screen.findByText('sin sesión')).toBeInTheDocument();
+    expect(await screen.findByText('sesión vencida')).toBeInTheDocument();
+    expect(screen.getByText(TEXTO_SESION)).toBeInTheDocument();
   });
 
-  it('un 401 en una mutación del panel cierra la sesión en pantalla', async () => {
+  it('un 401 en una mutación del panel marca la sesión como vencida sin sacar al usuario', async () => {
     server.use(http.post(api('/admin/prueba'), responderError(401, 'NO_AUTENTICADO')));
     montar();
     await entrar();
 
     await userEvent.click(screen.getByText('mutación ajena'));
 
+    expect(await screen.findByText('sesión vencida')).toBeInTheDocument();
+    expect(screen.getByText(TEXTO_SESION)).toBeInTheDocument();
+  });
+
+  it('un 401 sin sesión abierta no marca nada (las rutas protegidas ya llevan al login)', async () => {
+    server.use(http.get(api('/admin/prueba'), responderError(401, 'NO_AUTENTICADO')));
+    montar();
+    await screen.findByText('sin sesión');
+
+    await userEvent.click(screen.getByText('consulta ajena'));
+
+    expect(await screen.findByText('consulta ajena falló: 401')).toBeInTheDocument();
+    expect(screen.queryByText('sesión vencida')).not.toBeInTheDocument();
+  });
+
+  it('renovarSesion vuelve a entrar como el mismo usuario, estrena `sesionExpiraEn` y quita la marca de vencida', async () => {
+    server.use(http.get(api('/admin/prueba'), responderError(401, 'NO_AUTENTICADO'), { once: true }));
+    const { cliente } = montar();
+    await entrar();
+    const antes = cliente.getQueryData(CLAVE_SESION).sesionExpiraEn;
+    await userEvent.click(screen.getByText('consulta ajena'));
+    await screen.findByText('sesión vencida');
+
+    // Pasa un instante: el login nuevo trae otra fecha de vencimiento.
+    await new Promise((resolver) => setTimeout(resolver, 1100));
+    await userEvent.click(screen.getByText('renovar'));
+
+    await waitFor(() => expect(screen.queryByText('sesión vencida')).not.toBeInTheDocument());
+    expect(screen.getByText(TEXTO_SESION)).toBeInTheDocument();
+    expect(cliente.getQueryData(CLAVE_SESION).sesionExpiraEn).not.toBe(antes);
+  });
+
+  it('con una contraseña incorrecta renovarSesion falla con 401 y la sesión sigue marcada como vencida', async () => {
+    server.use(http.get(api('/admin/prueba'), responderError(401, 'NO_AUTENTICADO')));
+    montar();
+    await entrar();
+    await userEvent.click(screen.getByText('consulta ajena'));
+    await screen.findByText('sesión vencida');
+
+    await userEvent.click(screen.getByText('renovar mal'));
+
+    await waitFor(() => expect(document.body.dataset.errorLogin).toBe('401 NO_AUTENTICADO'));
+    expect(screen.getByText('sesión vencida')).toBeInTheDocument();
+    expect(screen.getByText(TEXTO_SESION)).toBeInTheDocument();
+  });
+
+  it('cerrar sesión limpia la marca de vencida', async () => {
+    server.use(http.get(api('/admin/prueba'), responderError(401, 'NO_AUTENTICADO')));
+    montar();
+    await entrar();
+    await userEvent.click(screen.getByText('consulta ajena'));
+    await screen.findByText('sesión vencida');
+
+    await userEvent.click(screen.getByText('salir'));
+
     expect(await screen.findByText('sin sesión')).toBeInTheDocument();
+    expect(screen.queryByText('sesión vencida')).not.toBeInTheDocument();
   });
 
   it('un 403 no cierra la sesión', async () => {

@@ -85,4 +85,35 @@ describe('Dialogo', () => {
 
     expect(document.body.style.overflow).toBe('');
   });
+
+  it('si quien lo abrió desaparece mientras está abierto (fila eliminada), el foco pasa al contenido principal', async () => {
+    function ConFila() {
+      const [hayFila, setHayFila] = useState(true);
+      const [abierto, setAbierto] = useState(false);
+      return (
+        <main id="contenido" tabIndex={-1}>
+          {hayFila && <button onClick={() => setAbierto(true)}>Eliminar fila</button>}
+          {abierto && (
+            <Dialogo
+              titulo="¿Eliminar?"
+              onCerrar={() => {
+                setAbierto(false);
+                setHayFila(false);
+              }}
+            >
+              <button>Aceptar</button>
+            </Dialogo>
+          )}
+        </main>
+      );
+    }
+    const usuario = userEvent.setup();
+    render(<ConFila />);
+
+    await usuario.click(screen.getByRole('button', { name: 'Eliminar fila' }));
+    await usuario.keyboard('{Escape}');
+
+    expect(screen.queryByRole('button', { name: 'Eliminar fila' })).not.toBeInTheDocument();
+    expect(screen.getByRole('main')).toHaveFocus();
+  });
 });

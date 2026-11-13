@@ -1,5 +1,6 @@
 // Datos iniciales del contenido de la parroquia (docs/api/admin.md §1, §5-§9 y database/seed).
-import { crearArchivosIniciales } from '../../mocks/multimediaDatos.js';
+import { videosExaltacion } from '../../../mocks/datos/parroquia.js';
+import { buscarArchivo } from '../../mocks/multimediaMock.js';
 import { SEDE_PRINCIPAL } from '../../mocks/usuarios.js';
 
 export const CATALOGOS = {
@@ -156,6 +157,7 @@ export function crearSedesIniciales() {
         textoAlternativo: 'Vista exterior de la Parroquia Señor de la Exaltación',
         ancho: 1878,
         alto: 1057,
+        variantes: [], // las imágenes del seed no tienen variantes
       },
       redesSociales: [
         {
@@ -180,7 +182,7 @@ export function crearSedesIniciales() {
       configuracion: {
         colorPrimario: '#231F20',
         colorAcento: '#E2AD11',
-        textoBarraSuperior: 'Hoy, sábado: Santa Misa 7:00 · 18:00 (vespertina dominical)',
+        textoBarraSuperior: 'Misas: lunes a viernes 7:00 y 19:00 · sábado 7:00 y 18:00 · domingo 8:00, 10:00, 12:00 y 19:00',
         textoWhatsapp: 'WhatsApp Secretaría',
         enlaceComoLlegar:
           'https://www.google.com/maps/dir/?api=1&destination=-16.5267952%2C-68.1082157',
@@ -480,20 +482,23 @@ export function crearGruposIniciales() {
 }
 
 export function crearVideosIniciales() {
-  return [];
+  return videosExaltacion.map((video) => ({
+    ...video,
+    sede: SEDE_PRINCIPAL,
+  }));
 }
 
+// Objeto imagen estándar (convenciones §7) de una imagen de la biblioteca, con sus `variantes`.
 export function buscarImagenEnBiblioteca(imagenId) {
-  const archivo = crearArchivosIniciales().find(
-    (item) => item.id === imagenId && item.tipoMime.startsWith('image/'),
-  );
-  if (!archivo) return null;
+  const archivo = buscarArchivo(imagenId);
+  if (!archivo || !archivo.tipoMime.startsWith('image/')) return null;
   return {
     id: archivo.id,
     url: archivo.url,
     textoAlternativo: archivo.textoAlternativo ?? null,
     ancho: archivo.ancho ?? null,
     alto: archivo.alto ?? null,
+    variantes: archivo.variantes ?? [],
   };
 }
 

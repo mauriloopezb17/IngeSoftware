@@ -70,6 +70,17 @@ export const categoriasEvento = [
 export function obtenerEventosExaltacion() {
   return [
     {
+      id: 99,
+      titulo: 'Evento pasado de archivo (oculto automáticamente)',
+      descripcion: null,
+      lugar: 'Templo parroquial',
+      fechaInicio: fechaRelativaBolivia(-3, '19:00:00'),
+      fechaFin: null,
+      todoElDia: false,
+      categoria: { id: 1, nombre: 'Liturgia', colorHex: '#E2AD11' },
+      imagen: null,
+    },
+    {
       id: 1,
       titulo: 'Adoración eucarística comunitaria',
       descripcion: null,
@@ -113,6 +124,61 @@ export function obtenerEventosExaltacion() {
       categoria: { id: 3, nombre: 'Catequesis', colorHex: '#B5532F' },
       imagen: null,
     },
+    {
+      id: 5,
+      titulo: 'Encuentro de jóvenes y confirmación',
+      descripcion: 'Jornada de reflexión y dinámicas comunitarias.',
+      lugar: 'Salón San Gabriel',
+      fechaInicio: fechaRelativaBolivia(16, '17:00:00'),
+      fechaFin: null,
+      todoElDia: false,
+      categoria: { id: 4, nombre: 'Comunidad', colorHex: '#3E9C97' },
+      imagen: null,
+    },
+    {
+      id: 6,
+      titulo: 'Retiro espiritual de Adviento',
+      descripcion: 'Retiro abierto a toda la comunidad parroquial.',
+      lugar: 'Casa de retiros Obrajes',
+      fechaInicio: fechaRelativaBolivia(20, '09:00:00'),
+      fechaFin: fechaRelativaBolivia(20, '17:00:00'),
+      todoElDia: true,
+      categoria: { id: 2, nombre: 'Solemnidad', colorHex: '#9E1B22' },
+      imagen: null,
+    },
+    {
+      id: 7,
+      titulo: 'Catequesis familiar comunitaria',
+      descripcion: null,
+      lugar: 'Salón parroquial',
+      fechaInicio: fechaRelativaBolivia(24, '10:00:00'),
+      fechaFin: null,
+      todoElDia: false,
+      categoria: { id: 3, nombre: 'Catequesis', colorHex: '#B5532F' },
+      imagen: null,
+    },
+    {
+      id: 8,
+      titulo: 'Vigilia de oración por la paz',
+      descripcion: null,
+      lugar: 'Templo parroquial',
+      fechaInicio: fechaRelativaBolivia(32, '19:30:00'),
+      fechaFin: null,
+      todoElDia: false,
+      categoria: { id: 1, nombre: 'Liturgia', colorHex: '#E2AD11' },
+      imagen: null,
+    },
+    {
+      id: 9,
+      titulo: 'Feria solidaria de Pastoral Social',
+      descripcion: 'Recaudación de alimentos para familias de la zona.',
+      lugar: 'Atrio del templo',
+      fechaInicio: fechaRelativaBolivia(38, '09:00:00'),
+      fechaFin: fechaRelativaBolivia(38, '14:00:00'),
+      todoElDia: true,
+      categoria: { id: 4, nombre: 'Comunidad', colorHex: '#3E9C97' },
+      imagen: null,
+    },
   ];
 }
 
@@ -137,6 +203,7 @@ export function obtenerPublicacionesExaltacion() {
           'Afiche del encuentro de Pastoral Familiar sobre el duelo y la pérdida de un ser querido',
         ancho: 1137,
         alto: 1383,
+        variantes: [],
       },
       urlExterna:
         'https://www.facebook.com/photo.php?fbid=1568791201958754&set=pb.100064836665037.-2207520000&type=3',
@@ -162,6 +229,7 @@ export function obtenerPublicacionesExaltacion() {
         textoAlternativo: 'Crucifijo en el interior del templo parroquial',
         ancho: 1888,
         alto: 1059,
+        variantes: [],
       },
       urlExterna: null,
       destacada: false,
@@ -186,6 +254,7 @@ export function obtenerPublicacionesExaltacion() {
         textoAlternativo: 'Vista exterior de la Parroquia Señor de la Exaltación',
         ancho: 1878,
         alto: 1057,
+        variantes: [],
       },
       urlExterna: null,
       destacada: false,
@@ -291,4 +360,60 @@ export function obtenerProclamasExaltacion() {
       publicaciones: [{ numero: 1, fecha: soloFechaRelativa(0) }],
     },
   ];
+}
+
+export function obtenerHistorialProclamasExaltacion() {
+  const vigentes = obtenerProclamasExaltacion();
+  const pasadas = [
+    {
+      id: 4,
+      contrayente1: 'Carlos E. Mendoza T.',
+      contrayente2: 'Valeria N. Quispe P.',
+      fechaMatrimonio: '2026-08-22T11:30:00-04:00',
+      numeroProclama: 3,
+      publicaciones: [
+        { numero: 1, fecha: '2026-08-02' },
+        { numero: 2, fecha: '2026-08-09' },
+        { numero: 3, fecha: '2026-08-16' },
+      ],
+    },
+    {
+      id: 5,
+      contrayente1: 'Rodrigo A. Flores V.',
+      contrayente2: 'Paola S. Condori M.',
+      fechaMatrimonio: '2026-06-13T16:00:00-04:00',
+      numeroProclama: 3,
+      publicaciones: [
+        { numero: 1, fecha: '2026-05-24' },
+        { numero: 2, fecha: '2026-05-31' },
+        { numero: 3, fecha: '2026-06-07' },
+      ],
+    },
+    {
+      id: 6,
+      contrayente1: 'Marco A. Rojas C.',
+      contrayente2: 'Lucía B. Vargas H.',
+      fechaMatrimonio: '2025-11-15T11:00:00-04:00',
+      numeroProclama: 3,
+      publicaciones: [
+        { numero: 1, fecha: '2025-10-26' },
+        { numero: 2, fecha: '2025-11-02' },
+        { numero: 3, fecha: '2025-11-09' },
+      ],
+    },
+    {
+      id: 7,
+      contrayente1: 'Fernando J. Ticona R.',
+      contrayente2: 'Gabriela L. Salazar D.',
+      fechaMatrimonio: '2025-09-20T15:30:00-04:00',
+      numeroProclama: 3,
+      publicaciones: [
+        { numero: 1, fecha: '2025-08-31' },
+        { numero: 2, fecha: '2025-09-07' },
+        { numero: 3, fecha: '2025-09-14' },
+      ],
+    },
+  ];
+
+  return [...vigentes, ...pasadas];
 }

@@ -1,4 +1,5 @@
 import '../../styles/ContenidoBlockNote.css';
+import { construirAtributosImagen } from './imagenSrcSet.js';
 
 const PROTOCOLOS_ENLACE_PERMITIDOS = new Set(['http:', 'https:', 'mailto:', 'tel:']);
 const PROTOCOLOS_ENLACE_EXTERNO = new Set(['http:', 'https:']);
@@ -201,10 +202,15 @@ function renderizarBloque(bloque, indice) {
       if (!esUrlMultimediaSegura(props.url)) return null;
       const ancho = Number.isFinite(props.previewWidth) && props.previewWidth > 0 ? props.previewWidth : undefined;
       const textoAlternativo = props.caption || props.name || '';
+      const atributosResponsivos = construirAtributosImagen(
+        { url: props.url, ancho: props.ancho ?? ancho, variantes: props.variantes },
+        '(min-width: 768px) 720px, 100vw',
+      );
       return (
         <figure key={clave} className={clasesBloqueTexto(props, 'bn-figura')}>
           <img
             src={props.url}
+            {...atributosResponsivos}
             alt={textoAlternativo}
             width={ancho}
             loading="lazy"

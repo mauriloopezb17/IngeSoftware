@@ -112,12 +112,14 @@ Todos los catálogos en una sola respuesta, para llenar los selectores de los fo
 - `codigo` de roles, tipos de sede, estados y tipos de publicación es la enumeración de la API (ver [convenciones.md](convenciones.md#2-nombres-y-tipos-de-datos)). La traducción a los nombres de la base la hace la API.
 - `estadosPublicacion` va en el orden del flujo, no por `id`.
 - `tiposBloque` trae los 6 tipos del seed con su `esquemaValidacion` completo, para que el panel arme el formulario de cada bloque. En el ejemplo se muestra solo uno; los demás están en [contenido.md](contenido.md).
+- Salvo `estadosPublicacion`, cada lista va ordenada por `id`. `esquemaValidacion` se devuelve tal como está guardado (sin traducir sus claves).
+- Sin sesión, `401 NO_AUTENTICADO`; no pide ningún permiso de la matriz.
 
 ---
 
 ## 2. Multimedia
 
-Archivos guardados en Oracle Cloud Object Storage (compatible con S3, bucket público). Su URL pública es `CDN_PUBLIC_URL` + la clave del objeto.
+Archivos guardados en Oracle Cloud Object Storage (compatible con S3, bucket público). Su URL pública es `CDN_PUBLIC_URL` + `/` + la clave del objeto; con OCI, `CDN_PUBLIC_URL` termina en `/n/<namespace>/b/<bucket>/o` (ver `backend/.env.example`).
 
 ### Objeto archivo multimedia (vista del panel)
 
@@ -473,8 +475,16 @@ Crea una publicación, **siempre en `BORRADOR`**. Permiso: `avisos.gestionar` pa
 | `destacada`                      | Booleano, por defecto `false`.                                                                                                                                    |
 | `fechaPublicacion`               | Opcional. Fecha **deseada**: se aplica al publicar o aprobar (ver [estados-publicacion.md](estados-publicacion.md)).                                              |
 | `fechaExpiracion`                | Opcional. Si viene junto con `fechaPublicacion`, debe ser posterior.                                                                                              |
+| `sedeId`                         | Solo lo usa el Administrador (los demás roles usan su sede). Por defecto, su sede; **obligatorio** si no tiene sede asignada. Debe existir.                       |
 
-**Respuesta `201`:** el objeto publicación, en `BORRADOR`.
+**Respuesta `201`:** el objeto publicación, en `BORRADOR`, con la cabecera `Location: /api/admin/publicaciones/:id`.
+
+- Un campo que no está en la tabla responde `400 VALIDACION` («Campo no permitido.»).
+- `contenido` puede guardarse con `bloques: []` en cualquier tipo: el borrador no necesita estar completo. Que tenga contenido (o `urlExterna`) se exige al salir de `BORRADOR` ([requisitos](estados-publicacion.md#requisitos-para-salir-de-borrador)).
+- Las URL de los bloques `image` y `video` se buscan en la biblioteca de la sede (también la de una variante); si no están, o no son de la clase del bloque, `400 VALIDACION` en `contenido.bloques.N.props.url`.
+- Errores de las referencias: «La categoría no existe.» (`categoriaId`), «Debe ser una imagen de la biblioteca multimedia de esta sede.» o «El archivo no es una imagen.» (`imagenPortadaId`), «Indica la sede.» o «La sede no existe.» (`sedeId`).
+- Slug repetido: `409 CONFLICTO` con «Ya existe una publicación con el slug «…» en esta sede.» y un detalle en `slug`.
+- Sin el permiso del tipo: `403 SIN_PERMISO` con «Tu rol no tiene permiso para crear avisos.» o «… para crear noticias ni notas de prensa.».
 
 ### `PATCH /api/admin/publicaciones/:id`
 
@@ -486,6 +496,11 @@ Edita campos (los mismos de la creación, salvo `tipo`). Solo se permite en los 
   "destacada": false
 }
 ```
+
+- Enviar `tipo` responde `400 VALIDACION` («El tipo no se puede cambiar.»); `sedeId` u otro campo desconocido, «Campo no permitido.».
+- `"slug": null` lo vuelve a generar desde el título (el nuevo, si también cambia). Cambiar el título no cambia el slug.
+- En `PUBLICADO` el slug no se puede cambiar: `409 CONFLICTO` con un detalle en `slug`.
+- `fechaExpiracion` se compara con la `fechaPublicacion` que quedaría guardada (la enviada o la actual).
 
 ### `DELETE /api/admin/publicaciones/:id`
 
@@ -503,6 +518,14 @@ Todas responden `200` con el objeto publicación actualizado. Si la acción no e
 | `POST /api/admin/publicaciones/:id/publicar`        | `{ "fechaPublicacion": "...", "fechaExpiracion": "..." }`, ambos opcionales | `BORRADOR` → `PUBLICADO`. Con una `fechaPublicacion` futura queda **programada**. |
 | `POST /api/admin/publicaciones/:id/archivar`        | —                                                                           | `PUBLICADO` → `ARCHIVADO`.                                                        |
 | `POST /api/admin/publicaciones/:id/restaurar`       | —                                                                           | `ARCHIVADO` → `BORRADOR`.                                                         |
+
+Reglas de las acciones (el detalle del flujo está en [estados-publicacion.md](estados-publicacion.md)):
+
+- `aprobar` y `publicar` aceptan solo los campos de la tabla; cualquier otro es `400 VALIDACION`. `fechaPublicacion` y `fechaExpiracion` deben llevar zona horaria. Si se envían ambas en `publicar`, la expiración debe ser posterior (`400` en `fechaExpiracion`).
+- `enviar-revision`, `aprobar` y `publicar` validan [los requisitos para salir de `BORRADOR`](estados-publicacion.md#requisitos-para-salir-de-borrador) y responden `400 VALIDACION` con el mensaje «La publicación no está lista para publicarse.» y un detalle por cada campo que falta. `enviar-revision` valida con la fecha de publicación **deseada** guardada.
+- Una `fechaExpiracion` que ya pasó, o que no es posterior a la fecha efectiva de publicación, es `400 VALIDACION` en `fechaExpiracion` («Debe ser posterior a la fecha de publicación y a la fecha actual.»).
+- Orden de las respuestas de error: `403` si el rol no tiene el permiso de la acción para ese tipo de publicación (o no es el autor, en `enviar-revision`); `409` si el estado actual no la permite. Marketing al enviar un aviso a revisión recibe `409` (los avisos no pasan por revisión), no `403`, porque sí tiene `noticias.redactar`.
+- `rechazar` registra al revisor y la fecha; al reenviar o aprobar después, la observación anterior se conserva hasta la nueva decisión (`aprobar` la deja en `null`).
 
 Ejemplo de rechazo:
 
@@ -582,6 +605,15 @@ Calendario parroquial. Permiso de escritura: `eventos.gestionar`. Los eventos se
 | `estado`            | `PUBLICADO` (por defecto), `BORRADOR` o `ARCHIVADO`. Los eventos no usan `EN_REVISION`. |
 | `descripcion`       | Texto plano, hasta 2000 caracteres.                                                     |
 | `lugar`             | Hasta 150 caracteres.                                                                   |
+
+Reglas adicionales:
+
+- `sedeId` (solo el Administrador, igual que en publicaciones): por defecto su sede; obligatorio si no tiene sede asignada.
+- `PATCH` acepta los mismos campos salvo `sedeId`; `fechaFin` se compara con la `fechaInicio` que quedaría guardada. `idExternoM365` es solo lectura: enviarlo es `400 VALIDACION` («Campo no permitido.»).
+- Con `todoElDia: true` las fechas se guardan como se envían; el portal no muestra la hora.
+- `categoriaEventoId` inexistente: `400 VALIDACION` («La categoría no existe.»). `imagenId` debe ser una imagen de la biblioteca de la misma sede («Debe ser una imagen de la biblioteca multimedia de esta sede.»).
+- Filtros de la lista: `desde` y `hasta` incluyen todo evento que se cruce con ese rango de días (hora de Bolivia); `estado` acepta `BORRADOR`, `PUBLICADO` y `ARCHIVADO` (varios con comas); `hasta` anterior a `desde` es `400 VALIDACION`.
+- Lectura: todos los roles de la sede; `POST`, `PATCH` y `DELETE` piden `eventos.gestionar` (Marketing recibe `403 SIN_PERMISO`).
 
 ---
 
@@ -919,6 +951,20 @@ Reglas:
 - `publicaciones` es opcional al crear: hasta 3, con fechas crecientes y anteriores a `fechaMatrimonio`.
 - Una cuarta publicación o una fecha posterior al matrimonio responde `409 CONFLICTO` o `400 VALIDACION`, según el caso.
 
+Reglas adicionales:
+
+- `sedeId` (solo el Administrador): por defecto su sede; obligatorio si no tiene sede asignada. Un campo que no está en el cuerpo es `400 VALIDACION` («Campo no permitido.»).
+- Las fechas de `publicaciones` deben ser **estrictamente crecientes** y **anteriores al día del matrimonio** (en hora de Bolivia): `400 VALIDACION` con el detalle en `publicaciones.N.fecha` («Debe ser posterior a la proclama anterior.» / «Debe ser anterior a la fecha del matrimonio.»). Más de 3 publicaciones al crear es `400` en `publicaciones`.
+- `POST .../publicaciones`: la cuarta es `409 CONFLICTO` («La proclama ya tiene sus 3 publicaciones.»); una fecha que rompe el orden o pasa del matrimonio es `400 VALIDACION` en `fecha`. Responde `201` con la proclama completa y `Location` de la proclama.
+- `PATCH .../publicaciones/:numero`: aplica las mismas reglas de orden a la lista resultante (`400` en `fecha`); un `numero` que la proclama no tiene es `404 NO_ENCONTRADO`. Responde `200` con la proclama.
+- `DELETE .../publicaciones/:numero`: solo la última; otra es `409 CONFLICTO` («Solo se puede quitar la última publicación (la N).»). Responde `200` con la proclama actualizada (no `204`, porque sigue existiendo).
+- `PATCH` de la proclama: no acepta `tramiteOrigenId` ni `publicaciones`. Si cambia `fechaMatrimonio`, debe seguir siendo posterior a todas las publicaciones (`400` en `fechaMatrimonio`).
+- `tramiteOrigenId` repetido: `409 CONFLICTO` con un detalle en `tramiteOrigenId`. Varias proclamas sin trámite (`null`) son válidas.
+- `numeroProclama` es el número de la última publicación **ya alcanzada** (su fecha llegó, hoy en Bolivia o antes), o `null` si ninguna. Una proclama con solo publicaciones futuras tiene `numeroProclama: null` y `vigente: false`.
+- `GET` (lista): `vigentes=true|false`, `anio` (año de la boda, hora de Bolivia, 1900–2100) y `buscar` (en ambos nombres, sin distinguir mayúsculas ni acentos).
+- Los cambios de las publicaciones se registran en la bitácora como cambios de la entidad `proclama`: sus `datosAnteriores` y `datosNuevos` incluyen la clave `publicaciones` (`[{ numero, fecha }]`).
+- Lectura: todos los roles de la sede; `POST`, `PATCH` y `DELETE` piden `proclamas.gestionar` (Marketing recibe `403 SIN_PERMISO`).
+
 ---
 
 ## 11. Boletines
@@ -949,6 +995,15 @@ El mismo objeto del [endpoint público](publico.md#get-apisedessedeboletines), m
 
 - `periodo`: `YYYY-MM`. Se guarda como el primer día del mes. Solo puede haber un boletín por sede y mes: repetir el periodo es `409 CONFLICTO`.
 - `archivoId`: debe ser un `application/pdf` de la misma sede. Si no, `400 VALIDACION`.
+
+Reglas adicionales:
+
+- `sedeId` (solo el Administrador): por defecto su sede; obligatorio si no tiene sede asignada.
+- `titulo`: obligatorio, hasta 150 caracteres. `periodo` con otro formato que `YYYY-MM` (ej. `2026-11-01` o `2026-13`) es `400 VALIDACION`.
+- `archivoId` inexistente, de otra sede o que no es un PDF: `400 VALIDACION` en `archivoId` («Debe ser un documento PDF de la biblioteca multimedia de esta sede.» o «El archivo no es un documento PDF.»).
+- `periodo` repetido en la sede (al crear o al editar): `409 CONFLICTO` con un detalle en `periodo`. `PATCH` acepta `titulo`, `periodo` y `archivoId`; cualquier otro campo es `400`.
+- `publicadoPor` es quien creó el boletín y no cambia al editarlo. `fechaPublicacion` es el momento de la creación.
+- Lectura: todos los roles de la sede; `POST`, `PATCH` y `DELETE` piden `boletines.gestionar` (incluye a Marketing).
 
 ---
 
@@ -1054,6 +1109,27 @@ En el panel, `bloques` incluye también los no visibles (`visible: false`). La l
 ```
 
 Un `tipo` inexistente también es `400 VALIDACION` (`campo`: `tipo`).
+
+Cómo se valida el contenido:
+
+- Se evalúan los dos pasos y se informan **juntos** los errores de ambos, sin repetir un mismo error. Cada detalle usa la ruta del dato con el prefijo `contenido.` (`contenido.items.0.titulo`, `contenido.botones.1.enlace`).
+- Mensajes: «Es obligatorio.», «Campo no permitido.» (clave que no es del tipo), «Debe ser un texto.» / «una lista.» / «un objeto.» / «un número.» / «true o false.», «Puede tener hasta N caracteres.», «Agrega al menos un elemento.», «Puede tener hasta N elementos.», «Debe ser uno de: …», «Debe ser texto plano, sin HTML.», y uno propio para URL, enlaces, íconos e id de YouTube.
+- Las imágenes y los videos (`url_video`, `url_poster`, `url_imagen`, `items[].url_imagen`, `imagenes[].url`) deben ser archivos de la biblioteca multimedia **de la misma sede** y de su clase (video o imagen), sea la ruta `/media/seed/...` o la URL pública del CDN (también la de una variante). Si no, `400 VALIDACION` en ese campo («Debe ser una imagen de la biblioteca multimedia de esta sede.», «El archivo no es un video.»). Un `contenido` que no es un objeto es `400` en `contenido`.
+- Un tipo de bloque que se agregue al catálogo sin reglas adicionales en la API se valida solo con su `esquema_validacion`.
+
+### Reglas de páginas y bloques
+
+- **Páginas**: `sedeId` (solo el Administrador, por defecto su sede; obligatorio si no tiene sede). `slug` es opcional (`null` o ausente: se genera desde el título con sufijo `-2`, `-3`… si choca), único por sede (`409 CONFLICTO`) y de hasta 120 caracteres. `estado` por defecto `BORRADOR`; `EN_REVISION` es `400`. `ordenMenu` entre 0 y 32767 (por defecto 0). `paginaPadreId` debe ser una página de la misma sede (`400` en `paginaPadreId`: «La página padre no existe en esta sede.») y, al editar, no puede ser la propia página ni una de sus descendientes («No puede ser la propia página ni una de sus páginas hijas.»). El árbol admite hasta **3 niveles** (una página raíz, sus hijas y las hijas de estas): un `paginaPadreId` que deje alguna página en el nivel 4 es `400 VALIDACION` en `paginaPadreId` («Las páginas se pueden anidar hasta 3 niveles.»). Al mover una página con hijas se cuentan también sus descendientes. Quitar el padre (`null`) siempre se puede.
+- **`PATCH` de la página**: `"slug": null` lo regenera desde el título; el slug de `inicio` y de `nosotros` no se puede cambiar (`409 CONFLICTO`, detalle en `slug`). La respuesta del detalle y del `PATCH` incluyen `bloques`.
+- **`GET /api/admin/paginas`**: filtros `sede` y `estado` (`BORRADOR`, `PUBLICADO`, `ARCHIVADO`, varios con comas); orden fijo por `ordenMenu` y luego `titulo`; sin `bloques`. `paginaPadre` es `{ id, slug, titulo }` o `null`.
+- **Eliminar una página** también elimina sus bloques. El `409 CONFLICTO` de las páginas hijas dice «La página tiene páginas hijas: elimínalas o cámbiales la página padre primero.»; el de `inicio` y `nosotros`, «La página «inicio» no se puede eliminar: el portal depende de ella.».
+- **`POST .../bloques`**: `tipo` es el `codigo` del tipo (`cita`, `galeria`…), `visible` por defecto `true`; el `orden` es el último más uno. Responde `201` con el bloque y `Location: /api/admin/paginas/:id/bloques/:bloqueId`. Un bloque tiene `id`, `tipo`, `orden`, `visible`, `contenido` y `fechaActualizacion`.
+- **`PATCH .../bloques/:bloqueId`**: `contenido` **reemplaza** al guardado (no se fusiona) y se valida completo; `visible` por sí solo no revalida. Enviar `tipo` es `400` («El tipo no se puede cambiar.»). Un `bloqueId` que no es de esa página es `404 NO_ENCONTRADO`. Responde `200` con el bloque.
+- **`DELETE .../bloques/:bloqueId`**: `204`. Los bloques restantes conservan su `orden` (puede haber huecos hasta que se reordene).
+- **`POST .../bloques/reordenar`**: `ids` debe tener **todos** los bloques de la página, una vez cada uno; si falta, sobra o se repite alguno, o es de otra página, `400 VALIDACION` en `ids`. Reasigna `orden` 1, 2, 3… y responde `200` con la lista de bloques ordenada. Una página sin bloques acepta `[]`.
+- Cambiar un bloque (agregar, editar, eliminar o reordenar) actualiza también `actualizadoPor` y `fechaActualizacion` de la página.
+- **Lectura**: todos los roles de la sede; todo lo demás pide `paginas.gestionar` (Marketing recibe `403 SIN_PERMISO`).
+- **Bitácora**: las páginas se registran como la entidad `pagina` y cada bloque como `bloque`. A los datos de un bloque se les agrega `sede_id` (la tabla no lo tiene), para que el Párroco vea los cambios de su sede aunque el bloque ya no exista.
 
 ---
 

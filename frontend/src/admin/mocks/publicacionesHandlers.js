@@ -13,7 +13,6 @@ import {
   serializar,
 } from './publicacionesMock.js';
 import { obtenerSesionMock } from './sesionMock.js';
-import { SEDE_PRINCIPAL } from './usuarios.js';
 
 function respuestaError({ estado, codigo, mensaje, detalles = [] }) {
   return HttpResponse.json({ error: { codigo, mensaje, detalles } }, { status: estado });
@@ -44,8 +43,7 @@ export const handlersPublicaciones = [
 
     const parametros = new URL(request.url).searchParams;
     const slug = parametros.get('sede');
-    if (esAdministrador(usuario) && slug && slug !== SEDE_PRINCIPAL.slug)
-      return respuestaError({ estado: 404, codigo: 'NO_ENCONTRADO', mensaje: 'La sede indicada no existe.' });
+    // Una sede inexistente no es error: el Administrador recibe la lista vacía (como la API).
     // Fuera del Administrador, la sede se fuerza a la propia; pedir otra es 403.
     if (!esAdministrador(usuario) && slug && slug !== usuario.sede.slug) return otraSede();
     const slugSede = esAdministrador(usuario) ? slug : usuario.sede.slug;

@@ -70,24 +70,39 @@ export function consultar(texto, parametros = []) {
   return ejecutar(obtenerPool(), texto, parametros);
 }
 
-// Ejecuta fn dentro de una transacción. fn recibe { consultar } ligado a la misma conexión.
+// Ejecuta fn dentro de una transacción. fn recibe { consultar, alConfirmar } ligado a la misma conexión.
 // Si fn termina bien se hace COMMIT y se devuelve su valor; si lanza un error, ROLLBACK y se relanza.
+//
+// alConfirmar(clave, tarea): programa "tarea" para después del COMMIT (ej. invalidar la caché).
+// Si la transacción se deshace, no corre. Dos llamadas con la misma clave corren una sola vez.
+// Una tarea que falla se registra y no afecta al resultado: el cambio ya está confirmado.
 export async function transaccion(fn) {
   const cliente = await obtenerPool().connect();
+  const tareas = new Map();
+  let valor;
 
   try {
     await cliente.query('BEGIN');
-    const valor = await fn({
+    valor = await fn({
       consultar: (texto, parametros = []) => ejecutar(cliente, texto, parametros),
+      alConfirmar: (clave, tarea) => tareas.set(clave, tarea),
     });
     await cliente.query('COMMIT');
-    return valor;
   } catch (error) {
     await cliente.query('ROLLBACK').catch(() => {});
     throw error;
   } finally {
     cliente.release();
   }
+
+  for (const tarea of tareas.values()) {
+    try {
+      await tarea();
+    } catch (error) {
+      obtenerLogger().warn({ err: error }, 'Falló una tarea posterior a la transacción');
+    }
+  }
+  return valor;
 }
 
 // Comprueba que PostgreSQL responde. Lanza el error de conexión si no.

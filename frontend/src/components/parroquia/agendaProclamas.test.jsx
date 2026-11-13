@@ -37,6 +37,16 @@ describe('Agenda y Proclamas desde la API', () => {
       await screen.findByText('Juan Carlos M. Q. & María Fernanda R. V.'),
     ).toBeInTheDocument();
     expect(screen.getByText('3.ª proclama')).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('link', { name: /Ver calendario completo/i }),
+    ).toHaveAttribute('href', '/calendario');
+    expect(
+      screen.getByRole('link', { name: /Ver archivo de boletines/i }),
+    ).toHaveAttribute('href', '/boletines');
+    expect(
+      screen.getByRole('link', { name: /Ver historial de proclamas/i }),
+    ).toHaveAttribute('href', '/proclamas');
   });
 
   it('muestra error con Reintentar cuando eventos, avisos o proclamas devuelven 500', async () => {

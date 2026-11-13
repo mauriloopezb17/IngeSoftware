@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 import { anchoContenido } from './ElementosComunes.jsx';
+import EnlacePortal from './EnlacePortal.jsx';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { useBoletines, useEventos, usePublicaciones } from '../../hooks/index.js';
 import {
@@ -56,10 +57,10 @@ function Agenda() {
           <div className="agenda-encabezado">
             <h2 className="serif-title agenda-titulo">Próximos eventos</h2>
 
-            <a href="#agenda-eventos" className="agenda-calendario">
+            <EnlacePortal to="/calendario" className="agenda-calendario">
               Ver calendario completo
               <ArrowRight size={15} />
-            </a>
+            </EnlacePortal>
           </div>
 
           <div id="agenda-eventos" className="agenda-eventos">
@@ -207,6 +208,11 @@ function Agenda() {
                     <Download size={15} />
                   </span>
                 )}
+
+                <EnlacePortal to="/boletines" className="agenda-boletin-archivo">
+                  Ver archivo de boletines
+                  <ArrowRight size={14} />
+                </EnlacePortal>
               </div>
             )
           )}

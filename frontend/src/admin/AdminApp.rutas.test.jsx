@@ -160,6 +160,30 @@ describe('rutas del panel', () => {
       expect(screen.getByRole('navigation', { name: 'Menú principal' })).toBeInTheDocument();
     });
 
+    // Toda sección se monta en /admin/<ruta>/*: la que no tiene subrutas responde «no encontrada» debajo de su raíz.
+    it.each(SECCIONES.filter((x) => !['inicio', 'publicaciones', 'paginas'].includes(x.clave)).map((x) => [x.ruta]))(
+      '/admin/%s/no-existe muestra «página no encontrada» dentro del panel',
+      async (ruta) => {
+        await abrir('admin@parroquia.test', `${ruta}/no-existe`);
+
+        expect(await screen.findByRole('heading', { name: 'Página no encontrada' })).toBeInTheDocument();
+        expect(screen.getByRole('navigation', { name: 'Menú principal' })).toBeInTheDocument();
+      },
+    );
+
+    it('Páginas tiene subrutas reales: /admin/paginas/:id abre la página y una desconocida no existe', async () => {
+      await abrir('admin@parroquia.test', 'paginas/2');
+      expect(await screen.findByRole('heading', { level: 1, name: 'Quiénes somos' })).toBeInTheDocument();
+      const menu = screen.getByRole('navigation', { name: 'Menú principal' });
+      expect(within(menu).getByRole('link', { name: 'Páginas' })).toHaveAttribute('aria-current', 'page');
+    });
+
+    it('las subrutas pasan por la guardia de permisos de su sección', async () => {
+      await abrir('marketing@parroquia.test', 'usuarios/algo');
+
+      expect(await screen.findByRole('heading', { name: 'Sin permiso' })).toBeInTheDocument();
+    });
+
     it('las demás secciones siguen respondiendo solo en su raíz', async () => {
       await abrir('admin@parroquia.test', 'eventos/nueva');
 

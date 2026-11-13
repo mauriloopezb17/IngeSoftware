@@ -96,4 +96,64 @@ describe('GruposPastorales, Comunidades y VideoInstitucional desde la API', () =
       ).toBeInTheDocument();
     });
   });
+
+  it('usa srcSet y sizes en Comunidades cuando imagenPortada incluye variantes', async () => {
+    server.use(
+      http.get(api('/sedes'), () =>
+        HttpResponse.json({
+          datos: [
+            {
+              id: 1,
+              nombre: 'Parroquia Señor de la Exaltación',
+              slug: 'senor-de-la-exaltacion',
+              tipo: { codigo: 'PARROQUIA', nombre: 'Parroquia' },
+              sedePadre: null,
+              direccion: 'Av. Héctor Ormachea N.º 167',
+              imagenPortada: {
+                id: 10,
+                url: 'https://cdn.pasionistas.org.bo/templo.webp',
+                textoAlternativo: 'Templo con variantes',
+                ancho: 1600,
+                alto: 900,
+                variantes: [{ ancho: 480, url: 'https://cdn.pasionistas.org.bo/templo-480w.webp' }],
+              },
+              enlaceComoLlegar: null,
+            },
+            {
+              id: 2,
+              nombre: 'Capilla San Pablo',
+              slug: 'san-pablo',
+              tipo: { codigo: 'CAPILLA', nombre: 'Capilla' },
+              sedePadre: null,
+              direccion: 'La Paz',
+              imagenPortada: {
+                id: 11,
+                url: '/media/seed/altar.webp',
+                textoAlternativo: 'Capilla sin variantes',
+                ancho: 1879,
+                alto: 1057,
+              },
+              enlaceComoLlegar: null,
+            },
+          ],
+        }),
+      ),
+    );
+
+    renderConQuery(<Comunidades />);
+
+    const imgCon = await screen.findByAltText('Templo con variantes');
+    expect(imgCon).toHaveAttribute(
+      'srcset',
+      'https://cdn.pasionistas.org.bo/templo-480w.webp 480w, https://cdn.pasionistas.org.bo/templo.webp 1600w',
+    );
+    expect(imgCon).toHaveAttribute(
+      'sizes',
+      '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw',
+    );
+
+    const imgSin = screen.getByAltText('Capilla sin variantes');
+    expect(imgSin).not.toHaveAttribute('srcset');
+    expect(imgSin).not.toHaveAttribute('sizes');
+  });
 });
