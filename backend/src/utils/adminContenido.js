@@ -101,3 +101,31 @@ export async function reordenarPorSede({ tabla, entidad, usuario, ids, contexto,
     return sedeId;
   });
 }
+
+// Verifica que imagenId exista, sea una imagen y pertenezca a sedeId.
+// Cualquier incumplimiento responde 400 VALIDACION sobre ese campo (admin.md, Reglas comunes).
+export async function validarImagenDeSede(
+  imagenId,
+  sedeId,
+  campo = 'imagenId',
+  db = { consultar: null },
+) {
+  const consultarFn = db?.consultar ?? (await import('../db/index.js')).consultar;
+  const { rows } = await consultarFn(
+    'SELECT id, sede_id, tipo_mime, url FROM archivo_multimedia WHERE id = $1',
+    [imagenId],
+  );
+  const archivo = rows[0];
+  if (!archivo) {
+    throw ErrorApp.validacion(undefined, [{ campo, mensaje: 'La imagen indicada no existe.' }]);
+  }
+  if (archivo.sede_id !== sedeId) {
+    throw ErrorApp.validacion(undefined, [{ campo, mensaje: 'La imagen pertenece a otra sede.' }]);
+  }
+  if (!String(archivo.tipo_mime).startsWith('image/')) {
+    throw ErrorApp.validacion(undefined, [
+      { campo, mensaje: 'El archivo seleccionado debe ser una imagen.' },
+    ]);
+  }
+  return archivo;
+}

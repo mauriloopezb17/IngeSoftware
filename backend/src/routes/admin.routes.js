@@ -7,6 +7,8 @@ import bibliotecaRoutes from './biblioteca.routes.js';
 import bitacoraRoutes from './bitacora.routes.js';
 import adminHorariosRoutes from './adminHorarios.routes.js';
 import adminServiciosRoutes from './adminServicios.routes.js';
+import adminGruposRoutes from './adminGrupos.routes.js';
+import adminVideosRoutes from './adminVideos.routes.js';
 import multimediaRoutes from './multimedia.routes.js';
 
 const router = Router();
@@ -18,5 +20,7 @@ router.use('/multimedia', bibliotecaRoutes);
 router.use('/bitacora', bitacoraRoutes);
 router.use('/horarios', adminHorariosRoutes);
 router.use('/servicios', adminServiciosRoutes);
+router.use('/grupos-pastorales', adminGruposRoutes);
+router.use('/videos', adminVideosRoutes);
 
 export default router;
