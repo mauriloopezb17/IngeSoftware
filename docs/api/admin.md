@@ -1108,6 +1108,27 @@ En el panel, `bloques` incluye también los no visibles (`visible: false`). La l
 
 Un `tipo` inexistente también es `400 VALIDACION` (`campo`: `tipo`).
 
+Cómo se valida el contenido:
+
+- Se evalúan los dos pasos y se informan **juntos** los errores de ambos, sin repetir un mismo error. Cada detalle usa la ruta del dato con el prefijo `contenido.` (`contenido.items.0.titulo`, `contenido.botones.1.enlace`).
+- Mensajes: «Es obligatorio.», «Campo no permitido.» (clave que no es del tipo), «Debe ser un texto.» / «una lista.» / «un objeto.» / «un número.» / «true o false.», «Puede tener hasta N caracteres.», «Agrega al menos un elemento.», «Puede tener hasta N elementos.», «Debe ser uno de: …», «Debe ser texto plano, sin HTML.», y uno propio para URL, enlaces, íconos e id de YouTube.
+- Las imágenes y los videos (`url_video`, `url_poster`, `url_imagen`, `items[].url_imagen`, `imagenes[].url`) deben ser archivos de la biblioteca multimedia **de la misma sede** y de su clase (video o imagen), sea la ruta `/media/seed/...` o la URL pública del CDN (también la de una variante). Si no, `400 VALIDACION` en ese campo («Debe ser una imagen de la biblioteca multimedia de esta sede.», «El archivo no es un video.»). Un `contenido` que no es un objeto es `400` en `contenido`.
+- Un tipo de bloque que se agregue al catálogo sin reglas adicionales en la API se valida solo con su `esquema_validacion`.
+
+### Reglas de páginas y bloques
+
+- **Páginas**: `sedeId` (solo el Administrador, por defecto su sede; obligatorio si no tiene sede). `slug` es opcional (`null` o ausente: se genera desde el título con sufijo `-2`, `-3`… si choca), único por sede (`409 CONFLICTO`) y de hasta 120 caracteres. `estado` por defecto `BORRADOR`; `EN_REVISION` es `400`. `ordenMenu` entre 0 y 32767 (por defecto 0). `paginaPadreId` debe ser una página de la misma sede (`400` en `paginaPadreId`: «La página padre no existe en esta sede.») y, al editar, no puede ser la propia página ni una de sus descendientes («No puede ser la propia página ni una de sus páginas hijas.»).
+- **`PATCH` de la página**: `"slug": null` lo regenera desde el título; el slug de `inicio` y de `nosotros` no se puede cambiar (`409 CONFLICTO`, detalle en `slug`). La respuesta del detalle y del `PATCH` incluyen `bloques`.
+- **`GET /api/admin/paginas`**: filtros `sede` y `estado` (`BORRADOR`, `PUBLICADO`, `ARCHIVADO`, varios con comas); orden fijo por `ordenMenu` y luego `titulo`; sin `bloques`. `paginaPadre` es `{ id, slug, titulo }` o `null`.
+- **Eliminar una página** también elimina sus bloques. El `409 CONFLICTO` de las páginas hijas dice «La página tiene páginas hijas: elimínalas o cámbiales la página padre primero.»; el de `inicio` y `nosotros`, «La página «inicio» no se puede eliminar: el portal depende de ella.».
+- **`POST .../bloques`**: `tipo` es el `codigo` del tipo (`cita`, `galeria`…), `visible` por defecto `true`; el `orden` es el último más uno. Responde `201` con el bloque y `Location: /api/admin/paginas/:id/bloques/:bloqueId`. Un bloque tiene `id`, `tipo`, `orden`, `visible`, `contenido` y `fechaActualizacion`.
+- **`PATCH .../bloques/:bloqueId`**: `contenido` **reemplaza** al guardado (no se fusiona) y se valida completo; `visible` por sí solo no revalida. Enviar `tipo` es `400` («El tipo no se puede cambiar.»). Un `bloqueId` que no es de esa página es `404 NO_ENCONTRADO`. Responde `200` con el bloque.
+- **`DELETE .../bloques/:bloqueId`**: `204`. Los bloques restantes conservan su `orden` (puede haber huecos hasta que se reordene).
+- **`POST .../bloques/reordenar`**: `ids` debe tener **todos** los bloques de la página, una vez cada uno; si falta, sobra o se repite alguno, o es de otra página, `400 VALIDACION` en `ids`. Reasigna `orden` 1, 2, 3… y responde `200` con la lista de bloques ordenada. Una página sin bloques acepta `[]`.
+- Cambiar un bloque (agregar, editar, eliminar o reordenar) actualiza también `actualizadoPor` y `fechaActualizacion` de la página.
+- **Lectura**: todos los roles de la sede; todo lo demás pide `paginas.gestionar` (Marketing recibe `403 SIN_PERMISO`).
+- **Bitácora**: las páginas se registran como la entidad `pagina` y cada bloque como `bloque`. A los datos de un bloque se les agrega `sede_id` (la tabla no lo tiene), para que el Párroco vea los cambios de su sede aunque el bloque ya no exista.
+
 ---
 
 ## 13. Bitácora
