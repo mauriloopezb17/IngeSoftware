@@ -22,4 +22,6 @@ const formatoFecha = new Intl.DateTimeFormat('es', {
 
 export const formatearFecha = (iso) => formatoFecha.format(new Date(iso));
 
-export const contarArchivos = (n) => `${n} ${n === 1 ? 'archivo' : 'archivos'}`;
+export const contarImagenes = (n) => `${n} ${n === 1 ? 'imagen' : 'imágenes'}`;
+
+export const contarArchivos =(n) => `${n} ${n === 1 ? 'archivo' : 'archivos'}`;

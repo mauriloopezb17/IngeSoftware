@@ -33,9 +33,9 @@ export function eliminarArchivo(id) {
   return clienteHttp.delete(`/admin/multimedia/${id}`);
 }
 
-export function listarMultimedia({ buscar, clase, enUso, orden, pagina }, senal) {
+export function listarMultimedia({ buscar, clase, enUso, orden, pagina, porPagina = POR_PAGINA }, senal) {
   return clienteHttp.get('/admin/multimedia', {
-    parametros: { buscar, clase, enUso, orden, pagina, porPagina: POR_PAGINA },
+    parametros: { buscar, clase, enUso, orden, pagina, porPagina },
     senal,
   });
 }
