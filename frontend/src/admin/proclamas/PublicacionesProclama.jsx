@@ -4,6 +4,7 @@ import { CalendarPlus, Loader2, Pencil, Trash2 } from 'lucide-react';
 
 import CampoTexto from '../componentes/CampoTexto.jsx';
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
+import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import Dialogo from '../componentes/Dialogo.jsx';
 import {
   agregarPublicacion,
@@ -73,6 +74,8 @@ export default function PublicacionesProclama({ proclama, editable }) {
   const ultima = publicaciones[publicaciones.length - 1];
   const [fechaNueva, setFechaNueva] = useState('');
   const [aviso, setAviso] = useState('');
+  // El botón de una publicación quitada desaparece: el foco pasa al mensaje de confirmación.
+  const avisoRef = useEnfocarAviso(aviso);
   const [cambiando, setCambiando] = useState(null); // publicación cuya fecha se cambia
   const [quitando, setQuitando] = useState(null);
 
@@ -118,7 +121,12 @@ export default function PublicacionesProclama({ proclama, editable }) {
       </p>
 
       {aviso && (
-        <p role="status" className="mt-3 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark">
+        <p
+          ref={avisoRef}
+          role="status"
+          tabIndex={-1}
+          className="mt-3 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark outline-none focus-visible:outline-2 focus-visible:outline-goldDark"
+        >
           {aviso}
         </p>
       )}

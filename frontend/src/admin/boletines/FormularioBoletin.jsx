@@ -107,7 +107,10 @@ export default function FormularioBoletin({ boletin }) {
         value={campos.periodo}
         onChange={(e) => cambiar({ periodo: e.target.value })}
         error={errores.periodo}
-        ayuda="Solo puede haber un boletín por mes."
+        // Firefox de escritorio y Safari no tienen selector de mes: el campo funciona como texto, con el mismo formato.
+        placeholder="AAAA-MM"
+        pattern="\d{4}-(0[1-9]|1[0-2])"
+        ayuda="Solo puede haber un boletín por mes. Si tu navegador no muestra un selector, escribe año y mes así: 2026-11."
         required
       />
 

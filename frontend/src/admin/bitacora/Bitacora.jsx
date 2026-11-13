@@ -4,7 +4,7 @@ import { Eye, RotateCcw } from 'lucide-react';
 
 import Paginacion from '../componentes/Paginacion.jsx';
 import EstadoLista from '../contenido/componentes/EstadoLista.jsx';
-import { usePermisos } from '../permisos/usePermisos.js';
+import { useSesion } from '../sesion/SesionContexto.js';
 import {
   ACCIONES_BITACORA,
   CLAVE_BITACORA,
@@ -22,7 +22,8 @@ const CLASES_ACCION = {
 };
 
 export default function Bitacora() {
-  const { usuario } = usePermisos();
+  const { usuario } = useSesion();
+  // El Administrador ve la bitácora de todas las sedes; el Párroco, solo la de la suya (admin.md §13).
   const esAdmin = usuario?.rol?.codigo === 'ADMINISTRADOR';
 
   const idEntidad = useId();

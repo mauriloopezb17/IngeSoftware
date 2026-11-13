@@ -5,6 +5,7 @@ import { Inbox, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
 import { AvisoExito, AvisoSoloLectura, Cargando, ErrorConsulta } from '../componentes/EstadoConsulta.jsx';
+import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import Paginacion from '../componentes/Paginacion.jsx';
 import { formatearFecha } from '../multimedia/formato.js';
 import { usePermisos } from '../permisos/usePermisos.js';
@@ -125,6 +126,7 @@ export default function ListadoProclamas() {
   const clienteConsultas = useQueryClient();
   const ubicacion = useLocation();
   const [aviso, setAviso] = useState(ubicacion.state?.aviso ?? '');
+  const avisoRef = useEnfocarAviso(aviso); // tras eliminar, el foco pasa al mensaje (la fila y su botón desaparecen)
   const [porEliminar, setPorEliminar] = useState(null);
   const idAnio = useId();
 
@@ -173,7 +175,7 @@ export default function ListadoProclamas() {
       </header>
 
       {!editable && <AvisoSoloLectura>Tu rol puede consultar las proclamas, pero no modificarlas.</AvisoSoloLectura>}
-      <AvisoExito>{aviso}</AvisoExito>
+      <AvisoExito ref={avisoRef}>{aviso}</AvisoExito>
 
       <div className="mt-6 flex flex-col gap-4 rounded-lg border border-borderSoft bg-white p-4 lg:flex-row lg:items-end">
         <div role="group" aria-label="Mostrar proclamas" className="flex rounded-md border border-borderSoft p-0.5">
