@@ -38,6 +38,21 @@ export async function enviarARevision(id) {
   return datos;
 }
 
+// El Párroco o el Administrador aprueban: EN_REVISION -> PUBLICADO. `fechaPublicacion` es opcional.
+export async function aprobarPublicacion(id, cuerpo = {}) {
+  const { datos } = await clienteHttp.post(`/admin/publicaciones/${id}/aprobar`, cuerpo);
+  return datos;
+}
+
+// Rechazo: EN_REVISION -> BORRADOR. La observación es obligatoria, de 5 a 500 caracteres.
+export const OBSERVACION_MIN = 5;
+export const OBSERVACION_MAX = 500;
+
+export async function rechazarPublicacion(id, observacion) {
+  const { datos } = await clienteHttp.post(`/admin/publicaciones/${id}/rechazar`, { observacion });
+  return datos;
+}
+
 // Mismos catálogos que usa el resto del panel (GET /admin/catalogos): comparten la caché.
 export const CLAVE_CATALOGOS = ['admin', 'catalogos'];
 

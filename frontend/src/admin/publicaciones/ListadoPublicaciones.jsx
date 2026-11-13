@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useId, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { AlertCircle, Inbox, Loader2, Pencil, Plus, Search, X } from 'lucide-react';
+import { AlertCircle, ClipboardCheck, Inbox, Loader2, Pencil, Plus, Search, X } from 'lucide-react';
 
 import Paginacion from '../componentes/Paginacion.jsx';
 import { formatearFecha } from '../multimedia/formato.js';
@@ -166,14 +166,24 @@ export default function ListadoPublicaciones() {
           <h1 className="font-display text-4xl font-semibold text-ink">Publicaciones</h1>
           <p className="mt-2 text-muted">Noticias y notas de prensa de la sede.</p>
         </div>
-        {puede('noticias.redactar') && (
-          <Link
-            to="/admin/publicaciones/nueva"
-            className="flex items-center gap-2 rounded-md bg-gold px-4 py-2.5 font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark"
-          >
-            <Plus className="size-4" aria-hidden="true" /> Nueva publicación
-          </Link>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {puede('noticias.publicar') && (
+            <Link
+              to="/admin/publicaciones/revision"
+              className="flex items-center gap-2 rounded-md border border-borderSoft bg-white px-4 py-2.5 font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
+            >
+              <ClipboardCheck className="size-4" aria-hidden="true" /> Bandeja de revisión
+            </Link>
+          )}
+          {puede('noticias.redactar') && (
+            <Link
+              to="/admin/publicaciones/nueva"
+              className="flex items-center gap-2 rounded-md bg-gold px-4 py-2.5 font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark"
+            >
+              <Plus className="size-4" aria-hidden="true" /> Nueva publicación
+            </Link>
+          )}
+        </div>
       </header>
 
       {aviso && (
