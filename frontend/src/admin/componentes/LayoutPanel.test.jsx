@@ -132,4 +132,23 @@ describe('layout del panel', () => {
     expect(await screen.findByRole('link', { name: 'Saltar al contenido' })).toHaveAttribute('href', '#contenido');
     expect(screen.getByRole('main')).toHaveAttribute('id', 'contenido');
   });
+
+  // jsdom no calcula estilos: se comprueban las clases que dan el alto completo en escritorio.
+  it('el fondo del menú cubre toda la altura de la página, sin importar el largo del contenido', async () => {
+    await iniciarSesion('admin@parroquia.test');
+    montar();
+
+    await screen.findByText('Administrador (desarrollo)');
+    const columna = screen.getByRole('complementary');
+    const clases = columna.className.split(/\s+/);
+    // El fondo está en la columna, que se estira con el contenido: no tiene alto fijo en escritorio.
+    expect(clases).toContain('bg-deep');
+    expect(clases).toContain('lg:static');
+    expect(clases).not.toContain('lg:h-screen');
+    expect(clases).not.toContain('lg:sticky');
+    // El menú queda pegado a la pantalla dentro de la columna.
+    const menu = screen.getByTestId('menu-fijo');
+    expect(menu.className.split(/\s+/)).toEqual(expect.arrayContaining(['lg:sticky', 'lg:top-0', 'lg:h-screen']));
+    expect(columna).toContainElement(menu);
+  });
 });

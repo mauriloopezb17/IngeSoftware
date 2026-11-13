@@ -25,6 +25,9 @@ const PANTALLAS = {
   ...pantallasContenido,
 };
 
+// Las pantallas de publicaciones manejan sus subrutas (nueva, :id, :id/editar, revision).
+const SECCIONES_CON_SUBRUTAS = new Set(Object.keys(pantallasPublicaciones));
+
 function AdminApp() {
   return (
     // Es el mismo QueryClient que monta App.jsx; se declara aquí para que el panel también
@@ -38,11 +41,23 @@ function AdminApp() {
               <Route index element={<Navigate to="inicio" replace />} />
               <Route path="inicio" element={<Inicio />} />
               {/* Una ruta por sección del índice de admin.md; cada una pasa por su guardia de permisos. */}
-              {SECCIONES.filter((s) => s.clave !== 'inicio').map(({ clave, ruta, titulo }) => (
-                <Route key={clave} path={ruta} element={<GuardiaSeccion clave={clave} />}>
-                  <Route index element={PANTALLAS[clave] ?? <PantallaProvisional titulo={titulo} />} />
-                </Route>
-              ))}
+              {SECCIONES.filter((s) => s.clave !== 'inicio').map(({ clave, ruta, titulo }) => {
+                const pantalla = PANTALLAS[clave] ?? <PantallaProvisional titulo={titulo} />;
+                return (
+                  <Route key={clave} path={ruta} element={<GuardiaSeccion clave={clave} />}>
+                    {/* Las secciones con subrutas (publicaciones) declaran sus propias <Routes> relativas;
+                        el resto solo responde en su raíz y cualquier otra subruta es «no encontrada». */}
+                    {SECCIONES_CON_SUBRUTAS.has(clave) ? (
+                      <>
+                        <Route index element={pantalla} />
+                        <Route path="*" element={pantalla} />
+                      </>
+                    ) : (
+                      <Route index element={pantalla} />
+                    )}
+                  </Route>
+                );
+              })}
               <Route path="*" element={<NoEncontrada />} />
             </Route>
           </Route>

@@ -13,6 +13,8 @@ import {
   reiniciarMultimedia,
   validarArchivo,
 } from './multimediaMock.js';
+import { handlersPublicaciones } from './publicacionesHandlers.js';
+import { reiniciarPublicaciones } from './publicacionesMock.js';
 import { borrarSesionMock, guardarSesionMock, obtenerSesionMock } from './sesionMock.js';
 import { CONTRASENA_DESARROLLO, crearSesion, SEDE_PRINCIPAL, usuariosSeed } from './usuarios.js';
 
@@ -28,6 +30,7 @@ export function reiniciarMocksAdmin() {
   fallosPorCorreo.clear();
   borrarSesionMock();
   reiniciarMultimedia();
+  reiniciarPublicaciones();
 }
 
 function error(estado, codigo, mensaje, detalles = [], cabeceras = {}) {
@@ -191,4 +194,7 @@ export const handlersAdmin = [
     eliminarArchivo(archivo.id);
     return new HttpResponse(null, { status: 204 });
   }),
+
+  // ---- Publicaciones (docs/api/admin.md §3) ----
+  ...handlersPublicaciones,
 ];

@@ -46,6 +46,7 @@ export function reiniciarMultimedia() {
 }
 
 export const buscarArchivo = (id) => archivos.find((a) => a.id === id) ?? null;
+export const buscarArchivoPorUrl = (url) => archivos.find((a) => a.url === url) ?? null;
 
 const normalizar = (texto) =>
   String(texto ?? '')
