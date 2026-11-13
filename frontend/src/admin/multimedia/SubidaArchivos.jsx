@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react';
-import { AlertCircle, CheckCircle2, Loader2, RotateCcw, Trash2, UploadCloud, X } from 'lucide-react';
+import { AlertCircle, Ban, CheckCircle2, RotateCcw, Trash2, UploadCloud, X } from 'lucide-react';
 
+import BarraProgreso from './BarraProgreso.jsx';
 import { formatearTamano } from './formato.js';
 import { claseDeTipo, nombreDeTipo } from './tipos.js';
 import { ACCEPT_ARCHIVOS, RESUMEN_DE_LIMITES, tipoDelArchivo } from './validacion.js';
@@ -9,10 +10,10 @@ import { useColaSubida } from './useColaSubida.js';
 const botonSecundario =
   'flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white';
 
-function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintentar }) {
+function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintentar, onCancelar }) {
   const idTexto = useId();
   const idAyuda = `${idTexto}-ayuda`;
-  const { archivo, estado, mensaje, textoAlternativo } = elemento;
+  const { archivo, estado, mensaje, textoAlternativo, progreso } = elemento;
   const tipo = tipoDelArchivo(archivo);
   const esImagen = claseDeTipo(tipo) === 'IMAGEN';
 
@@ -28,8 +29,18 @@ function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintent
 
         <div className="flex shrink-0 items-center gap-2 text-sm">
           {estado === 'subiendo' && (
+            <button
+              type="button"
+              onClick={onCancelar}
+              aria-label={`Cancelar la subida de ${archivo.name}`}
+              className={botonSecundario}
+            >
+              <Ban className="size-4" aria-hidden="true" /> Cancelar
+            </button>
+          )}
+          {estado === 'cancelado' && (
             <span role="status" className="flex items-center gap-1.5 text-muted">
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" /> Subiendo…
+              <Ban className="size-4" aria-hidden="true" /> Subida cancelada
             </span>
           )}
           {estado === 'subido' && (
@@ -37,12 +48,12 @@ function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintent
               <CheckCircle2 className="size-4" aria-hidden="true" /> Subido
             </span>
           )}
-          {estado === 'error' && (
+          {(estado === 'error' || estado === 'cancelado') && (
             <button type="button" onClick={onReintentar} disabled={deshabilitado} className={botonSecundario}>
               <RotateCcw className="size-4" aria-hidden="true" /> Reintentar
             </button>
           )}
-          {(estado === 'pendiente' || estado === 'error') && (
+          {(estado === 'pendiente' || estado === 'error' || estado === 'cancelado') && (
             <button
               type="button"
               onClick={onQuitar}
@@ -55,6 +66,8 @@ function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintent
           )}
         </div>
       </div>
+
+      {estado === 'subiendo' && <BarraProgreso nombre={archivo.name} progreso={progreso} />}
 
       {estado === 'error' && (
         <p role="alert" className="flex items-start gap-2 text-sm text-redParish">
@@ -73,7 +86,7 @@ function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintent
             type="text"
             value={textoAlternativo}
             maxLength={255}
-            disabled={estado !== 'pendiente' && estado !== 'error'}
+            disabled={estado !== 'pendiente' && estado !== 'error' && estado !== 'cancelado'}
             aria-describedby={idAyuda}
             onChange={(e) => onTexto(e.target.value)}
             className="rounded-md border border-borderSoft px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-goldDark disabled:bg-stone"
@@ -190,6 +203,7 @@ export default function SubidaArchivos() {
                 onTexto={(texto) => cola.cambiarTexto(elemento.id, texto)}
                 onQuitar={() => cola.quitar(elemento.id)}
                 onReintentar={() => cola.reintentar(elemento.id)}
+                onCancelar={() => cola.cancelar(elemento.id)}
               />
             ))}
           </ul>

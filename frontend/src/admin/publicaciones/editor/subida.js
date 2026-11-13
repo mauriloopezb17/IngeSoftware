@@ -17,7 +17,10 @@ export function propiedadesDeArchivo(archivo) {
 
 // `uploadFile` del editor: valida el archivo, lo sube a la biblioteca y devuelve las propiedades del bloque.
 // Si algo falla lanza un Error con el motivo (BlockNote muestra un aviso genérico de error de subida).
-export async function subirArchivoDelEditor(archivo) {
+// `opciones` (opcional): { onProgreso(0-100), senal } para mostrar el avance y poder cancelar. BlockNote llama a
+// `uploadFile(archivo, idDelBloque)`: ese segundo argumento (un texto) se ignora.
+export async function subirArchivoDelEditor(archivo, opciones) {
+  const { onProgreso, senal } = opciones !== null && typeof opciones === 'object' ? opciones : {};
   const clase = claseDeTipo(tipoDelArchivo(archivo));
   if (clase !== 'IMAGEN' && clase !== 'VIDEO') {
     throw new Error('Solo se pueden insertar imágenes (JPG, PNG, WebP) o videos (MP4, WebM).');
@@ -26,6 +29,6 @@ export async function subirArchivoDelEditor(archivo) {
   const rechazo = validarArchivoCliente(archivo);
   if (rechazo) throw new Error(rechazo.mensaje);
 
-  const subido = await subirArchivo({ archivo });
+  const subido = await subirArchivo({ archivo, onProgreso, senal });
   return { props: propiedadesDeArchivo(subido) };
 }
