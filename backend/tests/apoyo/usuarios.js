@@ -39,7 +39,15 @@ export async function crearUsuarioDePrueba({
   return { id: rows[0].id, correo, contrasena: CONTRASENA_DE_PRUEBA };
 }
 
+// Borra los usuarios de prueba y antes sus registros de bitácora (la clave foránea lo exige):
+// los que hicieron ellos y los cambios sobre ellos.
 export async function borrarUsuariosDePrueba() {
   if (idsCreados.length === 0) return;
-  await consultar('DELETE FROM usuario WHERE id = ANY($1)', [idsCreados.splice(0)]);
+  const ids = idsCreados.splice(0);
+  await consultar(
+    `DELETE FROM bitacora_cambio
+      WHERE usuario_id = ANY($1) OR (entidad = 'usuario' AND entidad_id = ANY($1::text[]))`,
+    [ids],
+  );
+  await consultar('DELETE FROM usuario WHERE id = ANY($1)', [ids]);
 }

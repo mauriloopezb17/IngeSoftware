@@ -1,5 +1,6 @@
 // Controladores HTTP de /api/auth: leen la petición, ponen o borran la cookie y responden.
 import * as servicio from '../services/auth.service.js';
+import { contextoDe } from '../services/bitacora.service.js';
 import { conLimiteDeIntentos } from '../services/limiteIntentos.service.js';
 import { borrarCookieSesion, establecerCookieSesion } from '../utils/sesion.js';
 
@@ -47,7 +48,11 @@ export function yo(req, res) {
 export async function cambiarContrasena(req, res) {
   await conLimiteDeIntentos(
     { ip: req.ip, correo: req.usuario.fila.correo, log: req.log },
-    () => servicio.cambiarContrasena({ usuarioId: req.usuario.id, ...req.validado.body }),
+    () =>
+      servicio.cambiarContrasena(
+        { usuarioId: req.usuario.id, ...req.validado.body },
+        contextoDe(req),
+      ),
     esCambioFallido,
   );
 

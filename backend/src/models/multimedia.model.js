@@ -40,23 +40,28 @@ export const UNIONES_ARCHIVO = `
   JOIN sede s ON s.id = m.sede_id
   JOIN usuario u ON u.id = m.subido_por`;
 
-// Inserta el archivo y devuelve su fila completa. "url" guarda la clave del objeto en el bucket.
-export async function insertar({
-  sedeId,
-  subidoPor,
-  nombreOriginal,
-  clave,
-  tipoMime,
-  tamanoBytes,
-  anchoPx,
-  altoPx,
-  textoAlternativo,
-}) {
-  const { rows } = await consultar(
+// Inserta el archivo. "url" guarda la clave del objeto en el bucket. "db" permite hacerlo en la
+// misma transacción que la bitácora. Devuelve { fila } (la de la tabla, para la bitácora) y
+// { archivo } (con su sede y quien lo subió, para la respuesta).
+export async function insertar(
+  {
+    sedeId,
+    subidoPor,
+    nombreOriginal,
+    clave,
+    tipoMime,
+    tamanoBytes,
+    anchoPx,
+    altoPx,
+    textoAlternativo,
+  },
+  db = { consultar },
+) {
+  const { rows } = await db.consultar(
     `INSERT INTO archivo_multimedia
        (sede_id, subido_por, nombre_original, url, tipo_mime, tamano_bytes, ancho_px, alto_px, texto_alternativo)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-     RETURNING id`,
+     RETURNING *`,
     [
       sedeId,
       subidoPor,
@@ -70,9 +75,9 @@ export async function insertar({
     ],
   );
 
-  const { rows: archivo } = await consultar(
+  const { rows: archivo } = await db.consultar(
     `SELECT ${COLUMNAS_ARCHIVO}, false AS en_uso ${UNIONES_ARCHIVO} WHERE m.id = $1`,
     [rows[0].id],
   );
-  return archivo[0];
+  return { fila: rows[0], archivo: archivo[0] };
 }

@@ -7,6 +7,7 @@ import { eliminarObjetos } from '../storage/oci.js';
 import { esAdministrador, exigirSedeDelRecurso } from '../utils/alcanceSede.js';
 import { patronBusqueda } from '../utils/busqueda.js';
 import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
+import { registrarCambio } from './bitacora.service.js';
 import { aArchivoMultimedia } from './multimedia.service.js';
 
 const MENSAJE_SOLO_LO_PROPIO = 'Solo puedes eliminar los archivos que tú subiste.';
@@ -52,9 +53,22 @@ export async function obtenerArchivo(usuario, id) {
   return aArchivoMultimedia(await archivoDelUsuario(usuario, id));
 }
 
-export async function actualizarArchivo(usuario, id, { textoAlternativo }) {
+// contexto: quién y desde dónde (bitacora.service.contextoDe(req)), para la bitácora.
+export async function actualizarArchivo(usuario, id, { textoAlternativo }, contexto) {
   await archivoDelUsuario(usuario, id);
-  return aArchivoMultimedia(await modelo.actualizarTextoAlternativo(id, textoAlternativo));
+
+  await transaccion(async (db) => {
+    const anterior = await modelo.filaParaModificar(id, db);
+    const nuevo = await modelo.actualizarTextoAlternativo(id, textoAlternativo, db);
+    await registrarCambio(db, contexto, {
+      entidad: 'archivo_multimedia',
+      entidadId: id,
+      accion: 'UPDATE',
+      anterior,
+      nuevo,
+    });
+  });
+  return aArchivoMultimedia(await modelo.buscarPorId(id));
 }
 
 const DESCRIPCION_DE_USO = {
@@ -96,7 +110,7 @@ function clavesDelArchivo(fila) {
 }
 
 // Borra la fila y los objetos en una sola transacción: si el bucket falla (503) la fila vuelve.
-export async function eliminarArchivo(usuario, id) {
+export async function eliminarArchivo(usuario, id, contexto) {
   const fila = await archivoDelUsuario(usuario, id);
 
   // Fuera del Administrador, cada usuario borra solo lo que subió.
@@ -109,7 +123,14 @@ export async function eliminarArchivo(usuario, id) {
 
   try {
     await transaccion(async (db) => {
-      await modelo.eliminar(id, db);
+      const borrada = await modelo.eliminar(id, db);
+      await registrarCambio(db, contexto, {
+        entidad: 'archivo_multimedia',
+        entidadId: id,
+        accion: 'DELETE',
+        anterior: borrada,
+      });
+      // Al final: si el bucket falla, se deshacen el borrado y su registro (503, se puede reintentar).
       await eliminarObjetos(clavesDelArchivo(fila));
     });
   } catch (error) {

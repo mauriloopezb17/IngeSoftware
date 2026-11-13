@@ -105,15 +105,28 @@ export async function listar(filtros, { limite, desplazamiento, campo, ascendent
   return { filas: pagina.rows, total: conteo.rows[0].total };
 }
 
-export async function actualizarTextoAlternativo(id, textoAlternativo) {
-  await consultar('UPDATE archivo_multimedia SET texto_alternativo = $2 WHERE id = $1', [
+// Fila de la tabla (sin uniones), bloqueada hasta el fin de la transacción: es el "antes" de la
+// bitácora y evita que otro cambio se cuele en el medio.
+export async function filaParaModificar(id, db) {
+  const { rows } = await db.consultar('SELECT * FROM archivo_multimedia WHERE id = $1 FOR UPDATE', [
     id,
-    textoAlternativo,
   ]);
-  return buscarPorId(id);
+  return rows[0];
 }
 
-// "db" permite ejecutarlo dentro de una transacción (junto con el borrado de los objetos).
+// Devuelve la fila de la tabla ya cambiada. "db": la transacción del cambio y su bitácora.
+export async function actualizarTextoAlternativo(id, textoAlternativo, db = { consultar }) {
+  const { rows } = await db.consultar(
+    'UPDATE archivo_multimedia SET texto_alternativo = $2 WHERE id = $1 RETURNING *',
+    [id, textoAlternativo],
+  );
+  return rows[0];
+}
+
+// Devuelve la fila borrada. "db": la transacción del borrado, su bitácora y los objetos del bucket.
 export async function eliminar(id, db = { consultar }) {
-  await db.consultar('DELETE FROM archivo_multimedia WHERE id = $1', [id]);
+  const { rows } = await db.consultar('DELETE FROM archivo_multimedia WHERE id = $1 RETURNING *', [
+    id,
+  ]);
+  return rows[0];
 }

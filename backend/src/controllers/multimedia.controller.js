@@ -1,6 +1,7 @@
 // Controladores HTTP de /api/admin/multimedia.
 import { ErrorApp } from '../errores/ErrorApp.js';
 import { errorDeZod } from '../middlewares/errores.js';
+import { contextoDe } from '../services/bitacora.service.js';
 import * as servicio from '../services/multimedia.service.js';
 import { cuerpoSubida } from '../validacion/multimedia.js';
 
@@ -17,6 +18,7 @@ export async function subir(req, res) {
     archivo: req.archivoRecibido,
     textoAlternativo: campos.data.textoAlternativo,
     sedeId: campos.data.sedeId,
+    contexto: contextoDe(req),
   });
 
   res.status(201).set('Location', `/api/admin/multimedia/${datos.id}`).json({ datos });
