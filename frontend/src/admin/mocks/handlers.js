@@ -15,6 +15,7 @@ import {
   validarArchivo,
 } from './multimediaMock.js';
 import { handlersPublicaciones } from './publicacionesHandlers.js';
+import { handlersProclamas, reiniciarProclamas } from './proclamasMock.js';
 import { reiniciarPublicaciones } from './publicacionesMock.js';
 import { borrarSesionMock, guardarSesionMock, obtenerSesionMock } from './sesionMock.js';
 import { CONTRASENA_DESARROLLO, crearSesion, SEDE_PRINCIPAL, usuariosSeed } from './usuarios.js';
@@ -33,6 +34,7 @@ export function reiniciarMocksAdmin() {
   reiniciarMultimedia();
   reiniciarPublicaciones();
   reiniciarEventos();
+  reiniciarProclamas();
 }
 
 function error(estado, codigo, mensaje, detalles = [], cabeceras = {}) {
@@ -202,4 +204,7 @@ export const handlersAdmin = [
 
   // ---- Eventos (docs/api/admin.md §4) ----
   ...handlersEventos,
+
+  // ---- Proclamas (docs/api/admin.md §10) ----
+  ...handlersProclamas,
 ];
