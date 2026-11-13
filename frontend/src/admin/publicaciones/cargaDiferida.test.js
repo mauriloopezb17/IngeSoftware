@@ -15,7 +15,7 @@ const dentro = Object.entries(fuentes).filter(([ruta]) => ruta.startsWith('./edi
 describe('carga diferida del editor', () => {
   it('encuentra los archivos que debe revisar', () => {
     expect(fuera.length).toBeGreaterThan(5);
-    expect(dentro.map(([ruta]) => ruta).sort()).toEqual(['./editor/EditorContenido.jsx', './editor/esquema.js']);
+    expect(dentro.map(([ruta]) => ruta).sort()).toEqual(['./editor/EditorContenido.jsx', './editor/esquema.js', './editor/subida.js']);
   });
 
   it('el formulario importa el editor con import() dentro de un React.lazy', () => {
