@@ -1,10 +1,11 @@
 import { useEffect, useEffectEvent, useId, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { AlertCircle, Inbox, Loader2, Search, X } from 'lucide-react';
+import { AlertCircle, Inbox, Loader2, Pencil, Plus, Search, X } from 'lucide-react';
 
 import Paginacion from '../componentes/Paginacion.jsx';
 import { formatearFecha } from '../multimedia/formato.js';
+import { usePermisos } from '../permisos/usePermisos.js';
 import { CLAVE_PUBLICACIONES, ESTADOS, listarPublicaciones, TIPOS_DE_ESTA_PANTALLA } from './api.js';
 import InsigniaSituacion from './InsigniaSituacion.jsx';
 
@@ -133,6 +134,7 @@ function Filtros({ valores, hayFiltros, onCambiar, onLimpiar }) {
 export default function ListadoPublicaciones() {
   const [parametros, setParametros] = useSearchParams();
   const filtros = leerFiltros(parametros);
+  const { puede } = usePermisos();
   const hayFiltros = Boolean(filtros.estado || filtros.tipo || filtros.buscar || filtros.autor);
 
   const { data, isPending, isError, error, isPlaceholderData, refetch } = useQuery({
@@ -158,9 +160,19 @@ export default function ListadoPublicaciones() {
 
   return (
     <section className="mx-auto max-w-6xl">
-      <header>
-        <h1 className="font-display text-4xl font-semibold text-ink">Publicaciones</h1>
-        <p className="mt-2 text-muted">Noticias y notas de prensa de la sede.</p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-4xl font-semibold text-ink">Publicaciones</h1>
+          <p className="mt-2 text-muted">Noticias y notas de prensa de la sede.</p>
+        </div>
+        {puede('noticias.redactar') && (
+          <Link
+            to="/admin/publicaciones/nueva"
+            className="flex items-center gap-2 rounded-md bg-gold px-4 py-2.5 font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark"
+          >
+            <Plus className="size-4" aria-hidden="true" /> Nueva publicación
+          </Link>
+        )}
       </header>
 
       <div className="mt-6 rounded-lg border border-borderSoft bg-white p-4">
@@ -208,6 +220,7 @@ export default function ListadoPublicaciones() {
                       <th scope="col" className="px-4 py-3 font-semibold">Situación</th>
                       <th scope="col" className="px-4 py-3 font-semibold">Autor</th>
                       <th scope="col" className="px-4 py-3 font-semibold">Publicación</th>
+                      <th scope="col" className="px-4 py-3 font-semibold"><span className="sr-only">Acciones</span></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-borderSoft">
@@ -223,6 +236,18 @@ export default function ListadoPublicaciones() {
                         <td className="px-4 py-3 text-charcoal">{publicacion.autor.nombreCompleto}</td>
                         <td className="whitespace-nowrap px-4 py-3 text-charcoal">
                           {publicacion.fechaPublicacion ? formatearFecha(publicacion.fechaPublicacion) : 'Sin fecha'}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {/* Los botones salen de `acciones`: la API dice qué puede hacer esta sesión. */}
+                          {publicacion.acciones.includes('EDITAR') && (
+                            <Link
+                              to={`/admin/publicaciones/${publicacion.id}/editar`}
+                              aria-label={`Editar «${publicacion.titulo}»`}
+                              className="inline-flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
+                            >
+                              <Pencil className="size-3.5" aria-hidden="true" /> Editar
+                            </Link>
+                          )}
                         </td>
                       </tr>
                     ))}

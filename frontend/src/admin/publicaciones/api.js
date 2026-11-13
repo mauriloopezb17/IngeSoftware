@@ -17,6 +17,29 @@ export const ESTADOS = {
   ARCHIVADO: 'Archivado',
 };
 
+export async function obtenerPublicacion(id, senal) {
+  const { datos } = await clienteHttp.get(`/admin/publicaciones/${id}`, { senal });
+  return datos;
+}
+
+export async function crearPublicacion(cuerpo) {
+  const { datos } = await clienteHttp.post('/admin/publicaciones', cuerpo);
+  return datos;
+}
+
+export async function actualizarPublicacion(id, cuerpo) {
+  const { datos } = await clienteHttp.patch(`/admin/publicaciones/${id}`, cuerpo);
+  return datos;
+}
+
+// Mismos catálogos que usa el resto del panel (GET /admin/catalogos): comparten la caché.
+export const CLAVE_CATALOGOS = ['admin', 'catalogos'];
+
+export async function obtenerCatalogos() {
+  const { datos } = await clienteHttp.get('/admin/catalogos');
+  return datos;
+}
+
 export function listarPublicaciones({ estado, tipo, buscar, autor, pagina, porPagina = POR_PAGINA }, senal) {
   return clienteHttp.get('/admin/publicaciones', {
     parametros: {

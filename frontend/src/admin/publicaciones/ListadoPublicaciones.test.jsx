@@ -11,6 +11,7 @@ import { clienteHttp } from '../../services/clienteHttp.js';
 import { crearQueryClient } from '../../services/queryClient.js';
 import { reiniciarMocksAdmin } from '../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from '../mocks/usuarios.js';
+import { SesionProvider } from '../sesion/SesionProvider.jsx';
 import Publicaciones from './Publicaciones.jsx';
 
 const entrar = (usuario) =>
@@ -24,12 +25,14 @@ function Ubicacion() {
 function montar(entrada = '/admin/publicaciones') {
   return render(
     <QueryClientProvider client={crearQueryClient()}>
-      <MemoryRouter initialEntries={[entrada]}>
-        <Routes>
-          <Route path="/admin/publicaciones/*" element={<Publicaciones />} />
-        </Routes>
-        <Ubicacion />
-      </MemoryRouter>
+      <SesionProvider>
+        <MemoryRouter initialEntries={[entrada]}>
+          <Routes>
+            <Route path="/admin/publicaciones/*" element={<Publicaciones />} />
+          </Routes>
+          <Ubicacion />
+        </MemoryRouter>
+      </SesionProvider>
     </QueryClientProvider>,
   );
 }
@@ -172,5 +175,45 @@ describe('listado de publicaciones', () => {
     montar('/admin/publicaciones/no-existe');
 
     expect(await screen.findByRole('heading', { name: 'Página no encontrada' })).toBeInTheDocument();
+  });
+
+  describe('botones según el rol y las acciones de cada publicación', () => {
+    it('Marketing ve «Nueva publicación» y «Editar» solo en lo suyo que puede editar', async () => {
+      await entrar('marketing');
+      montar();
+      await screen.findByRole('table');
+
+      expect(await screen.findByRole('link', { name: 'Nueva publicación' })).toHaveAttribute('href', '/admin/publicaciones/nueva');
+      // Su borrador sí; en revisión, el borrador del Párroco y lo publicado no.
+      expect(within(fila('Retiro de Adviento')).getByRole('link', { name: /Editar/ })).toHaveAttribute(
+        'href',
+        '/admin/publicaciones/4/editar',
+      );
+      expect(within(fila('Solemnidad de Cristo Rey')).queryByRole('link', { name: /Editar/ })).not.toBeInTheDocument();
+      expect(within(fila('Nota de prensa: campaña de víveres')).queryByRole('link', { name: /Editar/ })).not.toBeInTheDocument();
+      expect(within(fila('Primeras comuniones')).queryByRole('link', { name: /Editar/ })).not.toBeInTheDocument();
+    });
+
+    it('el Párroco edita cualquier publicación que no esté archivada', async () => {
+      await entrar('parroco');
+      montar();
+      await screen.findByRole('table');
+
+      expect(await screen.findByRole('link', { name: 'Nueva publicación' })).toBeInTheDocument();
+      expect(within(fila('Solemnidad de Cristo Rey')).getByRole('link', { name: /Editar/ })).toBeInTheDocument();
+      expect(within(fila('Primeras comuniones')).getByRole('link', { name: /Editar/ })).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: /Siguiente/ }));
+      const archivada = await screen.findByRole('row', { name: /Misa de acción de gracias/ });
+      expect(within(archivada).queryByRole('link', { name: /Editar/ })).not.toBeInTheDocument();
+    });
+
+    it('Secretaría puede ver la lista pero no ve «Nueva publicación»', async () => {
+      await entrar('secretaria');
+      montar();
+      await screen.findByRole('table');
+
+      expect(screen.queryByRole('link', { name: 'Nueva publicación' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /Editar/ })).not.toBeInTheDocument();
+    });
   });
 });
