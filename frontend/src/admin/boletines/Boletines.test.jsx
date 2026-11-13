@@ -1,8 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
+import { http, HttpResponse, delay } from 'msw';
+
+import { api } from '../../mocks/api.js';
+import { server } from '../../mocks/server.js';
 
 import { clienteHttp } from '../../services/clienteHttp.js';
 import { crearQueryClient } from '../../services/queryClient.js';
@@ -113,6 +117,30 @@ describe('boletines del panel', () => {
     expect(await screen.findByText('Se publicó el boletín «Edición de diciembre 2026».')).toBeInTheDocument();
   });
 
+  it('muestra el avance de la subida del PDF y permite cancelarla sin error; el foco vuelve al botón de subir', async () => {
+    server.use(
+      http.post(api('/admin/multimedia'), async () => {
+        await delay(5000);
+        return HttpResponse.json({ datos: {} }, { status: 201 });
+      }),
+    );
+    await entrar('secretaria');
+    montar('/admin/boletines/nuevo');
+    const usuario = userEvent.setup();
+
+    await usuario.click(await screen.findByRole('button', { name: 'Elegir PDF' }));
+    const dialogo = await screen.findByRole('dialog', { name: 'PDF del boletín' });
+    await usuario.upload(within(dialogo).getByLabelText('Archivo PDF'), pdf('boletin-enero.pdf'));
+
+    expect(await within(dialogo).findByRole('progressbar', { name: 'Progreso de subida de boletin-enero.pdf' })).toBeInTheDocument();
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Cancelar la subida de boletin-enero.pdf' }));
+
+    const subir = await within(dialogo).findByRole('button', { name: 'Subir un PDF' });
+    expect(within(dialogo).queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(within(dialogo).queryByRole('alert')).not.toBeInTheDocument();
+    await waitFor(() => expect(subir).toHaveFocus());
+  });
+
   it('rechaza en el selector un archivo que no es PDF', async () => {
     await entrar('secretaria');
     montar('/admin/boletines/nuevo');
@@ -133,7 +161,7 @@ describe('boletines del panel', () => {
     await completar(usuario, { titulo: 'Otro de octubre', periodo: '2026-10', archivo: 'estatutos-pastoral-juvenil' });
     await usuario.click(screen.getByRole('button', { name: 'Publicar boletín' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Ya existe un boletín de ese mes en la sede.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ya hay un boletín de ese mes.');
     expect(screen.getByTestId('ubicacion')).toHaveTextContent('/admin/boletines/nuevo');
   });
 

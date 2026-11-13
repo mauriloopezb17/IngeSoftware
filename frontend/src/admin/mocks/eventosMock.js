@@ -9,6 +9,7 @@ import {
   autenticar,
   autorDe,
   autorizar,
+  camposNoPermitidos,
   consultaInvalida,
   cuerpoInvalido,
   errorValidacion,
@@ -160,13 +161,16 @@ export function serializarEvento(ev) {
 
 // ---- Validación (admin.md §4) ----
 
+// Cuerpos estrictos como en la API: idExternoM365 (solo lectura) u otro campo desconocido es «Campo no permitido.».
+const CAMPOS_EDITAR = ['titulo', 'descripcion', 'lugar', 'fechaInicio', 'fechaFin', 'todoElDia', 'categoriaEventoId', 'imagenId', 'estado'];
+const CAMPOS_CREAR = ['sedeId', ...CAMPOS_EDITAR];
+
 function validar(cuerpo, { parcial, sede }) {
-  const detalles = [];
+  const detalles = camposNoPermitidos(cuerpo, parcial ? CAMPOS_EDITAR : CAMPOS_CREAR);
   const mal = (campo, mensaje) => detalles.push({ campo, mensaje });
   const enviado = (campo) => !parcial || campo in cuerpo;
   const opcional = (campo) => campo in cuerpo && cuerpo[campo] !== null;
 
-  if ('idExternoM365' in cuerpo) mal('idExternoM365', 'Es de solo lectura.');
   if (enviado('titulo')) {
     const titulo = typeof cuerpo.titulo === 'string' ? cuerpo.titulo.trim() : '';
     if (titulo.length < 3 || titulo.length > 200) mal('titulo', 'El título debe tener entre 3 y 200 caracteres.');
@@ -176,8 +180,11 @@ function validar(cuerpo, { parcial, sede }) {
   if (opcional('fechaFin') && !esFechaHoraConZona(cuerpo.fechaFin))
     mal('fechaFin', 'Debe ser una fecha y hora con zona.');
   if ('todoElDia' in cuerpo && typeof cuerpo.todoElDia !== 'boolean') mal('todoElDia', 'Debe ser verdadero o falso.');
-  if (enviado('categoriaEventoId') && !CATEGORIAS_EVENTO.some((c) => c.id === cuerpo.categoriaEventoId))
-    mal('categoriaEventoId', 'Elige una categoría de evento.');
+  if (enviado('categoriaEventoId')) {
+    if (cuerpo.categoriaEventoId === undefined || cuerpo.categoriaEventoId === null) mal('categoriaEventoId', 'Es obligatorio.');
+    else if (!CATEGORIAS_EVENTO.some((c) => c.id === cuerpo.categoriaEventoId))
+      mal('categoriaEventoId', 'La categoría no existe.');
+  }
   if ('estado' in cuerpo && !(cuerpo.estado in ESTADOS))
     mal('estado', 'Debe ser PUBLICADO, BORRADOR o ARCHIVADO. Los eventos no usan EN_REVISION.');
   if (opcional('descripcion') && (typeof cuerpo.descripcion !== 'string' || cuerpo.descripcion.length > 2000))
@@ -186,8 +193,9 @@ function validar(cuerpo, { parcial, sede }) {
     mal('lugar', 'El lugar puede tener hasta 150 caracteres.');
   if (opcional('imagenId')) {
     const archivo = buscarArchivo(cuerpo.imagenId);
-    if (!archivo || !archivo.tipoMime.startsWith('image/') || archivo.sede.id !== sede.id)
-      mal('imagenId', 'La imagen debe ser una imagen de la biblioteca de la sede.');
+    if (!archivo || archivo.sede.id !== sede.id)
+      mal('imagenId', 'Debe ser una imagen de la biblioteca multimedia de esta sede.');
+    else if (!archivo.tipoMime.startsWith('image/')) mal('imagenId', 'El archivo no es una imagen.');
   }
   return detalles;
 }
@@ -237,6 +245,8 @@ function listar(parametros, slugSede) {
   if (orden !== 'fechaInicio' && orden !== '-fechaInicio')
     detalles.push({ campo: 'query.orden', mensaje: 'Orden no válido: fechaInicio o -fechaInicio.' });
 
+  if (desde && hasta && !detalles.length && hasta < desde)
+    detalles.push({ campo: 'query.hasta', mensaje: 'Debe ser igual o posterior a desde.' });
   if (detalles.length) return { detalles };
 
   const diaDe = (iso) => fechaBolivia(new Date(iso)).slice(0, 10);
@@ -244,7 +254,8 @@ function listar(parametros, slugSede) {
   let resultado = eventos.filter(
     (ev) =>
       (!slugSede || ev.sede.slug === slugSede) &&
-      (!desde || diaDe(ev.fechaInicio) >= desde) &&
+      // Todo evento que se cruce con el rango de días (hora de Bolivia), no solo los que empiezan en él.
+      (!desde || diaDe(ev.fechaFin ?? ev.fechaInicio) >= desde) &&
       (!hasta || diaDe(ev.fechaInicio) <= hasta) &&
       (!categorias.length || categorias.includes(ev.categoria.id)) &&
       (!estados.length || estados.includes(ev.estado.codigo)) &&

@@ -89,7 +89,7 @@ describe('listado de publicaciones', () => {
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Estado' }), 'EN_REVISION');
 
     expect(await screen.findByText('2 publicaciones con estos filtros', {}, esperar)).toBeInTheDocument();
-    expect(filas().map((f) => within(f).getByRole('rowheader').textContent)).toEqual(
+    expect(filas().map((f) => within(f).getByRole('rowheader').firstChild.textContent)).toEqual(
       expect.arrayContaining(['Jornada de oración por las vocaciones', 'Solemnidad de Cristo Rey: invitación a la procesión']),
     );
     expect(filas()).toHaveLength(2);

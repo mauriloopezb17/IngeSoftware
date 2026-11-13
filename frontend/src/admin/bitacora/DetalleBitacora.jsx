@@ -76,7 +76,12 @@ export default function DetalleBitacora({ registro, onCerrar }) {
         {campos.length === 0 ? (
           <p className="mt-3 text-sm text-muted">No hay campos registrados en este cambio.</p>
         ) : (
-          <div className="mt-3 overflow-x-auto rounded-lg border border-borderSoft">
+          <div
+            role="region"
+            aria-label="Cambios registrados (se desplaza horizontalmente)"
+            tabIndex={0}
+            className="relative mt-3 overflow-x-auto rounded-lg border border-borderSoft focus-visible:outline-2 focus-visible:outline-goldDark"
+          >
             <table className="w-full border-collapse text-left text-sm">
               <thead className="bg-cream/60 text-xs font-semibold text-muted">
                 <tr>

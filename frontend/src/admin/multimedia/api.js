@@ -1,5 +1,6 @@
 // Llamadas de la biblioteca multimedia (docs/api/admin.md §2).
 import { clienteHttp } from '../../services/clienteHttp.js';
+import { subirFormulario } from './subidaXhr.js';
 
 export const CLAVE_MULTIMEDIA = ['admin', 'multimedia'];
 export const POR_PAGINA = 12;
@@ -11,14 +12,14 @@ export const ORDENES = {
   tamanoBytes: 'Menor tamaño',
 };
 
-// Sube un archivo como multipart/form-data. clienteHttp omite el Content-Type para que el
-// navegador ponga el boundary. `fetch` no informa el avance de la subida.
-export async function subirArchivo({ archivo, textoAlternativo }) {
+// Sube un archivo como multipart/form-data, con XMLHttpRequest para informar el avance (subidaXhr.js).
+//   onProgreso(porcentaje): 0 a 100 de lo enviado. senal: AbortSignal para cancelar la subida.
+export async function subirArchivo({ archivo, textoAlternativo, onProgreso, senal }) {
   const formulario = new FormData();
   formulario.append('archivo', archivo);
   if (textoAlternativo) formulario.append('textoAlternativo', textoAlternativo);
 
-  const { datos } = await clienteHttp.post('/admin/multimedia', formulario);
+  const { datos } = await subirFormulario('/admin/multimedia', formulario, { onProgreso, senal });
   return datos;
 }
 

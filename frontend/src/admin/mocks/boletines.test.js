@@ -90,4 +90,24 @@ describe('mock de boletines (admin.md §11)', () => {
     const { datos } = await crear({ periodo: '2027-01' });
     expect(datos.publicadoPor.id).toBe(4);
   });
+
+  it('sigue las reglas adicionales de admin.md §11: título hasta 150, campos estrictos y mensajes de la API', async () => {
+    await entrar('secretaria');
+    expect((await capturar(crear({ titulo: 'x'.repeat(151) }))).detalles[0]).toEqual({
+      campo: 'titulo',
+      mensaje: 'Puede tener hasta 150 caracteres.',
+    });
+    await expect(crear({ titulo: 'x'.repeat(150) })).resolves.toBeTruthy();
+
+    expect((await capturar(crear({ periodo: '2027-02', destacado: true }))).detalles).toEqual([
+      { campo: 'destacado', mensaje: 'Campo no permitido.' },
+    ]);
+    expect((await capturar(crear({ periodo: '2027-02', archivoId: 8 }))).detalles[0].mensaje).toBe(
+      'El archivo no es un documento PDF.',
+    );
+
+    const repetido = await capturar(crear({ periodo: '2026-10' }));
+    expect(repetido.message).toBe('Ya existe un boletín de ese periodo en esta sede.');
+    expect(repetido.detalles).toEqual([{ campo: 'periodo', mensaje: 'Ya hay un boletín de ese mes.' }]);
+  });
 });

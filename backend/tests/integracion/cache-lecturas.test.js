@@ -267,4 +267,25 @@ describe('lo guardado se sirve hasta que se invalida', () => {
 
     expect((await leerConCache(clave, async () => 'v3')).valor).toBe('v3');
   });
+
+  // Antes la generación nueva salía de Date.now() (milisegundos): dos invalidaciones seguidas, con la clave
+  // de la generación perdida entre una y otra, podían dar el mismo número y «revivir» lo viejo. Con un reloj
+  // congelado ambas caen en el mismo milisegundo, así que la prueba no depende de la velocidad de la máquina.
+  it('la generación nueva no coincide con la anterior aunque el reloj de la API no avance', async () => {
+    const clave = { recurso: RECURSOS_CACHE.VIDEOS, sedeId: sedeTemporal.id, variante: 'g2' };
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-12T12:00:00Z'));
+    try {
+      await leerConCache(clave, async () => 'v1');
+      await invalidarRecursos(sedeTemporal.id, [RECURSOS_CACHE.VIDEOS]);
+      await leerConCache(clave, async () => 'v2');
+
+      await obtenerRedis().del(`${PREFIJO_CACHE}:g:${sedeTemporal.id}:videos`);
+      await invalidarRecursos(sedeTemporal.id, [RECURSOS_CACHE.VIDEOS]);
+
+      expect((await leerConCache(clave, async () => 'v3')).valor).toBe('v3');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

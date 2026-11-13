@@ -5,6 +5,7 @@ import {
   CLAVE_CERRAR_SESION,
   CLAVE_INICIAR_SESION,
   CLAVE_SESION,
+  CLAVE_SESION_VENCIDA,
   cerrarSesionApi,
   iniciarSesionApi,
   obtenerUsuarioActual,
@@ -24,11 +25,24 @@ export function SesionProvider({ children }) {
     staleTime: Infinity, // solo cambia al iniciar o cerrar sesión, o al recibir un 401
   });
 
+  // true tras un 401 con el panel abierto (ver useSesionExpirada). Vive en la caché para que también la marque
+  // quien no está dentro del contexto (por ejemplo, la subida del editor).
+  const { data: sesionVencida } = useQuery({
+    queryKey: CLAVE_SESION_VENCIDA,
+    queryFn: () => false,
+    initialData: false,
+    enabled: false,
+    staleTime: Infinity,
+  });
+
   const { mutateAsync: iniciarSesion } = useMutation({
     mutationKey: CLAVE_INICIAR_SESION,
     mutationFn: iniciarSesionApi,
     // Se espera a que /auth/yo se recargue: al resolverse el login el usuario ya está disponible.
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: CLAVE_SESION }),
+    onSuccess: async () => {
+      queryClient.setQueryData(CLAVE_SESION_VENCIDA, false);
+      await queryClient.invalidateQueries({ queryKey: CLAVE_SESION, exact: true });
+    },
   });
 
   const { mutateAsync: cerrarSesionApiMutacion } = useMutation({
@@ -36,6 +50,7 @@ export function SesionProvider({ children }) {
     mutationFn: cerrarSesionApi,
     // Aunque falle la red, en pantalla la sesión queda cerrada y no sobran datos del usuario anterior.
     onSettled: () => {
+      queryClient.setQueryData(CLAVE_SESION_VENCIDA, false);
       queryClient.setQueryData(CLAVE_SESION, null);
       queryClient.removeQueries({
         predicate: ({ queryKey }) => queryKey[0] === 'admin' && queryKey[1] !== 'sesion',
@@ -51,15 +66,26 @@ export function SesionProvider({ children }) {
     [cerrarSesionApiMutacion],
   );
 
+  // «Seguir»: el contrato no tiene un endpoint de renovación, pero un login nuevo emite otra cookie con otro
+  // `sesionExpiraEn`. Se vuelve a entrar como el mismo usuario (pidiendo su contraseña) sin salir de la pantalla,
+  // así no se pierde lo que no se guardó.
+  const correo = consulta.data?.correo;
+  const renovarSesion = useCallback(
+    (contrasena) => iniciarSesion({ correo, contrasena }),
+    [iniciarSesion, correo],
+  );
+
   const valor = useMemo(
     () => ({
       usuario: consulta.data ?? null,
       cargando: consulta.isPending,
       error: consulta.error,
+      sesionVencida: Boolean(sesionVencida),
       iniciarSesion,
+      renovarSesion,
       cerrarSesion,
     }),
-    [consulta.data, consulta.isPending, consulta.error, iniciarSesion, cerrarSesion],
+    [consulta.data, consulta.isPending, consulta.error, sesionVencida, iniciarSesion, renovarSesion, cerrarSesion],
   );
 
   return <SesionContexto.Provider value={valor}>{children}</SesionContexto.Provider>;

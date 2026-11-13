@@ -3,6 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
+import { http, HttpResponse } from 'msw';
+
+import { api } from '../../mocks/api.js';
+import { server } from '../../mocks/server.js';
 
 import { clienteHttp } from '../../services/clienteHttp.js';
 import { reiniciarMocksContenido } from '../contenido/mocks/handlers.js';
@@ -134,5 +138,32 @@ describe('gestión de usuarios', () => {
       codigo: 'SIN_PERMISO',
     });
   });
-});
 
+  it('la lista trae la paginación en la raíz, como la API (convenciones §3)', async () => {
+    await entrar('admin');
+    const respuesta = await clienteHttp.get('/admin/usuarios', { parametros: { porPagina: 2 } });
+    expect(respuesta.paginacion).toEqual({ pagina: 1, porPagina: 2, total: 4, totalPaginas: 2 });
+    expect(respuesta).not.toHaveProperty('meta');
+  });
+
+  it('muestra la paginación cuando hay más de una página', async () => {
+    await entrar('admin');
+    const original = (await clienteHttp.get('/admin/usuarios')).datos;
+    server.use(
+      http.get(api('/admin/usuarios'), ({ request }) => {
+        const pagina = Number(new URL(request.url).searchParams.get('pagina') ?? 1);
+        return HttpResponse.json({
+          datos: pagina === 1 ? original.slice(0, 2) : original.slice(2),
+          paginacion: { pagina, porPagina: 2, total: 4, totalPaginas: 2 },
+        });
+      }),
+    );
+    montar();
+    const u = userEvent.setup({ delay: null });
+
+    const paginacion = await screen.findByRole('navigation', { name: 'Paginación de usuarios' });
+    expect(within(paginacion).getByText('Página 1 de 2 · 4 en total')).toBeInTheDocument();
+    await u.click(within(paginacion).getByRole('button', { name: /Siguiente/ }));
+    expect(await screen.findByText('Página 2 de 2 · 4 en total')).toBeInTheDocument();
+  });
+});

@@ -449,4 +449,13 @@ describe('mocks de publicaciones del panel', () => {
       expect((await capturar(leer(ID.ARCHIVADA))).estado).toBe(404);
     });
   });
+
+  it('la portada trae el objeto imagen estándar con variantes (convenciones §7)', async () => {
+    await entrar('parroco');
+    expect((await leer(ID.PUBLICADA)).imagenPortada).toMatchObject({
+      id: 8,
+      variantes: [expect.objectContaining({ ancho: 480 }), expect.objectContaining({ ancho: 960 })],
+    });
+    expect((await leer(ID.EN_REVISION_CRISTO_REY)).imagenPortada.variantes).toEqual([]); // imagen del seed
+  });
 });

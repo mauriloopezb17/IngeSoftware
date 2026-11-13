@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 
@@ -177,8 +177,10 @@ describe('eventos del panel', () => {
     const dialogo = screen.getByRole('dialog', { name: '¿Eliminar «Misa de sanación»?' });
     await usuario.click(within(dialogo).getByRole('button', { name: 'Eliminar' }));
 
-    expect(await screen.findByText('Se eliminó el evento «Misa de sanación».')).toBeInTheDocument();
+    const confirmacion = await screen.findByText('Se eliminó el evento «Misa de sanación».');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    // La fila (y su botón) desaparece: el foco pasa al mensaje de confirmación y no se pierde en <body>.
+    await waitFor(() => expect(confirmacion).toHaveFocus());
     expect(screen.queryByRole('heading', { name: 'Misa de sanación' })).not.toBeInTheDocument();
   });
 

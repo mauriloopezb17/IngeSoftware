@@ -5,6 +5,7 @@ import { ExternalLink, FileText, Inbox, Pencil, Plus, Trash2 } from 'lucide-reac
 
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
 import { AvisoExito, AvisoSoloLectura, Cargando, ErrorConsulta } from '../componentes/EstadoConsulta.jsx';
+import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import Paginacion from '../componentes/Paginacion.jsx';
 import { formatearFecha, formatearTamano } from '../multimedia/formato.js';
 import { usePermisos } from '../permisos/usePermisos.js';
@@ -27,6 +28,7 @@ export default function ListadoBoletines() {
   const clienteConsultas = useQueryClient();
   const ubicacion = useLocation();
   const [aviso, setAviso] = useState(ubicacion.state?.aviso ?? '');
+  const avisoRef = useEnfocarAviso(aviso); // tras eliminar, el foco pasa al mensaje (la fila y su botón desaparecen)
   const [porEliminar, setPorEliminar] = useState(null);
   const idAnio = useId();
 
@@ -73,7 +75,7 @@ export default function ListadoBoletines() {
       </header>
 
       {!editable && <AvisoSoloLectura>Tu rol puede consultar los boletines, pero no modificarlos.</AvisoSoloLectura>}
-      <AvisoExito>{aviso}</AvisoExito>
+      <AvisoExito ref={avisoRef}>{aviso}</AvisoExito>
 
       <div className="mt-6 flex flex-col gap-1 rounded-lg border border-borderSoft bg-white p-4 sm:w-56">
         <label htmlFor={idAnio} className="text-xs font-semibold text-muted">

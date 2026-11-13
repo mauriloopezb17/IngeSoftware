@@ -6,6 +6,7 @@ import { CalendarX2, Clock, MapPin, Pencil, Plus, Trash2 } from 'lucide-react';
 import CampoSelect from '../componentes/CampoSelect.jsx';
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
 import { AvisoExito, AvisoSoloLectura, Cargando, ErrorConsulta } from '../componentes/EstadoConsulta.jsx';
+import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import Paginacion from '../componentes/Paginacion.jsx';
 import { usePermisos } from '../permisos/usePermisos.js';
 import { CLAVE_CATALOGOS, obtenerCatalogos } from '../publicaciones/api.js';
@@ -101,6 +102,7 @@ export default function ListadoEventos() {
   const clienteConsultas = useQueryClient();
   const ubicacion = useLocation();
   const [aviso, setAviso] = useState(ubicacion.state?.aviso ?? '');
+  const avisoRef = useEnfocarAviso(aviso); // tras eliminar, el foco pasa al mensaje (la fila y su botón desaparecen)
   const [porEliminar, setPorEliminar] = useState(null);
 
   const catalogos = useQuery({ queryKey: CLAVE_CATALOGOS, queryFn: obtenerCatalogos, staleTime: 5 * 60 * 1000 });
@@ -150,7 +152,7 @@ export default function ListadoEventos() {
       </header>
 
       {!editable && <AvisoSoloLectura>Tu rol puede consultar el calendario, pero no modificarlo.</AvisoSoloLectura>}
-      <AvisoExito>{aviso}</AvisoExito>
+      <AvisoExito ref={avisoRef}>{aviso}</AvisoExito>
 
       <div className="mt-6 flex flex-col gap-4 rounded-lg border border-borderSoft bg-white p-4 sm:flex-row sm:items-end">
         <div role="group" aria-label="Mostrar eventos" className="flex rounded-md border border-borderSoft p-0.5">
