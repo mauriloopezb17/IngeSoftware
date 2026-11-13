@@ -119,6 +119,39 @@ export async function idsDeLaRama(id, db) {
   return rows.map((fila) => fila.id);
 }
 
+// Nivel de la página en el árbol: 1 si es raíz, 2 si su padre es raíz, etc. (el tope de 20 solo
+// protege de un ciclo imposible en los datos).
+export async function nivelDe(id, db) {
+  const { rows } = await db.consultar(
+    `WITH RECURSIVE ancestros AS (
+       SELECT id, pagina_padre_id, 1 AS nivel FROM pagina WHERE id = $1
+       UNION ALL
+       SELECT p.id, p.pagina_padre_id, a.nivel + 1
+         FROM pagina p JOIN ancestros a ON p.id = a.pagina_padre_id
+        WHERE a.nivel < 20
+     )
+     SELECT max(nivel)::int AS nivel FROM ancestros`,
+    [id],
+  );
+  return rows[0].nivel;
+}
+
+// Niveles que ocupa la página con todas sus descendientes: 1 si no tiene hijas, 2 si tiene hijas
+// pero ninguna nieta, etc.
+export async function alturaDeLaRama(id, db) {
+  const { rows } = await db.consultar(
+    `WITH RECURSIVE rama AS (
+       SELECT id, 1 AS nivel FROM pagina WHERE id = $1
+       UNION ALL
+       SELECT h.id, r.nivel + 1 FROM pagina h JOIN rama r ON h.pagina_padre_id = r.id
+        WHERE r.nivel < 20
+     )
+     SELECT max(nivel)::int AS altura FROM rama`,
+    [id],
+  );
+  return rows[0].altura;
+}
+
 export async function contarHijas(id, db) {
   const { rows } = await db.consultar(
     'SELECT count(*)::int AS total FROM pagina WHERE pagina_padre_id = $1',
