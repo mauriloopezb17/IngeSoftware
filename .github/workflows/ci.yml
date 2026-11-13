@@ -114,3 +114,82 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: db_portal_cms
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/db_portal_cms
+      REDIS_URL: redis://localhost:6379
+      # Valor de prueba, solo para CI. Nunca se usan credenciales reales aquí.
+      JWT_SECRET: secreto-solo-para-ci-0123456789abcdef
+      VITE_USAR_MOCKS: 'false'
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      # Mismo script que usa docker-compose: esquema, migraciones y datos iniciales.
+      - name: Cargar esquema, migraciones y datos iniciales
+        env:
+          DB_DIR: database
+          POSTGRES_USER: postgres
+          POSTGRES_DB: db_portal_cms
+          PGHOST: localhost
+          PGPASSWORD: postgres
+        run: bash database/docker/00-iniciar-portal-cms.sh
+
+      - name: Instalar dependencias del backend
+        working-directory: backend
+        run: npm ci
+
+      - name: Instalar dependencias del frontend
+        working-directory: frontend
+        run: npm ci
+
+      - name: Instalar Chromium para Playwright
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Ejecutar pruebas e2e
+        working-directory: frontend
+        run: npm run test:e2e
+
+      - name: Subir reporte de Playwright si falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7

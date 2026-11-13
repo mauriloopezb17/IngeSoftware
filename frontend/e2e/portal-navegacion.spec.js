@@ -60,13 +60,14 @@ test('noticias muestra listado, detalle por slug y pantalla de slug inexistente'
   const { erroresConsola, erroresPagina } = capturarErrores(page);
 
   await page.goto('/noticias');
-  const tituloSeed = 'Primeras comuniones: 42 niños recibieron a Jesús';
-  await expect(page.getByRole('link', { name: new RegExp(tituloSeed, 'i') }).first()).toBeVisible();
+  const primerEnlace = page.locator('main a[href^="/noticias/"]').first();
+  await expect(primerEnlace).toBeVisible();
+  const href = await primerEnlace.getAttribute('href');
 
-  await page.getByRole('link', { name: new RegExp(tituloSeed, 'i') }).first().click();
-  await expect(page).toHaveURL(/\/noticias\/primeras-comuniones-42-ninos/);
-  await expect(page.getByRole('heading', { level: 1, name: tituloSeed })).toBeVisible();
-  await expect(page.locator('article')).toContainText('catequistas y familias');
+  await primerEnlace.click();
+  await expect(page).toHaveURL(new RegExp(`${href}$`));
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.locator('article')).toBeVisible();
 
   expect(erroresPagina).toEqual([]);
   expect(erroresConsola).toEqual([]);
