@@ -16,8 +16,8 @@ import logoBlanco from '../../assets/parroquia/logos/logo-horizontal-blanco.svg'
 import '../../styles/PiePagina.css';
 
 const enlacesParroquia = [
-  { texto: 'Quiénes somos', href: '/#nosotros' },
-  { texto: 'Nuestra historia', href: '/paginas/historia' },
+  // Solo páginas que existen siempre: las demás llegan al encabezado desde el menú del CMS.
+  { texto: 'Quiénes somos', href: '/paginas/nosotros' },
   { texto: 'El párroco', href: '/#nosotros' },
   { texto: 'Nuestras sedes', href: '/#comunidades' },
   { texto: 'Noticias', href: '/noticias' },
