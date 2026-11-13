@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { Link, useBlocker, useNavigate } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, ImagePlus, Loader2, Save, Trash2 } from 'lucide-react';
+import { AlertCircle, Eye, ImagePlus, Loader2, Save, Trash2 } from 'lucide-react';
 
 import CampoTexto from '../componentes/CampoTexto.jsx';
 import Dialogo from '../componentes/Dialogo.jsx';
@@ -16,6 +16,7 @@ import {
 } from './api.js';
 import { aContenido } from './contenido.js';
 import { aCampoFecha, deCampoFecha } from './fechas.js';
+import PreviaPublicacion from './PreviaPublicacion.jsx';
 
 // BlockNote es pesado: el editor se descarga solo cuando se abre este formulario.
 const EditorContenido = lazy(() => import('./editor/EditorContenido.jsx'));
@@ -123,6 +124,7 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
   const [generales, setGenerales] = useState([]);
   const [aviso, setAviso] = useState(avisoInicial);
   const [eligiendoPortada, setEligiendoPortada] = useState(false);
+  const [verPrevia, setVerPrevia] = useState(false);
 
   const editando = Boolean(publicacion);
   const cambiar = (cambios) => setCampos((actuales) => ({ ...actuales, ...cambios }));
@@ -435,6 +437,13 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
           )}
           {editando ? 'Guardar cambios' : 'Guardar borrador'}
         </button>
+        <button
+          type="button"
+          onClick={() => setVerPrevia(true)}
+          className="flex items-center gap-2 rounded-md border border-borderSoft bg-white px-4 py-2.5 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
+        >
+          <Eye className="size-4" aria-hidden="true" /> Vista previa
+        </button>
         <Link
           to="/admin/publicaciones"
           className="rounded-md border border-borderSoft bg-white px-4 py-2.5 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
@@ -443,6 +452,16 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
         </Link>
         {hayCambios && <p className="text-sm text-muted">Hay cambios sin guardar.</p>}
       </div>
+
+      {verPrevia && (
+        <PreviaPublicacion
+          campos={campos}
+          categoria={categorias.find((c) => String(c.id) === campos.categoriaId)}
+          tipoNombre={TIPOS_DE_ESTA_PANTALLA[campos.tipo]}
+          bloques={bloques ?? JSON.parse(bloquesBase ?? '[]')}
+          onCerrar={() => setVerPrevia(false)}
+        />
+      )}
 
       {eligiendoPortada && (
         <SelectorImagenes

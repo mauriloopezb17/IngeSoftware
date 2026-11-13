@@ -303,6 +303,59 @@ describe('formulario de publicación', () => {
     });
   });
 
+  describe('vista previa', () => {
+    it('muestra el borrador actual (aunque no esté guardado): título, categoría, fechas y contenido en solo lectura', async () => {
+      await entrar('marketing');
+      montar('/admin/publicaciones/4/editar');
+      await esperarEditor();
+      await screen.findByText('Abrimos las inscripciones para el retiro de Adviento.', {}, esperar);
+
+      // Un cambio sin guardar también aparece en la vista previa.
+      await userEvent.type(screen.getByRole('textbox', { name: /Título/ }), ' (nuevo)');
+      await userEvent.type(screen.getByLabelText('Fecha de publicación'), '2026-12-10T08:00');
+      await userEvent.click(screen.getByRole('button', { name: 'Vista previa' }));
+
+      const previa = await screen.findByRole('dialog', { name: 'Vista previa' });
+      expect(within(within(previa).getByRole('article')).getByRole('heading', { level: 2 })).toHaveTextContent('Retiro de Adviento: inscripciones abiertas (nuevo)');
+      expect(within(previa).getByText('Comunidad')).toBeInTheDocument();
+      expect(within(previa).getByText('Noticia')).toBeInTheDocument();
+      expect(within(previa).getByText('10/12/2026 08:00')).toBeInTheDocument();
+      expect(within(previa).queryByRole('img')).not.toBeInTheDocument();
+      const contenido = await within(previa).findByTestId('contenido-solo-lectura', {}, esperar);
+      expect(within(contenido).getByText('Abrimos las inscripciones para el retiro de Adviento.')).toBeInTheDocument();
+      expect(within(contenido).queryByRole('textbox')).not.toHaveAttribute('contenteditable', 'true');
+      // No guardó nada.
+      expect((await leer(4)).titulo).toBe('Retiro de Adviento: inscripciones abiertas');
+
+      await userEvent.click(within(previa).getByRole('button', { name: 'Cerrar vista previa' }));
+      expect(screen.queryByRole('dialog', { name: 'Vista previa' })).not.toBeInTheDocument();
+    });
+
+    it('muestra la imagen de portada con su texto alternativo', async () => {
+      await entrar('parroco');
+      montar('/admin/publicaciones/7/editar');
+      await esperarEditor();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Vista previa' }));
+
+      const previa = await screen.findByRole('dialog', { name: 'Vista previa' });
+      expect(within(previa).getByRole('img')).toHaveAccessibleName(expect.stringMatching(/\S/));
+    });
+
+    it('en una publicación nueva y vacía avisa que falta el título y el contenido', async () => {
+      await entrar('marketing');
+      montar('/admin/publicaciones/nueva');
+      await esperarEditor();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Vista previa' }));
+
+      const previa = await screen.findByRole('dialog', { name: 'Vista previa' });
+      expect(within(previa).getByText('(Sin título)')).toBeInTheDocument();
+      expect(within(previa).getByText('se fijará al publicar')).toBeInTheDocument();
+      expect(within(previa).getByText('Esta publicación todavía no tiene contenido.')).toBeInTheDocument();
+    });
+  });
+
   describe('cambios sin guardar', () => {
     it('sin cambios, salir de la pantalla no pregunta nada', async () => {
       await entrar('marketing');

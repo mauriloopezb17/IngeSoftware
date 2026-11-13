@@ -15,13 +15,19 @@ const dentro = Object.entries(fuentes).filter(([ruta]) => ruta.startsWith('./edi
 describe('carga diferida del editor', () => {
   it('encuentra los archivos que debe revisar', () => {
     expect(fuera.length).toBeGreaterThan(5);
-    expect(dentro.map(([ruta]) => ruta).sort()).toEqual(['./editor/EditorContenido.jsx', './editor/esquema.js', './editor/subida.js']);
+    expect(dentro.map(([ruta]) => ruta).sort()).toEqual(['./editor/ContenidoSoloLectura.jsx', './editor/EditorContenido.jsx', './editor/esquema.js', './editor/subida.js']);
   });
 
   it('el formulario importa el editor con import() dentro de un React.lazy', () => {
     const formulario = fuentes['./FormularioPublicacion.jsx'];
 
     expect(formulario).toMatch(/const EditorContenido = lazy\(\(\) => import\('\.\/editor\/EditorContenido\.jsx'\)\)/);
+  });
+
+  it('la vista previa importa el contenido de solo lectura con import() dentro de un React.lazy', () => {
+    expect(fuentes['./PreviaPublicacion.jsx']).toMatch(
+      /const ContenidoSoloLectura = lazy\(\(\) => import\('\.\/editor\/ContenidoSoloLectura\.jsx'\)\)/,
+    );
   });
 
   it('ningún archivo fuera de editor/ importa BlockNote', () => {

@@ -17,3 +17,11 @@ export function aCampoFecha(iso) {
 }
 
 export const deCampoFecha = (valor) => (valor ? `${valor}:00-04:00` : null);
+
+// "2026-11-15T08:00" (campo datetime-local, hora de Bolivia) -> "15/11/2026 08:00". Sin pasar por Date: no hay desfases.
+export function formatearCampoFecha(valor) {
+  const [fecha, hora] = (valor ?? '').split('T');
+  if (!fecha || !hora) return '';
+  const [anio, mes, dia] = fecha.split('-');
+  return `${dia}/${mes}/${anio} ${hora}`;
+}
