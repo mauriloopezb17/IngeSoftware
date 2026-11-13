@@ -12,6 +12,9 @@ import {
   crearServiciosIniciales,
   crearVideosIniciales,
 } from './datos.js';
+import { crearControladorBitacora } from './bitacora.js';
+import { crearControladorPaginas } from './paginas.js';
+import { crearControladorUsuariosAdmin } from './usuariosAdmin.js';
 
 let sedes = crearSedesIniciales();
 let horarios = crearHorariosIniciales();
@@ -24,7 +27,7 @@ let sigHorarioId = horarios.length + 1;
 let sigServicioId = 7;
 let sigPreguntaId = 2;
 let sigGrupoId = 7;
-let sigVideoId = 1;
+let sigVideoId = videos.reduce((max, video) => Math.max(max, video.id), 0) + 1;
 
 export function reiniciarMocksContenido() {
   sedes = crearSedesIniciales();
@@ -37,7 +40,10 @@ export function reiniciarMocksContenido() {
   sigServicioId = 7;
   sigPreguntaId = 2;
   sigGrupoId = 7;
-  sigVideoId = 1;
+  sigVideoId = videos.reduce((max, video) => Math.max(max, video.id), 0) + 1;
+  controladorPaginas.reiniciar();
+  controladorUsuariosAdmin.reiniciar();
+  controladorBitacora.reiniciar();
 }
 
 const REGEX_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -300,6 +306,32 @@ function construirVideo(cuerpo, sede, orden, actual = null) {
         : actual?.fechaPublicacion ?? null,
   };
 }
+
+const controladorPaginas = crearControladorPaginas({
+  autenticar,
+  esAdministrador,
+  resolverSedeFiltro,
+  resolverSedeCreacion,
+  leerPorId,
+  aSlug,
+  validarReorden,
+  error,
+  errorValidacion,
+  otraSede,
+});
+
+const controladorUsuariosAdmin = crearControladorUsuariosAdmin({
+  autenticar,
+  error,
+  errorValidacion,
+  obtenerSedes: () => sedes,
+});
+
+const controladorBitacora = crearControladorBitacora({
+  autenticar,
+  esAdministrador,
+  errorValidacion,
+});
 
 export const handlersContenido = [
   // ---- §1 Catálogos ----
@@ -1099,4 +1131,8 @@ export const handlersContenido = [
 
     return HttpResponse.json({ datos: sede });
   }),
+
+  ...controladorPaginas.handlers,
+  ...controladorUsuariosAdmin.handlers,
+  ...controladorBitacora.handlers,
 ];

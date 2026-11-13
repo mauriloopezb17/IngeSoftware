@@ -4,6 +4,7 @@ import { anchoContenido } from './ElementosComunes.jsx';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { SEDE_ACTUAL } from '../../config/sede.js';
 import { useComunidades } from '../../hooks/index.js';
+import { construirAtributosImagen } from './imagenSrcSet.js';
 
 import '../../styles/Comunidades.css';
 
@@ -62,6 +63,10 @@ function Comunidades() {
                     {imagen ? (
                       <img
                         src={imagen.url}
+                        {...construirAtributosImagen(
+                          imagen,
+                          '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw',
+                        )}
                         alt={imagen.textoAlternativo || comunidad.nombre}
                         width={imagen.ancho ?? undefined}
                         height={imagen.alto ?? undefined}

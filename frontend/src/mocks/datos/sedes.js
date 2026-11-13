@@ -14,6 +14,7 @@ export const sedesLista = [
       textoAlternativo: 'Vista exterior de la Parroquia Señor de la Exaltación',
       ancho: 1878,
       alto: 1057,
+      variantes: [],
     },
     enlaceComoLlegar:
       'https://www.google.com/maps/dir/?api=1&destination=-16.5267952%2C-68.1082157',
@@ -65,6 +66,7 @@ export const sedesDetalle = {
       textoAlternativo: 'Vista exterior de la Parroquia Señor de la Exaltación',
       ancho: 1878,
       alto: 1057,
+      variantes: [],
     },
     redesSociales: [
       {

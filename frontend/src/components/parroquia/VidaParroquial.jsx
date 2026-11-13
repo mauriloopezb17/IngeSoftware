@@ -6,6 +6,7 @@ import { anchoContenido } from './ElementosComunes.jsx';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { usePublicaciones } from '../../hooks/index.js';
 import { formatearFechaLarga } from '../../utils/formatoPortal.js';
+import { construirAtributosImagen } from './imagenSrcSet.js';
 
 import '../../styles/VidaParroquial.css';
 
@@ -83,6 +84,10 @@ function VidaParroquial() {
                 const contenidoImagen = imagen ? (
                   <img
                     src={imagen.url}
+                    {...construirAtributosImagen(
+                      imagen,
+                      '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw',
+                    )}
                     alt={imagen.textoAlternativo || noticia.titulo}
                     width={imagen.ancho ?? undefined}
                     height={imagen.alto ?? undefined}

@@ -7,6 +7,7 @@ import { usePermisos } from '../../permisos/usePermisos.js';
 import BannerSoloLectura from '../componentes/BannerSoloLectura.jsx';
 import ConfirmarBorrado from '../componentes/ConfirmarBorrado.jsx';
 import EstadoLista from '../componentes/EstadoLista.jsx';
+import { pluralizar } from '../componentes/texto.js';
 import {
   CLAVE_SERVICIOS,
   eliminarServicio,
@@ -154,8 +155,12 @@ export default function Servicios() {
                     </div>
                     <p className="mt-1 text-sm text-charcoal">{servicio.descripcionCorta}</p>
                     <p className="mt-2 text-xs text-muted">
-                      {servicio.contenido?.datos?.length ?? 0} requisitos ·{' '}
-                      {servicio.preguntasFrecuentes?.length ?? 0} preguntas frecuentes
+                      {pluralizar(servicio.contenido?.datos?.length ?? 0, 'requisito', 'requisitos')} ·{' '}
+                      {pluralizar(
+                        servicio.preguntasFrecuentes?.length ?? 0,
+                        'pregunta frecuente',
+                        'preguntas frecuentes',
+                      )}
                     </p>
                   </div>
                 </div>
