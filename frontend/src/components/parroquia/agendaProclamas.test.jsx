@@ -18,12 +18,17 @@ describe('Agenda y Proclamas desde la API', () => {
       </>,
     );
 
-    expect(await screen.findByText('Vigilia de Todos los Santos')).toBeInTheDocument();
+    expect(await screen.findByText('Adoración eucarística comunitaria')).toBeInTheDocument();
+    expect(screen.getByText('Misa de sanación')).toBeInTheDocument();
+    expect(screen.getByText('Misa por los difuntos de la comunidad')).toBeInTheDocument();
     expect(screen.getByText(/8:00 – 10:00 – 12:00/)).toBeInTheDocument();
     expect(
       await screen.findByText(
         'Inscripciones abiertas para la catequesis de Confirmación 2027.',
       ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('El próximo lunes la secretaría atenderá solo por la mañana.'),
     ).toBeInTheDocument();
     expect(await screen.findByText('Edición de octubre 2026')).toBeInTheDocument();
     expect(screen.getByText(/PDF · 2,4 MB/)).toBeInTheDocument();
