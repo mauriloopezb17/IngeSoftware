@@ -5,6 +5,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import * as pastoral from '../controllers/contenidoPastoral.controller.js';
 import * as horarios from '../controllers/horarios.controller.js';
+import * as paginas from '../controllers/paginas.controller.js';
 import * as proclamasBoletines from '../controllers/proclamasBoletines.controller.js';
 import * as sedes from '../controllers/sedes.controller.js';
 import { resolverSede } from '../middlewares/resolverSede.js';
@@ -41,6 +42,8 @@ deSede.get(
   proclamasBoletines.listarHistorialProclamas,
 );
 deSede.get('/boletines', validar({ query: consultaPorAnio }), proclamasBoletines.listarBoletines);
+deSede.get('/paginas', paginas.listar);
+deSede.get('/paginas/:slug', paginas.detalle);
 
 router.use('/:sede', resolverSede, deSede);
 
