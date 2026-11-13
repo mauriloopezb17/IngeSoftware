@@ -9,6 +9,7 @@ import * as sedes from '../controllers/sedes.controller.js';
 import { resolverSede } from '../middlewares/resolverSede.js';
 import { validar } from '../middlewares/validar.js';
 import { listaIds } from '../validacion/comunes.js';
+import publicacionesRoutes from './publicaciones.routes.js';
 
 const router = Router();
 
@@ -26,6 +27,7 @@ deSede.get('/servicios', pastoral.listarServicios);
 deSede.get('/servicios/:slug', pastoral.detalleServicio);
 deSede.get('/grupos-pastorales', pastoral.listarGruposPastorales);
 deSede.get('/videos', pastoral.listarVideos);
+deSede.use('/publicaciones', publicacionesRoutes);
 
 router.use('/:sede', resolverSede, deSede);
 
