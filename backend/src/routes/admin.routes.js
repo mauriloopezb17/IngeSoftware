@@ -3,6 +3,7 @@
 // Cada módulo del panel registra aquí sus rutas y pone su requerirPermiso() (autorizar.js).
 import { Router } from 'express';
 import { autenticar } from '../middlewares/autenticar.js';
+import bibliotecaRoutes from './biblioteca.routes.js';
 import multimediaRoutes from './multimedia.routes.js';
 
 const router = Router();
@@ -10,5 +11,6 @@ const router = Router();
 router.use(autenticar);
 
 router.use('/multimedia', multimediaRoutes);
+router.use('/multimedia', bibliotecaRoutes);
 
 export default router;
