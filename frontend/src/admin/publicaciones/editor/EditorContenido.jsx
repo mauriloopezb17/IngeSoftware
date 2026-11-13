@@ -22,7 +22,7 @@ import {
 
 import BarraProgreso from '../../multimedia/BarraProgreso.jsx';
 import SelectorImagenes from '../../multimedia/SelectorImagenes.jsx';
-import { CLAVE_SESION, esErrorNoAutenticado } from '../../sesion/api.js';
+import { esErrorNoAutenticado, marcarSesionVencida } from '../../sesion/api.js';
 import { bloquesIniciales } from '../contenido.js';
 import { esOpcionPermitidaDelMenu, esquemaPublicacion, esTipoDeBloquePermitido } from './esquema.js';
 import { propiedadesDeArchivo, subirArchivoDelEditor } from './subida.js';
@@ -80,8 +80,8 @@ function useSubidasDelEditor() {
             setSubidas((actuales) => actuales.map((s) => (s.id === id ? { ...s, progreso } : s))),
         });
       } catch (error) {
-        // Esta subida no pasa por las mutaciones: un 401 también debe devolver al login.
-        if (esErrorNoAutenticado(error)) queryClient.setQueryData(CLAVE_SESION, null);
+        // Esta subida no pasa por las mutaciones: un 401 también marca la sesión como vencida.
+        if (esErrorNoAutenticado(error)) marcarSesionVencida(queryClient);
         throw error;
       } finally {
         controles.delete(id);

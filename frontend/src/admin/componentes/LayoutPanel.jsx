@@ -5,6 +5,7 @@ import { LogOut, Menu, X } from 'lucide-react';
 import { usePermisos } from '../permisos/usePermisos.js';
 import { SECCIONES } from '../rutas.js';
 import { useSesion } from '../sesion/SesionContexto.js';
+import AvisoSesion from './AvisoSesion.jsx';
 import MenuLateral from './MenuLateral.jsx';
 
 // Estructura del panel: menú lateral (cajón en móvil), cabecera con el usuario y contenido.
@@ -138,6 +139,7 @@ export default function LayoutPanel() {
         <main id="contenido" tabIndex={-1} className="flex-1 px-4 py-8 outline-none sm:px-6 lg:px-10">
           <Outlet />
         </main>
+        <AvisoSesion />
       </div>
     </div>
   );
