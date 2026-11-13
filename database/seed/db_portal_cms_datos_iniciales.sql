@@ -255,7 +255,8 @@ WHERE slug = 'senor-de-la-exaltacion';
 -- (current_date + N días) para que la agenda nunca quede vacía; los desfases N conservan la separación
 -- entre eventos que tiene la landing. La hora se interpreta en la zona horaria de La Paz.
 -- Los crea Secretaría y se publican directo (estado Publicado).
--- "Todos los Santos" tiene tres horarios en la landing (8:00 – 10:00 – 12:00): inicia a las 8:00 y los
+-- Los títulos no mencionan fechas propias, porque los eventos caen en días relativos a la carga.
+-- "Misa de sanación" tiene tres horarios (8:00 – 10:00 – 12:00): inicia a las 8:00 y los
 -- horarios completos van en la descripción.
 INSERT INTO evento (sede_id, categoria_evento_id, estado_publicacion_id, creado_por, titulo, descripcion, lugar, fecha_inicio)
 SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
@@ -265,9 +266,9 @@ SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
        e.titulo, e.descripcion, e.lugar,
        (current_date + e.dias + e.hora::time) AT TIME ZONE 'America/La_Paz'
 FROM (VALUES
-  ('Liturgia',   'Vigilia de Todos los Santos',                         NULL,                              'Templo parroquial', 6,  '19:00'),
-  ('Solemnidad', 'Todos los Santos',                                    'Horarios: 8:00 – 10:00 – 12:00',  'Templo parroquial', 7,  '08:00'),
-  ('Liturgia',   'Conmemoración de los Fieles Difuntos',                NULL,                              'Templo parroquial', 8,  '19:00'),
+  ('Liturgia',   'Adoración eucarística comunitaria',                   NULL,                              'Templo parroquial', 6,  '19:00'),
+  ('Solemnidad', 'Misa de sanación',                                    'Horarios: 8:00 – 10:00 – 12:00',  'Templo parroquial', 7,  '08:00'),
+  ('Liturgia',   'Misa por los difuntos de la comunidad',               NULL,                              'Templo parroquial', 8,  '19:00'),
   ('Catequesis', 'Charla pre-bautismal para padres y padrinos',         NULL,                              'Salón parroquial',  13, '09:30')
 ) AS e(categoria, titulo, descripcion, lugar, dias, hora);
 
@@ -293,7 +294,7 @@ SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
        now() - a.antiguedad
 FROM (VALUES
   ('inscripciones-confirmacion-2027',   'Inscripciones abiertas para la catequesis de Confirmación 2027.',                  interval '1 day'),
-  ('secretaria-2-de-noviembre',         'El 2 de noviembre la secretaría atenderá solo por la mañana.',                     interval '3 days'),
+  ('secretaria-atencion-lunes',         'El próximo lunes la secretaría atenderá solo por la mañana.',                      interval '3 days'),
   ('donaciones-viveres-pastoral-social','Recibimos donaciones de víveres para la Pastoral Social hasta fin de mes.',        interval '5 days')
 ) AS a(slug, texto, antiguedad);
 
