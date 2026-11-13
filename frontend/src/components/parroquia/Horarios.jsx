@@ -8,11 +8,11 @@ import { formatearRangoHorario } from '../../utils/formatoPortal.js';
 
 import '../../styles/Horarios.css';
 
-function formatearFilaHorarios(fila) {
+function formatearFilaHorarios(fila, marcarDescripcion = false) {
   const textoHoras = fila.horarios
     .map((h) => {
       const rango = formatearRangoHorario(h.horaInicio, h.horaFin);
-      return h.descripcion ? `${rango}*` : rango;
+      return marcarDescripcion && h.descripcion ? `${rango}*` : rango;
     })
     .join(' · ');
 
@@ -34,7 +34,7 @@ function construirTarjetasHorarios(grupos, configuracion) {
     tarjetas.push({
       title: santaMisa.tipo.nombre,
       icon: Cross,
-      rows: santaMisa.filas.map(formatearFilaHorarios),
+      rows: santaMisa.filas.map((fila) => formatearFilaHorarios(fila, Boolean(notaMisa))),
       note: notaMisa ? `* ${notaMisa}` : null,
     });
   }
@@ -43,7 +43,7 @@ function construirTarjetasHorarios(grupos, configuracion) {
   const adoracion = porNombre(TIPOS_HORARIO.ADORACION);
   if (confesiones || adoracion) {
     const filas = [
-      ...(confesiones ? confesiones.filas.map(formatearFilaHorarios) : []),
+      ...(confesiones ? confesiones.filas.map((fila) => formatearFilaHorarios(fila)) : []),
       ...(adoracion
         ? adoracion.filas.map((fila) => {
             const [, horas] = formatearFilaHorarios(fila);
@@ -65,7 +65,7 @@ function construirTarjetasHorarios(grupos, configuracion) {
 
   const secretaria = porNombre(TIPOS_HORARIO.SECRETARIA);
   if (secretaria) {
-    const filas = secretaria.filas.map(formatearFilaHorarios);
+    const filas = secretaria.filas.map((fila) => formatearFilaHorarios(fila));
     if (configuracion.horariosWhatsappSecretaria) {
       filas.push(['WhatsApp', configuracion.horariosWhatsappSecretaria]);
     }
