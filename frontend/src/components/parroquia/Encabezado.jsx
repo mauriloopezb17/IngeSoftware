@@ -24,8 +24,10 @@ const enlacesNavegacion = [
   { nombre: 'Nosotros', enlace: '/#nosotros' },
   { nombre: 'Sacramentos', enlace: '/#sacramentos' },
   { nombre: 'Comunidad', enlace: '/#comunidad' },
-  { nombre: 'Noticias', enlace: '/#noticias' },
-  { nombre: 'Calendario', enlace: '/#agenda' },
+  { nombre: 'Noticias', enlace: '/noticias' },
+  { nombre: 'Calendario', enlace: '/calendario' },
+  { nombre: 'Proclamas', enlace: '/proclamas' },
+  { nombre: 'Boletines', enlace: '/boletines' },
   { nombre: 'Contacto', enlace: '/#contacto' },
 ];
 
@@ -56,21 +58,27 @@ const seccionesBusqueda = [
   },
   {
     nombre: 'Calendario',
-    descripcion: 'Próximos eventos parroquiales',
-    enlace: '/#agenda',
-    palabrasClave: 'agenda actividades encuentros eventos',
+    descripcion: 'Calendario completo de eventos parroquiales',
+    enlace: '/calendario',
+    palabrasClave: 'agenda actividades encuentros eventos calendario',
   },
   {
-    nombre: 'Vida parroquial',
+    nombre: 'Boletines parroquiales',
+    descripcion: 'Archivo mensual de boletines en PDF',
+    enlace: '/boletines',
+    palabrasClave: 'boletin boletines pdf archivo mensual',
+  },
+  {
+    nombre: 'Vida parroquial y noticias',
     descripcion: 'Noticias y actividades de la parroquia',
-    enlace: '/#noticias',
-    palabrasClave: 'noticias pastoral familiar publicaciones',
+    enlace: '/noticias',
+    palabrasClave: 'noticias pastoral familiar publicaciones prensa',
   },
   {
     nombre: 'Proclamas matrimoniales',
-    descripcion: 'Avisos de próximos matrimonios',
-    enlace: '/#proclamas',
-    palabrasClave: 'bodas matrimonio proclamas',
+    descripcion: 'Proclamas vigentes e historial público',
+    enlace: '/proclamas',
+    palabrasClave: 'bodas matrimonio proclamas historial',
   },
   {
     nombre: 'Video institucional',
@@ -240,8 +248,8 @@ function Encabezado() {
 
       {/* Navegación principal */}
       <header className={`${anchoContenido} encabezado-principal`}>
-        <a
-          href="/#inicio"
+        <EnlacePortal
+          to="/"
           className="encabezado-logo-enlace"
           onClick={cerrarMenu}
           aria-label="Volver al inicio"
@@ -251,7 +259,7 @@ function Encabezado() {
             alt="Parroquia Señor de la Exaltación"
             className="encabezado-logo"
           />
-        </a>
+        </EnlacePortal>
 
         <nav
           id="menu-navegacion"
@@ -351,9 +359,9 @@ function Encabezado() {
 
             {resultados.length > 0 ? (
               resultados.map((seccion) => (
-                <a
+                <EnlacePortal
                   key={seccion.enlace}
-                  href={seccion.enlace}
+                  to={seccion.enlace}
                   className="encabezado-buscador-resultado"
                   onClick={cerrarMenu}
                 >
@@ -363,7 +371,7 @@ function Encabezado() {
                   </span>
 
                   <ArrowRight size={16} />
-                </a>
+                </EnlacePortal>
               ))
             ) : (
               <p className="encabezado-buscador-vacio">

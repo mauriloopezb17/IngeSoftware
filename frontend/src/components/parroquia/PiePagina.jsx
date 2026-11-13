@@ -1,4 +1,5 @@
 import { anchoContenido } from './ElementosComunes.jsx';
+import EnlacePortal from './EnlacePortal.jsx';
 import { IconoRedSocial } from './IconoDinamico.jsx';
 import { ErrorSeccion } from './EstadoSeccion.jsx';
 import { TIPOS_HORARIO } from '../../config/sede.js';
@@ -16,7 +17,7 @@ import '../../styles/PiePagina.css';
 
 const enlacesParroquia = [
   { texto: 'Quiénes somos', href: '/#nosotros' },
-  { texto: 'Nuestra historia', href: '/#nosotros' },
+  { texto: 'Nuestra historia', href: '/paginas/historia' },
   { texto: 'El párroco', href: '/#nosotros' },
   { texto: 'Nuestras sedes', href: '/#comunidades' },
   { texto: 'Noticias', href: '/noticias' },
@@ -25,9 +26,9 @@ const enlacesParroquia = [
 const enlacesServicios = [
   { texto: 'Horarios de misa', href: '/#horarios' },
   { texto: 'Sacramentos', href: '/#sacramentos' },
-  { texto: 'Proclamas matrimoniales', href: '/#proclamas' },
-  { texto: 'Calendario', href: '/#agenda' },
-  { texto: 'Boletín parroquial', href: '/#agenda' },
+  { texto: 'Proclamas matrimoniales', href: '/proclamas' },
+  { texto: 'Calendario', href: '/calendario' },
+  { texto: 'Boletín parroquial', href: '/boletines' },
 ];
 
 function construirLineasSecretaria(gruposHorarios, sede) {
@@ -79,8 +80,8 @@ function PiePagina() {
       <div className={anchoContenido}>
         <div className="pie-pagina-superior">
           <div className="pie-pagina-marca">
-            <a
-              href="/#inicio"
+            <EnlacePortal
+              to="/"
               className="pie-pagina-logo-enlace"
               aria-label="Ir al inicio de la página"
             >
@@ -89,7 +90,7 @@ function PiePagina() {
                 alt={sede?.nombre || 'Parroquia Señor de la Exaltación'}
                 className="pie-pagina-logo"
               />
-            </a>
+            </EnlacePortal>
 
             {isError ? (
               <ErrorSeccion
@@ -130,9 +131,9 @@ function PiePagina() {
               <ul className="pie-pagina-lista">
                 {enlacesParroquia.map(({ texto, href }) => (
                   <li key={texto}>
-                    <a href={href} className="pie-pagina-enlace">
+                    <EnlacePortal to={href} className="pie-pagina-enlace">
                       {texto}
-                    </a>
+                    </EnlacePortal>
                   </li>
                 ))}
               </ul>
@@ -144,9 +145,9 @@ function PiePagina() {
               <ul className="pie-pagina-lista">
                 {enlacesServicios.map(({ texto, href }) => (
                   <li key={texto}>
-                    <a href={href} className="pie-pagina-enlace">
+                    <EnlacePortal to={href} className="pie-pagina-enlace">
                       {texto}
-                    </a>
+                    </EnlacePortal>
                   </li>
                 ))}
               </ul>
