@@ -5,6 +5,7 @@ import { Navigate, Route, Routes } from 'react-router';
 
 import { queryClient } from '../services/queryClient.js';
 import GuardiaSeccion from './componentes/GuardiaSeccion.jsx';
+import { pantallasContenido } from './contenido/pantallas.jsx';
 import LayoutPanel from './componentes/LayoutPanel.jsx';
 import PantallaProvisional from './componentes/PantallaProvisional.jsx';
 import RutaProtegida from './componentes/RutaProtegida.jsx';
@@ -12,12 +13,16 @@ import Inicio from './paginas/Inicio.jsx';
 import InicioSesion from './paginas/InicioSesion.jsx';
 import Multimedia from './paginas/Multimedia.jsx';
 import NoEncontrada from './paginas/NoEncontrada.jsx';
+import { pantallasPublicaciones } from './publicaciones/pantallas.jsx';
 import { SECCIONES } from './rutas.js';
 import { SesionProvider } from './sesion/SesionProvider.jsx';
 
 // Secciones que ya tienen su pantalla; el resto muestra la pantalla provisional.
+// Cada área registra las suyas en su propio archivo para no editar este.
 const PANTALLAS = {
   multimedia: <Multimedia />,
+  ...pantallasPublicaciones,
+  ...pantallasContenido,
 };
 
 function AdminApp() {
