@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 
@@ -76,7 +76,9 @@ describe('gestión de páginas y bloques', () => {
       name: 'Eliminar «Nuestra historia»',
     });
     await u.click(within(dialogoEliminarHija).getByRole('button', { name: 'Eliminar' }));
-    expect(screen.queryByText('Nuestra historia')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText('Nuestra historia')).not.toBeInTheDocument(),
+    );
   }, 15000);
 
   it('gestiona bloques en «Quiénes somos»: agrega cita, youtube, texto_imagen y reordena', async () => {
@@ -132,10 +134,12 @@ describe('gestión de páginas y bloques', () => {
 
     // Reordenar bloques (subir el segundo bloque al primer lugar)
     await u.click(screen.getByRole('button', { name: /Subir bloque 2:/ }));
-    const itemsActualizados = within(
-      await screen.findByRole('list', { name: 'Bloques de la página' }),
-    ).getAllByRole('listitem');
-    expect(within(itemsActualizados[0]).getByText('Cita destacada')).toBeInTheDocument();
+    await waitFor(() => {
+      const itemsActualizados = within(
+        screen.getByRole('list', { name: 'Bloques de la página' }),
+      ).getAllByRole('listitem');
+      expect(within(itemsActualizados[0]).getByText('Cita destacada')).toBeInTheDocument();
+    });
 
     // Editar y eliminar el bloque recién agregado
     await u.click(screen.getByRole('button', { name: /Editar bloque 5: Video de YouTube/ }));
@@ -151,7 +155,9 @@ describe('gestión de páginas y bloques', () => {
       name: 'Eliminar bloque «Video de YouTube»',
     });
     await u.click(within(dialogoBorrado).getByRole('button', { name: 'Eliminar' }));
-    expect(screen.queryByText('Recorrido del templo (pX7aQm3kR2c)')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText('Recorrido del templo (pX7aQm3kR2c)')).not.toBeInTheDocument(),
+    );
   }, 15000);
 
   it('soporta formularios hero_video, tarjetas y galeria con SelectorImagenes', async () => {

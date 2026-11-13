@@ -65,7 +65,9 @@ describe('gestión de servicios y preguntas frecuentes', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByText('Se creó el servicio «Dirección espiritual».')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Dirección espiritual' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Dirección espiritual' }),
+    ).toBeInTheDocument();
   }, 15000);
 
   it('edita un servicio existente con éxito', async () => {

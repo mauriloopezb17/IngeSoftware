@@ -110,7 +110,7 @@ describe('gestión de usuarios', () => {
       /Se desactivó la cuenta de «Marketing \(desarrollo\)»/,
     );
     expect(
-      screen.getByRole('button', { name: 'Activar a Marketing (desarrollo)' }),
+      await screen.findByRole('button', { name: 'Activar a Marketing (desarrollo)' }),
     ).toBeInTheDocument();
 
     // Restablecer contraseña
