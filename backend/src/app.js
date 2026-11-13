@@ -16,6 +16,9 @@ export function createApp() {
   const app = express();
 
   app.disable('x-powered-by');
+  // Detrás de un proxy, req.ip sale de X-Forwarded-For solo para los proxies de TRUST_PROXY.
+  // Lo usan el límite de intentos de inicio de sesión y la bitácora.
+  app.set('trust proxy', entorno.confiarProxy);
   // Primero el log: así toda petición tiene su id (X-Request-Id), aunque falle después.
   app.use(crearMiddlewareLog());
 

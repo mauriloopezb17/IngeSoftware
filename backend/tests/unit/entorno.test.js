@@ -38,6 +38,7 @@ describe('validarEntorno', () => {
       puerto: 3000,
       nivelLog: 'info',
       corsOrigenes: ['http://localhost:5173'],
+      confiarProxy: false,
       baseDatosUrl: BASE.DATABASE_URL,
       redisUrl: BASE.REDIS_URL,
       jwt: { secreto: BASE.JWT_SECRET, expiraEn: '8h' },
@@ -113,6 +114,51 @@ describe('validarEntorno', () => {
     });
 
     expect(entorno.corsOrigenes).toEqual(['http://localhost:5173', 'https://pasionistas.org.bo']);
+  });
+
+  describe('TRUST_PROXY', () => {
+    const confiarProxy = (valor) => validarEntorno({ ...BASE, TRUST_PROXY: valor }).confiarProxy;
+
+    it('no confía en ningún proxy con false, 0 o sin definir', () => {
+      expect(confiarProxy(undefined)).toBe(false);
+      expect(confiarProxy('')).toBe(false);
+      expect(confiarProxy('false')).toBe(false);
+      expect(confiarProxy(' FALSE ')).toBe(false);
+      expect(confiarProxy('0')).toBe(false);
+    });
+
+    it('acepta un número de proxies', () => {
+      expect(confiarProxy('1')).toBe(1);
+      expect(confiarProxy('2')).toBe(2);
+    });
+
+    it('acepta una lista de IPs, subredes y rangos con nombre', () => {
+      const proxies = confiarProxy('10.0.0.1, 172.16.0.0/12,fd00::/8, ::1,loopback');
+
+      expect(proxies).toEqual(['10.0.0.1', '172.16.0.0/12', 'fd00::/8', '::1', 'loopback']);
+      expect(Object.isFrozen(proxies)).toBe(true);
+    });
+
+    it('rechaza true porque permitiría falsear la IP del cliente', () => {
+      expect(problemasDe({ ...BASE, TRUST_PROXY: 'true' })).toEqual([
+        'TRUST_PROXY: no puede ser true (permitiría falsear la IP); usa el número de proxies o sus IPs.',
+      ]);
+    });
+
+    it.each([
+      '11',
+      '-1',
+      '1.5',
+      'nginx',
+      '10.0.0.0/33',
+      '::/129',
+      '10.0.0.1/8/2',
+      '300.1.1.1',
+      ',',
+    ])('rechaza el valor inválido %j', (valor) => {
+      const [problema] = problemasDe({ ...BASE, TRUST_PROXY: valor });
+      expect(problema).toMatch(/^TRUST_PROXY: /);
+    });
   });
 
   it('exige las variables OCI_S3_* todas juntas o ninguna', () => {
