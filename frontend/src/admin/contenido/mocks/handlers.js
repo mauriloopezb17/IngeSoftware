@@ -24,7 +24,7 @@ let sigHorarioId = horarios.length + 1;
 let sigServicioId = 7;
 let sigPreguntaId = 2;
 let sigGrupoId = 7;
-let sigVideoId = 1;
+let sigVideoId = videos.reduce((max, video) => Math.max(max, video.id), 0) + 1;
 
 export function reiniciarMocksContenido() {
   sedes = crearSedesIniciales();
@@ -37,7 +37,7 @@ export function reiniciarMocksContenido() {
   sigServicioId = 7;
   sigPreguntaId = 2;
   sigGrupoId = 7;
-  sigVideoId = 1;
+  sigVideoId = videos.reduce((max, video) => Math.max(max, video.id), 0) + 1;
 }
 
 const REGEX_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;

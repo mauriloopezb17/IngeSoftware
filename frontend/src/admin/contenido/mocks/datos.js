@@ -1,4 +1,5 @@
 // Datos iniciales del contenido de la parroquia (docs/api/admin.md §1, §5-§9 y database/seed).
+import { videosExaltacion } from '../../../mocks/datos/parroquia.js';
 import { crearArchivosIniciales } from '../../mocks/multimediaDatos.js';
 import { SEDE_PRINCIPAL } from '../../mocks/usuarios.js';
 
@@ -480,7 +481,10 @@ export function crearGruposIniciales() {
 }
 
 export function crearVideosIniciales() {
-  return [];
+  return videosExaltacion.map((video) => ({
+    ...video,
+    sede: SEDE_PRINCIPAL,
+  }));
 }
 
 export function buscarImagenEnBiblioteca(imagenId) {
