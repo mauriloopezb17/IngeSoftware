@@ -9,7 +9,7 @@ Endpoints del panel CMS (`frontend/src/admin/`), todos bajo `/api/admin/...`. Si
 - **Lecturas por id**: `GET /api/admin/<recurso>/:id`. Si el id no existe, `404 NO_ENCONTRADO`.
 - **`PATCH`**: solo los campos enviados cambian; `null` borra un campo opcional. Responde `200` con el objeto completo.
 - **`DELETE`**: responde `204`. Si otro registro depende del recurso, responde `409 CONFLICTO` y el `mensaje` dice qué lo usa.
-- **Reordenar**: los recursos con `orden` (servicios, grupos, videos y bloques) tienen `POST .../reordenar` con `{ "ids": [...] }`, que recibe **todos** los ids en el nuevo orden. Responde `200` con la lista ordenada. Si faltan o sobran ids, `400 VALIDACION`.
+- **Reordenar**: los recursos con `orden` (servicios, preguntas frecuentes, grupos, videos y bloques) tienen `POST .../reordenar` con `{ "ids": [...] }`, que recibe **todos** los ids en el nuevo orden. Responde `200` con la lista ordenada. Si faltan o sobran ids, `400 VALIDACION`.
 - **Bitácora**: todo `POST`, `PATCH` y `DELETE` exitoso queda registrado en `bitacora_cambio` con el usuario, la IP y los datos antes y después ([sección 13](#13-bitácora)).
 - **Caché**: toda modificación invalida en Redis las lecturas públicas afectadas (ADR-02).
 - **Referencias**: un `...Id` del cuerpo que no existe o que es de otra sede responde `400 VALIDACION`, con `detalles` en ese campo.
@@ -125,11 +125,21 @@ Archivos guardados en Oracle Cloud Object Storage (compatible con S3, bucket pú
 {
   "id": 8,
   "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/11/4b1e9c2a-7d3f-4e8a-9c61-2f0d8a5b3e17.webp",
-  "nombreOriginal": "primeras comuniones 2026.webp",
+  "nombreOriginal": "primeras comuniones 2026.jpg",
   "tipoMime": "image/webp",
   "tamanoBytes": 412870,
   "ancho": 1600,
   "alto": 1067,
+  "variantes": [
+    {
+      "ancho": 480,
+      "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/11/4b1e9c2a-7d3f-4e8a-9c61-2f0d8a5b3e17-480w.webp"
+    },
+    {
+      "ancho": 960,
+      "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/11/4b1e9c2a-7d3f-4e8a-9c61-2f0d8a5b3e17-960w.webp"
+    }
+  ],
   "textoAlternativo": "Niños de primera comunión frente al altar",
   "sede": {
     "id": 1,
@@ -142,7 +152,10 @@ Archivos guardados en Oracle Cloud Object Storage (compatible con S3, bucket pú
 }
 ```
 
-`enUso` indica si alguna publicación, evento, grupo o boletín lo referencia. Un archivo en uso no se puede eliminar.
+- `url`, `tipoMime`, `tamanoBytes`, `ancho` y `alto` describen el archivo **guardado**, no el que se subió: una imagen JPEG o PNG se guarda como WebP (ver [Imágenes](#imágenes)). `nombreOriginal` conserva el nombre con que se subió.
+- `ancho` y `alto` son `null` en los videos y los PDF. `variantes` es `[]` en todo lo que no es imagen.
+- `variantes` tiene la misma forma que en el [objeto imagen estándar](convenciones.md#7-objeto-imagen-estándar).
+- `enUso` indica si el archivo está siendo usado (ver [Cuándo un archivo está en uso](#cuándo-un-archivo-está-en-uso)). Un archivo en uso no se puede eliminar.
 
 ### Tipos y límites (RNF-05)
 
@@ -154,19 +167,53 @@ Archivos guardados en Oracle Cloud Object Storage (compatible con S3, bucket pú
 
 - El tipo se detecta **por el contenido del archivo** (firma binaria), no por la extensión ni por el `Content-Type` que manda el navegador. Si no coincide con la tabla, `415 TIPO_NO_PERMITIDO`.
 - No se aceptan SVG ni GIF: un SVG puede contener scripts.
-- De las imágenes, la API lee el ancho y el alto y **elimina los metadatos EXIF** (incluida la ubicación GPS) antes de guardarlas. Los videos y PDF se guardan tal cual.
-- Clave del objeto: `sedes/<slug-de-la-sede>/<año>/<mes>/<uuid>.<ext>`. El nombre original solo se guarda en la base.
-- Capacidad total: 50 GB. Al llegar al 90 %, la subida responde `409 CONFLICTO` con el mensaje «El almacenamiento está casi lleno».
+- Los videos y los PDF se guardan tal cual. La API no lee su ancho ni su alto: quedan en `null`.
+- El tamaño máximo se comprueba contra el archivo subido, antes de procesarlo.
+- **Capacidad**: el almacenamiento total es de 50 GB. Se mide con la suma de `tamanoBytes` de todos los archivos (las variantes de las imágenes no se cuentan). Al llegar al 90 %, la subida responde `409 CONFLICTO` con el mensaje «El almacenamiento está casi lleno.».
+- **Duración de la subida**: una subida que tarda más de 30 minutos se corta. Un video de 2 GB necesita una conexión de al menos 10 Mbps. Como mejora futura queda la subida directa al bucket con una URL prefirmada para los videos grandes.
+
+### Imágenes
+
+Toda imagen subida se procesa antes de guardarla:
+
+1. Se aplica la orientación indicada por el EXIF y después se **eliminan todos los metadatos** (incluida la ubicación GPS).
+2. Se reduce, sin deformarla, para que su lado largo no pase de **2560 px**. Nunca se amplía.
+3. Se guarda como **WebP**, con calidad 82. Los PNG con transparencia conservan la transparencia. El archivo original no se conserva.
+4. Se generan las [variantes](#variantes).
+
+Una imagen que no se puede leer (archivo dañado) responde `415 TIPO_NO_PERMITIDO`. Una imagen con demasiados píxeles (más de 268 megapíxeles, aunque pese poco) responde `400 VALIDACION` con el detalle en `archivo`: así se evitan las «bombas de descompresión».
+
+### Variantes
+
+Las imágenes subidas desde el CMS tienen versiones más pequeñas para que el navegador descargue solo lo que necesita.
+
+- Se generan **solo** las de ancho **menor** que el de la imagen guardada, entre 480, 960 y 1600 px. Una imagen de 400 px de ancho no tiene variantes.
+- El cliente **nunca deduce** las URL de las variantes a partir de la `url` principal: usa siempre el campo `variantes`. Las imágenes del seed (`/media/seed/...`) y las de URL fija no tienen variantes y devuelven `[]`.
+- Claves de los objetos en el bucket: la principal es `sedes/<slug-de-la-sede>/<año>/<mes>/<uuid>.webp` y cada variante, `.../<uuid>-<ancho>w.webp`. El nombre original solo se guarda en la base.
+- Al eliminar un archivo se eliminan también sus variantes.
+
+### Cuándo un archivo está en uso
+
+`enUso` es `true` si el archivo está en alguno de estos lugares:
+
+- como portada de una publicación;
+- como imagen de un evento o de un grupo pastoral;
+- como archivo de un boletín;
+- como portada de una sede (la `url` de la portada es la del archivo);
+- dentro del contenido de una publicación o de un servicio;
+- dentro de un bloque de una página.
+
+> El contenido de las publicaciones, los servicios y los bloques es JSON: en él el archivo se busca por su **identificador único** (el `<uuid>` de la clave del objeto), no por la URL completa. Así también se detecta cuando el contenido usa una de sus variantes.
 
 ### `POST /api/admin/multimedia`
 
 Sube un archivo. Permiso: `multimedia.subir`. **`Content-Type: multipart/form-data`.**
 
-| Campo del formulario | Tipo    | Regla                                                                                        |
-| -------------------- | ------- | -------------------------------------------------------------------------------------------- |
-| `archivo`            | archivo | Obligatorio. Uno solo.                                                                       |
-| `textoAlternativo`   | texto   | Hasta 255 caracteres. Recomendado para imágenes: es necesario para publicarlas en el portal. |
-| `sedeId`             | entero  | Solo lo usa el Administrador. Por defecto, su sede.                                          |
+| Campo del formulario | Tipo    | Regla                                                                                                                                                                 |
+| -------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `archivo`            | archivo | Obligatorio. Uno solo.                                                                                                                                                |
+| `textoAlternativo`   | texto   | Opcional, hasta 255 caracteres. Se acepta y se guarda en cualquier clase de archivo. Recomendado para imágenes: es necesario para publicarlas en el portal.           |
+| `sedeId`             | entero  | Solo lo usa el Administrador (los demás roles usan su sede y se ignora este campo). Por defecto, su sede. **Obligatorio** si el Administrador no tiene sede asignada. |
 
 ```js
 // Ejemplo desde el panel con clienteHttp
@@ -183,12 +230,28 @@ await clienteHttp.post("/admin/multimedia", formulario);
 
 **Errores:**
 
-| Código                         | Cuándo                                                                                                             |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `400 VALIDACION`               | Falta `archivo`, se envió más de uno o `textoAlternativo` es demasiado largo.                                      |
-| `413 ARCHIVO_DEMASIADO_GRANDE` | El archivo supera el límite de su clase. El `mensaje` indica el límite («Las imágenes pueden pesar hasta 30 MB.»). |
-| `415 TIPO_NO_PERMITIDO`        | Tipo real no permitido, o la petición no es `multipart/form-data`.                                                 |
-| `409 CONFLICTO`                | Almacenamiento casi lleno.                                                                                         |
+| Código                         | Cuándo                                                                                                                                                                                                     |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `400 VALIDACION`               | Falta `archivo`, se envió más de uno, `textoAlternativo` es demasiado largo, falta `sedeId` (Administrador sin sede), el `sedeId` no existe o la sede está inactiva, o la imagen tiene demasiados píxeles. |
+| `413 ARCHIVO_DEMASIADO_GRANDE` | El archivo supera el límite de su clase.                                                                                                                                                                   |
+| `415 TIPO_NO_PERMITIDO`        | Tipo real no permitido, imagen dañada, o la petición no es `multipart/form-data`.                                                                                                                          |
+| `409 CONFLICTO`                | Almacenamiento casi lleno.                                                                                                                                                                                 |
+| `503 SERVICIO_NO_DISPONIBLE`   | El almacenamiento no está configurado en el servidor o no responde. No se guarda nada.                                                                                                                     |
+
+Mensajes:
+
+| Error | `mensaje`                                                                                                                     | `detalles`         |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| 400   | «Falta el archivo.» / «Envía un solo archivo.»                                                                                | `archivo`          |
+| 400   | «El texto alternativo puede tener hasta 255 caracteres.»                                                                      | `textoAlternativo` |
+| 400   | «Indica la sede del archivo.» / «La sede no existe o está inactiva.»                                                          | `sedeId`           |
+| 400   | «La imagen tiene demasiados píxeles (máximo 268 megapíxeles).»                                                                | `archivo`          |
+| 413   | «Las imágenes pueden pesar hasta 30 MB.» / «Los videos pueden pesar hasta 2 GB.» / «Los documentos pueden pesar hasta 50 MB.» | `[]`               |
+| 415   | «El archivo no es de un tipo permitido. Se aceptan imágenes JPEG, PNG y WebP, videos MP4 y WebM, y documentos PDF.»           | `[]`               |
+| 415   | «El archivo no es una imagen válida.»                                                                                         | `[]`               |
+| 415   | «La petición debe ser multipart/form-data.»                                                                                   | `[]`               |
+| 409   | «El almacenamiento está casi lleno.»                                                                                          | `[]`               |
+| 503   | «El almacenamiento de archivos no está configurado.» / «No se pudo guardar el archivo. Intenta de nuevo más tarde.»           | `[]`               |
 
 > Un video de hasta 2 GB tarda en subir. `fetch` no informa el avance de la subida; para mostrar una barra de progreso, el panel puede usar `XMLHttpRequest` con `upload.onprogress` solo en este endpoint.
 
@@ -207,9 +270,17 @@ Biblioteca multimedia. Paginada.
 
 **Respuesta `200`:** `{ "datos": [ <archivo multimedia>, ... ], "paginacion": { ... } }`.
 
+### `GET /api/admin/multimedia/:id`
+
+Un archivo de la biblioteca. Es la dirección que devuelve la cabecera `Location` de la subida.
+
+**Respuesta `200`:** `{ "datos": <archivo multimedia> }`.
+
+**Errores:** `404 NO_ENCONTRADO` si el id no existe y `403 SIN_PERMISO` si el archivo es de otra sede.
+
 ### `PATCH /api/admin/multimedia/:id`
 
-Solo se puede cambiar `textoAlternativo`. Permiso: `multimedia.subir`.
+Solo se puede cambiar `textoAlternativo` (hasta 255 caracteres; `null` lo borra). Cualquier otro campo responde `400 VALIDACION`. Permiso: `multimedia.subir`.
 
 ```json
 {
@@ -217,9 +288,22 @@ Solo se puede cambiar `textoAlternativo`. Permiso: `multimedia.subir`.
 }
 ```
 
+**Respuesta `200`:** `{ "datos": <archivo multimedia> }`.
+
 ### `DELETE /api/admin/multimedia/:id`
 
-Borra el archivo de la base y del bucket. Permiso: `multimedia.eliminar`. Fuera del Administrador, cada usuario solo puede borrar lo que subió. Si el archivo está en uso, responde `409 CONFLICTO`:
+Borra el archivo de la base y del bucket, con todas sus variantes. Permiso: `multimedia.eliminar`. **Respuesta `204`.**
+
+**Errores:**
+
+| Código                       | Cuándo                                                                                                                                                |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `403 SIN_PERMISO`            | Fuera del Administrador, cada usuario solo puede borrar lo que subió: «Solo puedes eliminar los archivos que tú subiste.» También si es de otra sede. |
+| `404 NO_ENCONTRADO`          | El id no existe.                                                                                                                                      |
+| `409 CONFLICTO`              | El archivo está en uso.                                                                                                                               |
+| `503 SERVICIO_NO_DISPONIBLE` | El almacenamiento no está configurado o no responde. **No se borra nada**: se puede reintentar.                                                       |
+
+Si el archivo está en uso, el `mensaje` es «El archivo está en uso y no se puede eliminar.» y `detalles` trae un elemento por cada uso, con `campo: "id"`:
 
 ```json
 {
@@ -235,6 +319,19 @@ Borra el archivo de la base y del bucket. Permiso: `multimedia.eliminar`. Fuera 
   }
 }
 ```
+
+| Uso                          | Mensaje del detalle                                    |
+| ---------------------------- | ------------------------------------------------------ |
+| Portada de una publicación   | Usado como portada de la publicación «título».         |
+| Imagen de un evento          | Usado como imagen del evento «título».                 |
+| Imagen de un grupo pastoral  | Usado como imagen del grupo «nombre».                  |
+| Archivo de un boletín        | Usado como archivo del boletín «título».               |
+| Portada de una sede          | Usado como portada de la sede «nombre».                |
+| Contenido de una publicación | Usado dentro del contenido de la publicación «título». |
+| Contenido de un servicio     | Usado dentro del contenido del servicio «nombre».      |
+| Bloque de una página         | Usado en un bloque de la página «título».              |
+
+Se listan hasta 5 usos. Si hay más, el último elemento dice «Y N usos más.».
 
 ---
 
@@ -579,17 +676,18 @@ Permiso de escritura: `servicios.gestionar`.
 }
 ```
 
-| Método y ruta                                                      | Descripción                                                                                                        |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `GET /api/admin/servicios`                                         | Sin paginar, por `orden`. Filtros: `sede`, `visible`.                                                              |
-| `GET /api/admin/servicios/:id`                                     | Un servicio con sus preguntas frecuentes (activas e inactivas).                                                    |
-| `POST /api/admin/servicios`                                        | Crea. `201`.                                                                                                       |
-| `PATCH /api/admin/servicios/:id`                                   | Edita.                                                                                                             |
-| `DELETE /api/admin/servicios/:id`                                  | Elimina el servicio. Sus preguntas frecuentes quedan sin servicio asociado: las sigue usando el asistente virtual. |
-| `POST /api/admin/servicios/reordenar`                              | `{ "ids": [1, 2, 3, 4, 5, 6] }`.                                                                                   |
-| `POST /api/admin/servicios/:id/preguntas-frecuentes`               | Crea una pregunta: `{ "pregunta", "respuesta", "activa" }`.                                                        |
-| `PATCH /api/admin/servicios/:id/preguntas-frecuentes/:preguntaId`  | Edita una pregunta.                                                                                                |
-| `DELETE /api/admin/servicios/:id/preguntas-frecuentes/:preguntaId` | Elimina una pregunta.                                                                                              |
+| Método y ruta                                                      | Descripción                                                                                                                                |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /api/admin/servicios`                                         | Sin paginar, por `orden`. Filtros: `sede`, `visible`.                                                                                      |
+| `GET /api/admin/servicios/:id`                                     | Un servicio con sus preguntas frecuentes (activas e inactivas).                                                                            |
+| `POST /api/admin/servicios`                                        | Crea. `201`.                                                                                                                               |
+| `PATCH /api/admin/servicios/:id`                                   | Edita.                                                                                                                                     |
+| `DELETE /api/admin/servicios/:id`                                  | Elimina el servicio. Sus preguntas frecuentes quedan sin servicio asociado: las sigue usando el asistente virtual.                         |
+| `POST /api/admin/servicios/reordenar`                              | `{ "ids": [1, 2, 3, 4, 5, 6] }`.                                                                                                           |
+| `POST /api/admin/servicios/:id/preguntas-frecuentes`               | Crea una pregunta: `{ "pregunta", "respuesta", "activa" }`.                                                                                |
+| `PATCH /api/admin/servicios/:id/preguntas-frecuentes/:preguntaId`  | Edita una pregunta.                                                                                                                        |
+| `DELETE /api/admin/servicios/:id/preguntas-frecuentes/:preguntaId` | Elimina una pregunta.                                                                                                                      |
+| `POST /api/admin/servicios/:id/preguntas-frecuentes/reordenar`     | `{ "ids": [3, 1, 2] }`: todos los ids de las preguntas del servicio, en el nuevo orden. Responde `200` con la lista de preguntas ordenada. |
 
 **Cuerpo de `POST /api/admin/servicios`:**
 

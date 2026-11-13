@@ -133,17 +133,18 @@ Todo error usa el mismo formato, que el cliente HTTP del frontend (`frontend/src
 
 ### Tabla de códigos
 
-| Código                     | HTTP | Cuándo se usa                                                                                                                                                  |
-| -------------------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VALIDACION`               | 400  | El cuerpo, la query o los parámetros de ruta no cumplen el esquema. También el JSON mal formado y los bloques que no cumplen `tipo_bloque.esquema_validacion`. |
-| `NO_AUTENTICADO`           | 401  | No hay sesión, la cookie expiró o es inválida, o las credenciales del login son incorrectas.                                                                   |
-| `SIN_PERMISO`              | 403  | Hay sesión pero el rol no puede hacer la acción, o el recurso pertenece a otra sede.                                                                           |
-| `NO_ENCONTRADO`            | 404  | El recurso, la sede (slug) o la ruta no existen. En el portal también un contenido que no está publicado o vigente.                                            |
-| `CONFLICTO`                | 409  | Choca con una restricción de unicidad (slug, correo, boletín del mismo periodo) o con el estado actual (ej. aprobar algo que no está «En revisión»).           |
-| `ARCHIVO_DEMASIADO_GRANDE` | 413  | El archivo supera el límite de su tipo (RNF-05) o el cuerpo JSON supera el límite.                                                                             |
-| `TIPO_NO_PERMITIDO`        | 415  | El tipo real del archivo (detectado por su contenido, no por la extensión) no está permitido, o el `Content-Type` de la petición no es el esperado.            |
-| `DEMASIADAS_SOLICITUDES`   | 429  | Se superó el límite de peticiones (ej. intentos de login). Incluye la cabecera `Retry-After` en segundos.                                                      |
-| `ERROR_INTERNO`            | 500  | Error no previsto. Se registra en el log con el id de la petición.                                                                                             |
+| Código                     | HTTP | Cuándo se usa                                                                                                                                                               |
+| -------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VALIDACION`               | 400  | El cuerpo, la query o los parámetros de ruta no cumplen el esquema. También el JSON mal formado y los bloques que no cumplen `tipo_bloque.esquema_validacion`.              |
+| `NO_AUTENTICADO`           | 401  | No hay sesión, la cookie expiró o es inválida, o las credenciales del login son incorrectas.                                                                                |
+| `SIN_PERMISO`              | 403  | Hay sesión pero el rol no puede hacer la acción, o el recurso pertenece a otra sede.                                                                                        |
+| `NO_ENCONTRADO`            | 404  | El recurso, la sede (slug) o la ruta no existen. En el portal también un contenido que no está publicado o vigente.                                                         |
+| `CONFLICTO`                | 409  | Choca con una restricción de unicidad (slug, correo, boletín del mismo periodo) o con el estado actual (ej. aprobar algo que no está «En revisión»).                        |
+| `ARCHIVO_DEMASIADO_GRANDE` | 413  | El archivo supera el límite de su tipo (RNF-05) o el cuerpo JSON supera el límite.                                                                                          |
+| `TIPO_NO_PERMITIDO`        | 415  | El tipo real del archivo (detectado por su contenido, no por la extensión) no está permitido, o el `Content-Type` de la petición no es el esperado.                         |
+| `DEMASIADAS_SOLICITUDES`   | 429  | Se superó el límite de peticiones (ej. intentos de login). Incluye la cabecera `Retry-After` en segundos.                                                                   |
+| `ERROR_INTERNO`            | 500  | Error no previsto. Se registra en el log con el id de la petición.                                                                                                          |
+| `SERVICIO_NO_DISPONIBLE`   | 503  | Un servicio externo del que depende la acción no está configurado o no responde (hoy, el almacenamiento de archivos de multimedia). No se guardó nada: se puede reintentar. |
 
 ## 6. Sedes (RF-13)
 
@@ -160,21 +161,40 @@ Toda imagen se devuelve con la misma forma, venga de `archivo_multimedia` o de u
 ```json
 {
   "id": 31,
-  "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/10/primeras-comuniones.webp",
+  "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/10/4b1e9c2a-7d3f-4e8a-9c61-2f0d8a5b3e17.webp",
   "textoAlternativo": "Niños de primera comunión frente al altar",
   "ancho": 1600,
-  "alto": 1067
+  "alto": 1067,
+  "variantes": [
+    {
+      "ancho": 480,
+      "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/10/4b1e9c2a-7d3f-4e8a-9c61-2f0d8a5b3e17-480w.webp"
+    },
+    {
+      "ancho": 960,
+      "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/10/4b1e9c2a-7d3f-4e8a-9c61-2f0d8a5b3e17-960w.webp"
+    }
+  ]
 }
 ```
 
-| Campo              | Tipo            | Nota                                                                                                                                                                                   |
-| ------------------ | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`               | entero o `null` | Id en `archivo_multimedia`. Es `null` cuando la imagen no es un archivo subido (ej. `sede.url_imagen_portada`).                                                                        |
-| `url`              | texto           | **Absoluta** (`CDN_PUBLIC_URL`) para los archivos subidos desde el CMS. **Relativa** (`/media/seed/<archivo>`) para las imágenes del seed, que el portal sirve desde su propio origen. |
-| `textoAlternativo` | texto o `null`  | Obligatorio para publicar en el portal. Si falta, el portal usa el título del recurso.                                                                                                 |
-| `ancho`, `alto`    | entero o `null` | Dimensiones en píxeles. Sirven para reservar el espacio y evitar saltos de diseño.                                                                                                     |
+| Campo              | Tipo            | Nota                                                                                                                                                                                          |
+| ------------------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | entero o `null` | Id en `archivo_multimedia`. Es `null` cuando la imagen no es un archivo subido (ej. `sede.url_imagen_portada`).                                                                               |
+| `url`              | texto           | **Absoluta** (`CDN_PUBLIC_URL`) para los archivos subidos desde el CMS. **Relativa** (`/media/seed/<archivo>`) para las imágenes del seed, que el portal sirve desde su propio origen.        |
+| `textoAlternativo` | texto o `null`  | Obligatorio para publicar en el portal. Si falta, el portal usa el título del recurso.                                                                                                        |
+| `ancho`, `alto`    | entero o `null` | Dimensiones en píxeles. Sirven para reservar el espacio y evitar saltos de diseño.                                                                                                            |
+| `variantes`        | lista           | Versiones más pequeñas de la imagen, de menor a mayor ancho: `[{ "ancho": 480, "url": "..." }]`. Es `[]` cuando no hay (imágenes del seed, URL fija o archivos que no son imagen). Ver abajo. |
 
 Un recurso sin imagen devuelve `"imagen": null`, nunca un objeto vacío.
+
+### Variantes de la imagen
+
+`variantes` permite que el navegador descargue solo el tamaño que necesita (`srcset`). Lo generan las imágenes subidas desde el CMS (ver [admin.md](admin.md#variantes)): anchos de 480, 960 y 1600 px, solo los que son **menores** que el ancho de la imagen principal, que es la versión completa.
+
+- **No se deducen**: el cliente nunca arma la URL de una variante a partir de `url`. Las imágenes del seed (`/media/seed/...`) y las de URL fija no tienen variantes y devuelven `[]`.
+- Un cliente puede ignorar el campo: la `url` principal siempre sirve. Es un cambio **aditivo**: quien aún no lo adoptó (y los mocks que no lo traen) debe tolerar que falte y tratarlo como `[]`.
+- Con variantes, un `srcset` sería: `<url de la variante> <ancho>w, ..., <url principal> <ancho principal>w`.
 
 ## 8. Autenticación, caché y límites
 
