@@ -10,6 +10,7 @@ import { server } from '../../mocks/server.js';
 import { clienteHttp } from '../../services/clienteHttp.js';
 import { reiniciarMocksAdmin } from '../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from '../mocks/usuarios.js';
+import { SesionProvider } from '../sesion/SesionProvider.jsx';
 import Multimedia from './Multimedia.jsx';
 
 const entrar = (usuario = 'marketing') =>
@@ -19,9 +20,11 @@ function montar(entrada = '/admin/multimedia') {
   const cliente = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={cliente}>
-      <MemoryRouter initialEntries={[entrada]}>
-        <Multimedia />
-      </MemoryRouter>
+      <SesionProvider>
+        <MemoryRouter initialEntries={[entrada]}>
+          <Multimedia />
+        </MemoryRouter>
+      </SesionProvider>
     </QueryClientProvider>,
   );
 }
@@ -196,6 +199,23 @@ describe('biblioteca de medios', () => {
 
       expect(await screen.findByText('14 archivos')).toBeInTheDocument();
       expect(screen.getByLabelText('Tipo')).toHaveValue('');
+    });
+  });
+
+  describe('subida', () => {
+    it('ofrece subir archivos y la biblioteca se actualiza al terminar', async () => {
+      montar();
+      expect(await screen.findByText('14 archivos')).toBeInTheDocument();
+      const usuario = userEvent.setup();
+
+      await usuario.upload(
+        await screen.findByLabelText('Archivos a subir'),
+        new File(['contenido'], 'nueva-foto.jpg', { type: 'image/jpeg' }),
+      );
+      await usuario.click(await screen.findByRole('button', { name: 'Subir 1 archivo' }));
+
+      expect(await screen.findByText('Subido')).toBeInTheDocument();
+      expect(await screen.findByText('15 archivos')).toBeInTheDocument();
     });
   });
 

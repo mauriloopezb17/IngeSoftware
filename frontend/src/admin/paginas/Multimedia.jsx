@@ -3,9 +3,11 @@ import { useSearchParams } from 'react-router';
 import { AlertCircle, ImageOff, Loader2 } from 'lucide-react';
 
 import Paginacion from '../componentes/Paginacion.jsx';
+import { usePermisos } from '../permisos/usePermisos.js';
 import { ORDENES, POR_PAGINA } from '../multimedia/api.js';
 import FiltrosMultimedia from '../multimedia/FiltrosMultimedia.jsx';
 import { contarArchivos } from '../multimedia/formato.js';
+import SubidaArchivos from '../multimedia/SubidaArchivos.jsx';
 import TarjetaArchivo from '../multimedia/TarjetaArchivo.jsx';
 import { CLASES } from '../multimedia/tipos.js';
 import { useBiblioteca } from '../multimedia/useBiblioteca.js';
@@ -34,6 +36,7 @@ export default function Multimedia() {
   const filtros = leerFiltros(parametros);
   const consulta = useBiblioteca(filtros);
   const [abierto, setAbierto] = useState(null);
+  const { puede } = usePermisos();
 
   const hayFiltros = Boolean(filtros.buscar || filtros.clase || filtros.enUso || filtros.orden !== ORDEN_INICIAL);
 
@@ -58,6 +61,8 @@ export default function Multimedia() {
         <h1 className="font-display text-4xl font-semibold text-ink">Multimedia</h1>
         <p className="mt-2 text-muted">Imágenes, videos y documentos de la sede.</p>
       </header>
+
+      {puede('multimedia.subir') && <SubidaArchivos />}
 
       <div className="mt-6 rounded-lg border border-borderSoft bg-white p-4">
         <FiltrosMultimedia
