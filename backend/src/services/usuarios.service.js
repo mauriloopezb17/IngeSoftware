@@ -5,17 +5,13 @@ import { ROLES } from '../constantes/catalogos.js';
 import { ErrorApp } from '../errores/ErrorApp.js';
 import * as usuarios from '../models/usuarios.model.js';
 import { contrasenaNueva, hashearContrasena } from '../utils/contrasenas.js';
+import { correoUsuario } from '../validacion/auth.js';
 
 // Código de pg para una restricción UNIQUE violada (usuario.correo).
 const VIOLACION_UNICA_PG = '23505';
 
 const esquemaNuevoAdministrador = z.object({
-  correo: z
-    .string({ error: 'Debe ser un texto.' })
-    .trim()
-    .toLowerCase()
-    .max(120, 'Debe tener como máximo 120 caracteres.')
-    .pipe(z.email({ error: 'Debe ser un correo válido.' })),
+  correo: correoUsuario,
   nombreCompleto: z
     .string({ error: 'Debe ser un texto.' })
     .trim()

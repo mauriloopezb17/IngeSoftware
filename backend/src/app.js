@@ -4,6 +4,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { obtenerEntorno } from './config/entorno.js';
 import { crearMiddlewareLog } from './config/logger.js';
+import { protegerCsrf } from './middlewares/csrf.js';
 import { manejarErrores, rutaNoEncontrada } from './middlewares/errores.js';
 import routes from './routes/index.js';
 
@@ -37,6 +38,9 @@ export function createApp() {
       maxAge: 600,
     }),
   );
+
+  // Antes de leer el cuerpo: una petición de otro origen que modifica datos se rechaza de entrada.
+  app.use('/api', protegerCsrf);
 
   app.use(express.json({ limit: LIMITE_CUERPO_JSON }));
   app.use(cookieParser());
