@@ -133,6 +133,7 @@ describe('GET /api/sedes/:sede/grupos-pastorales', () => {
             'Altar del templo parroquial adornado con flores rojas y blancas, con un tríptico de icono al lado derecho',
           ancho: 1879,
           alto: 1057,
+          variantes: [],
         },
         orden: 1,
       },

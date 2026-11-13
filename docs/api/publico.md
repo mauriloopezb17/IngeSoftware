@@ -92,7 +92,8 @@ Sedes activas, para la sección «Nuestras comunidades». Sin paginación. Orden
         "url": "/media/seed/exterior-parroquia.webp",
         "textoAlternativo": "Vista exterior de la Parroquia Señor de la Exaltación",
         "ancho": 1878,
-        "alto": 1057
+        "alto": 1057,
+        "variantes": []
       },
       "enlaceComoLlegar": "https://www.google.com/maps/dir/?api=1&destination=-16.5267952%2C-68.1082157"
     },
@@ -157,7 +158,8 @@ Datos institucionales, contacto, redes sociales y configuración visual de una s
       "url": "/media/seed/exterior-parroquia.webp",
       "textoAlternativo": "Vista exterior de la Parroquia Señor de la Exaltación",
       "ancho": 1878,
-      "alto": 1057
+      "alto": 1057,
+      "variantes": []
     },
     "redesSociales": [
       {
@@ -657,7 +659,8 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
         "url": "/media/seed/pastoral-familiar.jpg",
         "textoAlternativo": "Afiche del encuentro de Pastoral Familiar sobre el duelo y la pérdida de un ser querido",
         "ancho": 1137,
-        "alto": 1383
+        "alto": 1383,
+        "variantes": []
       },
       "urlExterna": "https://www.facebook.com/photo.php?fbid=1568791201958754&set=pb.100064836665037.-2207520000&type=3",
       "destacada": false,
@@ -676,7 +679,8 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
         "url": "/media/seed/crucifijo.webp",
         "textoAlternativo": "Crucifijo en el interior del templo parroquial",
         "ancho": 1888,
-        "alto": 1059
+        "alto": 1059,
+        "variantes": []
       },
       "urlExterna": null,
       "destacada": false,
@@ -695,7 +699,8 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
         "url": "/media/seed/exterior-parroquia.webp",
         "textoAlternativo": "Vista exterior de la Parroquia Señor de la Exaltación",
         "ancho": 1878,
-        "alto": 1057
+        "alto": 1057,
+        "variantes": []
       },
       "urlExterna": null,
       "destacada": false,
@@ -790,7 +795,8 @@ Detalle de una publicación publicada y vigente, con su `contenido` en formato B
       "url": "/media/seed/crucifijo.webp",
       "textoAlternativo": "Crucifijo en el interior del templo parroquial",
       "ancho": 1888,
-      "alto": 1059
+      "alto": 1059,
+      "variantes": []
     },
     "urlExterna": null,
     "destacada": false,

@@ -362,7 +362,8 @@ Todos los campos del [detalle público](publico.md#get-apisedessedepublicaciones
     "url": "/media/seed/altar.webp",
     "textoAlternativo": "Altar del templo parroquial adornado con flores rojas y blancas, con un tríptico de icono al lado derecho",
     "ancho": 1879,
-    "alto": 1057
+    "alto": 1057,
+    "variantes": []
   },
   "urlExterna": null,
   "destacada": true,

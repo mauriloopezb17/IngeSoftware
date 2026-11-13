@@ -1,6 +1,7 @@
 // Formato común de las respuestas: fechas, horas, imágenes y claves en camelCase.
 // Contrato: docs/api/convenciones.md (secciones 2 y 7).
 import { obtenerEntorno } from '../config/entorno.js';
+import { ANCHOS_VARIANTES, claveDeVariante } from '../constantes/multimedia.js';
 
 // Bolivia (America/La_Paz) está en UTC-4 todo el año: no tiene horario de verano.
 const DESFASE_BOLIVIA_MS = -4 * 60 * 60 * 1000;
@@ -53,7 +54,21 @@ export function urlPublica(url, cdnUrlPublica = obtenerEntorno().cdnUrlPublica) 
   return `${cdnUrlPublica}/${url.replace(/^\/+/, '')}`;
 }
 
-// Objeto imagen estándar { id, url, textoAlternativo, ancho, alto }, o null si no hay imagen.
+// Variantes [{ ancho, url }] de una imagen subida desde el CMS. Se calculan a partir de la clave
+// del objeto y del ancho guardado: la API generó exactamente las de ancho menor al de la imagen.
+// Las imágenes del seed (/media/...), las de URL fija y todo lo que no es una imagen subida
+// (clave que no termina en .webp) no tienen variantes: [].
+export function variantesDe(clave, ancho, cdnUrlPublica = obtenerEntorno().cdnUrlPublica) {
+  const esClaveSubida = clave && !/^https?:\/\//i.test(clave) && !clave.startsWith('/');
+  if (!esClaveSubida || !/\.webp$/.test(clave) || !Number.isInteger(ancho)) return [];
+
+  return ANCHOS_VARIANTES.filter((anchoVariante) => anchoVariante < ancho).map((anchoVariante) => ({
+    ancho: anchoVariante,
+    url: urlPublica(claveDeVariante(clave, anchoVariante), cdnUrlPublica),
+  }));
+}
+
+// Objeto imagen estándar { id, url, textoAlternativo, ancho, alto, variantes }, o null si no hay imagen.
 export function imagen(
   { id = null, url = null, textoAlternativo = null, ancho = null, alto = null } = {},
   cdnUrlPublica = obtenerEntorno().cdnUrlPublica,
@@ -67,6 +82,7 @@ export function imagen(
     textoAlternativo: textoAlternativo ?? null,
     ancho: ancho ?? null,
     alto: alto ?? null,
+    variantes: variantesDe(url, ancho, cdnUrlPublica),
   };
 }
 

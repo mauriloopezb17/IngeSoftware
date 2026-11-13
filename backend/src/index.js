@@ -3,6 +3,7 @@ import { ErrorEntorno, obtenerEntorno } from './config/entorno.js';
 import { obtenerLogger } from './config/logger.js';
 import { cerrarPool, esperarBaseDatos } from './db/index.js';
 import { cerrarRedis, obtenerRedis } from './db/redis.js';
+import { almacenamientoConfigurado, cerrarClienteS3 } from './storage/oci.js';
 
 // Si el cierre ordenado se traba (ej. una conexión que no termina), se fuerza la salida.
 const ESPERA_MAXIMA_APAGADO_MS = 10_000;
@@ -33,11 +34,26 @@ try {
 // Redis es opcional para arrancar (ADR-02): se empieza a conectar en segundo plano y no se espera.
 obtenerRedis();
 
+// El almacenamiento de archivos también es opcional: sin él, solo la subida y el borrado de
+// archivos responden 503; el resto de la API funciona igual.
+if (!almacenamientoConfigurado()) {
+  logger.warn(
+    'Almacenamiento de archivos sin configurar (OCI_S3_* y CDN_PUBLIC_URL): la subida de multimedia está desactivada',
+  );
+}
+
 const app = createApp();
+
+// Una subida de 2 GB tarda: se amplía el plazo para recibir una petición completa (por defecto
+// Node corta a los 5 minutos). 30 minutos exigen ≥ 10 Mbps para el video más grande (admin.md §2).
+// headersTimeout no cambia: las cabeceras deben llegar enseguida.
+const PLAZO_MAXIMO_PETICION_MS = 30 * 60 * 1000;
 
 const servidor = app.listen(entorno.puerto, () => {
   logger.info({ puerto: entorno.puerto, modo: entorno.modo }, 'API escuchando');
 });
+
+servidor.requestTimeout = PLAZO_MAXIMO_PETICION_MS;
 
 let apagando = false;
 
@@ -54,6 +70,7 @@ function apagar(senal) {
   }, ESPERA_MAXIMA_APAGADO_MS).unref();
 
   servidor.close(async () => {
+    cerrarClienteS3();
     await Promise.all([cerrarPool(), cerrarRedis()]);
     logger.info('Conexiones a PostgreSQL y Redis cerradas');
     process.exit(0);
