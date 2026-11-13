@@ -12,6 +12,7 @@ import {
   crearServiciosIniciales,
   crearVideosIniciales,
 } from './datos.js';
+import { crearControladorPaginas } from './paginas.js';
 
 let sedes = crearSedesIniciales();
 let horarios = crearHorariosIniciales();
@@ -38,6 +39,7 @@ export function reiniciarMocksContenido() {
   sigPreguntaId = 2;
   sigGrupoId = 7;
   sigVideoId = videos.reduce((max, video) => Math.max(max, video.id), 0) + 1;
+  controladorPaginas.reiniciar();
 }
 
 const REGEX_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -300,6 +302,19 @@ function construirVideo(cuerpo, sede, orden, actual = null) {
         : actual?.fechaPublicacion ?? null,
   };
 }
+
+const controladorPaginas = crearControladorPaginas({
+  autenticar,
+  esAdministrador,
+  resolverSedeFiltro,
+  resolverSedeCreacion,
+  leerPorId,
+  aSlug,
+  validarReorden,
+  error,
+  errorValidacion,
+  otraSede,
+});
 
 export const handlersContenido = [
   // ---- §1 Catálogos ----
@@ -1099,4 +1114,6 @@ export const handlersContenido = [
 
     return HttpResponse.json({ datos: sede });
   }),
+
+  ...controladorPaginas.handlers,
 ];
