@@ -52,7 +52,8 @@ describe('rutas del panel', () => {
     expect(SECCIONES.map((s) => s.ruta)).toEqual(RUTAS_DEL_INDICE);
   });
 
-  it.each(SECCIONES.filter((s) => s.clave !== 'inicio'))(
+  // Multimedia ya tiene su pantalla real; se prueba en paginas/Multimedia.test.jsx.
+  it.each(SECCIONES.filter((s) => s.clave !== 'inicio' && s.clave !== 'multimedia'))(
     'el Administrador abre «$titulo» con su pantalla provisional',
     async ({ ruta, titulo }) => {
       await abrir('admin@parroquia.test', ruta);
@@ -77,6 +78,14 @@ describe('rutas del panel', () => {
     expect(screen.queryByText(/en construcción/)).not.toBeInTheDocument();
     // El panel sigue disponible: se puede volver al resto de secciones.
     expect(screen.getByRole('navigation', { name: 'Menú principal' })).toBeInTheDocument();
+  });
+
+  it('Multimedia muestra la biblioteca, no la pantalla provisional', async () => {
+    await abrir('marketing@parroquia.test', 'multimedia');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Multimedia' })).toBeInTheDocument();
+    expect(await screen.findByRole('list', { name: 'Archivos' })).toBeInTheDocument();
+    expect(screen.queryByText(/en construcción/)).not.toBeInTheDocument();
   });
 
   it('el Párroco sí entra a la bitácora', async () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { usuariosSeed } from '../mocks/usuarios.js';
-import { PERMISOS_POR_ROL, puede, puedeVerSeccion } from './matriz.js';
+import { PERMISOS_POR_ROL, puede, puedeEliminarArchivo, puedeVerSeccion } from './matriz.js';
 
 const usuarioDe = (codigo) => usuariosSeed.find((u) => u.rol.codigo === codigo);
 
@@ -83,6 +83,27 @@ describe('matriz de permisos', () => {
 
     it('sin sesión no se ve ninguna', () => {
       expect(puedeVerSeccion(null, 'inicio')).toBe(false);
+    });
+  });
+
+  describe('eliminar archivos', () => {
+    const subidoPor = (id) => ({ subidoPor: { id } });
+
+    it('el Administrador elimina cualquier archivo', () => {
+      expect(puedeEliminarArchivo(usuarioDe('ADMINISTRADOR'), subidoPor(4))).toBe(true);
+    });
+
+    it('los demás roles solo eliminan lo que subieron', () => {
+      for (const codigo of ['PARROCO', 'SECRETARIA', 'MARKETING']) {
+        const usuario = usuarioDe(codigo);
+        expect(puedeEliminarArchivo(usuario, subidoPor(usuario.id))).toBe(true);
+        expect(puedeEliminarArchivo(usuario, subidoPor(usuario.id + 100))).toBe(false);
+      }
+    });
+
+    it('sin usuario o sin el permiso no se puede', () => {
+      expect(puedeEliminarArchivo(null, subidoPor(1))).toBe(false);
+      expect(puedeEliminarArchivo({ id: 1, rol: { codigo: 'INVITADO' } }, subidoPor(1))).toBe(false);
     });
   });
 });

@@ -80,3 +80,10 @@ export function puedeVerSeccion(usuario, clave) {
   const requerido = PERMISO_PARA_ENTRAR[clave];
   return requerido ? puede(usuario, requerido) : true;
 }
+
+// «multimedia.eliminar»: fuera del Administrador, cada usuario solo elimina los archivos que subió.
+// Que el archivo esté en uso es otra condición (lo informa `archivo.enUso`, y la API responde 409).
+export function puedeEliminarArchivo(usuario, archivo) {
+  if (!puede(usuario, 'multimedia.eliminar')) return false;
+  return usuario.rol.codigo === 'ADMINISTRADOR' || archivo.subidoPor.id === usuario.id;
+}
