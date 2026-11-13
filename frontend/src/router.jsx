@@ -3,6 +3,7 @@ import { createBrowserRouter } from 'react-router';
 import InicioParroquia from './pages/InicioParroquia.jsx';
 import Noticias from './pages/Noticias.jsx';
 import NoticiaDetalle from './pages/NoticiaDetalle.jsx';
+import Proclamas from './pages/Proclamas.jsx';
 import NoEncontrado from './pages/NoEncontrado.jsx';
 import CargandoPagina from './pages/CargandoPagina.jsx';
 
@@ -20,6 +21,7 @@ export const rutas = [
       { path: '/', Component: InicioParroquia },
       { path: '/noticias', Component: Noticias },
       { path: '/noticias/:slug', Component: NoticiaDetalle },
+      { path: '/proclamas', Component: Proclamas },
       // El panel define sus propias subrutas dentro de AdminApp.
       { path: '/admin/*', lazy: cargarAdmin },
       { path: '*', Component: NoEncontrado },

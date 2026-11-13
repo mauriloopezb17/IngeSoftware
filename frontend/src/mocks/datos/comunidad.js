@@ -295,3 +295,59 @@ export function obtenerProclamasExaltacion() {
     },
   ];
 }
+
+export function obtenerHistorialProclamasExaltacion() {
+  const vigentes = obtenerProclamasExaltacion();
+  const pasadas = [
+    {
+      id: 4,
+      contrayente1: 'Carlos E. Mendoza T.',
+      contrayente2: 'Valeria N. Quispe P.',
+      fechaMatrimonio: '2026-08-22T11:30:00-04:00',
+      numeroProclama: 3,
+      publicaciones: [
+        { numero: 1, fecha: '2026-08-02' },
+        { numero: 2, fecha: '2026-08-09' },
+        { numero: 3, fecha: '2026-08-16' },
+      ],
+    },
+    {
+      id: 5,
+      contrayente1: 'Rodrigo A. Flores V.',
+      contrayente2: 'Paola S. Condori M.',
+      fechaMatrimonio: '2026-06-13T16:00:00-04:00',
+      numeroProclama: 3,
+      publicaciones: [
+        { numero: 1, fecha: '2026-05-24' },
+        { numero: 2, fecha: '2026-05-31' },
+        { numero: 3, fecha: '2026-06-07' },
+      ],
+    },
+    {
+      id: 6,
+      contrayente1: 'Marco A. Rojas C.',
+      contrayente2: 'Lucía B. Vargas H.',
+      fechaMatrimonio: '2025-11-15T11:00:00-04:00',
+      numeroProclama: 3,
+      publicaciones: [
+        { numero: 1, fecha: '2025-10-26' },
+        { numero: 2, fecha: '2025-11-02' },
+        { numero: 3, fecha: '2025-11-09' },
+      ],
+    },
+    {
+      id: 7,
+      contrayente1: 'Fernando J. Ticona R.',
+      contrayente2: 'Gabriela L. Salazar D.',
+      fechaMatrimonio: '2025-09-20T15:30:00-04:00',
+      numeroProclama: 3,
+      publicaciones: [
+        { numero: 1, fecha: '2025-08-31' },
+        { numero: 2, fecha: '2025-09-07' },
+        { numero: 3, fecha: '2025-09-14' },
+      ],
+    },
+  ];
+
+  return [...vigentes, ...pasadas];
+}

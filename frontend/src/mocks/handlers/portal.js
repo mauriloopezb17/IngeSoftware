@@ -20,6 +20,7 @@ import {
   obtenerEventosExaltacion,
   obtenerPublicacionesExaltacion,
   obtenerProclamasExaltacion,
+  obtenerHistorialProclamasExaltacion,
 } from '../datos/comunidad.js';
 
 const SEDE_PRINCIPAL = 'senor-de-la-exaltacion';
@@ -249,7 +250,7 @@ export const handlersPortal = [
 
     const url = new URL(request.url);
     let lista = esSedePrincipal(params.sede)
-      ? [...obtenerProclamasExaltacion()].sort((a, b) =>
+      ? [...obtenerHistorialProclamasExaltacion()].sort((a, b) =>
           b.fechaMatrimonio.localeCompare(a.fechaMatrimonio),
         )
       : [];
