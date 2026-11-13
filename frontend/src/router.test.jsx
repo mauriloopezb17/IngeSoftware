@@ -1,9 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 
 import { rutas } from './router.jsx';
+import { queryClient } from './services/queryClient.js';
 import { crearClientePruebas } from './test/utilidadesQuery.jsx';
 
 // La portada completa (video, imágenes) no es necesaria para probar el enrutado.
@@ -22,6 +23,11 @@ function renderizarRuta(ruta) {
 }
 
 describe('rutas del frontend', () => {
+  afterEach(() => {
+    queryClient.clear();
+    window.sessionStorage.clear();
+  });
+
   it('muestra la portada en /', async () => {
     renderizarRuta('/');
 
@@ -47,8 +53,10 @@ describe('rutas del frontend', () => {
   it('carga el panel de administración de forma diferida', async () => {
     renderizarRuta('/admin/noticias');
 
+    // cargarAdmin() dispara import('./admin/AdminApp.jsx') bajo demanda; con la suite en paralelo
+    // Vite transforma el árbol completo del panel dentro de esta ventana y supera los 1000 ms por defecto.
     expect(
-      await screen.findByRole('heading', { name: 'Panel de administración' }),
+      await screen.findByRole('heading', { name: 'Panel de administración' }, { timeout: 5000 }),
     ).toBeInTheDocument();
   });
 

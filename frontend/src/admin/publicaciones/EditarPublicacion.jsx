@@ -86,7 +86,9 @@ export default function EditarPublicacion() {
   return (
     <section className="mx-auto max-w-6xl">
       <header>
-        <h1 className="font-display text-4xl font-semibold text-ink">Editar publicación</h1>
+        <h1 className="font-display text-4xl font-semibold text-ink">
+          {publicacion.tipo.codigo === 'AVISO' ? 'Editar aviso' : 'Editar publicación'}
+        </h1>
         <p className="mt-2 text-muted">{publicacion.titulo}</p>
       </header>
       {publicacion.estado.codigo === 'BORRADOR' && publicacion.revision?.observacion && (

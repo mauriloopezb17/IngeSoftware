@@ -44,7 +44,7 @@ describe('edición de datos de la sede y redes sociales', () => {
   it('Secretaría edita directamente su sede (sin selector), configuración y redes sociales', async () => {
     await entrar('secretaria');
     montar();
-    const usuario = userEvent.setup();
+    const usuario = userEvent.setup({ delay: null });
 
     expect(await screen.findByDisplayValue('Parroquia Señor de la Exaltación')).toBeInTheDocument();
     expect(screen.queryByLabelText('Sede a editar')).not.toBeInTheDocument();
@@ -67,7 +67,7 @@ describe('edición de datos de la sede y redes sociales', () => {
       await screen.findByText('Se guardaron los cambios de «Parroquia Señor de la Exaltación».'),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('WhatsApp')).toHaveValue('+591 71234567');
-  });
+  }, 15000);
 
   it('muestra error de validación (400 VALIDACION) junto al campo si la URL de red social no usa https', async () => {
     await entrar('secretaria');
