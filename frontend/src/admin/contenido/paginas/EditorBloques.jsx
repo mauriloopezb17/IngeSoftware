@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react';
+import { Link } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowLeft, ArrowUp, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
 
+import NoEncontrada from '../../paginas/NoEncontrada.jsx';
 import BannerSoloLectura from '../componentes/BannerSoloLectura.jsx';
 import ConfirmarBorrado from '../componentes/ConfirmarBorrado.jsx';
 import EstadoLista from '../componentes/EstadoLista.jsx';
@@ -16,12 +18,8 @@ import {
 import FormularioBloque from './FormularioBloque.jsx';
 import FormularioPagina from './FormularioPagina.jsx';
 
-export default function EditorBloques({
-  paginaId,
-  paginasDisponibles,
-  puedeGestionar,
-  onVolver,
-}) {
+// Editor de bloques de una página (/admin/paginas/:id). `paginaId` sale de la ruta.
+export default function EditorBloques({ paginaId, paginasDisponibles, puedeGestionar }) {
   const queryClient = useQueryClient();
   const tituloRef = useRef(null);
 
@@ -64,17 +62,20 @@ export default function EditorBloques({
     setTimeout(() => tituloRef.current?.focus(), 0);
   }
 
+  // Una página que no existe (id desconocido) es una ruta desconocida.
+  if (paginaQuery.isError && paginaQuery.error.estado === 404) return <NoEncontrada />;
+
   return (
     <section className="mx-auto max-w-5xl">
       <div className="mb-4">
-        <button
-          type="button"
-          onClick={onVolver}
+        <Link
+          to="/admin/paginas"
+          state={{ enfocarTitulo: true }}
           className="inline-flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-sm font-medium text-ink hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
           Volver a páginas
-        </button>
+        </Link>
       </div>
 
       {paginaQuery.isPending || paginaQuery.isError ? (
