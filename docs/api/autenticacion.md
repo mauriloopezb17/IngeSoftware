@@ -32,7 +32,7 @@ El panel CMS (`frontend/src/admin/`) se autentica con un **JWT guardado en una c
 }
 ```
 
-`sub` es el id del usuario. En **cada** petición, la API valida la firma y el vencimiento, y además vuelve a leer al usuario de la base de datos. Así, desactivarlo o cambiarle el rol o la sede tiene efecto inmediato, sin esperar a que venza el token. Si el usuario ya no existe o está inactivo, la respuesta es `401 NO_AUTENTICADO` y la cookie se borra.
+`sub` es el id del usuario. En **cada** petición, la API valida la firma y el vencimiento, y además vuelve a leer al usuario de la base de datos. Así, desactivarlo o cambiarle el rol o la sede tiene efecto inmediato, sin esperar a que venza el token. Una caché corta del usuario en Redis llega en la Ola 5 (ADR-02) y se invalidará al desactivar o modificar al usuario, de modo que el efecto seguirá siendo inmediato. Si el usuario ya no existe o está inactivo, la respuesta es `401 NO_AUTENTICADO` y la cookie se borra.
 
 ### Protección contra CSRF
 
