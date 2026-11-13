@@ -542,7 +542,7 @@ Orden fijo: `fechaInicio` ascendente.
   "datos": [
     {
       "id": 1,
-      "titulo": "Vigilia de Todos los Santos",
+      "titulo": "Adoración eucarística comunitaria",
       "descripcion": null,
       "lugar": "Templo parroquial",
       "fechaInicio": "2026-11-18T19:00:00-04:00",
@@ -557,7 +557,7 @@ Orden fijo: `fechaInicio` ascendente.
     },
     {
       "id": 2,
-      "titulo": "Todos los Santos",
+      "titulo": "Misa de sanación",
       "descripcion": "Horarios: 8:00 – 10:00 – 12:00",
       "lugar": "Templo parroquial",
       "fechaInicio": "2026-11-19T08:00:00-04:00",
@@ -572,7 +572,7 @@ Orden fijo: `fechaInicio` ascendente.
     },
     {
       "id": 3,
-      "titulo": "Conmemoración de los Fieles Difuntos",
+      "titulo": "Misa por los difuntos de la comunidad",
       "descripcion": null,
       "lugar": "Templo parroquial",
       "fechaInicio": "2026-11-20T19:00:00-04:00",
