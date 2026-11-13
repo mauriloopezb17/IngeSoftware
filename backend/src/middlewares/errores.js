@@ -79,6 +79,9 @@ export function manejarErrores(error, req, res, next) {
   const conocido = normalizar(error);
 
   if (conocido) {
+    if (conocido.reintentarEnSegundos !== undefined) {
+      res.set('Retry-After', String(conocido.reintentarEnSegundos));
+    }
     return res.status(conocido.estado).json(conocido.aRespuesta());
   }
 
