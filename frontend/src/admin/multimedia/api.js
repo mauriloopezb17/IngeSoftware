@@ -22,6 +22,17 @@ export async function subirArchivo({ archivo, textoAlternativo }) {
   return datos;
 }
 
+// Cambia solo el texto alternativo (permiso multimedia.subir). `null` lo borra.
+export async function actualizarTextoAlternativo(id, textoAlternativo) {
+  const { datos } = await clienteHttp.patch(`/admin/multimedia/${id}`, { textoAlternativo });
+  return datos;
+}
+
+// Borra el archivo de la base y del bucket (permiso multimedia.eliminar). Responde 409 si está en uso.
+export function eliminarArchivo(id) {
+  return clienteHttp.delete(`/admin/multimedia/${id}`);
+}
+
 export function listarMultimedia({ buscar, clase, enUso, orden, pagina }, senal) {
   return clienteHttp.get('/admin/multimedia', {
     parametros: { buscar, clase, enUso, orden, pagina, porPagina: POR_PAGINA },

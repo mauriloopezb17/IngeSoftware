@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { AlertCircle, ImageOff, Loader2 } from 'lucide-react';
 
@@ -36,6 +36,8 @@ export default function Multimedia() {
   const filtros = leerFiltros(parametros);
   const consulta = useBiblioteca(filtros);
   const [abierto, setAbierto] = useState(null);
+  const [aviso, setAviso] = useState('');
+  const titulo = useRef(null);
   const { puede } = usePermisos();
 
   const hayFiltros = Boolean(filtros.buscar || filtros.clase || filtros.enUso || filtros.orden !== ORDEN_INICIAL);
@@ -58,9 +60,15 @@ export default function Multimedia() {
   return (
     <section className="mx-auto max-w-6xl">
       <header>
-        <h1 className="font-display text-4xl font-semibold text-ink">Multimedia</h1>
+        <h1 ref={titulo} tabIndex={-1} className="font-display text-4xl font-semibold text-ink outline-none">
+          Multimedia
+        </h1>
         <p className="mt-2 text-muted">Imágenes, videos y documentos de la sede.</p>
       </header>
+
+      <p role="status" className={aviso ? 'mt-4 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark' : 'sr-only'}>
+        {aviso}
+      </p>
 
       {puede('multimedia.subir') && <SubidaArchivos />}
 
@@ -109,7 +117,14 @@ export default function Multimedia() {
                 aria-label="Archivos"
               >
                 {archivos.map((archivo) => (
-                  <TarjetaArchivo key={archivo.id} archivo={archivo} onAbrir={setAbierto} />
+                  <TarjetaArchivo
+                    key={archivo.id}
+                    archivo={archivo}
+                    onAbrir={(a) => {
+                      setAviso('');
+                      setAbierto(a);
+                    }}
+                  />
                 ))}
               </ul>
             ) : (
@@ -137,7 +152,19 @@ export default function Multimedia() {
         )}
       </div>
 
-      {abierto && <VistaPreviaArchivo archivo={abierto} onCerrar={() => setAbierto(null)} />}
+      {abierto && (
+        <VistaPreviaArchivo
+          archivo={abierto}
+          onCerrar={() => setAbierto(null)}
+          onCambio={setAbierto}
+          onEliminado={(eliminado) => {
+            setAbierto(null);
+            setAviso(`Se eliminó «${eliminado.nombreOriginal}».`);
+            // La tarjeta desaparece: el foco pasa al título para no perderse.
+            setTimeout(() => titulo.current?.focus(), 0);
+          }}
+        />
+      )}
     </section>
   );
 }
