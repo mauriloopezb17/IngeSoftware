@@ -6,6 +6,7 @@ import Paginas from './paginas/Paginas.jsx';
 import Sedes from './sedes/Sedes.jsx';
 import Servicios from './servicios/Servicios.jsx';
 import Videos from './videos/Videos.jsx';
+import Bitacora from '../bitacora/Bitacora.jsx';
 import Usuarios from '../usuarios/Usuarios.jsx';
 
 export const pantallasContenido = {
@@ -15,5 +16,6 @@ export const pantallasContenido = {
   videos: <Videos />,
   sedes: <Sedes />,
   paginas: <Paginas />,
+  bitacora: <Bitacora />,
   usuarios: <Usuarios />,
 };

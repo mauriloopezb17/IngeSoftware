@@ -12,6 +12,7 @@ import {
   crearServiciosIniciales,
   crearVideosIniciales,
 } from './datos.js';
+import { crearControladorBitacora } from './bitacora.js';
 import { crearControladorPaginas } from './paginas.js';
 import { crearControladorUsuariosAdmin } from './usuariosAdmin.js';
 
@@ -42,6 +43,7 @@ export function reiniciarMocksContenido() {
   sigVideoId = videos.reduce((max, video) => Math.max(max, video.id), 0) + 1;
   controladorPaginas.reiniciar();
   controladorUsuariosAdmin.reiniciar();
+  controladorBitacora.reiniciar();
 }
 
 const REGEX_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -323,6 +325,12 @@ const controladorUsuariosAdmin = crearControladorUsuariosAdmin({
   error,
   errorValidacion,
   obtenerSedes: () => sedes,
+});
+
+const controladorBitacora = crearControladorBitacora({
+  autenticar,
+  esAdministrador,
+  errorValidacion,
 });
 
 export const handlersContenido = [
@@ -1126,4 +1134,5 @@ export const handlersContenido = [
 
   ...controladorPaginas.handlers,
   ...controladorUsuariosAdmin.handlers,
+  ...controladorBitacora.handlers,
 ];
