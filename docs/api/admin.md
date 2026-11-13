@@ -473,8 +473,16 @@ Crea una publicación, **siempre en `BORRADOR`**. Permiso: `avisos.gestionar` pa
 | `destacada`                      | Booleano, por defecto `false`.                                                                                                                                    |
 | `fechaPublicacion`               | Opcional. Fecha **deseada**: se aplica al publicar o aprobar (ver [estados-publicacion.md](estados-publicacion.md)).                                              |
 | `fechaExpiracion`                | Opcional. Si viene junto con `fechaPublicacion`, debe ser posterior.                                                                                              |
+| `sedeId`                         | Solo lo usa el Administrador (los demás roles usan su sede). Por defecto, su sede; **obligatorio** si no tiene sede asignada. Debe existir.                       |
 
-**Respuesta `201`:** el objeto publicación, en `BORRADOR`.
+**Respuesta `201`:** el objeto publicación, en `BORRADOR`, con la cabecera `Location: /api/admin/publicaciones/:id`.
+
+- Un campo que no está en la tabla responde `400 VALIDACION` («Campo no permitido.»).
+- `contenido` puede guardarse con `bloques: []` en cualquier tipo: el borrador no necesita estar completo. Que tenga contenido (o `urlExterna`) se exige al salir de `BORRADOR` ([requisitos](estados-publicacion.md#requisitos-para-salir-de-borrador)).
+- Las URL de los bloques `image` y `video` se buscan en la biblioteca de la sede (también la de una variante); si no están, o no son de la clase del bloque, `400 VALIDACION` en `contenido.bloques.N.props.url`.
+- Errores de las referencias: «La categoría no existe.» (`categoriaId`), «Debe ser una imagen de la biblioteca multimedia de esta sede.» o «El archivo no es una imagen.» (`imagenPortadaId`), «Indica la sede.» o «La sede no existe.» (`sedeId`).
+- Slug repetido: `409 CONFLICTO` con «Ya existe una publicación con el slug «…» en esta sede.» y un detalle en `slug`.
+- Sin el permiso del tipo: `403 SIN_PERMISO` con «Tu rol no tiene permiso para crear avisos.» o «… para crear noticias ni notas de prensa.».
 
 ### `PATCH /api/admin/publicaciones/:id`
 
@@ -486,6 +494,11 @@ Edita campos (los mismos de la creación, salvo `tipo`). Solo se permite en los 
   "destacada": false
 }
 ```
+
+- Enviar `tipo` responde `400 VALIDACION` («El tipo no se puede cambiar.»); `sedeId` u otro campo desconocido, «Campo no permitido.».
+- `"slug": null` lo vuelve a generar desde el título (el nuevo, si también cambia). Cambiar el título no cambia el slug.
+- En `PUBLICADO` el slug no se puede cambiar: `409 CONFLICTO` con un detalle en `slug`.
+- `fechaExpiracion` se compara con la `fechaPublicacion` que quedaría guardada (la enviada o la actual).
 
 ### `DELETE /api/admin/publicaciones/:id`
 
