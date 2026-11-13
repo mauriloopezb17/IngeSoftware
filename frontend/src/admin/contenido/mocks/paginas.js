@@ -377,15 +377,15 @@ export function crearControladorPaginas(ctx) {
       if (cuerpo.paginaPadreId !== undefined && cuerpo.paginaPadreId !== null && cuerpo.paginaPadreId !== '') {
         const padre = paginas.find((p) => p.id === Number(cuerpo.paginaPadreId) && p.sede.id === sede.id);
         if (!padre) {
-          detalles.push({ campo: 'paginaPadreId', mensaje: 'La página padre indicada no existe en la sede.' });
+          detalles.push({ campo: 'paginaPadreId', mensaje: 'La página padre no existe en esta sede.' });
         } else {
           paginaPadre = { id: padre.id, slug: padre.slug, titulo: padre.titulo };
         }
       }
 
       const ordenMenu = cuerpo.ordenMenu !== undefined ? Number(cuerpo.ordenMenu) : 0;
-      if (!Number.isInteger(ordenMenu) || ordenMenu < 0) {
-        detalles.push({ campo: 'ordenMenu', mensaje: 'El orden del menú debe ser un número entero mayor o igual a 0.' });
+      if (!Number.isInteger(ordenMenu) || ordenMenu < 0 || ordenMenu > 32767) {
+        detalles.push({ campo: 'ordenMenu', mensaje: 'El orden del menú debe ser un entero entre 0 y 32767.' });
       }
 
       if (detalles.length) return ctx.errorValidacion(detalles);
@@ -466,9 +466,9 @@ export function crearControladorPaginas(ctx) {
           const padreId = Number(cuerpo.paginaPadreId);
           const padre = paginas.find((p) => p.id === padreId && p.sede.id === recurso.sede.id);
           if (!padre) {
-            detalles.push({ campo: 'paginaPadreId', mensaje: 'La página padre indicada no existe en la sede.' });
+            detalles.push({ campo: 'paginaPadreId', mensaje: 'La página padre no existe en esta sede.' });
           } else if (tieneCicloPadre(paginas, recurso.id, padreId)) {
-            detalles.push({ campo: 'paginaPadreId', mensaje: 'Una página no puede depender de sí misma ni de una subpágina suya.' });
+            detalles.push({ campo: 'paginaPadreId', mensaje: 'No puede ser la propia página ni una de sus páginas hijas.' });
           } else {
             paginaPadre = { id: padre.id, slug: padre.slug, titulo: padre.titulo };
           }
@@ -476,8 +476,8 @@ export function crearControladorPaginas(ctx) {
       }
 
       const ordenMenu = cuerpo.ordenMenu !== undefined ? Number(cuerpo.ordenMenu) : recurso.ordenMenu;
-      if (!Number.isInteger(ordenMenu) || ordenMenu < 0) {
-        detalles.push({ campo: 'ordenMenu', mensaje: 'El orden del menú debe ser un número entero mayor o igual a 0.' });
+      if (!Number.isInteger(ordenMenu) || ordenMenu < 0 || ordenMenu > 32767) {
+        detalles.push({ campo: 'ordenMenu', mensaje: 'El orden del menú debe ser un entero entre 0 y 32767.' });
       }
 
       if (detalles.length) return ctx.errorValidacion(detalles);
@@ -516,7 +516,7 @@ export function crearControladorPaginas(ctx) {
         return ctx.error(
           409,
           'CONFLICTO',
-          `La página «${recurso.slug}» no se puede eliminar porque el portal depende de ella.`,
+          `La página «${recurso.slug}» no se puede eliminar: el portal depende de ella.`,
         );
       }
 
@@ -524,7 +524,7 @@ export function crearControladorPaginas(ctx) {
         return ctx.error(
           409,
           'CONFLICTO',
-          'No se puede eliminar esta página porque tiene páginas hijas asociadas.',
+          'La página tiene páginas hijas: elimínalas o cámbiales la página padre primero.',
         );
       }
 

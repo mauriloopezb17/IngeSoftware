@@ -84,20 +84,14 @@ export function crearControladorUsuariosAdmin(ctx) {
         .sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto, 'es'));
 
       const total = filtrados.length;
-      const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
+      const totalPaginas = Math.ceil(total / porPagina); // 0 cuando no hay resultados (convenciones §4)
       const inicio = (pagina - 1) * porPagina;
       const datos = filtrados.slice(inicio, inicio + porPagina);
 
       return HttpResponse.json({
         datos,
-        meta: {
-          paginacion: {
-            pagina,
-            porPagina,
-            total,
-            totalPaginas,
-          },
-        },
+        // La paginación va en la raíz, como en toda lista paginada (convenciones §3).
+        paginacion: { pagina, porPagina, total, totalPaginas },
       });
     }),
 

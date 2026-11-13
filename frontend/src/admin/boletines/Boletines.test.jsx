@@ -133,7 +133,7 @@ describe('boletines del panel', () => {
     await completar(usuario, { titulo: 'Otro de octubre', periodo: '2026-10', archivo: 'estatutos-pastoral-juvenil' });
     await usuario.click(screen.getByRole('button', { name: 'Publicar boletín' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Ya existe un boletín de ese mes en la sede.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ya hay un boletín de ese mes.');
     expect(screen.getByTestId('ubicacion')).toHaveTextContent('/admin/boletines/nuevo');
   });
 

@@ -92,6 +92,39 @@ describe('mock de eventos (admin.md §4)', () => {
   });
 });
 
+describe('mock de eventos alineado con admin.md §4 (reglas adicionales)', () => {
+  beforeEach(reiniciarMocksAdmin);
+  afterEach(reiniciarMocksAdmin);
+
+  it('idExternoM365 u otro campo desconocido es «Campo no permitido.»', async () => {
+    await entrar('secretaria');
+    const error = await capturar(clienteHttp.patch('/admin/eventos/5', { idExternoM365: 'abc', color: 'rojo' }));
+    expect(error.detalles).toEqual([
+      { campo: 'idExternoM365', mensaje: 'Campo no permitido.' },
+      { campo: 'color', mensaje: 'Campo no permitido.' },
+    ]);
+  });
+
+  it('usa los mensajes de la API para la categoría y la imagen', async () => {
+    await entrar('secretaria');
+    expect((await capturar(crear({ categoriaEventoId: 99 }))).detalles[0].mensaje).toBe('La categoría no existe.');
+    expect((await capturar(crear({ imagenId: 7 }))).detalles[0].mensaje).toBe('El archivo no es una imagen.');
+    expect((await capturar(crear({ imagenId: 999 }))).detalles[0].mensaje).toBe(
+      'Debe ser una imagen de la biblioteca multimedia de esta sede.',
+    );
+  });
+
+  it('desde y hasta incluyen los eventos que se cruzan con el rango; hasta antes de desde es 400', async () => {
+    await entrar('secretaria');
+    await crear({ titulo: 'Retiro de tres días', fechaInicio: '2027-03-01T08:00:00-04:00', fechaFin: '2027-03-03T17:00:00-04:00' });
+    const { datos } = await clienteHttp.get('/admin/eventos', { parametros: { desde: '2027-03-02', hasta: '2027-03-02' } });
+    expect(datos.map((e) => e.titulo)).toEqual(['Retiro de tres días']);
+
+    const error = await capturar(clienteHttp.get('/admin/eventos', { parametros: { desde: '2027-03-02', hasta: '2027-03-01' } }));
+    expect(error.detalles[0].campo).toBe('query.hasta');
+  });
+});
+
 describe('regla de «finalizado» (publico.md, RF-09)', () => {
   const ahora = new Date('2026-11-18T21:00:00-04:00');
 

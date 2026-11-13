@@ -7,6 +7,7 @@ import { api } from '../../mocks/api.js';
 import {
   autenticar,
   autorizar,
+  camposNoPermitidos,
   conflicto,
   consultaInvalida,
   cuerpoInvalido,
@@ -101,18 +102,22 @@ function validarNombres(cuerpo, { parcial }) {
   return detalles;
 }
 
-// Fechas de publicación: crecientes y anteriores al día del matrimonio.
-function validarFechas(fechas, fechaMatrimonio, campo = 'publicaciones') {
+// Fechas de publicación: estrictamente crecientes y anteriores al día del matrimonio (hora de Bolivia).
+// `campoDe(i)` da el campo del detalle: `publicaciones.N.fecha` al crear, `fecha` en las rutas de publicaciones.
+function validarFechas(fechas, fechaMatrimonio, campoDe) {
   const detalles = [];
   const limite = diaDe(fechaMatrimonio);
   fechas.forEach((fecha, i) => {
-    if (!esFechaSimple(fecha)) detalles.push({ campo, mensaje: 'La fecha debe tener el formato YYYY-MM-DD.' });
-    else if (fecha >= limite) detalles.push({ campo, mensaje: 'La publicación debe ser anterior a la fecha del matrimonio.' });
-    else if (i > 0 && esFechaSimple(fechas[i - 1]) && fecha <= fechas[i - 1])
-      detalles.push({ campo, mensaje: 'Las fechas deben ser crecientes.' });
+    if (!esFechaSimple(fecha)) detalles.push({ campo: campoDe(i), mensaje: 'Debe ser una fecha con el formato YYYY-MM-DD.' });
+    else if (i > 0 && fecha <= fechas[i - 1])
+      detalles.push({ campo: campoDe(i), mensaje: 'Debe ser posterior a la proclama anterior.' });
+    else if (fecha >= limite) detalles.push({ campo: campoDe(i), mensaje: 'Debe ser anterior a la fecha del matrimonio.' });
   });
   return detalles;
 }
+
+const CAMPOS_CREAR = ['sedeId', 'contrayente1', 'contrayente2', 'fechaMatrimonio', 'tramiteOrigenId', 'publicaciones'];
+const CAMPOS_EDITAR = ['contrayente1', 'contrayente2', 'fechaMatrimonio'];
 
 const SIN_PERMISO = 'Tu rol no tiene permiso para gestionar las proclamas.';
 const NO_EXISTE = 'La proclama no existe.';
@@ -126,7 +131,8 @@ function listar(parametros, slugSede) {
   if (vigentes && vigentes !== 'true' && vigentes !== 'false')
     detalles.push({ campo: 'query.vigentes', mensaje: 'Debe ser true o false.' });
   const anio = parametros.get('anio');
-  if (anio && !/^\d{4}$/.test(anio)) detalles.push({ campo: 'query.anio', mensaje: 'Debe ser un año de 4 dígitos.' });
+  if (anio && !(/^\d{4}$/.test(anio) && Number(anio) >= 1900 && Number(anio) <= 2100))
+    detalles.push({ campo: 'query.anio', mensaje: 'Debe ser un año entre 1900 y 2100.' });
   const orden = parametros.get('orden') ?? 'fechaMatrimonio';
   if (orden !== 'fechaMatrimonio' && orden !== '-fechaMatrimonio')
     detalles.push({ campo: 'query.orden', mensaje: 'Orden no válido: fechaMatrimonio o -fechaMatrimonio.' });
@@ -148,7 +154,9 @@ function listar(parametros, slugSede) {
   return { ...pagina, datos: pagina.datos.map(serializarProclama) };
 }
 
-const respuesta = (p, estado = 200) => HttpResponse.json({ datos: serializarProclama(p) }, { status: estado });
+const respuesta = (p) => HttpResponse.json({ datos: serializarProclama(p) });
+const noTieneLaPublicacion = (numero) =>
+  respuestaError({ estado: 404, codigo: 'NO_ENCONTRADO', mensaje: `La proclama no tiene la publicación ${numero}.` });
 const fallo = ({ error }) => respuestaError(error);
 
 // Comprobaciones comunes de las rutas con :id. Devuelve { p } o { respuesta }.
@@ -185,7 +193,7 @@ export const handlersProclamas = [
     const cuerpo = await leerCuerpo(request);
     if (!cuerpo) return cuerpoInvalido();
 
-    const detalles = validarNombres(cuerpo, { parcial: false });
+    const detalles = [...camposNoPermitidos(cuerpo, CAMPOS_CREAR), ...validarNombres(cuerpo, { parcial: false })];
     if (!esFechaHoraConZona(cuerpo.fechaMatrimonio))
       detalles.push({ campo: 'fechaMatrimonio', mensaje: 'La fecha del matrimonio es obligatoria, con fecha, hora y zona.' });
     const fechas = Array.isArray(cuerpo.publicaciones) ? cuerpo.publicaciones.map((x) => x?.fecha) : [];
@@ -193,7 +201,7 @@ export const handlersProclamas = [
       detalles.push({ campo: 'publicaciones', mensaje: 'Debe ser una lista.' });
     if (fechas.length > MAX_PUBLICACIONES)
       detalles.push({ campo: 'publicaciones', mensaje: `Una proclama tiene hasta ${MAX_PUBLICACIONES} publicaciones.` });
-    if (!detalles.length) detalles.push(...validarFechas(fechas, cuerpo.fechaMatrimonio));
+    if (!detalles.length) detalles.push(...validarFechas(fechas, cuerpo.fechaMatrimonio, (i) => `publicaciones.${i}.fecha`));
     if (detalles.length) return fallo(errorValidacion(detalles));
 
     const nueva = proclama(
@@ -220,7 +228,7 @@ export const handlersProclamas = [
     const cuerpo = await leerCuerpo(request);
     if (!cuerpo) return cuerpoInvalido();
 
-    const detalles = validarNombres(cuerpo, { parcial: true });
+    const detalles = [...camposNoPermitidos(cuerpo, CAMPOS_EDITAR), ...validarNombres(cuerpo, { parcial: true })];
     if ('fechaMatrimonio' in cuerpo) {
       if (!esFechaHoraConZona(cuerpo.fechaMatrimonio))
         detalles.push({ campo: 'fechaMatrimonio', mensaje: 'Debe ser una fecha y hora con zona.' });
@@ -228,7 +236,7 @@ export const handlersProclamas = [
         // El matrimonio no puede quedar antes de una publicación ya programada.
         const limite = diaDe(cuerpo.fechaMatrimonio);
         if (p.publicaciones.some((pub) => pub.fecha >= limite))
-          detalles.push({ campo: 'fechaMatrimonio', mensaje: 'Todas las publicaciones deben ser anteriores al matrimonio.' });
+          detalles.push({ campo: 'fechaMatrimonio', mensaje: 'Debe ser posterior a la última publicación de la proclama.' });
       }
     }
     if (detalles.length) return fallo(errorValidacion(detalles));
@@ -245,7 +253,9 @@ export const handlersProclamas = [
     // El historial es público: no se elimina si alguna publicación ya llegó a su fecha.
     if (p.publicaciones.some((pub) => alcanzada(pub, hoyBolivia())))
       return fallo(
-        conflicto('No se puede eliminar: alguna publicación ya llegó a su fecha y el historial es público.'),
+        conflicto(
+          'La proclama ya tiene publicaciones que llegaron a su fecha y forma parte del historial público: no se puede eliminar.',
+        ),
       );
     proclamas = proclamas.filter((x) => x.id !== p.id);
     return new HttpResponse(null, { status: 204 });
@@ -256,28 +266,35 @@ export const handlersProclamas = [
     if (denegada) return denegada;
     const cuerpo = await leerCuerpo(request);
     if (!cuerpo) return cuerpoInvalido();
+    const extra = camposNoPermitidos(cuerpo, ['fecha']);
+    if (extra.length) return fallo(errorValidacion(extra));
     if (p.publicaciones.length >= MAX_PUBLICACIONES)
-      return fallo(conflicto(`Una proclama tiene hasta ${MAX_PUBLICACIONES} publicaciones.`));
+      return fallo(conflicto(`La proclama ya tiene sus ${MAX_PUBLICACIONES} publicaciones.`));
 
     const fechas = [...p.publicaciones.map((pub) => pub.fecha), cuerpo.fecha];
-    const detalles = validarFechas(fechas, p.fechaMatrimonio, 'fecha');
+    const detalles = validarFechas(fechas, p.fechaMatrimonio, () => 'fecha');
     if (detalles.length) return fallo(errorValidacion(detalles));
 
     p.publicaciones.push({ numero: p.publicaciones.length + 1, fecha: cuerpo.fecha });
-    return respuesta(p, 201);
+    // 201 con la proclama completa y la Location de la proclama (admin.md §10).
+    return HttpResponse.json(
+      { datos: serializarProclama(p) },
+      { status: 201, headers: { Location: `/api/admin/proclamas/${p.id}` } },
+    );
   }),
 
   http.patch(api('/admin/proclamas/:id/publicaciones/:numero'), async ({ request, params }) => {
     const { p, respuesta: denegada } = proclamaEscribible(params);
     if (denegada) return denegada;
     const pub = p.publicaciones.find((x) => x.numero === Number(params.numero));
-    if (!pub)
-      return respuestaError({ estado: 404, codigo: 'NO_ENCONTRADO', mensaje: 'La publicación no existe.' });
+    if (!pub) return noTieneLaPublicacion(params.numero);
     const cuerpo = await leerCuerpo(request);
     if (!cuerpo) return cuerpoInvalido();
+    const extra = camposNoPermitidos(cuerpo, ['fecha']);
+    if (extra.length) return fallo(errorValidacion(extra));
 
     const fechas = p.publicaciones.map((x) => (x.numero === pub.numero ? cuerpo.fecha : x.fecha));
-    const detalles = validarFechas(fechas, p.fechaMatrimonio, 'fecha');
+    const detalles = validarFechas(fechas, p.fechaMatrimonio, () => 'fecha');
     if (detalles.length) return fallo(errorValidacion(detalles.slice(0, 1)));
 
     pub.fecha = cuerpo.fecha;
@@ -287,10 +304,12 @@ export const handlersProclamas = [
   http.delete(api('/admin/proclamas/:id/publicaciones/:numero'), ({ params }) => {
     const { p, respuesta: denegada } = proclamaEscribible(params);
     if (denegada) return denegada;
-    const ultima = p.publicaciones[p.publicaciones.length - 1];
-    if (!ultima || ultima.numero !== Number(params.numero))
-      return fallo(conflicto('Solo se puede quitar la última publicación.'));
+    const ultima = p.publicaciones.at(-1);
+    if (!p.publicaciones.some((x) => x.numero === Number(params.numero))) return noTieneLaPublicacion(params.numero);
+    if (ultima.numero !== Number(params.numero))
+      return fallo(conflicto(`Solo se puede quitar la última publicación (la ${ultima.numero}).`));
     p.publicaciones.pop();
-    return new HttpResponse(null, { status: 204 });
+    // 200 con la proclama actualizada, no 204: la proclama sigue existiendo (admin.md §10).
+    return respuesta(p);
   }),
 ];

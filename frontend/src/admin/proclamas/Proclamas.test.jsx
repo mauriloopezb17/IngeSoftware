@@ -148,7 +148,7 @@ describe('proclamas del panel', () => {
     fireEvent.change(screen.getByLabelText('Fecha de la 3.ª proclama'), { target: { value: dia(-20) } });
     await usuario.click(screen.getByRole('button', { name: 'Agregar proclama' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/crecientes/);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Debe ser posterior a la proclama anterior.');
   });
 
   it('cambia la fecha de una publicación y solo permite quitar la última', async () => {
@@ -181,7 +181,7 @@ describe('proclamas del panel', () => {
     const dialogo = screen.getByRole('dialog');
     await usuario.click(within(dialogo).getByRole('button', { name: 'Eliminar' }));
 
-    expect(await within(dialogo).findByRole('alert')).toHaveTextContent(/el historial es público/);
+    expect(await within(dialogo).findByRole('alert')).toHaveTextContent(/historial público/);
     expect(screen.getByRole('article', { name: /Juan Carlos/ })).toBeInTheDocument();
   });
 

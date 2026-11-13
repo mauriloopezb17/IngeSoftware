@@ -76,28 +76,33 @@ export default function PublicacionesProclama({ proclama, editable }) {
   const [cambiando, setCambiando] = useState(null); // publicación cuya fecha se cambia
   const [quitando, setQuitando] = useState(null);
 
-  const refrescar = () => clienteConsultas.invalidateQueries({ queryKey: CLAVE_PROCLAMAS });
+  // Las tres acciones responden con la proclama completa: se usa para el detalle sin volver a pedirlo,
+  // y se invalidan las listas (vigente y numeroProclama pueden cambiar).
+  const refrescar = (actualizada) => {
+    clienteConsultas.setQueryData([...CLAVE_PROCLAMAS, 'detalle', String(proclama.id)], actualizada);
+    clienteConsultas.invalidateQueries({ queryKey: [...CLAVE_PROCLAMAS, 'lista'] });
+  };
 
   const agregar = useMutation({
     mutationFn: () => agregarPublicacion(proclama.id, fechaNueva),
-    onSuccess: () => {
-      refrescar();
+    onSuccess: (actualizada) => {
+      refrescar(actualizada);
       setFechaNueva('');
       setAviso(`Se agregó la ${ordinal(siguiente)} proclama.`);
     },
   });
   const cambiar = useMutation({
     mutationFn: ({ numero, fecha }) => cambiarFechaPublicacion(proclama.id, numero, fecha),
-    onSuccess: (_, { numero }) => {
-      refrescar();
+    onSuccess: (actualizada, { numero }) => {
+      refrescar(actualizada);
       setCambiando(null);
       setAviso(`Se cambió la fecha de la ${ordinal(numero)} proclama.`);
     },
   });
   const quitar = useMutation({
     mutationFn: ({ numero }) => quitarPublicacion(proclama.id, numero),
-    onSuccess: (_, { numero }) => {
-      refrescar();
+    onSuccess: (actualizada, { numero }) => {
+      refrescar(actualizada);
       setQuitando(null);
       setAviso(`Se quitó la ${ordinal(numero)} proclama.`);
     },

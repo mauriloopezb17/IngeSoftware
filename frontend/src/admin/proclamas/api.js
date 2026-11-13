@@ -45,4 +45,8 @@ export async function cambiarFechaPublicacion(id, numero, fecha) {
   return datos;
 }
 
-export const quitarPublicacion = (id, numero) => clienteHttp.delete(`/admin/proclamas/${id}/publicaciones/${numero}`);
+// Solo la última. Responde 200 con la proclama actualizada (no 204: la proclama sigue existiendo).
+export async function quitarPublicacion(id, numero) {
+  const { datos } = await clienteHttp.delete(`/admin/proclamas/${id}/publicaciones/${numero}`);
+  return datos;
+}

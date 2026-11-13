@@ -57,7 +57,7 @@ export default function Bitacora() {
   });
 
   const registros = bitacoraQuery.data?.datos ?? [];
-  const paginacion = bitacoraQuery.data?.paginacion ?? bitacoraQuery.data?.meta?.paginacion;
+  const paginacion = bitacoraQuery.data?.paginacion;
   const hayFiltros = Boolean(entidad || entidadId || usuarioId || accion || desde || hasta);
 
   function limpiarFiltros() {

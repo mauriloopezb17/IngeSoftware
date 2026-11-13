@@ -130,6 +130,8 @@ export function crearArchivo({ archivo, textoAlternativo, usuario }) {
     ancho: clase === 'IMAGEN' ? 1600 : clase === 'VIDEO' ? 1920 : null,
     alto: clase === 'IMAGEN' ? 1067 : clase === 'VIDEO' ? 1080 : null,
     textoAlternativo: textoAlternativo || null,
+    // La API genera las variantes menores que la imagen; el mock usa la misma URL (no hay archivos reales).
+    variantes: clase === 'IMAGEN' ? [480, 960].map((ancho) => ({ ancho, url })) : [],
     sede,
     subidoPor: { id: usuario.id, nombreCompleto: usuario.nombreCompleto },
     fechaSubida: fecha,

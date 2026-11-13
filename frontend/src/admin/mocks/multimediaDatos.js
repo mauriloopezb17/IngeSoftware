@@ -11,7 +11,12 @@ const PARROCO = { id: 2, nombreCompleto: 'Párroco (desarrollo)' };
 const SECRETARIA = { id: 3, nombreCompleto: 'Secretaría (desarrollo)' };
 const MARKETING = { id: 4, nombreCompleto: 'Marketing (desarrollo)' };
 
-const archivo = (datos) => ({ sede: SEDE_PRINCIPAL, textoAlternativo: null, enUso: false, ...datos });
+// `variantes` (admin.md §2): [] en lo que no es imagen, en las imágenes del seed y en las de menos de 480 px.
+const archivo = (datos) => ({ sede: SEDE_PRINCIPAL, textoAlternativo: null, enUso: false, variantes: [], ...datos });
+
+// Variantes de una imagen del CDN: solo los anchos menores que el de la imagen (480, 960 y 1600).
+const variantesDe = (url, ancho) =>
+  [480, 960, 1600].filter((v) => v < ancho).map((v) => ({ ancho: v, url: url.replace(/\.\w+$/, `-${v}w.webp`) }));
 
 export function crearArchivosIniciales() {
   return [
@@ -110,6 +115,7 @@ export function crearArchivosIniciales() {
     archivo({
       id: 8,
       url: `${CDN}/2026/11/4b1e9c2a-7d3f-4e8a-9c61-2f0d8a5b3e17.webp`,
+      variantes: variantesDe(`${CDN}/2026/11/4b1e9c2a-7d3f-4e8a-9c61-2f0d8a5b3e17.webp`, 1600),
       nombreOriginal: 'primeras comuniones 2026.webp',
       tipoMime: 'image/webp',
       tamanoBytes: 412870,

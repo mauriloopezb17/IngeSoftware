@@ -1,6 +1,6 @@
 // Datos iniciales del contenido de la parroquia (docs/api/admin.md §1, §5-§9 y database/seed).
 import { videosExaltacion } from '../../../mocks/datos/parroquia.js';
-import { crearArchivosIniciales } from '../../mocks/multimediaDatos.js';
+import { buscarArchivo } from '../../mocks/multimediaMock.js';
 import { SEDE_PRINCIPAL } from '../../mocks/usuarios.js';
 
 export const CATALOGOS = {
@@ -157,6 +157,7 @@ export function crearSedesIniciales() {
         textoAlternativo: 'Vista exterior de la Parroquia Señor de la Exaltación',
         ancho: 1878,
         alto: 1057,
+        variantes: [], // las imágenes del seed no tienen variantes
       },
       redesSociales: [
         {
@@ -487,17 +488,17 @@ export function crearVideosIniciales() {
   }));
 }
 
+// Objeto imagen estándar (convenciones §7) de una imagen de la biblioteca, con sus `variantes`.
 export function buscarImagenEnBiblioteca(imagenId) {
-  const archivo = crearArchivosIniciales().find(
-    (item) => item.id === imagenId && item.tipoMime.startsWith('image/'),
-  );
-  if (!archivo) return null;
+  const archivo = buscarArchivo(imagenId);
+  if (!archivo || !archivo.tipoMime.startsWith('image/')) return null;
   return {
     id: archivo.id,
     url: archivo.url,
     textoAlternativo: archivo.textoAlternativo ?? null,
     ancho: archivo.ancho ?? null,
     alto: archivo.alto ?? null,
+    variantes: archivo.variantes ?? [],
   };
 }
 

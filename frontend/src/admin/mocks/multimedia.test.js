@@ -78,6 +78,16 @@ describe('mocks de multimedia del panel', () => {
           subidoPor: { id: 4, nombreCompleto: 'Marketing (desarrollo)' },
           fechaSubida: '2026-11-12T09:12:44-04:00',
           enUso: true,
+          variantes: [
+            {
+              ancho: 480,
+              url: 'https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/11/4b1e9c2a-7d3f-4e8a-9c61-2f0d8a5b3e17-480w.webp',
+            },
+            {
+              ancho: 960,
+              url: 'https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/11/4b1e9c2a-7d3f-4e8a-9c61-2f0d8a5b3e17-960w.webp',
+            },
+          ],
         },
       ]);
     });
@@ -140,8 +150,10 @@ describe('mocks de multimedia del panel', () => {
       expect(e.detalles.map((d) => d.campo).sort()).toEqual(['query.clase', 'query.porPagina']);
     });
 
-    it('el Administrador recibe 404 con una sede que no existe', async () => {
-      expect((await capturar(listar({ sede: 'no-existe' }))).estado).toBe(404);
+    it('el Administrador recibe una lista vacía (200) con una sede que no existe, como la API', async () => {
+      const respuesta = await listar({ sede: 'no-existe' });
+      expect(respuesta.datos).toEqual([]);
+      expect(respuesta.paginacion.total).toBe(0);
       expect((await listar({ sede: 'senor-de-la-exaltacion' })).paginacion.total).toBe(14);
     });
   });
