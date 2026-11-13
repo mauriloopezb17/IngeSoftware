@@ -15,8 +15,10 @@ import {
   claseDelTipo,
   claveDeVariante,
 } from '../constantes/multimedia.js';
+import { transaccion } from '../db/index.js';
 import { ErrorApp } from '../errores/ErrorApp.js';
 import * as modelo from '../models/multimedia.model.js';
+import { registrarCambio } from './bitacora.service.js';
 import { eliminarObjetos, subirObjeto } from '../storage/oci.js';
 import { sedeParaCrear } from '../utils/alcanceSede.js';
 import { formatearFechaHora, urlPublica as urlDeLaClave, variantesDe } from '../utils/formato.js';
@@ -125,7 +127,8 @@ export function aArchivoMultimedia(fila) {
 
 // Sube un archivo recibido (ya guardado en disco por multer). Orden: se valida todo, se sube al
 // bucket y recién después se registra en la base; si el registro falla se borra lo subido.
-export async function subirArchivo({ usuario, archivo, textoAlternativo, sedeId }) {
+// contexto: quién y desde dónde (bitacora.service.contextoDe(req)), para la bitácora.
+export async function subirArchivo({ usuario, archivo, textoAlternativo, sedeId, contexto }) {
   const sede = await resolverSede(usuario, sedeId);
 
   const tipoReal = await tipoRealDe(archivo.ruta);
@@ -170,18 +173,31 @@ export async function subirArchivo({ usuario, archivo, textoAlternativo, sedeId 
       subidas.push(claveVariante);
     }
 
-    const fila = await modelo.insertar({
-      sedeId: sede.id,
-      subidoPor: usuario.id,
-      nombreOriginal: archivo.nombreOriginal,
-      clave,
-      tipoMime: tipoGuardado,
-      tamanoBytes: tamanoGuardado,
-      anchoPx: imagen?.ancho ?? null,
-      altoPx: imagen?.alto ?? null,
-      textoAlternativo,
+    // El registro y su bitácora, en una sola transacción.
+    const creado = await transaccion(async (db) => {
+      const { fila, archivo: conDatos } = await modelo.insertar(
+        {
+          sedeId: sede.id,
+          subidoPor: usuario.id,
+          nombreOriginal: archivo.nombreOriginal,
+          clave,
+          tipoMime: tipoGuardado,
+          tamanoBytes: tamanoGuardado,
+          anchoPx: imagen?.ancho ?? null,
+          altoPx: imagen?.alto ?? null,
+          textoAlternativo,
+        },
+        db,
+      );
+      await registrarCambio(db, contexto, {
+        entidad: 'archivo_multimedia',
+        entidadId: fila.id,
+        accion: 'INSERT',
+        nuevo: fila,
+      });
+      return conDatos;
     });
-    return aArchivoMultimedia(fila);
+    return aArchivoMultimedia(creado);
   } catch (error) {
     // Sin registro en la base los objetos quedarían huérfanos ocupando espacio: se borran.
     if (subidas.length > 0) await eliminarObjetos(subidas).catch(() => {});

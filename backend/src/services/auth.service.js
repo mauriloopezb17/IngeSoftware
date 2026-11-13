@@ -1,6 +1,7 @@
 // Lógica de sesión del panel (docs/api/autenticacion.md).
 import { ROLES } from '../constantes/catalogos.js';
 import { permisosDe } from '../constantes/permisos.js';
+import { transaccion } from '../db/index.js';
 import { ErrorApp } from '../errores/ErrorApp.js';
 import * as usuarios from '../models/usuarios.model.js';
 import {
@@ -10,6 +11,7 @@ import {
 } from '../utils/contrasenas.js';
 import { formatearFechaHora } from '../utils/formato.js';
 import { firmarToken, verificarToken } from '../utils/sesion.js';
+import { CONTEXTO_DEL_SISTEMA, registrarCambio } from './bitacora.service.js';
 
 // El mismo mensaje para correo inexistente, contraseña incorrecta o usuario inactivo:
 // no debe revelar qué correos están registrados.
@@ -59,7 +61,11 @@ export async function autenticarToken(token) {
 
 // Cambia la contraseña del usuario de la sesión. La sesión actual sigue abierta.
 // Lanza 400 VALIDACION con detalle en contrasenaActual si la actual es incorrecta.
-export async function cambiarContrasena({ usuarioId, contrasenaActual, contrasenaNueva }) {
+// contexto: quién y desde dónde (bitacora.service.contextoDe(req)), para la bitácora.
+export async function cambiarContrasena(
+  { usuarioId, contrasenaActual, contrasenaNueva },
+  contexto = CONTEXTO_DEL_SISTEMA,
+) {
   const hashActual = await usuarios.obtenerHashContrasena(usuarioId);
 
   if (!hashActual || !(await verificarContrasena(contrasenaActual, hashActual))) {
@@ -68,7 +74,19 @@ export async function cambiarContrasena({ usuarioId, contrasenaActual, contrasen
     ]);
   }
 
-  await usuarios.actualizarContrasena(usuarioId, await hashearContrasena(contrasenaNueva));
+  const hashNuevo = await hashearContrasena(contrasenaNueva);
+
+  // El cambio queda en la bitácora en la misma transacción; el hash se guarda como "[oculto]".
+  await transaccion(async (db) => {
+    await usuarios.actualizarContrasena(usuarioId, hashNuevo, db);
+    await registrarCambio(db, contexto, {
+      entidad: 'usuario',
+      entidadId: usuarioId,
+      accion: 'UPDATE',
+      anterior: { hash_contrasena: hashActual },
+      nuevo: { hash_contrasena: hashNuevo },
+    });
+  });
 }
 
 // Abre una sesión. Devuelve { token, duracionSegundos, usuario } o lanza 401 NO_AUTENTICADO.

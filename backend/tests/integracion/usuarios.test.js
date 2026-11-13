@@ -13,8 +13,16 @@ const correoUnico = () => {
   return correo;
 };
 
+// Borra los usuarios creados y el registro de su creación en la bitácora.
 afterEach(async () => {
-  await consultar('DELETE FROM usuario WHERE correo = ANY($1)', [correosCreados.splice(0)]);
+  const correos = correosCreados.splice(0);
+  await consultar(
+    `DELETE FROM bitacora_cambio
+      WHERE entidad = 'usuario'
+        AND entidad_id IN (SELECT id::text FROM usuario WHERE correo = ANY($1))`,
+    [correos],
+  );
+  await consultar('DELETE FROM usuario WHERE correo = ANY($1)', [correos]);
 });
 
 afterAll(async () => {
