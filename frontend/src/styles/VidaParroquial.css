@@ -1,4 +1,3 @@
-
 /* Sección */
 .vida-parroquial {
   padding: 95px 0 105px;
@@ -256,4 +255,40 @@ a.vida-parroquial-enlace:hover {
     width: 33px;
     height: 33px;
   }
+}
+
+/* PAR-61 — Tarjetas de noticias y navegación del carrusel. */
+@media (prefers-reduced-motion: no-preference) {
+  .vida-parroquial-imagen {
+    transition: transform 550ms cubic-bezier(.2,.7,.2,1), opacity 300ms ease;
+  }
+  .vida-parroquial-tarjeta:hover .vida-parroquial-imagen:not(.vida-parroquial-imagen-afiche) {
+    transform: scale(1.055);
+  }
+  .vida-parroquial-control { transition: background-color 220ms ease, color 220ms ease, transform 220ms ease; }
+  .vida-parroquial-control:hover:not(:disabled) { transform: scale(1.08); }
+  .vida-parroquial-indicador { transition: width 260ms ease, background-color 260ms ease; }
+  .vida-parroquial-enlace svg { transition: transform 250ms ease; }
+  .vida-parroquial-enlace:hover svg { transform: translateX(4px); }
+  /* Una noticia nueva recibe transición de entrada cuando React la monta. */
+  .vida-parroquial-tarjeta {
+    animation: vida-noticia-montaje 420ms ease-out both;
+  }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .vida-parroquial-encabezado {
+      animation: vida-encabezado-aparecer 1s both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 24%;
+    }
+  }
+}
+@keyframes vida-noticia-montaje {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes vida-encabezado-aparecer {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
