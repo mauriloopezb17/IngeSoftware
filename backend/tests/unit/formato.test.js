@@ -97,6 +97,7 @@ describe('imagen', () => {
       textoAlternativo: 'Crucifijo en el interior del templo parroquial',
       ancho: 1888,
       alto: 1059,
+      variantes: [],
     });
   });
 
@@ -107,7 +108,35 @@ describe('imagen', () => {
       textoAlternativo: null,
       ancho: null,
       alto: null,
+      variantes: [],
     });
+  });
+
+  it('una imagen subida lleva las variantes menores que su ancho, con la URL del CDN', () => {
+    const resultado = imagen(
+      { id: 8, url: 'sedes/central/2026/11/abc.webp', ancho: 1000, alto: 500 },
+      CDN,
+    );
+
+    expect(resultado.variantes).toEqual([
+      { ancho: 480, url: `${CDN}/sedes/central/2026/11/abc-480w.webp` },
+      { ancho: 960, url: `${CDN}/sedes/central/2026/11/abc-960w.webp` },
+    ]);
+  });
+
+  it('una imagen subida chica no tiene variantes; la de 2560 px tiene las tres', () => {
+    const subida = (ancho) => imagen({ url: 'sedes/c/2026/11/a.webp', ancho }, CDN).variantes;
+
+    expect(subida(480)).toEqual([]);
+    expect(subida(400)).toEqual([]);
+    expect(subida(2560).map((v) => v.ancho)).toEqual([480, 960, 1600]);
+    expect(subida(null)).toEqual([]);
+  });
+
+  it('las imágenes con URL fija o que no son WebP subido no tienen variantes', () => {
+    expect(imagen({ url: '/media/seed/a.webp', ancho: 2000 }, CDN).variantes).toEqual([]);
+    expect(imagen({ url: 'https://otro.test/a.webp', ancho: 2000 }, CDN).variantes).toEqual([]);
+    expect(imagen({ url: 'sedes/c/a.jpg', ancho: 2000 }, CDN).variantes).toEqual([]);
   });
 
   it('devuelve null si no hay imagen, nunca un objeto vacío', () => {

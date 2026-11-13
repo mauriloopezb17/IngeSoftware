@@ -32,12 +32,16 @@ El panel CMS (`frontend/src/admin/`) se autentica con un **JWT guardado en una c
 }
 ```
 
-`sub` es el id del usuario. En **cada** petición, la API valida la firma y el vencimiento, y además vuelve a leer al usuario de la base de datos (con caché corta en Redis). Así, desactivarlo o cambiarle el rol tiene efecto inmediato, sin esperar a que venza el token. Si el usuario ya no existe o está inactivo, la respuesta es `401 NO_AUTENTICADO` y la cookie se borra.
+`sub` es el id del usuario. En **cada** petición, la API valida la firma y el vencimiento, y además vuelve a leer al usuario de la base de datos. Así, desactivarlo o cambiarle el rol o la sede tiene efecto inmediato, sin esperar a que venza el token. Una caché corta del usuario en Redis llega en la Ola 5 (ADR-02) y se invalidará al desactivar o modificar al usuario, de modo que el efecto seguirá siendo inmediato. Si el usuario ya no existe o está inactivo, la respuesta es `401 NO_AUTENTICADO` y la cookie se borra.
 
 ### Protección contra CSRF
 
 - `SameSite=Lax`: el navegador no envía la cookie en `POST`, `PATCH` ni `DELETE` iniciados desde otro sitio.
-- Además, en los métodos que modifican datos la API comprueba la cabecera `Origin` contra `CORS_ORIGEN` y responde `403 SIN_PERMISO` si no coincide.
+- Además, en los métodos que modifican datos (`POST`, `PATCH` y `DELETE`) la API responde `403 SIN_PERMISO` en estos casos:
+  - la cabecera `Origin` viene y no coincide con `CORS_ORIGEN` (incluido el valor `null`);
+  - la cabecera `Sec-Fetch-Site` vale `cross-site`, **aunque no venga `Origin`**. El navegador la envía solo y la página no puede falsearla.
+- Una petición sin `Origin` ni `Sec-Fetch-Site: cross-site` se deja pasar: la envían herramientas que no son un navegador (`curl`, otros servidores), que no llevan la cookie de otro usuario.
+- Los métodos de lectura (`GET`) no se comprueban.
 
 ## 2. Endpoints
 
@@ -93,6 +97,7 @@ Abre la sesión. Tiene límite de intentos (ver [sección 4](#4-límite-de-inten
 }
 ```
 
+- `sede` es `null` para un Administrador sin sede asignada (trabaja en todas las sedes). Los demás roles siempre tienen sede. `GET /api/auth/yo` devuelve lo mismo.
 - `fechaUltimoAcceso` se actualiza con cada login exitoso.
 - `sesionExpiraEn` sirve para que el panel avise antes de que venza la sesión.
 - `permisos` es la lista de la [matriz de permisos](#7-matriz-de-permisos) que corresponde al rol. El panel la usa para mostrar u ocultar menús y botones; quien decide de verdad es la API.
@@ -180,7 +185,11 @@ El usuario cambia su propia contraseña. Requiere sesión.
 }
 ```
 
-Los contadores se guardan en Redis, así que se mantienen aunque la API se reinicie (ADR-02).
+- El `mensaje` indica los minutos que faltan, **redondeados hacia arriba**, en singular o plural: «…en 1 minuto.», «…en 12 minutos.». `Retry-After` lleva los segundos exactos.
+- Superado el límite, la contraseña ni se comprueba: incluso la correcta recibe `429` hasta que pase la ventana.
+- Cuenta como intento fallido: credenciales incorrectas (correo inexistente, contraseña incorrecta o usuario inactivo) y, en el cambio de contraseña, la contraseña actual incorrecta. No cuentan los `400` de validación ni los intentos exitosos.
+- Un intento exitoso **no reinicia** los contadores: la ventana de 15 minutos empieza con el primer intento fallido y no se extiende con los siguientes.
+- Los contadores se guardan en Redis, así que se mantienen aunque la API se reinicie. Si Redis no responde, el límite no se aplica y el login sigue funcionando (ADR-02).
 
 ## 5. Roles
 
@@ -195,7 +204,7 @@ Cada usuario tiene **un** rol.
 
 ## 6. Restricción por sede
 
-- El **Administrador** trabaja en todas las sedes, tenga o no `sede` asignada.
+- El **Administrador** trabaja en todas las sedes, tenga o no `sede` asignada. Si no la tiene, `sede` es `null` en la sesión y debe indicar `sedeId` al crear recursos (en las listas, `sede` es solo un filtro).
 - Los demás roles tienen **una sede obligatoria** y solo pueden leer y modificar los recursos de esa sede:
   - en las listas de `/api/admin/...`, el filtro `sede` se fuerza a la suya (si piden otra, reciben `403`);
   - al crear un recurso, la sede se toma de la sesión y se ignora la que venga en el cuerpo;
