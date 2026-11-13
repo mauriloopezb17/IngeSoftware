@@ -1,8 +1,8 @@
-
 /* Sección principal */
 .nosotros {
   padding: 120px 0;
   background-color: var(--color-cream);
+  overflow-x: clip;
 }
 
 .nosotros-contenedor {
@@ -247,4 +247,36 @@
   .nosotros-pie {
     align-items: flex-start;
   }
+}
+
+/* PAR-61 — Entrada progresiva visible al llegar a la sección. */
+@media (prefers-reduced-motion: no-preference) {
+  .nosotros-imagen { transition: filter 500ms ease; }
+  .nosotros-imagen-contenedor:hover .nosotros-imagen { filter: brightness(1.045); }
+  .nosotros-tarjeta { transition: box-shadow 300ms ease; }
+  .nosotros-imagen-contenedor:hover .nosotros-tarjeta {
+    box-shadow: 0 18px 32px rgba(23,20,21,.19);
+  }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .nosotros-imagen-contenedor {
+      animation: nosotros-entrar-izquierda 1s both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 27%;
+    }
+    .nosotros-informacion {
+      animation: nosotros-entrar-derecha 1s both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 27%;
+    }
+  }
+}
+@keyframes nosotros-entrar-izquierda {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes nosotros-entrar-derecha {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: translateX(0); }
 }
