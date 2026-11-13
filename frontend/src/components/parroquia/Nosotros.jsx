@@ -1,5 +1,6 @@
 import { anchoContenido, TituloSeccion } from './ElementosComunes.jsx';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
+import { BloqueCita } from './BloquesPagina.jsx';
 import { usePagina } from '../../hooks/index.js';
 
 import '../../styles/Nosotros.css';
@@ -83,15 +84,7 @@ function Nosotros() {
                 </>
               )}
 
-              {cita && (
-                <blockquote className="nosotros-cita">
-                  <p className="nosotros-cita-texto">“{cita.texto}”</p>
-
-                  {cita.autor && (
-                    <cite className="nosotros-cita-autor">— {cita.autor}</cite>
-                  )}
-                </blockquote>
-              )}
+              <BloqueCita contenido={cita} />
 
               <div className="nosotros-pie">
                 {parroco && (

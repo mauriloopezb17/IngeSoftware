@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 
 import { anchoContenido, TituloSeccion } from './ElementosComunes.jsx';
+import EnlacePortal from './EnlacePortal.jsx';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { useProclamas } from '../../hooks/index.js';
 import { formatearFechaBoda } from '../../utils/formatoPortal.js';
@@ -50,10 +51,10 @@ function Proclamas() {
             en secretaría.
           </p>
 
-          <a href="#proclamas-listado" className="proclamas-enlace">
+          <EnlacePortal to="/proclamas" className="proclamas-enlace">
             Ver historial de proclamas
             <ArrowRight size={15} />
-          </a>
+          </EnlacePortal>
         </div>
 
         <div id="proclamas-listado" className="proclamas-tarjeta">

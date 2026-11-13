@@ -113,8 +113,13 @@ async function conSlugUnico(slug, operacion) {
   }
 }
 
-// La página padre debe ser de la misma sede y, al editar, no puede ser la propia página ni una
-// de sus descendientes (formaría un ciclo).
+// Niveles máximos del árbol de páginas: una raíz y hasta dos niveles de hijas (el menú del portal
+// no se puede navegar con más). Contrato: docs/api/admin.md, sección 12.
+export const PROFUNDIDAD_MAXIMA_PAGINAS = 3;
+
+// La página padre debe ser de la misma sede, y al editar no puede ser la propia página ni una de
+// sus descendientes (formaría un ciclo). Además, el árbol no puede pasar de PROFUNDIDAD_MAXIMA_PAGINAS
+// niveles, contando la página con todas sus descendientes cuando se la mueve.
 async function verificarPaginaPadre(db, sedeId, paginaPadreId, paginaId = null) {
   if (paginaPadreId === undefined || paginaPadreId === null) return;
 
@@ -125,6 +130,12 @@ async function verificarPaginaPadre(db, sedeId, paginaPadreId, paginaId = null) 
   }
   if (paginaId !== null && (await modelo.idsDeLaRama(paginaId, db)).includes(paginaPadreId)) {
     throw detalle('No puede ser la propia página ni una de sus páginas hijas.');
+  }
+
+  const nivelDelPadre = await modelo.nivelDe(paginaPadreId, db);
+  const niveles = paginaId === null ? 1 : await modelo.alturaDeLaRama(paginaId, db);
+  if (nivelDelPadre + niveles > PROFUNDIDAD_MAXIMA_PAGINAS) {
+    throw detalle(`Las páginas se pueden anidar hasta ${PROFUNDIDAD_MAXIMA_PAGINAS} niveles.`);
   }
 }
 

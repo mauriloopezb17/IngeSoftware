@@ -11,8 +11,9 @@ import {
 } from 'lucide-react';
 
 import { anchoContenido } from './ElementosComunes.jsx';
+import EnlacePortal from './EnlacePortal.jsx';
 import { IconoRedSocial } from './IconoDinamico.jsx';
-import { useSede } from '../../hooks/index.js';
+import { useMenuPaginas, useSede } from '../../hooks/index.js';
 import { armarHrefTelefono } from '../../utils/formatoPortal.js';
 
 import logoBlanco from '../../assets/parroquia/logos/logo-horizontal-blanco.svg';
@@ -23,8 +24,10 @@ const enlacesNavegacion = [
   { nombre: 'Nosotros', enlace: '/#nosotros' },
   { nombre: 'Sacramentos', enlace: '/#sacramentos' },
   { nombre: 'Comunidad', enlace: '/#comunidad' },
-  { nombre: 'Noticias', enlace: '/#noticias' },
-  { nombre: 'Calendario', enlace: '/#agenda' },
+  { nombre: 'Noticias', enlace: '/noticias' },
+  { nombre: 'Calendario', enlace: '/calendario' },
+  { nombre: 'Proclamas', enlace: '/proclamas' },
+  { nombre: 'Boletines', enlace: '/boletines' },
   { nombre: 'Contacto', enlace: '/#contacto' },
 ];
 
@@ -55,21 +58,27 @@ const seccionesBusqueda = [
   },
   {
     nombre: 'Calendario',
-    descripcion: 'Próximos eventos parroquiales',
-    enlace: '/#agenda',
-    palabrasClave: 'agenda actividades encuentros eventos',
+    descripcion: 'Calendario completo de eventos parroquiales',
+    enlace: '/calendario',
+    palabrasClave: 'agenda actividades encuentros eventos calendario',
   },
   {
-    nombre: 'Vida parroquial',
+    nombre: 'Boletines parroquiales',
+    descripcion: 'Archivo mensual de boletines en PDF',
+    enlace: '/boletines',
+    palabrasClave: 'boletin boletines pdf archivo mensual',
+  },
+  {
+    nombre: 'Vida parroquial y noticias',
     descripcion: 'Noticias y actividades de la parroquia',
-    enlace: '/#noticias',
-    palabrasClave: 'noticias pastoral familiar publicaciones',
+    enlace: '/noticias',
+    palabrasClave: 'noticias pastoral familiar publicaciones prensa',
   },
   {
     nombre: 'Proclamas matrimoniales',
-    descripcion: 'Avisos de próximos matrimonios',
-    enlace: '/#proclamas',
-    palabrasClave: 'bodas matrimonio proclamas',
+    descripcion: 'Proclamas vigentes e historial público',
+    enlace: '/proclamas',
+    palabrasClave: 'bodas matrimonio proclamas historial',
   },
   {
     nombre: 'Video institucional',
@@ -106,6 +115,7 @@ const normalizarTexto = (texto) =>
 
 function Encabezado() {
   const { data: sede } = useSede();
+  const { data: paginasMenu = [] } = useMenuPaginas();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [buscadorAbierto, setBuscadorAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState('');
@@ -143,6 +153,14 @@ function Encabezado() {
 
     window.location.hash = destino;
   };
+
+  const enlacesMenuDinamico = paginasMenu
+    .filter((pagina) => pagina.slug !== 'inicio' && pagina.slug !== 'nosotros')
+    .map((pagina) => ({
+      nombre: pagina.titulo,
+      enlace: `/paginas/${pagina.slug}`,
+    }));
+  const todosEnlacesMenu = [...enlacesNavegacion, ...enlacesMenuDinamico];
 
   const configuracion = sede?.configuracion ?? {};
   const redesSociales = sede?.redesSociales ?? [];
@@ -230,8 +248,8 @@ function Encabezado() {
 
       {/* Navegación principal */}
       <header className={`${anchoContenido} encabezado-principal`}>
-        <a
-          href="/#inicio"
+        <EnlacePortal
+          to="/"
           className="encabezado-logo-enlace"
           onClick={cerrarMenu}
           aria-label="Volver al inicio"
@@ -241,7 +259,7 @@ function Encabezado() {
             alt="Parroquia Señor de la Exaltación"
             className="encabezado-logo"
           />
-        </a>
+        </EnlacePortal>
 
         <nav
           id="menu-navegacion"
@@ -250,15 +268,15 @@ function Encabezado() {
           }`}
           aria-label="Navegación principal"
         >
-          {enlacesNavegacion.map(({ nombre, enlace }) => (
-            <a
-              key={nombre}
-              href={enlace}
+          {todosEnlacesMenu.map(({ nombre, enlace }) => (
+            <EnlacePortal
+              key={enlace}
+              to={enlace}
               className="encabezado-enlace"
               onClick={cerrarMenu}
             >
               {nombre}
-            </a>
+            </EnlacePortal>
           ))}
         </nav>
 
@@ -341,9 +359,9 @@ function Encabezado() {
 
             {resultados.length > 0 ? (
               resultados.map((seccion) => (
-                <a
+                <EnlacePortal
                   key={seccion.enlace}
-                  href={seccion.enlace}
+                  to={seccion.enlace}
                   className="encabezado-buscador-resultado"
                   onClick={cerrarMenu}
                 >
@@ -353,7 +371,7 @@ function Encabezado() {
                   </span>
 
                   <ArrowRight size={16} />
-                </a>
+                </EnlacePortal>
               ))
             ) : (
               <p className="encabezado-buscador-vacio">

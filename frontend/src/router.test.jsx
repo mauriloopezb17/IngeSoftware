@@ -65,4 +65,26 @@ describe('rutas del frontend', () => {
 
     expect(await screen.findByRole('heading', { name: 'Página no encontrada' })).toBeInTheDocument();
   });
+
+  it('renderiza las rutas públicas de proclamas, calendario, boletines y páginas dinámicas', async () => {
+    renderizarRuta('/proclamas');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Proclamas matrimoniales' }),
+    ).toBeInTheDocument();
+
+    renderizarRuta('/calendario');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Calendario de eventos' }),
+    ).toBeInTheDocument();
+
+    renderizarRuta('/boletines');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Boletines parroquiales' }),
+    ).toBeInTheDocument();
+
+    renderizarRuta('/paginas/historia');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Nuestra historia' }),
+    ).toBeInTheDocument();
+  });
 });
