@@ -107,19 +107,24 @@ export async function buscarPorId(id, estadoPublicado, db = { consultar }) {
 // estado aparte: { fila (el "antes" de la bitácora), tipoNombre, estadoNombre }. Así dos
 // transiciones simultáneas no se pisan: la segunda espera y ve el estado que dejó la primera.
 export async function bloquearParaModificar(id, db) {
-  const { rows } = await db.consultar(
-    `SELECT p.*, tp.nombre AS tipo_nombre__, ep.nombre AS estado_nombre__
-       FROM publicacion p
-       JOIN tipo_publicacion tp ON tp.id = p.tipo_publicacion_id
-       JOIN estado_publicacion ep ON ep.id = p.estado_publicacion_id
-      WHERE p.id = $1
-        FOR UPDATE OF p`,
-    [id],
-  );
+  // Se bloquea solo `publicacion` primero: si se hiciera JOIN con `estado_publicacion` en el mismo
+  // FOR UPDATE, PostgreSQL EvalPlanQual podría descartar la fila cuando otra transacción cambia
+  // `estado_publicacion_id` concurrentemente y devolver 0 filas (404 en vez de 409).
+  const { rows } = await db.consultar('SELECT * FROM publicacion WHERE id = $1 FOR UPDATE', [id]);
   if (!rows[0]) return undefined;
 
-  const { tipo_nombre__: tipoNombre, estado_nombre__: estadoNombre, ...fila } = rows[0];
-  return { fila, tipoNombre, estadoNombre };
+  const fila = rows[0];
+  const { rows: catalogos } = await db.consultar(
+    `SELECT tp.nombre AS tipo_nombre, ep.nombre AS estado_nombre
+       FROM tipo_publicacion tp, estado_publicacion ep
+      WHERE tp.id = $1 AND ep.id = $2`,
+    [fila.tipo_publicacion_id, fila.estado_publicacion_id],
+  );
+  return {
+    fila,
+    tipoNombre: catalogos[0].tipo_nombre,
+    estadoNombre: catalogos[0].estado_nombre,
+  };
 }
 
 // Inserta una publicación en el estado indicado (por nombre). Devuelve la fila (RETURNING *).
