@@ -7,6 +7,18 @@ import { useComunidades } from '../../hooks/index.js';
 
 import '../../styles/Comunidades.css';
 
+function formatearNombreComunidad(comunidad) {
+  const nombre = comunidad?.nombre ?? '';
+  const tipo = comunidad?.tipo?.nombre?.trim();
+  if (!tipo) return nombre;
+
+  const prefijo = `${tipo} `;
+  if (nombre.toLowerCase().startsWith(prefijo.toLowerCase())) {
+    return nombre.slice(prefijo.length).trimStart();
+  }
+  return nombre;
+}
+
 function Comunidades() {
   const { data: comunidades = [], isPending, isError, refetch } = useComunidades();
 
@@ -69,7 +81,7 @@ function Comunidades() {
                       <p className="comunidades-tipo">{comunidad.tipo.nombre}</p>
                     )}
 
-                    <h3 className="comunidades-nombre">{comunidad.nombre}</h3>
+                    <h3 className="comunidades-nombre">{formatearNombreComunidad(comunidad)}</h3>
 
                     {comunidad.direccion && (
                       <p className="comunidades-ubicacion">
