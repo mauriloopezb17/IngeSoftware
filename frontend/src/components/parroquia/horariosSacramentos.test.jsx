@@ -19,7 +19,13 @@ describe('Horarios y Sacramentos desde la API', () => {
     );
 
     expect(await screen.findByText('Santa Misa')).toBeInTheDocument();
+    expect(screen.getByText('7:00 · 18:00*')).toBeInTheDocument();
+    expect(screen.getByText('* Misa vespertina dominical')).toBeInTheDocument();
     expect(screen.getByText('Confesiones y Adoración')).toBeInTheDocument();
+    expect(screen.getByText('18:00 – 18:45')).toBeInTheDocument();
+    expect(screen.getByText('10:00 – 12:00')).toBeInTheDocument();
+    expect(screen.queryByText(/18:45\*/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/12:00\*/)).not.toBeInTheDocument();
     expect(screen.getByText('Jueves · Adoración')).toBeInTheDocument();
     expect(screen.getByText('Secretaría parroquial')).toBeInTheDocument();
     expect(screen.getByText('Asistente 24/7')).toBeInTheDocument();
