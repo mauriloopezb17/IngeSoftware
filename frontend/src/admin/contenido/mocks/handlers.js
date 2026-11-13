@@ -13,6 +13,7 @@ import {
   crearVideosIniciales,
 } from './datos.js';
 import { crearControladorPaginas } from './paginas.js';
+import { crearControladorUsuariosAdmin } from './usuariosAdmin.js';
 
 let sedes = crearSedesIniciales();
 let horarios = crearHorariosIniciales();
@@ -40,6 +41,7 @@ export function reiniciarMocksContenido() {
   sigGrupoId = 7;
   sigVideoId = videos.reduce((max, video) => Math.max(max, video.id), 0) + 1;
   controladorPaginas.reiniciar();
+  controladorUsuariosAdmin.reiniciar();
 }
 
 const REGEX_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -314,6 +316,13 @@ const controladorPaginas = crearControladorPaginas({
   error,
   errorValidacion,
   otraSede,
+});
+
+const controladorUsuariosAdmin = crearControladorUsuariosAdmin({
+  autenticar,
+  error,
+  errorValidacion,
+  obtenerSedes: () => sedes,
 });
 
 export const handlersContenido = [
@@ -1116,4 +1125,5 @@ export const handlersContenido = [
   }),
 
   ...controladorPaginas.handlers,
+  ...controladorUsuariosAdmin.handlers,
 ];
