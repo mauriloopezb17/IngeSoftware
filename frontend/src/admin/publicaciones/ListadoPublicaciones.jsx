@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useId, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link, useLocation, useSearchParams } from 'react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { AlertCircle, Inbox, Loader2, Pencil, Plus, Search, X } from 'lucide-react';
 
@@ -133,6 +133,7 @@ function Filtros({ valores, hayFiltros, onCambiar, onLimpiar }) {
 
 export default function ListadoPublicaciones() {
   const [parametros, setParametros] = useSearchParams();
+  const aviso = useLocation().state?.aviso;
   const filtros = leerFiltros(parametros);
   const { puede } = usePermisos();
   const hayFiltros = Boolean(filtros.estado || filtros.tipo || filtros.buscar || filtros.autor);
@@ -174,6 +175,12 @@ export default function ListadoPublicaciones() {
           </Link>
         )}
       </header>
+
+      {aviso && (
+        <p role="status" className="mt-4 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark">
+          {aviso}
+        </p>
+      )}
 
       <div className="mt-6 rounded-lg border border-borderSoft bg-white p-4">
         <Filtros valores={filtros} hayFiltros={hayFiltros} onCambiar={cambiar} onLimpiar={limpiar} />

@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { Link, useBlocker, useNavigate } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Eye, ImagePlus, Loader2, Save, Trash2 } from 'lucide-react';
+import { AlertCircle, Eye, ImagePlus, Loader2, Save, Send, Trash2 } from 'lucide-react';
 
 import CampoTexto from '../componentes/CampoTexto.jsx';
 import Dialogo from '../componentes/Dialogo.jsx';
@@ -11,6 +11,7 @@ import {
   CLAVE_CATALOGOS,
   CLAVE_PUBLICACIONES,
   crearPublicacion,
+  enviarARevision,
   obtenerCatalogos,
   TIPOS_DE_ESTA_PANTALLA,
 } from './api.js';
@@ -125,6 +126,7 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
   const [aviso, setAviso] = useState(avisoInicial);
   const [eligiendoPortada, setEligiendoPortada] = useState(false);
   const [verPrevia, setVerPrevia] = useState(false);
+  const [confirmandoEnvio, setConfirmandoEnvio] = useState(false);
 
   const editando = Boolean(publicacion);
   const cambiar = (cambios) => setCampos((actuales) => ({ ...actuales, ...cambios }));
@@ -180,6 +182,52 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
     },
   });
 
+  const construirCuerpo = () => ({
+    titulo: campos.titulo.trim(),
+    resumen: campos.resumen.trim() || null,
+    categoriaId: campos.categoriaId ? Number(campos.categoriaId) : null,
+    imagenPortadaId: campos.portada?.id ?? null,
+    contenido: aContenido(bloques ?? JSON.parse(bloquesBase ?? '[]')),
+    urlExterna: campos.urlExterna.trim() || null,
+    destacada: campos.destacada,
+    fechaPublicacion: deCampoFecha(campos.fechaPublicacion),
+    fechaExpiracion: deCampoFecha(campos.fechaExpiracion),
+  });
+
+  // ---- Enviar a revisión (Marketing) ----
+  // Guarda primero lo que haya en pantalla, para que el Párroco revise exactamente eso, y luego envía.
+  const enviarRevision = useMutation({
+    mutationFn: async (cuerpo) => {
+      if (cuerpo) await actualizarPublicacion(publicacion.id, cuerpo);
+      return enviarARevision(publicacion.id);
+    },
+    onSuccess: () => {
+      clienteConsultas.invalidateQueries({ queryKey: CLAVE_PUBLICACIONES });
+      omitirAvisoRef.current = true;
+      navegar('/admin/publicaciones', { state: { aviso: `«${campos.titulo.trim()}» se envió a revisión.` } });
+    },
+    onError: (error) => {
+      setConfirmandoEnvio(false);
+      const { errores: porCampo, generales: avisosGenerales } = erroresDe(error);
+      setErrores(porCampo);
+      setGenerales(avisosGenerales);
+      setAviso('');
+      requestAnimationFrame(() => avisos.current?.focus());
+    },
+  });
+
+  function confirmarEnvio() {
+    const locales = validarLocal(campos);
+    if (Object.keys(locales).length) {
+      setErrores(locales);
+      setGenerales([]);
+      setAviso('');
+      requestAnimationFrame(() => avisos.current?.focus());
+      return;
+    }
+    setConfirmandoEnvio(true);
+  }
+
   function enviar(evento) {
     evento.preventDefault();
     const locales = validarLocal(campos);
@@ -191,21 +239,12 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
       return;
     }
 
-    const cuerpo = {
-      titulo: campos.titulo.trim(),
-      resumen: campos.resumen.trim() || null,
-      categoriaId: campos.categoriaId ? Number(campos.categoriaId) : null,
-      imagenPortadaId: campos.portada?.id ?? null,
-      contenido: aContenido(bloques ?? JSON.parse(bloquesBase ?? '[]')),
-      urlExterna: campos.urlExterna.trim() || null,
-      destacada: campos.destacada,
-      fechaPublicacion: deCampoFecha(campos.fechaPublicacion),
-      fechaExpiracion: deCampoFecha(campos.fechaExpiracion),
-    };
+    const cuerpo = construirCuerpo();
     // El tipo se elige al crear y no se puede cambiar después.
     guardar.mutate(editando ? cuerpo : { tipo: campos.tipo, ...cuerpo });
   }
 
+  const puedeEnviar = editando && publicacion.acciones.includes('ENVIAR_REVISION');
   const mensajesDeError = [...Object.values(errores), ...generales];
 
   return (
@@ -437,6 +476,16 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
           )}
           {editando ? 'Guardar cambios' : 'Guardar borrador'}
         </button>
+        {puedeEnviar && (
+          <button
+            type="button"
+            onClick={confirmarEnvio}
+            disabled={guardar.isPending || enviarRevision.isPending}
+            className="flex items-center gap-2 rounded-md border border-goldDark bg-white px-4 py-2.5 text-sm font-semibold text-goldDark hover:bg-goldPale focus-visible:outline-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Send className="size-4" aria-hidden="true" /> Enviar a revisión
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setVerPrevia(true)}
@@ -452,6 +501,34 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
         </Link>
         {hayCambios && <p className="text-sm text-muted">Hay cambios sin guardar.</p>}
       </div>
+
+      {confirmandoEnvio && (
+        <Dialogo titulo="Enviar a revisión" onCerrar={() => setConfirmandoEnvio(false)} ancho="max-w-md">
+          <p className="text-sm text-charcoal">
+            El Párroco revisará la publicación y podrá aprobarla o rechazarla. Mientras esté en revisión no podrás editarla.
+            {hayCambios && ' Se guardarán antes los cambios que tienes en pantalla.'}
+          </p>
+          <div className="mt-5 flex flex-wrap justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setConfirmandoEnvio(false)}
+              disabled={enviarRevision.isPending}
+              className="rounded-md border border-borderSoft bg-white px-4 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark disabled:opacity-60"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => enviarRevision.mutate(hayCambios ? construirCuerpo() : null)}
+              disabled={enviarRevision.isPending}
+              className="flex items-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {enviarRevision.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              Enviar a revisión
+            </button>
+          </div>
+        </Dialogo>
+      )}
 
       {verPrevia && (
         <PreviaPublicacion

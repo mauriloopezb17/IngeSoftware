@@ -303,6 +303,128 @@ describe('formulario de publicación', () => {
     });
   });
 
+  describe('enviar a revisión (Marketing)', () => {
+    async function elegirPortada() {
+      await userEvent.click(screen.getByRole('button', { name: 'Elegir imagen' }));
+      const dialogo = await screen.findByRole('dialog', { name: 'Imagen de portada' });
+      await within(dialogo).findByRole('list', { name: 'Imágenes' });
+      await userEvent.type(within(dialogo).getByRole('searchbox', { name: 'Buscar imagen' }), 'exterior');
+      await userEvent.click(await within(dialogo).findByRole('button', { name: /exterior-parroquia\.webp/ }, esperar));
+      await userEvent.click(within(dialogo).getByRole('button', { name: 'Usar esta imagen' }));
+    }
+
+    it('guarda lo que hay en pantalla, envía a revisión y después ya no puede editarla', async () => {
+      await entrar('marketing');
+      const router = montar('/admin/publicaciones/4/editar');
+      await esperarEditor();
+      await elegirPortada();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Enviar a revisión' }));
+      const confirmacion = await screen.findByRole('dialog', { name: 'Enviar a revisión' });
+      expect(confirmacion).toHaveTextContent('Mientras esté en revisión no podrás editarla.');
+      expect(confirmacion).toHaveTextContent('Se guardarán antes los cambios');
+      // Aún no se envió nada.
+      expect((await leer(4)).estado.codigo).toBe('BORRADOR');
+
+      await userEvent.click(within(confirmacion).getByRole('button', { name: 'Enviar a revisión' }));
+
+      await waitFor(() => expect(router.state.location.pathname).toBe('/admin/publicaciones'), esperar);
+      expect(await screen.findByRole('status')).toHaveTextContent(
+        '«Retiro de Adviento: inscripciones abiertas» se envió a revisión.',
+      );
+      const enviada = await leer(4);
+      expect(enviada.estado.codigo).toBe('EN_REVISION');
+      expect(enviada.imagenPortada).toMatchObject({ id: 1 });
+
+      await router.navigate('/admin/publicaciones/4/editar');
+      expect(await screen.findByRole('heading', { name: 'No se puede editar' })).toBeInTheDocument();
+      expect(screen.getByText(/Está en revisión/)).toBeInTheDocument();
+    });
+
+    it('si la publicación no está lista, la API responde 400 y sigue en borrador', async () => {
+      await entrar('marketing');
+      const router = montar('/admin/publicaciones/4/editar');
+      await esperarEditor();
+
+      // Una expiración ya pasada: el borrador se guarda, pero no está lista para salir de borrador.
+      await userEvent.type(screen.getByLabelText('Fecha de expiración (opcional)'), '2026-01-01T08:00');
+      await userEvent.click(screen.getByRole('button', { name: 'Enviar a revisión' }));
+      await userEvent.click(
+        within(await screen.findByRole('dialog', { name: 'Enviar a revisión' })).getByRole('button', {
+          name: 'Enviar a revisión',
+        }),
+      );
+
+      const alerta = await screen.findByRole('alert', {}, esperar);
+      expect(alerta).toHaveTextContent('La expiración debe ser posterior a la fecha de publicación y a este momento.');
+      expect(screen.getByLabelText('Fecha de expiración (opcional)')).toHaveAttribute('aria-invalid', 'true');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(router.state.location.pathname).toBe('/admin/publicaciones/4/editar');
+      expect((await leer(4)).estado.codigo).toBe('BORRADOR');
+    });
+
+    it('valida el título antes de pedir confirmación', async () => {
+      await entrar('marketing');
+      montar('/admin/publicaciones/4/editar');
+      await esperarEditor();
+
+      await userEvent.clear(screen.getByRole('textbox', { name: /Título/ }));
+      await userEvent.type(screen.getByRole('textbox', { name: /Título/ }), 'ab');
+      await userEvent.click(screen.getByRole('button', { name: 'Enviar a revisión' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('El título debe tener entre 3 y 200 caracteres.');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('cancelar la confirmación no envía nada', async () => {
+      await entrar('marketing');
+      montar('/admin/publicaciones/4/editar');
+      await esperarEditor();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Enviar a revisión' }));
+      await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancelar' }));
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect((await leer(4)).estado.codigo).toBe('BORRADOR');
+    });
+
+    it('el Párroco no ve el botón: él publica directamente (acciones de la API)', async () => {
+      await entrar('parroco');
+      montar('/admin/publicaciones/11/editar');
+      await esperarEditor();
+
+      expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Enviar a revisión' })).not.toBeInTheDocument();
+    });
+
+    it('Marketing no puede editar una publicación en revisión', async () => {
+      await entrar('marketing');
+      montar('/admin/publicaciones/6/editar');
+
+      expect(await screen.findByRole('heading', { name: 'No se puede editar' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Enviar a revisión' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('observación de una revisión rechazada', () => {
+    it('el autor ve la observación del Párroco en su borrador', async () => {
+      await entrar('marketing');
+      montar('/admin/publicaciones/5/editar');
+
+      const nota = await screen.findByRole('region', { name: 'Observación de la revisión' });
+      expect(nota).toHaveTextContent('Agregar el nombre de la parroquia anfitriona y una foto del encuentro.');
+      expect(nota).toHaveTextContent('Párroco (desarrollo)');
+    });
+
+    it('un borrador que nunca se revisó no muestra ninguna observación', async () => {
+      await entrar('marketing');
+      montar('/admin/publicaciones/4/editar');
+      await screen.findByRole('heading', { level: 1, name: 'Editar publicación' });
+
+      expect(screen.queryByRole('region', { name: 'Observación de la revisión' })).not.toBeInTheDocument();
+    });
+  });
+
   describe('vista previa', () => {
     it('muestra el borrador actual (aunque no esté guardado): título, categoría, fechas y contenido en solo lectura', async () => {
       await entrar('marketing');

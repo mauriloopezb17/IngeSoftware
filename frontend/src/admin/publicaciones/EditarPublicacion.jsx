@@ -4,6 +4,7 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 
 import NoEncontrada from '../paginas/NoEncontrada.jsx';
 import { CLAVE_PUBLICACIONES, obtenerPublicacion } from './api.js';
+import { aCampoFecha, formatearCampoFecha } from './fechas.js';
 import FormularioPublicacion from './FormularioPublicacion.jsx';
 
 const enlaceVolver = (
@@ -88,6 +89,18 @@ export default function EditarPublicacion() {
         <h1 className="font-display text-4xl font-semibold text-ink">Editar publicación</h1>
         <p className="mt-2 text-muted">{publicacion.titulo}</p>
       </header>
+      {publicacion.estado.codigo === 'BORRADOR' && publicacion.revision?.observacion && (
+        <section
+          aria-label="Observación de la revisión"
+          className="mt-4 rounded-lg border border-redParish/30 bg-redParish/5 p-4 text-sm"
+        >
+          <h2 className="font-semibold text-redParish">El Párroco devolvió esta publicación con una observación</h2>
+          <p className="mt-1 text-charcoal">{publicacion.revision.observacion}</p>
+          <p className="mt-2 text-xs text-muted">
+            {publicacion.revision.revisadoPor.nombreCompleto} · {formatearCampoFecha(aCampoFecha(publicacion.revision.fecha))}
+          </p>
+        </section>
+      )}
       <FormularioPublicacion key={publicacion.id} publicacion={publicacion} aviso={state?.aviso} />
     </section>
   );

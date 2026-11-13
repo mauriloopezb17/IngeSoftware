@@ -32,6 +32,12 @@ export async function actualizarPublicacion(id, cuerpo) {
   return datos;
 }
 
+// Marketing envía su borrador al Párroco: BORRADOR -> EN_REVISION (admin.md §3, acciones de estado).
+export async function enviarARevision(id) {
+  const { datos } = await clienteHttp.post(`/admin/publicaciones/${id}/enviar-revision`);
+  return datos;
+}
+
 // Mismos catálogos que usa el resto del panel (GET /admin/catalogos): comparten la caché.
 export const CLAVE_CATALOGOS = ['admin', 'catalogos'];
 
