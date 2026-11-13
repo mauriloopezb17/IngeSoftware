@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import { clienteHttp } from '../services/clienteHttp.js';
 import { queryClient } from '../services/queryClient.js';
 import AdminApp from './AdminApp.jsx';
+import { pantallasContenido } from './contenido/pantallas.jsx';
 import { reiniciarMocksAdmin } from './mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from './mocks/usuarios.js';
 import { SECCIONES } from './rutas.js';
@@ -52,8 +53,15 @@ describe('rutas del panel', () => {
     expect(SECCIONES.map((s) => s.ruta)).toEqual(RUTAS_DEL_INDICE);
   });
 
-  // Multimedia ya tiene su pantalla real; se prueba en paginas/Multimedia.test.jsx.
-  it.each(SECCIONES.filter((s) => s.clave !== 'inicio' && s.clave !== 'multimedia'))(
+  // Multimedia y las pantallas de contenido ya tienen su pantalla real.
+  it.each(
+    SECCIONES.filter(
+      (s) =>
+        s.clave !== 'inicio' &&
+        s.clave !== 'multimedia' &&
+        !Object.hasOwn(pantallasContenido, s.clave),
+    ),
+  )(
     'el Administrador abre «$titulo» con su pantalla provisional',
     async ({ ruta, titulo }) => {
       await abrir('admin@parroquia.test', ruta);
