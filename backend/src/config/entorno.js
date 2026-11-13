@@ -1,5 +1,6 @@
 // Carga y valida las variables de entorno de la API.
 // La API no arranca si falta una variable obligatoria o si alguna tiene un valor inválido.
+import { isIP } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { z } from 'zod';
@@ -36,6 +37,66 @@ const urlConProtocolo = (protocolos, mensaje) =>
       return false;
     }
   }, mensaje);
+
+// Nombres de rangos que Express acepta en "trust proxy".
+const RANGOS_PROXY_CON_NOMBRE = ['loopback', 'linklocal', 'uniquelocal'];
+
+// Una IP (192.168.1.10, ::1), una subred CIDR (10.0.0.0/8, fd00::/8) o un rango con nombre.
+function esProxyValido(valor) {
+  if (RANGOS_PROXY_CON_NOMBRE.includes(valor)) return true;
+
+  const [ip, prefijo, ...resto] = valor.split('/');
+  const version = isIP(ip);
+  if (version === 0 || resto.length > 0) return false;
+  if (prefijo === undefined) return true;
+
+  const maximo = version === 4 ? 32 : 128;
+  return /^\d{1,3}$/.test(prefijo) && Number(prefijo) <= maximo;
+}
+
+// TRUST_PROXY: a quién cree Express cuando lee X-Forwarded-For (define req.ip).
+// - false o 0 (por defecto): a nadie; req.ip es la IP de la conexión.
+// - un número N: a los N proxies más cercanos (ej. 1 detrás de un solo Nginx).
+// - una lista de IPs, subredes o rangos con nombre, separados por comas.
+// "true" se rechaza: confiaría en cualquier X-Forwarded-For y el cliente podría falsear su IP.
+const esquemaConfiarProxy = z
+  .string()
+  .default('false')
+  .transform((valor, contexto) => {
+    const texto = valor.trim().toLowerCase();
+
+    if (texto === 'false') return false;
+    if (texto === 'true') {
+      contexto.addIssue({
+        code: 'custom',
+        message:
+          'no puede ser true (permitiría falsear la IP); usa el número de proxies o sus IPs.',
+      });
+      return z.NEVER;
+    }
+    if (/^\d+$/.test(texto)) {
+      const saltos = Number(texto);
+      if (saltos > 10) {
+        contexto.addIssue({ code: 'custom', message: 'el número de proxies debe ser de 0 a 10.' });
+        return z.NEVER;
+      }
+      return saltos === 0 ? false : saltos;
+    }
+
+    const proxies = texto
+      .split(',')
+      .map((proxy) => proxy.trim())
+      .filter(Boolean);
+    if (proxies.length === 0 || !proxies.every(esProxyValido)) {
+      contexto.addIssue({
+        code: 'custom',
+        message:
+          'debe ser false, un número de proxies o una lista de IPs/subredes separadas por comas.',
+      });
+      return z.NEVER;
+    }
+    return Object.freeze(proxies);
+  });
 
 const esquemaEntorno = z
   .object({
@@ -82,6 +143,7 @@ const esquemaEntorno = z
             .min(1, 'debe indicar al menos un origen.'),
         ),
     ),
+    TRUST_PROXY: sinVacio(esquemaConfiarProxy),
     DATABASE_URL: sinVacio(
       urlConProtocolo(
         ['postgres:', 'postgresql:'],
@@ -170,6 +232,7 @@ export function validarEntorno(variables) {
     puerto: v.PORT,
     nivelLog: v.LOG_LEVEL,
     corsOrigenes: Object.freeze(v.CORS_ORIGEN),
+    confiarProxy: v.TRUST_PROXY,
     baseDatosUrl: v.DATABASE_URL,
     redisUrl: v.REDIS_URL,
     jwt: Object.freeze({ secreto: v.JWT_SECRET, expiraEn: v.JWT_EXPIRA_EN }),

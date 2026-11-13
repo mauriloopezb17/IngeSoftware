@@ -4,6 +4,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { obtenerEntorno } from './config/entorno.js';
 import { crearMiddlewareLog } from './config/logger.js';
+import { protegerCsrf } from './middlewares/csrf.js';
 import { manejarErrores, rutaNoEncontrada } from './middlewares/errores.js';
 import routes from './routes/index.js';
 
@@ -16,6 +17,9 @@ export function createApp() {
   const app = express();
 
   app.disable('x-powered-by');
+  // Detrás de un proxy, req.ip sale de X-Forwarded-For solo para los proxies de TRUST_PROXY.
+  // Lo usan el límite de intentos de inicio de sesión y la bitácora.
+  app.set('trust proxy', entorno.confiarProxy);
   // Primero el log: así toda petición tiene su id (X-Request-Id), aunque falle después.
   app.use(crearMiddlewareLog());
 
@@ -34,6 +38,9 @@ export function createApp() {
       maxAge: 600,
     }),
   );
+
+  // Antes de leer el cuerpo: una petición de otro origen que modifica datos se rechaza de entrada.
+  app.use('/api', protegerCsrf);
 
   app.use(express.json({ limit: LIMITE_CUERPO_JSON }));
   app.use(cookieParser());

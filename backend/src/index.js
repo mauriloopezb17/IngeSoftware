@@ -2,6 +2,7 @@ import { createApp } from './app.js';
 import { ErrorEntorno, obtenerEntorno } from './config/entorno.js';
 import { obtenerLogger } from './config/logger.js';
 import { cerrarPool, esperarBaseDatos } from './db/index.js';
+import { cerrarRedis, obtenerRedis } from './db/redis.js';
 
 // Si el cierre ordenado se traba (ej. una conexión que no termina), se fuerza la salida.
 const ESPERA_MAXIMA_APAGADO_MS = 10_000;
@@ -29,6 +30,9 @@ try {
   process.exit(1);
 }
 
+// Redis es opcional para arrancar (ADR-02): se empieza a conectar en segundo plano y no se espera.
+obtenerRedis();
+
 const app = createApp();
 
 const servidor = app.listen(entorno.puerto, () => {
@@ -37,7 +41,8 @@ const servidor = app.listen(entorno.puerto, () => {
 
 let apagando = false;
 
-// Cierre ordenado: deja terminar las peticiones en curso y después cierra las conexiones a la base.
+// Cierre ordenado: deja terminar las peticiones en curso y después cierra las conexiones
+// a PostgreSQL y a Redis.
 function apagar(senal) {
   if (apagando) return;
   apagando = true;
@@ -49,8 +54,8 @@ function apagar(senal) {
   }, ESPERA_MAXIMA_APAGADO_MS).unref();
 
   servidor.close(async () => {
-    await cerrarPool();
-    logger.info('Conexiones a PostgreSQL cerradas');
+    await Promise.all([cerrarPool(), cerrarRedis()]);
+    logger.info('Conexiones a PostgreSQL y Redis cerradas');
     process.exit(0);
   });
 }
