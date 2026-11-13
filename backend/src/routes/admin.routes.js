@@ -10,6 +10,7 @@ import adminServiciosRoutes from './adminServicios.routes.js';
 import adminGruposRoutes from './adminGrupos.routes.js';
 import adminSedesRoutes from './adminSedes.routes.js';
 import adminVideosRoutes from './adminVideos.routes.js';
+import adminUsuariosRoutes from './adminUsuarios.routes.js';
 import multimediaRoutes from './multimedia.routes.js';
 
 const router = Router();
@@ -24,5 +25,6 @@ router.use('/servicios', adminServiciosRoutes);
 router.use('/grupos-pastorales', adminGruposRoutes);
 router.use('/videos', adminVideosRoutes);
 router.use('/sedes', adminSedesRoutes);
+router.use('/usuarios', adminUsuariosRoutes);
 
 export default router;
