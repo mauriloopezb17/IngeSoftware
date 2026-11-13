@@ -112,6 +112,8 @@ Todos los catálogos en una sola respuesta, para llenar los selectores de los fo
 - `codigo` de roles, tipos de sede, estados y tipos de publicación es la enumeración de la API (ver [convenciones.md](convenciones.md#2-nombres-y-tipos-de-datos)). La traducción a los nombres de la base la hace la API.
 - `estadosPublicacion` va en el orden del flujo, no por `id`.
 - `tiposBloque` trae los 6 tipos del seed con su `esquemaValidacion` completo, para que el panel arme el formulario de cada bloque. En el ejemplo se muestra solo uno; los demás están en [contenido.md](contenido.md).
+- Salvo `estadosPublicacion`, cada lista va ordenada por `id`. `esquemaValidacion` se devuelve tal como está guardado (sin traducir sus claves).
+- Sin sesión, `401 NO_AUTENTICADO`; no pide ningún permiso de la matriz.
 
 ---
 
