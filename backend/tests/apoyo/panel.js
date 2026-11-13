@@ -105,7 +105,8 @@ export function crearPanel(app) {
       await consultar('DELETE FROM archivo_multimedia WHERE id = ANY($1)', [archivosCreados]);
       await borrarUsuariosDePrueba();
       await consultar('DELETE FROM sede WHERE id = ANY($1)', [sedesCreadas]);
-      await limpiarContadoresDeIntentos();
+      // Los contadores viven en Redis: si no responde (pruebas con Redis caído), no hay qué limpiar.
+      await limpiarContadoresDeIntentos().catch(() => {});
     },
   };
 }

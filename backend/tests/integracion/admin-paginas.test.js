@@ -372,6 +372,70 @@ describe('PATCH /api/admin/paginas/:id', () => {
     expect(quitar.body.datos.paginaPadre).toBeNull();
   });
 
+  describe('profundidad máxima del árbol (3 niveles)', () => {
+    const MENSAJE = 'Las páginas se pueden anidar hasta 3 niveles.';
+    const errorDePadre = (respuesta) => respuesta.body.error.detalles;
+
+    it('acepta una raíz con hijas y nietas, pero no una bisnieta', async () => {
+      const raiz = await crear('secretaria');
+      const hija = await crear('secretaria', { paginaPadreId: raiz.id });
+      const nieta = await crear('secretaria', { paginaPadreId: hija.id });
+      expect(nieta.paginaPadre).toMatchObject({ id: hija.id });
+
+      const bisnieta = await como('secretaria').post(RUTA, pagina({ paginaPadreId: nieta.id }));
+      expect(bisnieta.status).toBe(400);
+      expect(errorDePadre(bisnieta)).toEqual([{ campo: 'paginaPadreId', mensaje: MENSAJE }]);
+    });
+
+    it('al mover una página cuenta también sus descendientes', async () => {
+      const raiz = await crear('secretaria');
+      const hija = await crear('secretaria', { paginaPadreId: raiz.id });
+      // Una rama de dos niveles (madre con una hija) ya no cabe bajo una página de nivel 2.
+      const madre = await crear('secretaria');
+      await crear('secretaria', { paginaPadreId: madre.id });
+
+      const bajoHija = await como('secretaria').patch(`${RUTA}/${madre.id}`, {
+        paginaPadreId: hija.id,
+      });
+      expect(bajoHija.status).toBe(400);
+      expect(errorDePadre(bajoHija)).toEqual([{ campo: 'paginaPadreId', mensaje: MENSAJE }]);
+
+      // Bajo una raíz sí cabe (queda de nivel 2 con su hija en el 3).
+      const bajoRaiz = await como('secretaria').patch(`${RUTA}/${madre.id}`, {
+        paginaPadreId: raiz.id,
+      });
+      expect(bajoRaiz.status).toBe(200);
+    });
+
+    it('una página sin hijas sí se puede mover al nivel 3; volver a la raíz siempre se puede', async () => {
+      const raiz = await crear('secretaria');
+      const hija = await crear('secretaria', { paginaPadreId: raiz.id });
+      const suelta = await crear('secretaria');
+
+      const nivel3 = await como('secretaria').patch(`${RUTA}/${suelta.id}`, {
+        paginaPadreId: hija.id,
+      });
+      expect(nivel3.status).toBe(200);
+
+      const aLaRaiz = await como('secretaria').patch(`${RUTA}/${suelta.id}`, {
+        paginaPadreId: null,
+      });
+      expect(aLaRaiz.status).toBe(200);
+      expect(aLaRaiz.body.datos.paginaPadre).toBeNull();
+    });
+
+    it('cambiar otros campos de una página en el nivel 3 no revalida el árbol', async () => {
+      const raiz = await crear('secretaria');
+      const hija = await crear('secretaria', { paginaPadreId: raiz.id });
+      const nieta = await crear('secretaria', { paginaPadreId: hija.id });
+
+      const respuesta = await como('secretaria').patch(`${RUTA}/${nieta.id}`, {
+        titulo: 'Nieta editada',
+      });
+      expect(respuesta.status).toBe(200);
+    });
+  });
+
   it('«inicio» y «nosotros» no cambian de slug (el portal depende de ellas)', async () => {
     const propia = await panel.crearSede();
     const inicio = await como('admin').post(RUTA, pagina({ slug: 'inicio', sedeId: propia.id }));

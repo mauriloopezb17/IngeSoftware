@@ -15,6 +15,7 @@ import * as modelo from '../models/bitacora.model.js';
 import { esAdministrador } from '../utils/alcanceSede.js';
 import { formatearFechaHora } from '../utils/formato.js';
 import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
+import { programarInvalidacion } from './invalidacionCache.service.js';
 
 // Columnas cuyo valor nunca se guarda (se registra que cambiaron, no a qué).
 const COLUMNAS_OCULTAS = new Set(['hash_contrasena']);
@@ -75,7 +76,7 @@ function datosDelCambio(accion, anterior, nuevo) {
 
 // Registra un cambio. "db" es el { consultar } de la transacción del cambio.
 // anterior / nuevo: filas de la tabla (snake_case, tal como se guardan). Un UPDATE que no cambia
-// nada no se registra.
+// nada no se registra (ni invalida la caché de lecturas públicas).
 export async function registrarCambio(
   db,
   contexto,
@@ -100,6 +101,10 @@ export async function registrarCambio(
     },
     db,
   );
+
+  // Todo cambio que se registra puede afectar lo que ve el portal: se invalida su caché al
+  // confirmarse la transacción (invalidacionCache.service.js).
+  await programarInvalidacion(db, { entidad, anterior, nuevo });
 }
 
 // ---- Consulta (GET /api/admin/bitacora) ----

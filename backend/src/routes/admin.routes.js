@@ -2,6 +2,7 @@
 // Todos exigen sesión: sin cookie válida responden 401 NO_AUTENTICADO, existan o no.
 // Cada módulo del panel registra aquí sus rutas y pone su requerirPermiso() (autorizar.js).
 import { Router } from 'express';
+import { listarCatalogosDelPanel } from '../controllers/catalogos.controller.js';
 import { autenticar } from '../middlewares/autenticar.js';
 import adminBoletinesRoutes from './adminBoletines.routes.js';
 import adminEventosRoutes from './adminEventos.routes.js';
@@ -21,6 +22,9 @@ import multimediaRoutes from './multimedia.routes.js';
 const router = Router();
 
 router.use(autenticar);
+
+// Catálogos para los selectores del panel: los puede consultar todos los roles.
+router.get('/catalogos', listarCatalogosDelPanel);
 
 router.use('/multimedia', multimediaRoutes);
 router.use('/multimedia', bibliotecaRoutes);

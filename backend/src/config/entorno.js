@@ -156,6 +156,13 @@ const esquemaEntorno = z
         'debe ser una URL de Redis (redis://servidor:puerto).',
       ),
     ),
+    // Caché de lecturas públicas en Redis (ADR-02). Se puede apagar sin tocar el código.
+    CACHE_HABILITADA: sinVacio(
+      z
+        .enum(['true', 'false'], { error: 'debe ser true o false.' })
+        .default('true')
+        .transform((valor) => valor === 'true'),
+    ),
     JWT_SECRET: sinVacio(z.string().min(32, 'debe tener al menos 32 caracteres.')),
     JWT_EXPIRA_EN: sinVacio(
       z
@@ -235,6 +242,7 @@ export function validarEntorno(variables) {
     confiarProxy: v.TRUST_PROXY,
     baseDatosUrl: v.DATABASE_URL,
     redisUrl: v.REDIS_URL,
+    cacheHabilitada: v.CACHE_HABILITADA,
     jwt: Object.freeze({ secreto: v.JWT_SECRET, expiraEn: v.JWT_EXPIRA_EN }),
     almacenamiento: ociConfigurado
       ? Object.freeze({
