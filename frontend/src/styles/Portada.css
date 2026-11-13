@@ -1,4 +1,3 @@
-
 /* Portada */
 .portada {
   width: 100%;
@@ -254,4 +253,49 @@
   .portada-video-chip {
     transition: none;
   }
+}
+
+/* PAR-61 — Animaciones cinematográficas de la portada (sin cambios de JSX). */
+@media (prefers-reduced-motion: no-preference) {
+  /* Desplazamiento muy suave del poster. El video conserva sus estados de opacidad. */
+  .portada-fondo > img {
+    transform-origin: center center;
+    animation: portada-poster-cinematico 18s ease-out both;
+  }
+
+  .portada-contenido .portada-titulo {
+    animation: portada-aparecer 900ms cubic-bezier(.2,.7,.2,1) both;
+  }
+  .portada-contenido .portada-descripcion {
+    animation: portada-aparecer 900ms cubic-bezier(.2,.7,.2,1) 140ms both;
+  }
+  .portada-contenido .portada-botones {
+    animation: portada-aparecer 850ms cubic-bezier(.2,.7,.2,1) 260ms both;
+  }
+  .portada-video-wrap {
+    animation: portada-aparecer 850ms cubic-bezier(.2,.7,.2,1) 360ms both;
+  }
+  .portada-accesos {
+    animation: portada-accesos-entrada 850ms cubic-bezier(.2,.7,.2,1) 300ms both;
+  }
+  .portada-acceso-icono {
+    transition: transform 300ms ease, background-color 300ms ease;
+  }
+  .portada-acceso:hover .portada-acceso-icono,
+  .portada-acceso:focus-visible .portada-acceso-icono {
+    transform: scale(1.09);
+  }
+  .portada-video-chip:hover { transform: translateY(-2px); }
+}
+@keyframes portada-poster-cinematico {
+  from { transform: scale(1.08); }
+  to { transform: scale(1); }
+}
+@keyframes portada-aparecer {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes portada-accesos-entrada {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }

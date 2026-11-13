@@ -308,3 +308,30 @@
     transition: none;
   }
 }
+
+/* PAR-61 — Mapa ilustrativo y datos de contacto. */
+@media (prefers-reduced-motion: no-preference) {
+  .contacto-mapa { transition: box-shadow 320ms ease; }
+  .contacto-mapa:hover { box-shadow: 0 18px 34px rgba(23,20,21,.12); }
+  .contacto-mapa-etiqueta { transition: background-color 240ms ease, box-shadow 240ms ease; }
+  .contacto-mapa:hover .contacto-mapa-etiqueta { box-shadow: 0 10px 20px rgba(23,20,21,.22); }
+  .contacto-dato-icono { transition: transform 280ms ease; }
+  .contacto-dato:hover .contacto-dato-icono { transform: scale(1.08); }
+  .contacto-boton-principal svg,
+  .contacto-boton-secundario svg { transition: transform 250ms ease; }
+  .contacto-boton-principal:hover svg:last-child,
+  .contacto-boton-secundario:hover svg:last-child { transform: translateX(4px); }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .contacto-mapa, .contacto-informacion {
+      animation: contacto-aparecer 1s both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 28%;
+    }
+  }
+}
+@keyframes contacto-aparecer {
+  from { opacity: 0; transform: translateY(27px); }
+  to { opacity: 1; transform: translateY(0); }
+}

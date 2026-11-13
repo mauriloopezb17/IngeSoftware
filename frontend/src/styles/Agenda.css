@@ -342,3 +342,30 @@
   color: #ffffff;
   text-decoration: underline;
 }
+
+/* PAR-61 — Lectura fluida de los eventos y paneles laterales. */
+@media (prefers-reduced-motion: no-preference) {
+  .agenda-evento {
+    transition: background-color 280ms ease, padding-left 280ms ease;
+  }
+  .agenda-evento:hover { background-color: rgba(255,255,255,.42); padding-left: 7px; }
+  .agenda-evento-flecha { transition: transform 260ms ease; }
+  .agenda-evento:hover .agenda-evento-flecha { transform: translateX(5px); }
+  .agenda-fecha { transition: background-color 320ms ease; }
+  .agenda-evento:hover .agenda-fecha { background-color: #393334; }
+  .agenda-avisos, .agenda-boletin { transition: box-shadow 300ms ease; }
+  .agenda-avisos:hover, .agenda-boletin:hover { box-shadow: 0 16px 32px rgba(23,20,21,.1); }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .agenda-encabezado, .agenda-evento, .agenda-avisos, .agenda-boletin {
+      animation: agenda-aparecer 1s both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 25%;
+    }
+  }
+}
+@keyframes agenda-aparecer {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}

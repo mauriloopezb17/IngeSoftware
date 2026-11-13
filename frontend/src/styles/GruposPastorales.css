@@ -165,3 +165,31 @@
     font-size: 42px;
   }
 }
+
+/* PAR-61 — Presentación suave de grupos pastorales. */
+@media (prefers-reduced-motion: no-preference) {
+  .grupos-tarjeta {
+    transition: box-shadow 300ms ease, background-color 300ms ease;
+  }
+  .grupos-tarjeta:hover {
+    background-color: #fffdfa;
+    box-shadow: 0 16px 30px rgba(23,20,21,.11);
+  }
+  .grupos-icono { transition: transform 300ms ease; }
+  .grupos-tarjeta:hover .grupos-icono { transform: scale(1.09); }
+  .grupos-boton svg { transition: transform 250ms ease; }
+  .grupos-boton:hover svg { transform: translateX(4px); }
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .grupos-informacion, .grupos-tarjeta {
+      animation: grupos-aparecer 1s both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 26%;
+    }
+  }
+}
+@keyframes grupos-aparecer {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
