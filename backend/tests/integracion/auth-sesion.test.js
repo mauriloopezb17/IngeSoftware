@@ -1,19 +1,26 @@
 // GET /api/auth/yo, POST /api/auth/logout y POST /api/auth/cambiar-contrasena contra la base real.
 import jwt from 'jsonwebtoken';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../src/app.js';
 import { obtenerEntorno } from '../../src/config/entorno.js';
 import { cerrarPool, consultar } from '../../src/db/index.js';
+import { cerrarRedis } from '../../src/db/redis.js';
 import { verificarContrasena } from '../../src/utils/contrasenas.js';
 import { ejemploDelContrato } from '../apoyo/contrato.js';
+import { limpiarContadoresDeIntentos } from '../apoyo/limite.js';
 import { borrarUsuariosDePrueba, crearUsuarioDePrueba } from '../apoyo/usuarios.js';
 
 const app = createApp();
 
+// Los fallos de unas pruebas no deben bloquear a las siguientes (límite de intentos por IP).
+beforeEach(limpiarContadoresDeIntentos);
+
 afterAll(async () => {
+  await limpiarContadoresDeIntentos();
   await borrarUsuariosDePrueba();
   await cerrarPool();
+  await cerrarRedis();
 });
 
 // Inicia sesión y devuelve el valor de la cabecera Cookie y la respuesta del login.

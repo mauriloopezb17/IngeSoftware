@@ -1,11 +1,13 @@
 // POST /api/auth/login contra la base real, con usuarios temporales (no se tocan los del seed).
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../src/app.js';
 import { obtenerEntorno } from '../../src/config/entorno.js';
 import { cerrarPool, consultar } from '../../src/db/index.js';
+import { cerrarRedis } from '../../src/db/redis.js';
 import { duracionEnSegundos, verificarToken } from '../../src/utils/sesion.js';
 import { ejemploDelContrato } from '../apoyo/contrato.js';
+import { limpiarContadoresDeIntentos } from '../apoyo/limite.js';
 import { borrarUsuariosDePrueba, crearUsuarioDePrueba } from '../apoyo/usuarios.js';
 
 const app = createApp();
@@ -14,9 +16,14 @@ const ENCABEZADO = '### `POST /api/auth/login`';
 
 const iniciarSesion = (cuerpo) => request(app).post(LOGIN).send(cuerpo);
 
+// Los fallos de unas pruebas no deben bloquear a las siguientes (límite de intentos por IP).
+beforeEach(limpiarContadoresDeIntentos);
+
 afterAll(async () => {
+  await limpiarContadoresDeIntentos();
   await borrarUsuariosDePrueba();
   await cerrarPool();
+  await cerrarRedis();
 });
 
 describe('POST /api/auth/login: inicio correcto', () => {

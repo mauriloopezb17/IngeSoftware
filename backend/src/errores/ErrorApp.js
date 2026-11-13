@@ -48,6 +48,13 @@ export class ErrorApp extends Error {
     return new ErrorApp('CONFLICTO', mensaje, detalles);
   }
 
+  // 429 con la cabecera Retry-After (segundos que faltan), que pone el manejador de errores.
+  static demasiadasSolicitudes(mensaje, reintentarEnSegundos) {
+    const error = new ErrorApp('DEMASIADAS_SOLICITUDES', mensaje);
+    error.reintentarEnSegundos = reintentarEnSegundos;
+    return error;
+  }
+
   // Cuerpo de la respuesta según el contrato.
   aRespuesta() {
     return { error: { codigo: this.codigo, mensaje: this.message, detalles: this.detalles } };
