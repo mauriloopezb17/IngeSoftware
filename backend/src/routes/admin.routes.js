@@ -3,6 +3,7 @@
 // Cada módulo del panel registra aquí sus rutas y pone su requerirPermiso() (autorizar.js).
 import { Router } from 'express';
 import { autenticar } from '../middlewares/autenticar.js';
+import adminEventosRoutes from './adminEventos.routes.js';
 import adminPublicacionesRoutes from './adminPublicaciones.routes.js';
 import bibliotecaRoutes from './biblioteca.routes.js';
 import bitacoraRoutes from './bitacora.routes.js';
@@ -16,5 +17,6 @@ router.use('/multimedia', multimediaRoutes);
 router.use('/multimedia', bibliotecaRoutes);
 router.use('/bitacora', bitacoraRoutes);
 router.use('/publicaciones', adminPublicacionesRoutes);
+router.use('/eventos', adminEventosRoutes);
 
 export default router;

@@ -604,6 +604,15 @@ Calendario parroquial. Permiso de escritura: `eventos.gestionar`. Los eventos se
 | `descripcion`       | Texto plano, hasta 2000 caracteres.                                                     |
 | `lugar`             | Hasta 150 caracteres.                                                                   |
 
+Reglas adicionales:
+
+- `sedeId` (solo el Administrador, igual que en publicaciones): por defecto su sede; obligatorio si no tiene sede asignada.
+- `PATCH` acepta los mismos campos salvo `sedeId`; `fechaFin` se compara con la `fechaInicio` que quedaría guardada. `idExternoM365` es solo lectura: enviarlo es `400 VALIDACION` («Campo no permitido.»).
+- Con `todoElDia: true` las fechas se guardan como se envían; el portal no muestra la hora.
+- `categoriaEventoId` inexistente: `400 VALIDACION` («La categoría no existe.»). `imagenId` debe ser una imagen de la biblioteca de la misma sede («Debe ser una imagen de la biblioteca multimedia de esta sede.»).
+- Filtros de la lista: `desde` y `hasta` incluyen todo evento que se cruce con ese rango de días (hora de Bolivia); `estado` acepta `BORRADOR`, `PUBLICADO` y `ARCHIVADO` (varios con comas); `hasta` anterior a `desde` es `400 VALIDACION`.
+- Lectura: todos los roles de la sede; `POST`, `PATCH` y `DELETE` piden `eventos.gestionar` (Marketing recibe `403 SIN_PERMISO`).
+
 ---
 
 ## 5. Horarios
