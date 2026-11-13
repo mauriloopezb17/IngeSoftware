@@ -91,3 +91,24 @@ export const cuerpoEditarPublicacion = z
     fechaExpiracion: campos.fechaExpiracion,
   })
   .refine(fechasEnOrden, { path: ['fechaExpiracion'], message: MENSAJE_EXPIRACION });
+
+// ---- Acciones de estado ----
+
+export const cuerpoAprobar = z.strictObject({
+  fechaPublicacion: fechaHoraConZona.nullable().optional(),
+});
+
+export const cuerpoPublicar = z
+  .strictObject({
+    fechaPublicacion: fechaHoraConZona.nullable().optional(),
+    fechaExpiracion: fechaHoraConZona.nullable().optional(),
+  })
+  .refine(fechasEnOrden, { path: ['fechaExpiracion'], message: MENSAJE_EXPIRACION });
+
+export const cuerpoRechazar = z.strictObject({
+  observacion: z
+    .string({ error: 'Debe ser un texto.' })
+    .trim()
+    .min(5, 'Debe tener de 5 a 500 caracteres.')
+    .max(500, 'Debe tener de 5 a 500 caracteres.'),
+});

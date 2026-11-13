@@ -517,6 +517,14 @@ Todas responden `200` con el objeto publicación actualizado. Si la acción no e
 | `POST /api/admin/publicaciones/:id/archivar`        | —                                                                           | `PUBLICADO` → `ARCHIVADO`.                                                        |
 | `POST /api/admin/publicaciones/:id/restaurar`       | —                                                                           | `ARCHIVADO` → `BORRADOR`.                                                         |
 
+Reglas de las acciones (el detalle del flujo está en [estados-publicacion.md](estados-publicacion.md)):
+
+- `aprobar` y `publicar` aceptan solo los campos de la tabla; cualquier otro es `400 VALIDACION`. `fechaPublicacion` y `fechaExpiracion` deben llevar zona horaria. Si se envían ambas en `publicar`, la expiración debe ser posterior (`400` en `fechaExpiracion`).
+- `enviar-revision`, `aprobar` y `publicar` validan [los requisitos para salir de `BORRADOR`](estados-publicacion.md#requisitos-para-salir-de-borrador) y responden `400 VALIDACION` con el mensaje «La publicación no está lista para publicarse.» y un detalle por cada campo que falta. `enviar-revision` valida con la fecha de publicación **deseada** guardada.
+- Una `fechaExpiracion` que ya pasó, o que no es posterior a la fecha efectiva de publicación, es `400 VALIDACION` en `fechaExpiracion` («Debe ser posterior a la fecha de publicación y a la fecha actual.»).
+- Orden de las respuestas de error: `403` si el rol no tiene el permiso de la acción para ese tipo de publicación (o no es el autor, en `enviar-revision`); `409` si el estado actual no la permite. Marketing al enviar un aviso a revisión recibe `409` (los avisos no pasan por revisión), no `403`, porque sí tiene `noticias.redactar`.
+- `rechazar` registra al revisor y la fecha; al reenviar o aprobar después, la observación anterior se conserva hasta la nueva decisión (`aprobar` la deja en `null`).
+
 Ejemplo de rechazo:
 
 ```json
