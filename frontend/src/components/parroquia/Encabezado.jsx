@@ -11,8 +11,9 @@ import {
 } from 'lucide-react';
 
 import { anchoContenido } from './ElementosComunes.jsx';
+import EnlacePortal from './EnlacePortal.jsx';
 import { IconoRedSocial } from './IconoDinamico.jsx';
-import { useSede } from '../../hooks/index.js';
+import { useMenuPaginas, useSede } from '../../hooks/index.js';
 import { armarHrefTelefono } from '../../utils/formatoPortal.js';
 
 import logoBlanco from '../../assets/parroquia/logos/logo-horizontal-blanco.svg';
@@ -106,6 +107,7 @@ const normalizarTexto = (texto) =>
 
 function Encabezado() {
   const { data: sede } = useSede();
+  const { data: paginasMenu = [] } = useMenuPaginas();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [buscadorAbierto, setBuscadorAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState('');
@@ -143,6 +145,14 @@ function Encabezado() {
 
     window.location.hash = destino;
   };
+
+  const enlacesMenuDinamico = paginasMenu
+    .filter((pagina) => pagina.slug !== 'inicio' && pagina.slug !== 'nosotros')
+    .map((pagina) => ({
+      nombre: pagina.titulo,
+      enlace: `/paginas/${pagina.slug}`,
+    }));
+  const todosEnlacesMenu = [...enlacesNavegacion, ...enlacesMenuDinamico];
 
   const configuracion = sede?.configuracion ?? {};
   const redesSociales = sede?.redesSociales ?? [];
@@ -250,15 +260,15 @@ function Encabezado() {
           }`}
           aria-label="Navegación principal"
         >
-          {enlacesNavegacion.map(({ nombre, enlace }) => (
-            <a
-              key={nombre}
-              href={enlace}
+          {todosEnlacesMenu.map(({ nombre, enlace }) => (
+            <EnlacePortal
+              key={enlace}
+              to={enlace}
               className="encabezado-enlace"
               onClick={cerrarMenu}
             >
               {nombre}
-            </a>
+            </EnlacePortal>
           ))}
         </nav>
 

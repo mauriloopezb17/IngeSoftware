@@ -152,6 +152,13 @@ export const menuPaginasExaltacion = [
     paginaPadreId: null,
     ordenMenu: 1,
   },
+  {
+    id: 3,
+    slug: 'historia',
+    titulo: 'Nuestra historia',
+    paginaPadreId: null,
+    ordenMenu: 2,
+  },
 ];
 
 export const paginasExaltacion = {
@@ -262,6 +269,62 @@ export const paginasExaltacion = {
               titulo: 'P. Gregorio, C.P.',
               subtitulo: 'Párroco',
               url_imagen: '/media/seed/padre_gregorio.jpg',
+            },
+          ],
+        },
+      },
+    ],
+  },
+  historia: {
+    id: 3,
+    slug: 'historia',
+    titulo: 'Nuestra historia',
+    descripcionSeo: 'Historia y vida pasionista de la Parroquia Señor de la Exaltación en Obrajes, La Paz.',
+    paginaPadre: { id: 2, slug: 'nosotros', titulo: 'Quiénes somos' },
+    fechaActualizacion: '2026-10-20T12:00:00-04:00',
+    bloques: [
+      {
+        id: 10,
+        tipo: 'texto_imagen',
+        orden: 1,
+        contenido: {
+          etiqueta: 'Historia parroquial',
+          titulo: 'Acompañando a Obrajes desde hace décadas',
+          texto:
+            'La Parroquia Señor de la Exaltación nació para servir a las familias del sur de La Paz bajo el carisma de la Congregación de la Pasión.\n\nA lo largo de los años, la comunidad ha crecido en torno a la Eucaristía, la catequesis y la pastoral social.',
+          url_imagen: '/media/seed/exterior-parroquia.webp',
+          texto_alternativo: 'Fachada exterior de la Parroquia Señor de la Exaltación',
+          posicion_imagen: 'derecha',
+        },
+      },
+      {
+        id: 11,
+        tipo: 'cita',
+        orden: 2,
+        contenido: {
+          texto: 'La Pasión de Cristo es la obra más grande y estupenda del amor divino.',
+          autor: 'San Pablo de la Cruz',
+        },
+      },
+      {
+        id: 12,
+        tipo: 'galeria',
+        orden: 3,
+        contenido: {
+          titulo: 'Nuestro templo',
+          imagenes: [
+            {
+              url: '/media/seed/exterior-parroquia.webp',
+              texto_alternativo: 'Vista exterior de la Parroquia Señor de la Exaltación',
+              leyenda: 'Fachada sobre la Av. Héctor Ormachea',
+            },
+            {
+              url: '/media/seed/altar.webp',
+              texto_alternativo: 'Altar del templo parroquial adornado con flores rojas y blancas',
+            },
+            {
+              url: '/media/seed/crucifijo.webp',
+              texto_alternativo: 'Crucifijo en el interior del templo parroquial',
             },
           ],
         },

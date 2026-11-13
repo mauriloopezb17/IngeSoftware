@@ -6,6 +6,7 @@ import NoticiaDetalle from './pages/NoticiaDetalle.jsx';
 import Proclamas from './pages/Proclamas.jsx';
 import Calendario from './pages/Calendario.jsx';
 import Boletines from './pages/Boletines.jsx';
+import PaginaPublica from './pages/PaginaPublica.jsx';
 import NoEncontrado from './pages/NoEncontrado.jsx';
 import CargandoPagina from './pages/CargandoPagina.jsx';
 
@@ -26,6 +27,7 @@ export const rutas = [
       { path: '/proclamas', Component: Proclamas },
       { path: '/calendario', Component: Calendario },
       { path: '/boletines', Component: Boletines },
+      { path: '/paginas/:slug', Component: PaginaPublica },
       // El panel define sus propias subrutas dentro de AdminApp.
       { path: '/admin/*', lazy: cargarAdmin },
       { path: '*', Component: NoEncontrado },
