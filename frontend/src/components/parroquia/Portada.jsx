@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { ArrowRight, Play, Pause } from 'lucide-react';
 
 import Encabezado from './Encabezado.jsx';
+import EnlacePortal from './EnlacePortal.jsx';
 import { anchoContenido, EtiquetaSeccion } from './ElementosComunes.jsx';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { IconoDinamico } from './IconoDinamico.jsx';
@@ -110,9 +111,9 @@ function Portada() {
                 {hero.botones?.length > 0 && (
                   <div className="portada-botones mt-9 flex flex-wrap items-center gap-4">
                     {hero.botones.map((boton, indice) => (
-                      <a
+                      <EnlacePortal
                         key={boton.texto}
-                        href={boton.enlace}
+                        to={boton.enlace}
                         className={
                           indice === 0
                             ? 'static-cta'
@@ -121,7 +122,7 @@ function Portada() {
                       >
                         {boton.texto}
                         {indice === 0 && <ArrowRight size={18} />}
-                      </a>
+                      </EnlacePortal>
                     ))}
                   </div>
                 )}
@@ -169,9 +170,9 @@ function Portada() {
       {tarjetas.length > 0 && (
         <div className={`${anchoContenido} portada-accesos`}>
           {tarjetas.map(({ titulo, subtitulo, icono, enlace }) => (
-            <a
+            <EnlacePortal
               key={titulo}
-              href={enlace || '#'}
+              to={enlace || '#'}
               className="portada-acceso"
               aria-label={`Ir a ${titulo}`}
             >
@@ -186,7 +187,7 @@ function Portada() {
                   <span className="portada-acceso-subtitulo">{subtitulo}</span>
                 )}
               </span>
-            </a>
+            </EnlacePortal>
           ))}
         </div>
       )}
