@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { Link, useBlocker, useNavigate } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Eye, ImagePlus, Loader2, Save, Send, Trash2 } from 'lucide-react';
+import { AlertCircle, Eye, ImagePlus, Loader2, Rocket, Save, Send, Trash2 } from 'lucide-react';
 
 import CampoTexto from '../componentes/CampoTexto.jsx';
 import Dialogo from '../componentes/Dialogo.jsx';
@@ -13,6 +13,8 @@ import {
   crearPublicacion,
   enviarARevision,
   obtenerCatalogos,
+  publicarPublicacion,
+  TIPO_AVISO,
   TIPOS_DE_ESTA_PANTALLA,
 } from './api.js';
 import { aContenido } from './contenido.js';
@@ -28,11 +30,11 @@ const estiloControl =
 const MAX_RESUMEN = 400;
 
 // Campos del formulario a partir de una publicación de la API (o vacíos, para una nueva).
-function camposDe(publicacion) {
+function camposDe(publicacion, tipoInicial = 'NOTICIA') {
   return {
     titulo: publicacion?.titulo ?? '',
     resumen: publicacion?.resumen ?? '',
-    tipo: publicacion?.tipo.codigo ?? 'NOTICIA',
+    tipo: publicacion?.tipo.codigo ?? tipoInicial,
     categoriaId: publicacion?.categoria ? String(publicacion.categoria.id) : '',
     portada: publicacion?.imagenPortada ?? null,
     destacada: publicacion?.destacada ?? false,
@@ -102,9 +104,10 @@ function Grupo({ legend, error, children, ayuda }) {
   );
 }
 
-// Formulario de noticia o nota de prensa. `publicacion` (opcional): la que se edita.
+// Formulario de noticia, nota de prensa o aviso. `publicacion` (opcional): la que se edita.
+// `tipoInicial`: el tipo de una publicación nueva (los avisos pasan 'AVISO'; el tipo no se puede cambiar después).
 // `aviso`: mensaje inicial (por ejemplo, «Borrador guardado.» al venir de crear).
-export default function FormularioPublicacion({ publicacion, aviso: avisoInicial = '' }) {
+export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTICIA', aviso: avisoInicial = '' }) {
   const navegar = useNavigate();
   const clienteConsultas = useQueryClient();
   const idResumen = useId();
@@ -115,8 +118,8 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
   const idTipo = useId();
   const avisos = useRef(null);
 
-  const [campos, setCampos] = useState(() => camposDe(publicacion));
-  const [base, setBase] = useState(() => huella(camposDe(publicacion)));
+  const [campos, setCampos] = useState(() => camposDe(publicacion, tipoInicial));
+  const [base, setBase] = useState(() => huella(camposDe(publicacion, tipoInicial)));
   // Documento del editor: `bloquesBase` es como quedó cargado (BlockNote lo normaliza) y `bloques` el actual.
   const [bloquesBase, setBloquesBase] = useState(null);
   const [bloques, setBloques] = useState(null);
@@ -129,6 +132,8 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
   const [confirmandoEnvio, setConfirmandoEnvio] = useState(false);
 
   const editando = Boolean(publicacion);
+  const esAviso = campos.tipo === TIPO_AVISO;
+  const listadoVolver = esAviso ? '/admin/publicaciones/avisos' : '/admin/publicaciones';
   const cambiar = (cambios) => setCampos((actuales) => ({ ...actuales, ...cambios }));
 
   const catalogos = useQuery({ queryKey: CLAVE_CATALOGOS, queryFn: obtenerCatalogos, staleTime: 5 * 60 * 1000 });
@@ -194,6 +199,69 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
     fechaExpiracion: deCampoFecha(campos.fechaExpiracion),
   });
 
+  // ---- Publicar directamente (avisos: sin revisión) ----
+  // Guarda lo que haya en pantalla y publica. Con una fecha de publicación futura queda programada.
+  // Si el aviso se llegó a crear pero no se pudo publicar, queda como borrador y se lleva a su edición
+  // (no se reintenta desde «nuevo», para no duplicarlo).
+  const publicar = useMutation({
+    mutationFn: async () => {
+      const cuerpo = construirCuerpo();
+      let id = publicacion?.id;
+      try {
+        if (editando) await actualizarPublicacion(id, cuerpo);
+        else id = (await crearPublicacion({ tipo: campos.tipo, ...cuerpo })).id;
+      } catch (error) {
+        error.creadaId = null;
+        throw error;
+      }
+      const fechas = {};
+      if (cuerpo.fechaPublicacion) fechas.fechaPublicacion = cuerpo.fechaPublicacion;
+      if (cuerpo.fechaExpiracion) fechas.fechaExpiracion = cuerpo.fechaExpiracion;
+      try {
+        return await publicarPublicacion(id, fechas);
+      } catch (error) {
+        error.creadaId = editando ? null : id;
+        throw error;
+      }
+    },
+    onSuccess: (publicada) => {
+      clienteConsultas.invalidateQueries({ queryKey: CLAVE_PUBLICACIONES });
+      omitirAvisoRef.current = true;
+      const programada = publicada.fechaPublicacion && new Date(publicada.fechaPublicacion) > new Date();
+      navegar(listadoVolver, {
+        state: { aviso: `«${publicada.titulo}» ${programada ? 'quedó programada' : 'se publicó'}.` },
+      });
+    },
+    onError: (error) => {
+      if (error.creadaId) {
+        clienteConsultas.invalidateQueries({ queryKey: CLAVE_PUBLICACIONES });
+        omitirAvisoRef.current = true;
+        navegar(`/admin/publicaciones/${error.creadaId}/editar`, {
+          replace: true,
+          state: { aviso: `Se guardó como borrador, pero no se pudo publicar: ${error.message}` },
+        });
+        return;
+      }
+      const { errores: porCampo, generales: avisosGenerales } = erroresDe(error);
+      setErrores(porCampo);
+      setGenerales(avisosGenerales);
+      setAviso('');
+      requestAnimationFrame(() => avisos.current?.focus());
+    },
+  });
+
+  function publicarAviso() {
+    const locales = validarLocal(campos);
+    if (Object.keys(locales).length) {
+      setErrores(locales);
+      setGenerales([]);
+      setAviso('');
+      requestAnimationFrame(() => avisos.current?.focus());
+      return;
+    }
+    publicar.mutate();
+  }
+
   // ---- Enviar a revisión (Marketing) ----
   // Guarda primero lo que haya en pantalla, para que el Párroco revise exactamente eso, y luego envía.
   const enviarRevision = useMutation({
@@ -245,6 +313,7 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
   }
 
   const puedeEnviar = editando && publicacion.acciones.includes('ENVIAR_REVISION');
+  const puedePublicar = esAviso && (!editando || publicacion.acciones.includes('PUBLICAR'));
   const mensajesDeError = [...Object.values(errores), ...generales];
 
   return (
@@ -341,16 +410,16 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
               id={idTipo}
               value={campos.tipo}
               onChange={(e) => cambiar({ tipo: e.target.value })}
-              disabled={editando}
+              disabled={editando || esAviso}
               className={`${estiloControl} border-borderSoft`}
             >
-              {Object.entries(TIPOS_DE_ESTA_PANTALLA).map(([codigo, nombre]) => (
+              {Object.entries(esAviso ? { [TIPO_AVISO]: 'Aviso' } : TIPOS_DE_ESTA_PANTALLA).map(([codigo, nombre]) => (
                 <option key={codigo} value={codigo}>
                   {nombre}
                 </option>
               ))}
             </select>
-            {editando && <p className="text-xs text-muted">El tipo no se puede cambiar.</p>}
+            {(editando || esAviso) && <p className="text-xs text-muted">El tipo no se puede cambiar.</p>}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -466,7 +535,7 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
       <div className="flex flex-wrap items-center gap-3 border-t border-borderSoft pt-5">
         <button
           type="submit"
-          disabled={guardar.isPending}
+          disabled={guardar.isPending || publicar.isPending}
           className="flex items-center gap-2 rounded-md bg-gold px-5 py-2.5 font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
         >
           {guardar.isPending ? (
@@ -476,11 +545,26 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
           )}
           {editando ? 'Guardar cambios' : 'Guardar borrador'}
         </button>
+        {puedePublicar && (
+          <button
+            type="button"
+            onClick={publicarAviso}
+            disabled={guardar.isPending || publicar.isPending}
+            className="flex items-center gap-2 rounded-md border border-goldDark bg-white px-4 py-2.5 text-sm font-semibold text-goldDark hover:bg-goldPale focus-visible:outline-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {publicar.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Rocket className="size-4" aria-hidden="true" />
+            )}
+            Publicar
+          </button>
+        )}
         {puedeEnviar && (
           <button
             type="button"
             onClick={confirmarEnvio}
-            disabled={guardar.isPending || enviarRevision.isPending}
+            disabled={guardar.isPending || enviarRevision.isPending || publicar.isPending}
             className="flex items-center gap-2 rounded-md border border-goldDark bg-white px-4 py-2.5 text-sm font-semibold text-goldDark hover:bg-goldPale focus-visible:outline-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Send className="size-4" aria-hidden="true" /> Enviar a revisión
@@ -494,10 +578,10 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
           <Eye className="size-4" aria-hidden="true" /> Vista previa
         </button>
         <Link
-          to="/admin/publicaciones"
+          to={listadoVolver}
           className="rounded-md border border-borderSoft bg-white px-4 py-2.5 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
         >
-          Volver a publicaciones
+          {esAviso ? 'Volver a avisos' : 'Volver a publicaciones'}
         </Link>
         {hayCambios && <p className="text-sm text-muted">Hay cambios sin guardar.</p>}
       </div>
@@ -534,7 +618,7 @@ export default function FormularioPublicacion({ publicacion, aviso: avisoInicial
         <PreviaPublicacion
           campos={campos}
           categoria={categorias.find((c) => String(c.id) === campos.categoriaId)}
-          tipoNombre={TIPOS_DE_ESTA_PANTALLA[campos.tipo]}
+          tipoNombre={esAviso ? 'Aviso' : TIPOS_DE_ESTA_PANTALLA[campos.tipo]}
           bloques={bloques ?? JSON.parse(bloquesBase ?? '[]')}
           onCerrar={() => setVerPrevia(false)}
         />
