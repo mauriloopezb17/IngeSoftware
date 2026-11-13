@@ -3,6 +3,7 @@
 //   GET /api/sedes/:sede            y todo lo que cuelga de una sede (horarios, servicios, …)
 import { Router } from 'express';
 import { z } from 'zod';
+import * as pastoral from '../controllers/contenidoPastoral.controller.js';
 import * as horarios from '../controllers/horarios.controller.js';
 import * as sedes from '../controllers/sedes.controller.js';
 import { resolverSede } from '../middlewares/resolverSede.js';
@@ -21,6 +22,10 @@ deSede.get(
   validar({ query: z.object({ tipo: listaIds.optional() }) }),
   horarios.listar,
 );
+deSede.get('/servicios', pastoral.listarServicios);
+deSede.get('/servicios/:slug', pastoral.detalleServicio);
+deSede.get('/grupos-pastorales', pastoral.listarGruposPastorales);
+deSede.get('/videos', pastoral.listarVideos);
 
 router.use('/:sede', resolverSede, deSede);
 
