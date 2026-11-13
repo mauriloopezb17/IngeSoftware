@@ -10,6 +10,9 @@ export const TIPOS_DE_ESTA_PANTALLA = {
   NOTA_DE_PRENSA: 'Nota de prensa',
 };
 
+// Los avisos tienen su pestaña (/admin/publicaciones/avisos): mismo listado, formulario y editor.
+export const TIPO_AVISO = 'AVISO';
+
 export const ESTADOS = {
   BORRADOR: 'Borrador',
   EN_REVISION: 'En revisión',
@@ -74,3 +77,21 @@ export function listarPublicaciones({ estado, tipo, buscar, autor, pagina, porPa
     senal,
   });
 }
+
+// Publica directamente (BORRADOR -> PUBLICADO). Con una fechaPublicacion futura queda programada.
+export async function publicarPublicacion(id, cuerpo = {}) {
+  const { datos } = await clienteHttp.post(`/admin/publicaciones/${id}/publicar`, cuerpo);
+  return datos;
+}
+
+export async function archivarPublicacion(id) {
+  const { datos } = await clienteHttp.post(`/admin/publicaciones/${id}/archivar`);
+  return datos;
+}
+
+export async function restaurarPublicacion(id) {
+  const { datos } = await clienteHttp.post(`/admin/publicaciones/${id}/restaurar`);
+  return datos;
+}
+
+export const eliminarPublicacion = (id) => clienteHttp.delete(`/admin/publicaciones/${id}`);

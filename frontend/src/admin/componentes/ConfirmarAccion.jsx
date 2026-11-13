@@ -8,6 +8,7 @@ export default function ConfirmarAccion({
   titulo,
   children,
   textoConfirmar = 'Eliminar',
+  peligro = true,
   pendiente = false,
   error = null,
   onConfirmar,
@@ -49,7 +50,11 @@ export default function ConfirmarAccion({
           type="button"
           onClick={onConfirmar}
           disabled={pendiente}
-          className="flex items-center gap-2 rounded-md bg-redParish px-4 py-2 text-sm font-semibold text-white hover:bg-redParish/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-redParish disabled:cursor-not-allowed disabled:opacity-60"
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+            peligro
+              ? 'bg-redParish text-white hover:bg-redParish/90 focus-visible:outline-redParish'
+              : 'bg-gold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-goldDark'
+          }`}
         >
           {pendiente && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
           {textoConfirmar}
