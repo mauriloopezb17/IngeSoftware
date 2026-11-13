@@ -21,7 +21,7 @@ describe('Encabezado, Contacto y PiePagina desde la sede', () => {
     );
 
     expect(
-      await screen.findByText('Hoy, sábado: Santa Misa 7:00 · 18:00 (vespertina dominical)'),
+      await screen.findByText('Misas: lunes a viernes 7:00 y 19:00 · sábado 7:00 y 18:00 · domingo 8:00, 10:00, 12:00 y 19:00'),
     ).toBeInTheDocument();
     expect(
       screen.getByText('Av. Héctor Ormachea N.º 167, Obrajes, La Paz'),

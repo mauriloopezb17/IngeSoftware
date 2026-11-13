@@ -27,7 +27,7 @@ INSERT INTO sede (tipo_sede_id, sede_padre_id, nombre, slug, direccion, telefono
    '{
       "color_primario": "#231F20",
       "color_acento": "#E2AD11",
-      "texto_barra_superior": "Hoy, sábado: Santa Misa 7:00 · 18:00 (vespertina dominical)",
+      "texto_barra_superior": "Misas: lunes a viernes 7:00 y 19:00 · sábado 7:00 y 18:00 · domingo 8:00, 10:00, 12:00 y 19:00",
       "texto_whatsapp": "WhatsApp Secretaría",
       "enlace_como_llegar": "https://www.google.com/maps/dir/?api=1&destination=-16.5267952%2C-68.1082157",
       "enlace_messenger": "https://www.facebook.com/profile.php?id=100064836665037",
