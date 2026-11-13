@@ -105,4 +105,75 @@ describe('VidaParroquial desde la API', () => {
       ).toBeInTheDocument();
     });
   });
+
+  it('arma srcSet y sizes cuando imagenPortada trae variantes, y los omite si es [] o falta', async () => {
+    server.use(
+      http.get(api('/sedes/:sede/publicaciones'), () =>
+        HttpResponse.json({
+          datos: [
+            {
+              id: 201,
+              tipo: { codigo: 'NOTICIA', nombre: 'Noticia' },
+              titulo: 'Noticia con variantes',
+              slug: 'noticia-con-variantes',
+              resumen: 'Resumen con variantes.',
+              categoria: null,
+              imagenPortada: {
+                id: 31,
+                url: 'https://cdn.pasionistas.org.bo/foto.webp',
+                textoAlternativo: 'Foto con variantes',
+                ancho: 1600,
+                alto: 1067,
+                variantes: [
+                  { ancho: 960, url: 'https://cdn.pasionistas.org.bo/foto-960w.webp' },
+                  { ancho: 480, url: 'https://cdn.pasionistas.org.bo/foto-480w.webp' },
+                ],
+              },
+              urlExterna: null,
+              destacada: false,
+              fechaPublicacion: '2026-11-12T12:00:00-04:00',
+              fechaExpiracion: null,
+            },
+            {
+              id: 202,
+              tipo: { codigo: 'NOTICIA', nombre: 'Noticia' },
+              titulo: 'Noticia sin variantes',
+              slug: 'noticia-sin-variantes',
+              resumen: 'Resumen sin variantes.',
+              categoria: null,
+              imagenPortada: {
+                id: 2,
+                url: '/media/seed/crucifijo.webp',
+                textoAlternativo: 'Foto seed sin variantes',
+                ancho: 1888,
+                alto: 1059,
+                variantes: [],
+              },
+              urlExterna: null,
+              destacada: false,
+              fechaPublicacion: '2026-11-11T12:00:00-04:00',
+              fechaExpiracion: null,
+            },
+          ],
+          paginacion: { pagina: 1, porPagina: 3, total: 2, totalPaginas: 1 },
+        }),
+      ),
+    );
+
+    renderConRouterYQuery(<VidaParroquial />);
+
+    const imgCon = await screen.findByAltText('Foto con variantes');
+    expect(imgCon).toHaveAttribute(
+      'srcset',
+      'https://cdn.pasionistas.org.bo/foto-480w.webp 480w, https://cdn.pasionistas.org.bo/foto-960w.webp 960w, https://cdn.pasionistas.org.bo/foto.webp 1600w',
+    );
+    expect(imgCon).toHaveAttribute(
+      'sizes',
+      '(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw',
+    );
+
+    const imgSin = screen.getByAltText('Foto seed sin variantes');
+    expect(imgSin).not.toHaveAttribute('srcset');
+    expect(imgSin).not.toHaveAttribute('sizes');
+  });
 });
