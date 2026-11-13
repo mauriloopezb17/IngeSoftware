@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { LogOut, Menu, X } from 'lucide-react';
 
+import { usePermisos } from '../permisos/usePermisos.js';
 import { SECCIONES } from '../rutas.js';
 import { useSesion } from '../sesion/SesionContexto.js';
 import MenuLateral from './MenuLateral.jsx';
@@ -11,6 +12,8 @@ export default function LayoutPanel() {
   const { usuario, cerrarSesion } = useSesion();
   const navegar = useNavigate();
   const { pathname } = useLocation();
+  const { puedeVerSeccion } = usePermisos();
+  const seccionesVisibles = SECCIONES.filter((s) => puedeVerSeccion(s.clave));
 
   const [menuAbierto, setMenuAbierto] = useState(false);
   const botonMenu = useRef(null);
@@ -88,7 +91,7 @@ export default function LayoutPanel() {
             <X className="size-5" aria-hidden="true" />
           </button>
         </div>
-        <MenuLateral secciones={SECCIONES} alNavegar={() => setMenuAbierto(false)} />
+        <MenuLateral secciones={seccionesVisibles}alNavegar={() => setMenuAbierto(false)} />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">

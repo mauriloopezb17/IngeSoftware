@@ -45,7 +45,8 @@ describe('layout del panel', () => {
     await iniciarSesion('admin@parroquia.test');
     montar();
 
-    const menu = await screen.findByRole('navigation', { name: 'Menú principal' });
+    await screen.findByText('Administrador (desarrollo)'); // el menú se arma cuando carga el usuario
+    const menu = screen.getByRole('navigation', { name: 'Menú principal' });
     const enlaces = within(menu).getAllByRole('link');
     expect(enlaces.map((e) => e.textContent)).toEqual(SECCIONES.map((s) => s.titulo));
     expect(within(menu).getByRole('link', { name: 'Inicio' })).toHaveAttribute('aria-current', 'page');

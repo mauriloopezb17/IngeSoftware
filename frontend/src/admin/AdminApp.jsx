@@ -5,8 +5,10 @@ import { Navigate, Route, Routes } from 'react-router';
 
 import { queryClient } from '../services/queryClient.js';
 import LayoutPanel from './componentes/LayoutPanel.jsx';
+import RutaProtegida from './componentes/RutaProtegida.jsx';
 import Inicio from './paginas/Inicio.jsx';
 import InicioSesion from './paginas/InicioSesion.jsx';
+import NoEncontrada from './paginas/NoEncontrada.jsx';
 import { SesionProvider } from './sesion/SesionProvider.jsx';
 
 function AdminApp() {
@@ -17,10 +19,13 @@ function AdminApp() {
       <SesionProvider>
         <Routes>
           <Route path="login" element={<InicioSesion />} />
-          <Route element={<LayoutPanel />}>
-            <Route path="inicio" element={<Inicio />} />
+          <Route element={<RutaProtegida />}>
+            <Route element={<LayoutPanel />}>
+              <Route index element={<Navigate to="inicio" replace />} />
+              <Route path="inicio" element={<Inicio />} />
+              <Route path="*" element={<NoEncontrada />} />
+            </Route>
           </Route>
-          <Route path="*" element={<Navigate to="/admin/login" replace />} />
         </Routes>
       </SesionProvider>
     </QueryClientProvider>
