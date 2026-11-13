@@ -10,35 +10,14 @@ import {
   X,
 } from 'lucide-react';
 
-import {
-  FaFacebookF,
-  FaInstagram,
-  FaYoutube,
-} from 'react-icons/fa';
-
 import { anchoContenido } from './ElementosComunes.jsx';
+import { IconoRedSocial } from './IconoDinamico.jsx';
+import { useSede } from '../../hooks/index.js';
+import { armarHrefTelefono } from '../../utils/formatoPortal.js';
 
 import logoBlanco from '../../assets/parroquia/logos/logo-horizontal-blanco.svg';
 
 import '../../styles/Encabezado.css';
-
-const redesSociales = [
-  {
-    nombre: 'Facebook',
-    enlace: 'https://www.facebook.com/profile.php?id=100064836665037',
-    icono: FaFacebookF,
-  },
-  {
-    nombre: 'Instagram',
-    enlace: 'https://www.instagram.com/senor_de_la_exaltacion',
-    icono: FaInstagram,
-  },
-  {
-    nombre: 'YouTube',
-    enlace: 'https://www.youtube.com/@ArquidiocesisdeLaPaz/videos',
-    icono: FaYoutube,
-  },
-];
 
 const enlacesNavegacion = [
   { nombre: 'Nosotros', enlace: '#nosotros' },
@@ -126,6 +105,7 @@ const normalizarTexto = (texto) =>
     .trim();
 
 function Encabezado() {
+  const { data: sede } = useSede();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [buscadorAbierto, setBuscadorAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState('');
@@ -164,6 +144,16 @@ function Encabezado() {
     window.location.hash = destino;
   };
 
+  const configuracion = sede?.configuracion ?? {};
+  const redesSociales = sede?.redesSociales ?? [];
+  const telefono = sede?.telefono;
+  const hrefTelefono = armarHrefTelefono(telefono);
+  const textoBarraSuperior = configuracion.textoBarraSuperior;
+  const textoWhatsapp = configuracion.textoWhatsapp;
+  const whatsappUrl = sede?.whatsapp
+    ? `https://wa.me/${sede.whatsapp.replace(/\D/g, '')}`
+    : null;
+
   return (
     <div
       className="encabezado"
@@ -175,45 +165,62 @@ function Encabezado() {
       <div className="encabezado-superior">
         <div className={`${anchoContenido} encabezado-superior-contenido`}>
           <div className="encabezado-aviso">
-            <Clock3 size={15} />
-
-            <span>
-              Hoy, sábado: Santa Misa 7:00 · 18:00
-              {' '}(vespertina dominical)
-            </span>
+            {textoBarraSuperior && (
+              <>
+                <Clock3 size={15} />
+                <span>{textoBarraSuperior}</span>
+              </>
+            )}
           </div>
 
           <div className="encabezado-contactos">
-            <a
-              href="tel:+59122784937"
-              className="encabezado-contacto"
-              aria-label="Llamar a la parroquia"
-            >
-              <Phone size={15} />
-              <span>(2) 278 4937</span>
-            </a>
+            {telefono && (
+              <a
+                href={hrefTelefono}
+                className="encabezado-contacto"
+                aria-label="Llamar a la parroquia"
+              >
+                <Phone size={15} />
+                <span>{telefono}</span>
+              </a>
+            )}
 
-            <span
-              className="encabezado-whatsapp"
-              title="Número de WhatsApp pendiente de confirmación"
-            >
-              <MessageCircle size={15} />
-              <span>WhatsApp Secretaría</span>
-            </span>
+            {whatsappUrl ? (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="encabezado-contacto"
+                aria-label="Escribir por WhatsApp"
+              >
+                <MessageCircle size={15} />
+                <span>{textoWhatsapp || 'WhatsApp Secretaría'}</span>
+              </a>
+            ) : (
+              textoWhatsapp && (
+                <span
+                  className="encabezado-whatsapp"
+                  title="Número de WhatsApp pendiente de confirmación"
+                >
+                  <MessageCircle size={15} />
+                  <span>{textoWhatsapp}</span>
+                </span>
+              )
+            )}
 
-            <span className="encabezado-separador" />
+            {redesSociales.length > 0 && <span className="encabezado-separador" />}
 
             <div className="encabezado-redes">
-              {redesSociales.map(({ nombre, enlace, icono: Icono }) => (
+              {redesSociales.map(({ nombre, url, icono }) => (
                 <a
                   key={nombre}
-                  href={enlace}
+                  href={url}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`Visitar ${nombre}`}
                   title={nombre}
                 >
-                  <Icono size={15} />
+                  <IconoRedSocial nombre={icono} size={15} />
                 </a>
               ))}
             </div>
