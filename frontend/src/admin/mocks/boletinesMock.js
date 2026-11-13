@@ -9,6 +9,7 @@ import {
   autenticar,
   autorDe,
   autorizar,
+  camposNoPermitidos,
   conflicto,
   consultaInvalida,
   cuerpoInvalido,
@@ -24,7 +25,10 @@ import { buscarArchivo } from './multimediaMock.js';
 import { SEDE_PRINCIPAL } from './usuarios.js';
 
 const SECRETARIA = { id: 3, nombreCompleto: 'Secretaría (desarrollo)' };
-const REGEX_PERIODO = /^\d{4}-(0[1-9]|1[0-2])$/;
+const REGEX_PERIODO = /^(19|20|21)\d{2}-(0[1-9]|1[0-2])$/;
+const MAX_TITULO = 150;
+const CAMPOS_CREAR = ['sedeId', 'titulo', 'periodo', 'archivoId'];
+const CAMPOS_EDITAR = ['titulo', 'periodo', 'archivoId'];
 const SIN_PERMISO = 'Tu rol no tiene permiso para gestionar los boletines.';
 const NO_EXISTE = 'El boletín no existe.';
 
@@ -66,23 +70,27 @@ export function serializarBoletin(b) {
   };
 }
 
+// Mismos mensajes que la API (verificarArchivos): no está en la biblioteca de la sede, o no es un PDF.
 function validarArchivo(archivoId, sede) {
   const archivo = Number.isInteger(archivoId) ? buscarArchivo(archivoId) : null;
-  if (!archivo || archivo.tipoMime !== 'application/pdf' || archivo.sede.id !== sede.id)
-    return [{ campo: 'archivoId', mensaje: 'El archivo debe ser un PDF de la biblioteca de la sede.' }];
+  if (!archivo || archivo.sede.id !== sede.id)
+    return [{ campo: 'archivoId', mensaje: 'Debe ser un documento PDF de la biblioteca multimedia de esta sede.' }];
+  if (archivo.tipoMime !== 'application/pdf') return [{ campo: 'archivoId', mensaje: 'El archivo no es un documento PDF.' }];
   return [];
 }
 
 function validar(cuerpo, { parcial, sede }) {
-  const detalles = [];
+  const detalles = camposNoPermitidos(cuerpo, parcial ? CAMPOS_EDITAR : CAMPOS_CREAR);
   const mal = (campo, mensaje) => detalles.push({ campo, mensaje });
   const enviado = (campo) => !parcial || campo in cuerpo;
 
   if (enviado('titulo')) {
     const titulo = typeof cuerpo.titulo === 'string' ? cuerpo.titulo.trim() : '';
-    if (!titulo || titulo.length > 200) mal('titulo', 'El título es obligatorio, hasta 200 caracteres.');
+    if (!titulo) mal('titulo', 'Es obligatorio.');
+    else if (titulo.length > MAX_TITULO) mal('titulo', `Puede tener hasta ${MAX_TITULO} caracteres.`);
   }
-  if (enviado('periodo') && !REGEX_PERIODO.test(cuerpo.periodo ?? '')) mal('periodo', 'El periodo debe tener el formato YYYY-MM.');
+  if (enviado('periodo') && !REGEX_PERIODO.test(cuerpo.periodo ?? ''))
+    mal('periodo', 'Debe tener formato AAAA-MM (ej. 2026-11).');
   if (enviado('archivoId')) detalles.push(...validarArchivo(cuerpo.archivoId, sede));
   return detalles;
 }
@@ -90,7 +98,8 @@ function validar(cuerpo, { parcial, sede }) {
 const periodoTomado = (sede, periodo, idPropio) =>
   boletines.some((b) => b.sede.id === sede.id && b.periodo === `${periodo}-01` && b.id !== idPropio);
 
-const MENSAJE_PERIODO = 'Ya existe un boletín de ese mes en la sede.';
+const periodoRepetido = () =>
+  conflicto('Ya existe un boletín de ese periodo en esta sede.', [{ campo: 'periodo', mensaje: 'Ya hay un boletín de ese mes.' }]);
 
 export const handlersBoletines = [
   http.get(api('/admin/boletines'), ({ request }) => {
@@ -131,7 +140,7 @@ export const handlersBoletines = [
     const sede = usuario.sede ?? SEDE_PRINCIPAL;
     const detalles = validar(cuerpo, { parcial: false, sede });
     if (detalles.length) return respuestaError(errorValidacion(detalles).error);
-    if (periodoTomado(sede, cuerpo.periodo)) return respuestaError(conflicto(MENSAJE_PERIODO).error);
+    if (periodoTomado(sede, cuerpo.periodo)) return respuestaError(periodoRepetido().error);
 
     const nuevo = {
       id: siguienteId,
@@ -162,7 +171,7 @@ export const handlersBoletines = [
     const detalles = validar(cuerpo, { parcial: true, sede: b.sede });
     if (detalles.length) return respuestaError(errorValidacion(detalles).error);
     if ('periodo' in cuerpo && periodoTomado(b.sede, cuerpo.periodo, b.id))
-      return respuestaError(conflicto(MENSAJE_PERIODO).error);
+      return respuestaError(periodoRepetido().error);
 
     if ('titulo' in cuerpo) b.titulo = cuerpo.titulo.trim();
     if ('periodo' in cuerpo) b.periodo = `${cuerpo.periodo}-01`;

@@ -81,7 +81,7 @@ describe('edición de datos de la sede y redes sociales', () => {
     await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
     await waitFor(() => expect(url1).toBeInvalid());
-    expect(url1).toHaveAccessibleDescription(/La URL debe empezar con https:\/\/\./);
+    expect(url1).toHaveAccessibleDescription(/La URL de la red social debe comenzar con https:\/\/\./);
   });
 
   it('Administrador ve el selector de sedes y puede crear una nueva sede', async () => {

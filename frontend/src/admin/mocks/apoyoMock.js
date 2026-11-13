@@ -3,7 +3,7 @@
 import { HttpResponse } from 'msw';
 
 import { obtenerSesionMock } from './sesionMock.js';
-import { fechaBolivia, SEDE_PRINCIPAL } from './usuarios.js';
+import { fechaBolivia } from './usuarios.js';
 
 export function respuestaError({ estado, codigo, mensaje, detalles = [] }) {
   return HttpResponse.json({ error: { codigo, mensaje, detalles } }, { status: estado });
@@ -42,11 +42,8 @@ export function autorizar(permiso, mensaje) {
 // Filtro `sede` de las listas: para los roles que no son Administrador se fuerza la propia (admin.md, reglas comunes).
 export function sedeDeLaLista(parametros, usuario) {
   const slug = parametros.get('sede');
-  if (esAdministrador(usuario)) {
-    if (slug && slug !== SEDE_PRINCIPAL.slug)
-      return { respuesta: respuestaError({ estado: 404, codigo: 'NO_ENCONTRADO', mensaje: 'La sede indicada no existe.' }) };
-    return { slugSede: slug };
-  }
+  // El Administrador filtra por el slug que pida: uno inexistente no es error, la lista sale vacía.
+  if (esAdministrador(usuario)) return { slugSede: slug };
   if (slug && slug !== usuario.sede.slug)
     return { respuesta: respuestaError({ estado: 403, codigo: 'SIN_PERMISO', mensaje: 'Este recurso pertenece a otra sede.' }) };
   return { slugSede: usuario.sede.slug };
@@ -106,3 +103,10 @@ export const ahoraIso = () => fechaBolivia(new Date());
 export const hoyBolivia = (ahora = new Date()) => fechaBolivia(ahora).slice(0, 10);
 
 export const autorDe = (usuario) => ({ id: usuario.id, nombreCompleto: usuario.nombreCompleto });
+
+// Cuerpos estrictos (z.strictObject en la API): un campo que no está en la lista es 400 «Campo no permitido.».
+export function camposNoPermitidos(cuerpo, permitidos) {
+  return Object.keys(cuerpo)
+    .filter((campo) => !permitidos.includes(campo))
+    .map((campo) => ({ campo, mensaje: 'Campo no permitido.' }));
+}

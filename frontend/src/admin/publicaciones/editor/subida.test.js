@@ -1,4 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { http, HttpResponse, delay } from 'msw';
+
+import { api } from '../../../mocks/api.js';
+import { server } from '../../../mocks/server.js';
+import { fueCancelada } from '../../multimedia/subidaXhr.js';
 
 import { clienteHttp } from '../../../services/clienteHttp.js';
 import { reiniciarMocksAdmin } from '../../mocks/handlers.js';
@@ -42,5 +47,31 @@ describe('subida de archivos desde el editor', () => {
     expect(
       propiedadesDeArchivo({ url: '/media/seed/a.webp', nombreOriginal: 'a.webp', textoAlternativo: 'Templo' }),
     ).toEqual({ url: '/media/seed/a.webp', name: 'a.webp', caption: 'Templo' });
+  });
+
+  it('informa el avance y acepta el segundo argumento de BlockNote (el id del bloque) sin confundirlo con opciones', async () => {
+    const avances = [];
+
+    await subirArchivoDelEditor(archivo('a.png', 'image/png'), { onProgreso: (p) => avances.push(p) });
+    expect(avances.at(-1)).toBe(100);
+
+    // BlockNote llama a uploadFile(archivo, idDelBloque).
+    const resultado = await subirArchivoDelEditor(archivo('b.png', 'image/png'), 'id-del-bloque');
+    expect(buscarArchivoPorUrl(resultado.props.url)).not.toBeNull();
+  });
+
+  it('se puede cancelar con una señal: se rechaza como cancelación, no como fallo de la API', async () => {
+    server.use(
+      http.post(api('/admin/multimedia'), async () => {
+        await delay(5000);
+        return HttpResponse.json({ datos: {} }, { status: 201 });
+      }),
+    );
+    const control = new AbortController();
+
+    const promesa = subirArchivoDelEditor(archivo('lenta.png', 'image/png'), { senal: control.signal });
+    setTimeout(() => control.abort(), 50);
+
+    expect(fueCancelada(await promesa.catch((e) => e))).toBe(true);
   });
 });

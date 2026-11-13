@@ -9,6 +9,7 @@ import { pantallasContenido } from './contenido/pantallas.jsx';
 import LayoutPanel from './componentes/LayoutPanel.jsx';
 import PantallaProvisional from './componentes/PantallaProvisional.jsx';
 import RutaProtegida from './componentes/RutaProtegida.jsx';
+import SeccionSimple from './componentes/SeccionSimple.jsx';
 import Inicio from './paginas/Inicio.jsx';
 import InicioSesion from './paginas/InicioSesion.jsx';
 import Multimedia from './paginas/Multimedia.jsx';
@@ -18,15 +19,16 @@ import { SECCIONES } from './rutas.js';
 import { SesionProvider } from './sesion/SesionProvider.jsx';
 
 // Secciones que ya tienen su pantalla; el resto muestra la pantalla provisional.
-// Cada área registra las suyas en su propio archivo para no editar este.
+// Cada área registra las suyas en su propio archivo.
+//
+// Toda sección se monta en /admin/<ruta>/*: su pantalla maneja las subrutas con sus propias <Routes>
+// relativas (nuevo, :id, :id/editar...). Las que aún no tienen subrutas van dentro de <SeccionSimple>,
+// que responde en la raíz y da «no encontrada» en cualquier otra ruta.
 const PANTALLAS = {
-  multimedia: <Multimedia />,
+  multimedia: <SeccionSimple><Multimedia /></SeccionSimple>,
   ...pantallasPublicaciones,
   ...pantallasContenido,
 };
-
-// Las pantallas de publicaciones manejan sus subrutas (nueva, :id, :id/editar, revision).
-const SECCIONES_CON_SUBRUTAS = new Set(Object.keys(pantallasPublicaciones));
 
 function AdminApp() {
   return (
@@ -42,19 +44,17 @@ function AdminApp() {
               <Route path="inicio" element={<Inicio />} />
               {/* Una ruta por sección del índice de admin.md; cada una pasa por su guardia de permisos. */}
               {SECCIONES.filter((s) => s.clave !== 'inicio').map(({ clave, ruta, titulo }) => {
-                const pantalla = PANTALLAS[clave] ?? <PantallaProvisional titulo={titulo} />;
+                const pantalla = PANTALLAS[clave] ?? (
+                  <SeccionSimple>
+                    <PantallaProvisional titulo={titulo} />
+                  </SeccionSimple>
+                );
                 return (
                   <Route key={clave} path={ruta} element={<GuardiaSeccion clave={clave} />}>
-                    {/* Las secciones con subrutas (publicaciones) declaran sus propias <Routes> relativas;
-                        el resto solo responde en su raíz y cualquier otra subruta es «no encontrada». */}
-                    {SECCIONES_CON_SUBRUTAS.has(clave) ? (
-                      <>
-                        <Route index element={pantalla} />
-                        <Route path="*" element={pantalla} />
-                      </>
-                    ) : (
-                      <Route index element={pantalla} />
-                    )}
+                    {/* Raíz y subrutas llegan a la misma pantalla, que decide qué muestra en cada una.
+                        (Con «*» solo, las <Routes> anidadas no resuelven la raíz de la sección.) */}
+                    <Route index element={pantalla} />
+                    <Route path="*" element={pantalla} />
                   </Route>
                 );
               })}

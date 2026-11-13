@@ -200,7 +200,68 @@ Un recurso sin imagen devuelve `"imagen": null`, nunca un objeto vacío.
 
 - **Sesión**: el panel CMS se autentica con un JWT en una cookie httpOnly. El frontend no lee el token; solo envía `credentials: 'include'`. Detalles en [autenticacion.md](autenticacion.md).
 - **CORS**: solo se acepta el origen configurado en `CORS_ORIGEN`, con `credentials: true`.
-- **Caché (ADR-02)**: las lecturas públicas se guardan en Redis (cache-aside) y se invalidan en cuanto el CMS modifica el recurso. El contrato no cambia por la caché.
+- **Caché (ADR-02)**: las lecturas públicas se guardan en Redis (cache-aside) y se invalidan en cuanto el CMS modifica el recurso. El contrato no cambia por la caché. Detalles en la [sección 9](#9-caché-de-lecturas-públicas).
 - **Límite del cuerpo JSON**: 1 MB. Los archivos tienen sus propios límites (ver [admin.md](admin.md)).
 - **Límite de peticiones**: el login tiene un límite estricto (ver [autenticacion.md](autenticacion.md)). Un exceso responde `429 DEMASIADAS_SOLICITUDES`.
 - **Id de petición**: cada respuesta incluye la cabecera `X-Request-Id`. Si el usuario reporta un error, ese id permite encontrarlo en los logs.
+
+## 9. Caché de lecturas públicas
+
+Resumen de cómo se comporta la caché de Redis (ADR-02, cache-aside) para quien consume la API. **No cambia ningún cuerpo, estado ni código de error**: una respuesta desde la caché es idéntica a la que se calcula en la base de datos.
+
+### Qué se guarda
+
+Las lecturas públicas `GET /api/sedes/...` (incluida la lista de sedes y la búsqueda de la sede por su slug), una entrada por sede, recurso y combinación de filtros, orden y paginación. **No se guardan**: `/api/admin/...`, `/api/auth/...`, `/api/salud`, los catálogos globales (`/api/categorias`, `/api/categorias-evento`) ni ninguna respuesta de error (`400`, `404`…).
+
+### Cabecera `X-Cache`
+
+Las lecturas públicas incluyen `X-Cache` para diagnóstico (el navegador no la puede leer entre orígenes: no está en `Access-Control-Expose-Headers`). Ningún cliente debe depender de ella.
+
+| Valor    | Significa                                                                                    |
+| -------- | -------------------------------------------------------------------------------------------- |
+| `HIT`    | Salió de la caché.                                                                           |
+| `MISS`   | No estaba: se leyó de la base de datos y se guardó.                                          |
+| `BYPASS` | Redis no respondió: se leyó de la base de datos y no se guardó (ver «Si Redis no responde»). |
+
+Con la caché apagada (`CACHE_HABILITADA=false`) la cabecera no se envía.
+
+### Tiempos de vida (TTL)
+
+El TTL es el tope de antigüedad de una respuesta guardada. Los valores están en `backend/src/constantes/cache.js`.
+
+| Recurso                                                        | TTL    | Por qué                                                                                                                                          |
+| -------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Sedes, horarios, servicios, grupos, videos, boletines, páginas | 10 min | Solo cambian cuando el CMS los modifica, y eso ya invalida la caché.                                                                             |
+| Publicaciones, eventos y proclamas                             | 60 s   | Además dependen del reloj: una publicación programada que llega a su fecha, una que expira, un evento que termina o una proclama cuya boda pasa. |
+
+No hay ningún proceso programado que invalide al llegar esas fechas. Por eso, **un cambio que depende solo de la hora puede tardar hasta 60 s en verse** en el portal (ej. una publicación programada para las 08:00 aparece como máximo a las 08:01).
+
+### Invalidación al modificar el CMS
+
+Toda modificación exitosa (`POST`, `PATCH`, `DELETE` y las acciones) invalida las lecturas públicas que afecta **en cuanto se confirma el cambio**, antes de responder al panel: el portal ve el cambio de inmediato, no al vencer el TTL. Se invalida por sede y recurso, con todas sus variantes de filtros y páginas.
+
+| Se modifica                                             | Se invalida en el portal                                                                                                                 |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Publicaciones                                           | Lista y detalle de publicaciones de esa sede.                                                                                            |
+| Eventos, horarios, grupos, videos, proclamas, boletines | Su lista de esa sede (proclamas: vigentes e historial).                                                                                  |
+| Servicios y sus preguntas frecuentes                    | Lista y detalle de servicios de esa sede.                                                                                                |
+| Páginas y bloques                                       | El menú y el detalle de las páginas de esa sede.                                                                                         |
+| Sede, sus redes sociales                                | El detalle de la sede y, si cambia la sede, la lista de sedes y la búsqueda por slug (crear, renombrar, cambiar el slug o desactivarla). |
+| Texto alternativo de un archivo de multimedia           | Publicaciones, eventos, grupos, boletines y la sede de esa sede.                                                                         |
+| Usuarios                                                | Nada: no aparecen en el portal.                                                                                                          |
+
+Una modificación rechazada (`400`, `403`, `404`, `409`) o un `PATCH` que no cambia nada no invalida nada.
+
+### Si Redis no responde
+
+La API nunca falla por Redis (mismo criterio que el límite de intentos de inicio de sesión, ver [autenticacion.md](autenticacion.md)):
+
+- Las lecturas públicas se responden desde PostgreSQL, con `X-Cache: BYPASS` y una advertencia en el log. Un `404` o un `400` siguen siendo los mismos.
+- El panel sigue funcionando: crear, editar y eliminar no dependen de Redis, y el portal ve el cambio porque lee de la base.
+- Tras un fallo, la API **no intenta Redis durante 5 segundos** (así no suma su tiempo de espera, de hasta 1 s, a cada petición). Pasado ese tiempo, una sola petición lo prueba; si responde, la caché se retoma sin reiniciar la API.
+- Si el CMS modifica algo mientras Redis está caído, la invalidación no se puede hacer: se recuerda en memoria y se ejecuta **antes de la primera lectura** cuando Redis vuelve, para no servir datos anteriores al cambio. Si la API se reinicia antes de que Redis vuelva, lo guardado vence por su TTL.
+
+### Operación
+
+- `CACHE_HABILITADA=false` en `backend/.env` apaga la caché: todo se lee de PostgreSQL. Por defecto está activa.
+- Todas las claves empiezan con `cache:v1:`. Se pueden borrar a mano (`cache:v1:*`) sin riesgo: solo se pierde el ahorro hasta que se vuelvan a llenar.

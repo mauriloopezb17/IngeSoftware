@@ -20,7 +20,10 @@ export default function Dialogo({ titulo, onCerrar, children, ancho = 'max-w-3xl
 
     return () => {
       document.body.style.overflow = overflow;
+      // Si quien lo abrió ya no existe (por ejemplo, la fila que se acaba de eliminar), el foco no se pierde en
+      // <body>: pasa al contenido principal del panel, un lugar lógico desde donde seguir.
       if (anterior instanceof HTMLElement && anterior.isConnected) anterior.focus();
+      else document.getElementById('contenido')?.focus();
     };
   }, []);
 

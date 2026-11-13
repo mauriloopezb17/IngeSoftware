@@ -8,3 +8,7 @@ export async function listarCategorias(_req, res) {
 export async function listarCategoriasEvento(_req, res) {
   res.json({ datos: await servicio.listarCategoriasEvento() });
 }
+
+export async function listarCatalogosDelPanel(_req, res) {
+  res.json({ datos: await servicio.obtenerCatalogosDelPanel() });
+}

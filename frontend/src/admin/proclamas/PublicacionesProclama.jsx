@@ -4,6 +4,7 @@ import { CalendarPlus, Loader2, Pencil, Trash2 } from 'lucide-react';
 
 import CampoTexto from '../componentes/CampoTexto.jsx';
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
+import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import Dialogo from '../componentes/Dialogo.jsx';
 import {
   agregarPublicacion,
@@ -73,31 +74,38 @@ export default function PublicacionesProclama({ proclama, editable }) {
   const ultima = publicaciones[publicaciones.length - 1];
   const [fechaNueva, setFechaNueva] = useState('');
   const [aviso, setAviso] = useState('');
+  // El botón de una publicación quitada desaparece: el foco pasa al mensaje de confirmación.
+  const avisoRef = useEnfocarAviso(aviso);
   const [cambiando, setCambiando] = useState(null); // publicación cuya fecha se cambia
   const [quitando, setQuitando] = useState(null);
 
-  const refrescar = () => clienteConsultas.invalidateQueries({ queryKey: CLAVE_PROCLAMAS });
+  // Las tres acciones responden con la proclama completa: se usa para el detalle sin volver a pedirlo,
+  // y se invalidan las listas (vigente y numeroProclama pueden cambiar).
+  const refrescar = (actualizada) => {
+    clienteConsultas.setQueryData([...CLAVE_PROCLAMAS, 'detalle', String(proclama.id)], actualizada);
+    clienteConsultas.invalidateQueries({ queryKey: [...CLAVE_PROCLAMAS, 'lista'] });
+  };
 
   const agregar = useMutation({
     mutationFn: () => agregarPublicacion(proclama.id, fechaNueva),
-    onSuccess: () => {
-      refrescar();
+    onSuccess: (actualizada) => {
+      refrescar(actualizada);
       setFechaNueva('');
       setAviso(`Se agregó la ${ordinal(siguiente)} proclama.`);
     },
   });
   const cambiar = useMutation({
     mutationFn: ({ numero, fecha }) => cambiarFechaPublicacion(proclama.id, numero, fecha),
-    onSuccess: (_, { numero }) => {
-      refrescar();
+    onSuccess: (actualizada, { numero }) => {
+      refrescar(actualizada);
       setCambiando(null);
       setAviso(`Se cambió la fecha de la ${ordinal(numero)} proclama.`);
     },
   });
   const quitar = useMutation({
     mutationFn: ({ numero }) => quitarPublicacion(proclama.id, numero),
-    onSuccess: (_, { numero }) => {
-      refrescar();
+    onSuccess: (actualizada, { numero }) => {
+      refrescar(actualizada);
       setQuitando(null);
       setAviso(`Se quitó la ${ordinal(numero)} proclama.`);
     },
@@ -113,7 +121,12 @@ export default function PublicacionesProclama({ proclama, editable }) {
       </p>
 
       {aviso && (
-        <p role="status" className="mt-3 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark">
+        <p
+          ref={avisoRef}
+          role="status"
+          tabIndex={-1}
+          className="mt-3 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark outline-none focus-visible:outline-2 focus-visible:outline-goldDark"
+        >
           {aviso}
         </p>
       )}

@@ -219,7 +219,7 @@ describe('subida de archivos', () => {
       await elegir(crearArchivo('uno.jpg', 'image/jpeg'));
       await userEvent.click(await screen.findByRole('button', { name: 'Subir 1 archivo' }));
 
-      expect(await screen.findByText('Subiendo…')).toBeInTheDocument();
+      expect(await screen.findByRole('progressbar', { name: 'Progreso de subida de uno.jpg' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Seleccionar archivos' })).toBeDisabled();
       expect(screen.getByRole('button', { name: 'Subiendo archivos…' })).toBeDisabled();
       // Mientras sube, el archivo ya no se puede quitar ni editar.
@@ -229,6 +229,87 @@ describe('subida de archivos', () => {
       liberar();
       expect(await screen.findByRole('alert')).toHaveTextContent('Error interno del servidor.');
       expect(screen.getByRole('button', { name: 'Seleccionar archivos' })).toBeEnabled();
+    });
+  });
+
+  describe('progreso y cancelación', () => {
+    // Un servidor lento: recibe todo el archivo y tarda en responder (como al convertir una imagen a WebP).
+    const servidorLento = () => {
+      let liberar;
+      server.use(
+        http.post(
+          api('/admin/multimedia'),
+          async () => {
+            await new Promise((resolver) => {
+              liberar = resolver;
+            });
+            return HttpResponse.json({ error: { codigo: 'ERROR_INTERNO', mensaje: 'Error interno.', detalles: [] } }, { status: 500 });
+          },
+          { once: true },
+        ),
+      );
+      return () => liberar?.();
+    };
+
+    it('muestra la barra de progreso del archivo que se sube, con su valor accesible', async () => {
+      const liberar = servidorLento();
+      montar();
+      await elegir(crearArchivo('procesion.jpg', 'image/jpeg'));
+      await userEvent.click(await screen.findByRole('button', { name: 'Subir 1 archivo' }));
+
+      const barra = await screen.findByRole('progressbar', { name: 'Progreso de subida de procesion.jpg' });
+      expect(barra).toHaveAttribute('max', '100');
+      expect(barra).toHaveAttribute('aria-valuetext', expect.stringMatching(/^\d+ %$|procesando/));
+      // Es la única barra: la de los demás archivos solo aparece mientras suben.
+      expect(screen.getAllByRole('progressbar')).toHaveLength(1);
+      liberar();
+      await screen.findByRole('alert');
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    });
+
+    it('«Cancelar» corta la subida: queda cancelada (sin error) y se puede reintentar', async () => {
+      servidorLento();
+      montar();
+      await elegir(crearArchivo('procesion.jpg', 'image/jpeg'), crearArchivo('altar.png', 'image/png'));
+      await userEvent.click(await screen.findByRole('button', { name: 'Subir 2 archivos' }));
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Cancelar la subida de procesion.jpg' }));
+
+      expect(await screen.findByText('Subida cancelada')).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.queryByRole('progressbar', { name: 'Progreso de subida de procesion.jpg' })).not.toBeInTheDocument();
+      // La cola sigue con el siguiente archivo (el servidor lento ya no está: responde bien).
+      expect(await screen.findByText('Subido')).toBeInTheDocument();
+      // Lo cancelado se reintenta o se quita.
+      expect(screen.getByRole('button', { name: 'Quitar procesion.jpg' })).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+      await waitFor(() => expect(screen.getAllByText('Subido')).toHaveLength(2));
+      expect(screen.queryByText('Subida cancelada')).not.toBeInTheDocument();
+    });
+
+    it('al salir de la pantalla se corta la subida en curso', async () => {
+      let cancelada = false;
+      server.use(
+        http.post(api('/admin/multimedia'), async ({ request }) => {
+          request.signal.addEventListener('abort', () => {
+            cancelada = true;
+          });
+          await new Promise((resolver) => setTimeout(resolver, 3000));
+          return HttpResponse.json({ datos: {} }, { status: 201 });
+        }),
+      );
+      const { unmount } = render(
+        <QueryClientProvider client={new QueryClient()}>
+          <SubidaArchivos />
+        </QueryClientProvider>,
+      );
+      await elegir(crearArchivo('uno.jpg', 'image/jpeg'));
+      await userEvent.click(await screen.findByRole('button', { name: 'Subir 1 archivo' }));
+      await screen.findByRole('progressbar');
+
+      unmount();
+
+      await waitFor(() => expect(cancelada).toBe(true));
     });
   });
 

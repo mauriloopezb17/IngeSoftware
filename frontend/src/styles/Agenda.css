@@ -326,3 +326,19 @@
     font-size: 20px;
   }
 }
+
+.agenda-boletin-archivo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  color: var(--color-gold);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.agenda-boletin-archivo:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
