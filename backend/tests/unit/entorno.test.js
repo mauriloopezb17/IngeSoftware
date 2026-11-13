@@ -200,4 +200,22 @@ describe('validarEntorno', () => {
       'JWT_SECRET: no puede ser el valor de ejemplo de .env.example en producción.',
     ]);
   });
+
+  describe('CACHE_HABILITADA', () => {
+    it('está habilitada por defecto', () => {
+      expect(validarEntorno(BASE).cacheHabilitada).toBe(true);
+      expect(validarEntorno({ ...BASE, CACHE_HABILITADA: '' }).cacheHabilitada).toBe(true);
+    });
+
+    it('acepta true y false', () => {
+      expect(validarEntorno({ ...BASE, CACHE_HABILITADA: 'false' }).cacheHabilitada).toBe(false);
+      expect(validarEntorno({ ...BASE, CACHE_HABILITADA: 'true' }).cacheHabilitada).toBe(true);
+    });
+
+    it('rechaza cualquier otro valor', () => {
+      expect(problemasDe({ ...BASE, CACHE_HABILITADA: 'no' })).toEqual([
+        'CACHE_HABILITADA: debe ser true o false.',
+      ]);
+    });
+  });
 });
