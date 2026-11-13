@@ -12,6 +12,7 @@ export const CODIGOS_ERROR = Object.freeze({
   TIPO_NO_PERMITIDO: 415,
   DEMASIADAS_SOLICITUDES: 429,
   ERROR_INTERNO: 500,
+  SERVICIO_NO_DISPONIBLE: 503,
 });
 
 export class ErrorApp extends Error {
@@ -46,6 +47,11 @@ export class ErrorApp extends Error {
 
   static conflicto(mensaje, detalles = []) {
     return new ErrorApp('CONFLICTO', mensaje, detalles);
+  }
+
+  // 503: un servicio externo (ej. el almacenamiento de archivos) no está disponible.
+  static servicioNoDisponible(mensaje) {
+    return new ErrorApp('SERVICIO_NO_DISPONIBLE', mensaje);
   }
 
   // 429 con la cabecera Retry-After (segundos que faltan), que pone el manejador de errores.
