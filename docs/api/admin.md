@@ -112,6 +112,8 @@ Todos los catálogos en una sola respuesta, para llenar los selectores de los fo
 - `codigo` de roles, tipos de sede, estados y tipos de publicación es la enumeración de la API (ver [convenciones.md](convenciones.md#2-nombres-y-tipos-de-datos)). La traducción a los nombres de la base la hace la API.
 - `estadosPublicacion` va en el orden del flujo, no por `id`.
 - `tiposBloque` trae los 6 tipos del seed con su `esquemaValidacion` completo, para que el panel arme el formulario de cada bloque. En el ejemplo se muestra solo uno; los demás están en [contenido.md](contenido.md).
+- Salvo `estadosPublicacion`, cada lista va ordenada por `id`. `esquemaValidacion` se devuelve tal como está guardado (sin traducir sus claves).
+- Sin sesión, `401 NO_AUTENTICADO`; no pide ningún permiso de la matriz.
 
 ---
 
@@ -1117,7 +1119,7 @@ Cómo se valida el contenido:
 
 ### Reglas de páginas y bloques
 
-- **Páginas**: `sedeId` (solo el Administrador, por defecto su sede; obligatorio si no tiene sede). `slug` es opcional (`null` o ausente: se genera desde el título con sufijo `-2`, `-3`… si choca), único por sede (`409 CONFLICTO`) y de hasta 120 caracteres. `estado` por defecto `BORRADOR`; `EN_REVISION` es `400`. `ordenMenu` entre 0 y 32767 (por defecto 0). `paginaPadreId` debe ser una página de la misma sede (`400` en `paginaPadreId`: «La página padre no existe en esta sede.») y, al editar, no puede ser la propia página ni una de sus descendientes («No puede ser la propia página ni una de sus páginas hijas.»).
+- **Páginas**: `sedeId` (solo el Administrador, por defecto su sede; obligatorio si no tiene sede). `slug` es opcional (`null` o ausente: se genera desde el título con sufijo `-2`, `-3`… si choca), único por sede (`409 CONFLICTO`) y de hasta 120 caracteres. `estado` por defecto `BORRADOR`; `EN_REVISION` es `400`. `ordenMenu` entre 0 y 32767 (por defecto 0). `paginaPadreId` debe ser una página de la misma sede (`400` en `paginaPadreId`: «La página padre no existe en esta sede.») y, al editar, no puede ser la propia página ni una de sus descendientes («No puede ser la propia página ni una de sus páginas hijas.»). El árbol admite hasta **3 niveles** (una página raíz, sus hijas y las hijas de estas): un `paginaPadreId` que deje alguna página en el nivel 4 es `400 VALIDACION` en `paginaPadreId` («Las páginas se pueden anidar hasta 3 niveles.»). Al mover una página con hijas se cuentan también sus descendientes. Quitar el padre (`null`) siempre se puede.
 - **`PATCH` de la página**: `"slug": null` lo regenera desde el título; el slug de `inicio` y de `nosotros` no se puede cambiar (`409 CONFLICTO`, detalle en `slug`). La respuesta del detalle y del `PATCH` incluyen `bloques`.
 - **`GET /api/admin/paginas`**: filtros `sede` y `estado` (`BORRADOR`, `PUBLICADO`, `ARCHIVADO`, varios con comas); orden fijo por `ordenMenu` y luego `titulo`; sin `bloques`. `paginaPadre` es `{ id, slug, titulo }` o `null`.
 - **Eliminar una página** también elimina sus bloques. El `409 CONFLICTO` de las páginas hijas dice «La página tiene páginas hijas: elimínalas o cámbiales la página padre primero.»; el de `inicio` y `nosotros`, «La página «inicio» no se puede eliminar: el portal depende de ella.».

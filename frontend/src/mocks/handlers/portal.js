@@ -20,6 +20,7 @@ import {
   obtenerEventosExaltacion,
   obtenerPublicacionesExaltacion,
   obtenerProclamasExaltacion,
+  obtenerHistorialProclamasExaltacion,
 } from '../datos/comunidad.js';
 
 const SEDE_PRINCIPAL = 'senor-de-la-exaltacion';
@@ -163,7 +164,18 @@ export const handlersPortal = [
     if (fallo) return fallo;
 
     const url = new URL(request.url);
-    let lista = esSedePrincipal(params.sede) ? obtenerEventosExaltacion() : [];
+    const ahoraMs = Date.now();
+    const hoyBolivia = new Date(ahoraMs - 4 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    let lista = esSedePrincipal(params.sede)
+      ? obtenerEventosExaltacion().filter((evento) => {
+          if (evento.fechaFin) {
+            return new Date(evento.fechaFin).getTime() > ahoraMs;
+          }
+          const finDia = new Date(`${evento.fechaInicio.slice(0, 10)}T23:59:59-04:00`).getTime();
+          return finDia > ahoraMs;
+        })
+      : [];
 
     const categoria = url.searchParams.get('categoria');
     if (categoria) {
@@ -171,15 +183,16 @@ export const handlersPortal = [
       lista = lista.filter((evento) => ids.includes(evento.categoria?.id));
     }
 
-    const desde = url.searchParams.get('desde');
-    if (desde) {
-      lista = lista.filter((evento) => evento.fechaInicio.slice(0, 10) >= desde);
-    }
+    const desdeParam = url.searchParams.get('desde');
+    const desde = desdeParam && desdeParam > hoyBolivia ? desdeParam : hoyBolivia;
+    lista = lista.filter((evento) => evento.fechaInicio.slice(0, 10) >= desde);
 
     const hasta = url.searchParams.get('hasta');
     if (hasta) {
       lista = lista.filter((evento) => evento.fechaInicio.slice(0, 10) <= hasta);
     }
+
+    lista = [...lista].sort((a, b) => a.fechaInicio.localeCompare(b.fechaInicio));
 
     const resultado = paginar(lista, url);
     return resultado.error ?? resultado.respuesta;
@@ -249,7 +262,7 @@ export const handlersPortal = [
 
     const url = new URL(request.url);
     let lista = esSedePrincipal(params.sede)
-      ? [...obtenerProclamasExaltacion()].sort((a, b) =>
+      ? [...obtenerHistorialProclamasExaltacion()].sort((a, b) =>
           b.fechaMatrimonio.localeCompare(a.fechaMatrimonio),
         )
       : [];
