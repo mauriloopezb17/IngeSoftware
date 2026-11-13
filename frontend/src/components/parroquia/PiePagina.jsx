@@ -15,19 +15,19 @@ import logoBlanco from '../../assets/parroquia/logos/logo-horizontal-blanco.svg'
 import '../../styles/PiePagina.css';
 
 const enlacesParroquia = [
-  { texto: 'Quiénes somos', href: '#nosotros' },
-  { texto: 'Nuestra historia', href: '#nosotros' },
-  { texto: 'El párroco', href: '#nosotros' },
-  { texto: 'Nuestras sedes', href: '#comunidades' },
-  { texto: 'Noticias', href: '#noticias' },
+  { texto: 'Quiénes somos', href: '/#nosotros' },
+  { texto: 'Nuestra historia', href: '/#nosotros' },
+  { texto: 'El párroco', href: '/#nosotros' },
+  { texto: 'Nuestras sedes', href: '/#comunidades' },
+  { texto: 'Noticias', href: '/noticias' },
 ];
 
 const enlacesServicios = [
-  { texto: 'Horarios de misa', href: '#horarios' },
-  { texto: 'Sacramentos', href: '#sacramentos' },
-  { texto: 'Proclamas matrimoniales', href: '#proclamas' },
-  { texto: 'Calendario', href: '#agenda' },
-  { texto: 'Boletín parroquial', href: '#agenda' },
+  { texto: 'Horarios de misa', href: '/#horarios' },
+  { texto: 'Sacramentos', href: '/#sacramentos' },
+  { texto: 'Proclamas matrimoniales', href: '/#proclamas' },
+  { texto: 'Calendario', href: '/#agenda' },
+  { texto: 'Boletín parroquial', href: '/#agenda' },
 ];
 
 function construirLineasSecretaria(gruposHorarios, sede) {
@@ -80,7 +80,7 @@ function PiePagina() {
         <div className="pie-pagina-superior">
           <div className="pie-pagina-marca">
             <a
-              href="#inicio"
+              href="/#inicio"
               className="pie-pagina-logo-enlace"
               aria-label="Ir al inicio de la página"
             >

@@ -1,8 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
+import { QueryClientProvider } from '@tanstack/react-query';
 
 import { rutas } from './router.jsx';
+import { crearClientePruebas } from './test/utilidadesQuery.jsx';
 
 // La portada completa (video, imágenes) no es necesaria para probar el enrutado.
 vi.mock('./pages/InicioParroquia.jsx', () => ({
@@ -11,7 +13,12 @@ vi.mock('./pages/InicioParroquia.jsx', () => ({
 
 function renderizarRuta(ruta) {
   const router = createMemoryRouter(rutas, { initialEntries: [ruta] });
-  return render(<RouterProvider router={router} />);
+  const cliente = crearClientePruebas();
+  return render(
+    <QueryClientProvider client={cliente}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
 }
 
 describe('rutas del frontend', () => {
