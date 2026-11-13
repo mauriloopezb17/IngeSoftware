@@ -39,9 +39,15 @@ const claveDeDatos = (sedeId, recurso, generacion, variante) =>
 
 // Suma 1 a la generación. Si la clave no existe (primera vez, o Redis se vació), arranca desde un
 // valor basado en la hora y no desde 0: así nunca coincide con la generación de datos viejos.
+// La hora es la de Redis (TIME: segundos y microsegundos), no la de la API: con milisegundos, dos
+// invalidaciones seguidas que caían en el mismo milisegundo daban la misma generación y la segunda
+// «revivía» lo guardado bajo la primera. Con microsegundos, y una sola hora para todas las
+// instancias de la API, cada invalidación sucede en un instante distinto. (Los microsegundos van
+// con ceros a la izquierda y se unen como texto: un número de Lua perdería precisión.)
 const SCRIPT_INVALIDAR = `
 if redis.call('EXISTS', KEYS[1]) == 0 then
-  redis.call('SET', KEYS[1], ARGV[1])
+  local ahora = redis.call('TIME')
+  redis.call('SET', KEYS[1], ahora[1] .. string.format('%06d', ahora[2]))
 end
 return redis.call('INCR', KEYS[1])`;
 
@@ -104,10 +110,8 @@ export function reiniciarEstadoDeRedis() {
   invalidacionesPendientes.clear();
 }
 
-const generacionNueva = () => String(Date.now() * 1000);
-
 function invalidarGeneracion(redis, sedeId, recurso) {
-  return redis.eval(SCRIPT_INVALIDAR, 1, claveDeGeneracion(sedeId, recurso), generacionNueva());
+  return redis.eval(SCRIPT_INVALIDAR, 1, claveDeGeneracion(sedeId, recurso));
 }
 
 function recordarInvalidacion(sedeId, recursos) {
