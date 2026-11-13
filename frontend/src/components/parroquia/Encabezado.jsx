@@ -20,79 +20,79 @@ import logoBlanco from '../../assets/parroquia/logos/logo-horizontal-blanco.svg'
 import '../../styles/Encabezado.css';
 
 const enlacesNavegacion = [
-  { nombre: 'Nosotros', enlace: '#nosotros' },
-  { nombre: 'Sacramentos', enlace: '#sacramentos' },
-  { nombre: 'Comunidad', enlace: '#comunidad' },
-  { nombre: 'Noticias', enlace: '#noticias' },
-  { nombre: 'Calendario', enlace: '#agenda' },
-  { nombre: 'Contacto', enlace: '#contacto' },
+  { nombre: 'Nosotros', enlace: '/#nosotros' },
+  { nombre: 'Sacramentos', enlace: '/#sacramentos' },
+  { nombre: 'Comunidad', enlace: '/#comunidad' },
+  { nombre: 'Noticias', enlace: '/#noticias' },
+  { nombre: 'Calendario', enlace: '/#agenda' },
+  { nombre: 'Contacto', enlace: '/#contacto' },
 ];
 
 const seccionesBusqueda = [
   {
     nombre: 'Inicio',
     descripcion: 'Portada de la parroquia',
-    enlace: '#inicio',
+    enlace: '/#inicio',
     palabrasClave: 'portada principal',
   },
   {
     nombre: 'Nosotros',
     descripcion: 'Conoce nuestra parroquia',
-    enlace: '#nosotros',
+    enlace: '/#nosotros',
     palabrasClave: 'quienes somos historia parroco pasionistas',
   },
   {
     nombre: 'Horarios de misa',
     descripcion: 'Misas, confesiones y atención',
-    enlace: '#horarios',
+    enlace: '/#horarios',
     palabrasClave: 'horarios misas confesiones adoracion secretaria',
   },
   {
     nombre: 'Sacramentos y catequesis',
     descripcion: 'Bautismo, comunión, confirmación y más',
-    enlace: '#sacramentos',
+    enlace: '/#sacramentos',
     palabrasClave: 'bautismo comunion confirmacion matrimonio uncion requisitos',
   },
   {
     nombre: 'Calendario',
     descripcion: 'Próximos eventos parroquiales',
-    enlace: '#agenda',
+    enlace: '/#agenda',
     palabrasClave: 'agenda actividades encuentros eventos',
   },
   {
     nombre: 'Vida parroquial',
     descripcion: 'Noticias y actividades de la parroquia',
-    enlace: '#noticias',
+    enlace: '/#noticias',
     palabrasClave: 'noticias pastoral familiar publicaciones',
   },
   {
     nombre: 'Proclamas matrimoniales',
     descripcion: 'Avisos de próximos matrimonios',
-    enlace: '#proclamas',
+    enlace: '/#proclamas',
     palabrasClave: 'bodas matrimonio proclamas',
   },
   {
     nombre: 'Video institucional',
     descripcion: 'Recorrido por nuestro templo',
-    enlace: '#video-institucional',
+    enlace: '/#video-institucional',
     palabrasClave: 'video templo recorrido',
   },
   {
     nombre: 'Grupos y pastorales',
     descripcion: 'Participa en nuestra comunidad',
-    enlace: '#comunidad',
+    enlace: '/#comunidad',
     palabrasClave: 'grupos monaguillos coro catequistas pastoral',
   },
   {
     nombre: 'Nuestras comunidades',
     descripcion: 'Sedes y comunidades pasionistas',
-    enlace: '#comunidades',
+    enlace: '/#comunidades',
     palabrasClave: 'comunidades sedes capillas',
   },
   {
     nombre: 'Contacto',
     descripcion: 'Dirección, teléfono y Messenger',
-    enlace: '#contacto',
+    enlace: '/#contacto',
     palabrasClave: 'contacto ubicacion direccion correo telefono messenger',
   },
 ];
@@ -231,7 +231,7 @@ function Encabezado() {
       {/* Navegación principal */}
       <header className={`${anchoContenido} encabezado-principal`}>
         <a
-          href="#inicio"
+          href="/#inicio"
           className="encabezado-logo-enlace"
           onClick={cerrarMenu}
           aria-label="Volver al inicio"
@@ -276,7 +276,7 @@ function Encabezado() {
           </button>
 
           <a
-            href="#horarios"
+            href="/#horarios"
             className="encabezado-boton-horarios"
             onClick={cerrarMenu}
           >
