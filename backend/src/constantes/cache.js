@@ -44,3 +44,9 @@ export const TTL_SEGUNDOS = Object.freeze({
 // Todas las claves de la caché empiezan así. Subir la versión descarta de golpe todo lo guardado
 // (útil si cambia la forma de las respuestas).
 export const PREFIJO_CACHE = 'cache:v1';
+
+// Si Redis falla, durante este tiempo (ms) la API ni lo intenta: lee todo de PostgreSQL. Así un
+// Redis caído o lento no suma su tiempo de espera (hasta 1 s por comando) a cada petición del
+// portal. Pasado el tiempo, una sola petición lo prueba: si responde, se retoma la caché; si no,
+// se repite la pausa.
+export const PAUSA_REDIS_CAIDO_MS = 5_000;
