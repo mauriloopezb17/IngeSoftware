@@ -49,6 +49,10 @@ describe('Noticias (listado con filtros y paginación)', () => {
     expect(
       await screen.findByText('Primeras comuniones: 42 niños recibieron a Jesús'),
     ).toBeInTheDocument();
+    expect(document.title).toBe('Noticias | Parroquia Señor de la Exaltación');
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toContain(
+      'Parroquia Señor de la Exaltación',
+    );
     expect(
       screen.getByText('Encuentro de monaguillos de la Vicaría Sur'),
     ).toBeInTheDocument();

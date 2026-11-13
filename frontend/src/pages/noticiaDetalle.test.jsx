@@ -31,6 +31,22 @@ describe('NoticiaDetalle', () => {
       }),
     ).toBeInTheDocument();
 
+    expect(document.title).toBe(
+      'Primeras comuniones: 42 niños recibieron a Jesús | Parroquia Señor de la Exaltación',
+    );
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe(
+      'Una jornada de fiesta para toda la comunidad, acompañada por catequistas y familias.',
+    );
+    expect(document.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe(
+      'Primeras comuniones: 42 niños recibieron a Jesús',
+    );
+    expect(document.querySelector('meta[property="og:description"]')?.getAttribute('content')).toBe(
+      'Una jornada de fiesta para toda la comunidad, acompañada por catequistas y familias.',
+    );
+    expect(document.querySelector('meta[property="og:image"]')?.getAttribute('content')).toBe(
+      '/media/seed/crucifijo.webp',
+    );
+
     const articulo = screen.getByRole('article');
     expect(within(articulo).getByText('Sacramentos')).toBeInTheDocument();
     expect(within(articulo).getByText('18 OCT 2026')).toBeInTheDocument();
@@ -138,6 +154,22 @@ describe('NoticiaDetalle', () => {
         name: 'Primeras comuniones: 42 niños recibieron a Jesús',
       }),
     ).toBeInTheDocument();
+
+    expect(document.title).toBe(
+      'Primeras comuniones: 42 niños recibieron a Jesús | Parroquia Señor de la Exaltación',
+    );
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe(
+      'Una jornada de fiesta para toda la comunidad, acompañada por catequistas y familias.',
+    );
+    expect(document.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe(
+      'Primeras comuniones: 42 niños recibieron a Jesús',
+    );
+    expect(document.querySelector('meta[property="og:description"]')?.getAttribute('content')).toBe(
+      'Una jornada de fiesta para toda la comunidad, acompañada por catequistas y familias.',
+    );
+    expect(document.querySelector('meta[property="og:image"]')?.getAttribute('content')).toBe(
+      '/media/seed/crucifijo.webp',
+    );
 
     const enlaceInicio = screen
       .getAllByRole('link', { name: 'Volver al inicio' })

@@ -20,9 +20,27 @@ function NoticiaDetalle() {
   const esNoEncontrado = error?.estado === 404 || error?.codigo === 'NO_ENCONTRADO';
   const imagen = publicacion?.imagenPortada;
   const esAfiche = Boolean(imagen?.alto && imagen?.ancho && imagen.alto > imagen.ancho);
+  const tituloSeo = publicacion?.titulo
+    ? `${publicacion.titulo} | Parroquia Señor de la Exaltación`
+    : esNoEncontrado
+      ? 'Noticia no encontrada | Parroquia Señor de la Exaltación'
+      : 'Noticias | Parroquia Señor de la Exaltación';
+  const descripcionSeo =
+    publicacion?.resumen ||
+    publicacion?.titulo ||
+    'Publicaciones y vida parroquial de la Parroquia Señor de la Exaltación.';
 
   return (
     <div className="font-body">
+      <title>{tituloSeo}</title>
+      <meta name="description" content={descripcionSeo} />
+      {publicacion && (
+        <>
+          <meta property="og:title" content={publicacion.titulo} />
+          <meta property="og:description" content={descripcionSeo} />
+          {imagen?.url && <meta property="og:image" content={imagen.url} />}
+        </>
+      )}
       <div className="subpagina-encabezado">
         <Encabezado />
       </div>

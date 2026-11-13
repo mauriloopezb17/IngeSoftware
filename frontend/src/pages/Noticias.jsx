@@ -81,6 +81,11 @@ function Noticias() {
 
   return (
     <div className="font-body">
+      <title>Noticias | Parroquia Señor de la Exaltación</title>
+      <meta
+        name="description"
+        content="Noticias, actividades pastorales y notas de prensa de la Parroquia Señor de la Exaltación en Obrajes, La Paz."
+      />
       <div className="subpagina-encabezado">
         <Encabezado />
       </div>
