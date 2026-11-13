@@ -1,120 +1,106 @@
-
 import { MapPin, ArrowRight } from 'lucide-react';
 
 import { anchoContenido } from './ElementosComunes.jsx';
-
-const imagenParroquia = '/media/seed/exterior-parroquia.webp';
+import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
+import { SEDE_ACTUAL } from '../../config/sede.js';
+import { useComunidades } from '../../hooks/index.js';
 
 import '../../styles/Comunidades.css';
 
-const enlaceGoogleMaps =
-  'https://www.google.com/maps/dir/?api=1&destination=-16.5267952%2C-68.1082157';
-
-const comunidades = [
-  {
-    nombre: 'Señor de la Exaltación',
-    tipo: 'Parroquia',
-    ubicacion: 'Av. Héctor Ormachea, Obrajes, La Paz',
-    imagen: imagenParroquia,
-    principal: true,
-    enlace: enlaceGoogleMaps,
-  },
-  {
-    nombre: 'de la Resurrección',
-    tipo: 'Parroquia',
-    ubicacion: 'La Paz',
-    imagen: null,
-    principal: false,
-    enlace: null,
-  },
-  {
-    nombre: 'San Pablo de la Cruz',
-    tipo: 'Capilla',
-    ubicacion: 'La Paz',
-    imagen: null,
-    principal: false,
-    enlace: null,
-  },
-];
-
 function Comunidades() {
+  const { data: comunidades = [], isPending, isError, refetch } = useComunidades();
+
   return (
     <section id="comunidades" className="comunidades">
       <div className={anchoContenido}>
         <div className="comunidades-encabezado">
-          <p className="eyebrow comunidades-etiqueta">
-            Pasionistas en Bolivia
-          </p>
+          <p className="eyebrow comunidades-etiqueta">Pasionistas en Bolivia</p>
 
-          <h2 className="serif-title comunidades-titulo">
-            Nuestras comunidades
-          </h2>
+          <h2 className="serif-title comunidades-titulo">Nuestras comunidades</h2>
 
           <p className="comunidades-descripcion">
-            Una sola familia pasionista. Cada sede tiene su propio espacio
-            dentro de pasionistas.org.bo
+            Una sola familia pasionista. Cada sede tiene su propio espacio dentro
+            de pasionistas.org.bo
           </p>
         </div>
 
-        <div className="comunidades-tarjetas">
-          {comunidades.map((comunidad) => (
-            <article
-              key={comunidad.nombre}
-              className={`comunidades-tarjeta ${
-                comunidad.principal ? 'comunidades-tarjeta-principal' : ''
-              }`}
-            >
-              <div className="comunidades-imagen-contenedor">
-                {comunidad.imagen ? (
-                  <img
-                    src={comunidad.imagen}
-                    alt={`Vista exterior de la Parroquia ${comunidad.nombre}`}
-                    className="comunidades-imagen"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div
-                    className="comunidades-imagen-pendiente"
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
+        {isPending ? (
+          <CargandoSeccion alturaMinima={320} etiqueta="Cargando comunidades" />
+        ) : isError ? (
+          <ErrorSeccion
+            mensaje="No pudimos cargar las comunidades."
+            onReintentar={refetch}
+          />
+        ) : comunidades.length === 0 ? (
+          <SinResultados mensaje="No hay comunidades disponibles por el momento." />
+        ) : (
+          <div className="comunidades-tarjetas">
+            {comunidades.map((comunidad) => {
+              const principal = comunidad.slug === SEDE_ACTUAL;
+              const imagen = comunidad.imagenPortada;
 
-              <div className="comunidades-tarjeta-contenido">
-                <p className="comunidades-tipo">
-                  {comunidad.tipo}
-                </p>
+              return (
+                <article
+                  key={comunidad.id}
+                  className={`comunidades-tarjeta ${
+                    principal ? 'comunidades-tarjeta-principal' : ''
+                  }`}
+                >
+                  <div className="comunidades-imagen-contenedor">
+                    {imagen ? (
+                      <img
+                        src={imagen.url}
+                        alt={imagen.textoAlternativo || comunidad.nombre}
+                        width={imagen.ancho ?? undefined}
+                        height={imagen.alto ?? undefined}
+                        className="comunidades-imagen"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div
+                        className="comunidades-imagen-pendiente"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </div>
 
-                <h3 className="comunidades-nombre">
-                  {comunidad.nombre}
-                </h3>
+                  <div className="comunidades-tarjeta-contenido">
+                    {comunidad.tipo?.nombre && (
+                      <p className="comunidades-tipo">{comunidad.tipo.nombre}</p>
+                    )}
 
-                <p className="comunidades-ubicacion">
-                  <MapPin size={14} />
-                  {comunidad.ubicacion}
-                </p>
+                    <h3 className="comunidades-nombre">{comunidad.nombre}</h3>
 
-                {comunidad.enlace ? (
-                  <a
-                    href={comunidad.enlace}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="comunidades-enlace"
-                    aria-label={`Cómo llegar a ${comunidad.nombre} en Google Maps`}
-                  >
-                    Cómo llegar
-                    <ArrowRight size={14} />
-                  </a>
-                ) : (
-                  <span className="comunidades-enlace">
-                    Visitar sitio
-                    <ArrowRight size={14} />
-                  </span>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
+                    {comunidad.direccion && (
+                      <p className="comunidades-ubicacion">
+                        <MapPin size={14} />
+                        {comunidad.direccion}
+                      </p>
+                    )}
+
+                    {comunidad.enlaceComoLlegar ? (
+                      <a
+                        href={comunidad.enlaceComoLlegar}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="comunidades-enlace"
+                        aria-label={`Cómo llegar a ${comunidad.nombre} en Google Maps`}
+                      >
+                        Cómo llegar
+                        <ArrowRight size={14} />
+                      </a>
+                    ) : (
+                      <span className="comunidades-enlace">
+                        Visitar sitio
+                        <ArrowRight size={14} />
+                      </span>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
