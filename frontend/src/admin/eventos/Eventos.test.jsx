@@ -128,7 +128,7 @@ describe('eventos del panel', () => {
     await usuario.click(screen.getByRole('button', { name: 'Crear evento' }));
 
     expect(await screen.findByText('Se creó el evento «Peregrinación a Copacabana».')).toBeInTheDocument();
-    expect(screen.getByTestId('ubicacion')).toHaveTextContent(/^\/admin\/eventos$/);
+    await waitFor(() => expect(screen.getByTestId('ubicacion')).toHaveTextContent(/^\/admin\/eventos$/));
     const nueva = await screen.findByRole('article', { name: /Peregrinación a Copacabana/ });
     expect(within(nueva).getByText(/Todo el día/)).toBeInTheDocument();
   });
@@ -167,7 +167,8 @@ describe('eventos del panel', () => {
     await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
     expect(await screen.findByText('Se guardaron los cambios de «Solemnidad de Cristo Rey del Universo».')).toBeInTheDocument();
-    expect(await within(tarjeta('Solemnidad de Cristo Rey')).findByText('Archivado')).toBeInTheDocument();
+    const eventoEditado = await screen.findByRole('article', { name: /Solemnidad de Cristo Rey/ });
+    expect(await within(eventoEditado).findByText('Archivado')).toBeInTheDocument();
   });
 
   it('elimina un evento después de confirmar', async () => {
