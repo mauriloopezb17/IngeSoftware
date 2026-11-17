@@ -1,52 +1,232 @@
-
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap");
-
 @import "tailwindcss";
 
-/* Colores y fuentes */
+/*
+  Sistema de diseño de la parroquia (fuente: skill parroquia-design).
+  Las fuentes se cargan en index.html. Aquí solo se definen los tokens.
+*/
 @theme static {
-  --color-gold: #e2ad11;
-  --color-goldDark: #b98a06;
-  --color-goldPale: #fbf1d3;
+  /* Colores oficiales del logo: no se cambian */
+  --color-gold: #ecb51c;
+  --color-ink: #231f1e;
 
-  --color-ink: #231f20;
-  --color-deep: #171415;
-  --color-charcoal: #4a4344;
-  --color-muted: #6b6162;
+  /* Colores de apoyo (derivados del logo) */
+  --color-gold-dark: #c9960a;
+  --color-gold-soft: #fbf0d2;
+  --color-ink-soft: #2e2927;
+  --color-cream: #f7f3ec;
+  --color-sand: #eae2d6;
+  --color-muted: #6b625d;
+  --color-muted-on-dark: #b8afa8;
+  --color-panel: #faf8f5;
 
-  --color-cream: #faf7f2;
-  --color-stone: #f2ece3;
-  --color-borderSoft: #ddd3c5;
+  /* Estados (solo uso funcional: errores, publicado, avisos) */
+  --color-danger: #9e1b22;
+  --color-danger-soft: #f8e8e9;
+  --color-success: #2f6b3f;
+  --color-success-soft: #e5efe7;
 
-  --color-terracotta: #b5532f;
-  --color-redParish: #9e1b22;
+  /*
+    Alias heredados: apuntan a los colores nuevos para que nada se rompa durante el rediseño.
+    No usarlos en código nuevo; se eliminan al cerrar el rediseño.
+  */
+  --color-goldDark: var(--color-gold-dark);
+  --color-goldPale: var(--color-gold-soft);
+  --color-deep: var(--color-ink);
+  --color-charcoal: var(--color-ink-soft);
+  --color-stone: var(--color-cream);
+  --color-borderSoft: var(--color-sand);
+  --color-redParish: var(--color-danger);
+  --color-terracotta: var(--color-danger);
 
-  --font-display: "Cormorant Garamond", Georgia, serif;
-  --font-body: "Montserrat", Arial, sans-serif;
+  /* Fuentes: Cormorant Garamond para títulos, Montserrat para todo lo demás */
+  --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-body: "Montserrat", "Segoe UI", Arial, sans-serif;
+
+  /*
+    Escala tipográfica fluida: cada rol crece de su tamaño móvil (375 px) a su tamaño
+    de escritorio (1280 px). No usar tamaños fuera de esta escala en el portal.
+  */
+  --text-display: clamp(2.75rem, 1.817rem + 3.98vw, 5rem); /* 44 → 80 px */
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.015em;
+  --text-h1: clamp(2.25rem, 1.732rem + 2.21vw, 3.5rem); /* 36 → 56 px */
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.01em;
+  --text-h2: clamp(1.875rem, 1.513rem + 1.55vw, 2.75rem); /* 30 → 44 px */
+  --text-h2--line-height: 1.15;
+  --text-h3: clamp(1.375rem, 1.271rem + 0.44vw, 1.625rem); /* 22 → 26 px */
+  --text-h3--line-height: 1.25;
+  --text-lead: clamp(1.125rem, 1.073rem + 0.22vw, 1.25rem); /* 18 → 20 px */
+  --text-lead--line-height: 1.6;
+  --text-body: clamp(1.0625rem, 1.037rem + 0.11vw, 1.125rem); /* 17 → 18 px */
+  --text-body--line-height: 1.6;
+  --text-button: 0.9375rem; /* 15 px */
+  --text-button--line-height: 1.2;
+  --text-eyebrow: clamp(0.75rem, 0.724rem + 0.11vw, 0.8125rem); /* 12 → 13 px */
+  --text-eyebrow--line-height: 1.4;
+  --text-eyebrow--letter-spacing: 0.2em;
+  --text-meta: 0.875rem; /* 14 px */
+  --text-meta--line-height: 1.5;
+  --text-ui: 0.9375rem; /* 15 px: texto base del panel */
+  --text-ui--line-height: 1.5;
+
+  /* Curvas de animación */
+  --ease-suave: cubic-bezier(0.22, 1, 0.36, 1); /* revelados del portal */
+  --ease-salida: cubic-bezier(0.23, 1, 0.32, 1); /* interfaz y panel */
 }
 
 /* Estilos globales */
-:root {
-  font-family: "Montserrat", sans-serif;
-  color: #231f20;
-  background-color: #faf7f2;
+@layer base {
+  :root {
+    font-family: var(--font-body);
+    color: var(--color-ink);
+    background-color: var(--color-cream);
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    min-width: 320px;
+  }
+
+  body {
+    min-width: 320px;
+    margin: 0;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  /* Foco visible por defecto; los componentes pueden ajustarlo según el fondo */
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-gold);
+    color: var(--color-ink);
+  }
+
+  /* Con movimiento reducido, todo aparece sin animación */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
-html {
-  min-width: 320px;
+/*
+  Clases globales heredadas del portal. Se corrigen aquí para que respeten la marca mientras
+  llega el rediseño; dejan de usarse en la Ola 2 y se eliminan al cerrar el rediseño.
+*/
+.serif-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-body {
-  min-width: 320px;
-  margin: 0;
+/* Rótulo sobre los títulos: texto en tinta, filete dorado (nunca texto dorado sobre claro) */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  font-family: var(--font-body);
+  font-size: var(--text-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--color-ink);
 }
 
-#root {
-  width: 100%;
-  min-height: 100vh;
+.eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 2px;
+  flex-shrink: 0;
+  background-color: var(--color-gold);
+}
+
+.eyebrow.justify-center {
+  justify-content: center;
+}
+
+/* Botón principal: dorado con texto en tinta */
+.static-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+
+  min-height: 44px;
+  padding: 0.75rem 1.5rem;
+
+  border: none;
+  border-radius: 0.125rem;
+  background-color: var(--color-gold);
+  color: var(--color-ink);
+
+  font-family: var(--font-body);
+  font-size: var(--text-button);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 200ms ease;
+}
+
+.static-cta:hover {
+  background-color: var(--color-gold-dark);
+}
+
+/* Botón secundario: borde del color del texto */
+.static-cta-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+
+  min-height: 44px;
+  padding: 0.75rem 1.5rem;
+
+  border: 1px solid currentColor;
+  border-radius: 0.125rem;
+  background-color: transparent;
+  color: inherit;
+
+  font-family: var(--font-body);
+  font-size: var(--text-button);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 200ms ease;
+}
+
+.static-cta-outline:hover {
+  background-color: rgb(255 255 255 / 0.08);
+}
+
+.visual-control {
+  cursor: default;
+}
+
+/* Marcador de imagen pendiente (sin degradado: la marca no usa degradados) */
+.placeholder {
+  background-color: var(--color-ink-soft);
+}
+
+.shadow-soft {
+  box-shadow: 0 8px 24px rgb(35 31 30 / 0.12);
 }
