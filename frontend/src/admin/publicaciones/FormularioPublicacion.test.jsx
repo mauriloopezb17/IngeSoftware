@@ -332,6 +332,7 @@ describe('formulario de publicación', () => {
       await userEvent.click(within(confirmacion).getByRole('button', { name: 'Enviar a revisión' }));
 
       await waitFor(() => expect(router.state.location.pathname).toBe('/admin/publicaciones'), esperar);
+      expect(await screen.findByRole('heading', { level: 1, name: 'Publicaciones' }, esperar)).toBeInTheDocument();
       expect(await screen.findByRole('status')).toHaveTextContent(
         '«Retiro de Adviento: inscripciones abiertas» se envió a revisión.',
       );
@@ -340,8 +341,8 @@ describe('formulario de publicación', () => {
       expect(enviada.imagenPortada).toMatchObject({ id: 1 });
 
       await router.navigate('/admin/publicaciones/4/editar');
-      expect(await screen.findByRole('heading', { name: 'No se puede editar' })).toBeInTheDocument();
-      expect(screen.getByText(/Está en revisión/)).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'No se puede editar' }, esperar)).toBeInTheDocument();
+      expect(await screen.findByText(/Está en revisión/, {}, esperar)).toBeInTheDocument();
     });
 
     it('si la publicación no está lista, la API responde 400 y sigue en borrador', async () => {

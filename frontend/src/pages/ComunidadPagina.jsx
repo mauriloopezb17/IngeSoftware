@@ -37,7 +37,7 @@ function ComunidadPagina() {
         bajada="Hay un lugar para ti. Niños, jóvenes, familias y adultos mayores encuentran aquí un espacio para servir, formarse y crecer en la fe."
       />
 
-      <Seccion fondo="blanco">
+      <Seccion id="comunidad" fondo="blanco">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <div className="rounded-md border border-sand bg-cream p-6 lg:sticky lg:top-28">

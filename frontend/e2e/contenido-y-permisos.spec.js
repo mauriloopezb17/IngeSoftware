@@ -26,7 +26,7 @@ test.describe('Gestión de contenido y permisos por rol', () => {
 
       await expect(secretaria.page.getByRole('heading', { level: 2, name: nombre })).toBeVisible();
 
-      await page.goto('/');
+      await page.goto('/comunidad');
       const seccionComunidad = page.locator('#comunidad');
       await expect(seccionComunidad).toContainText(nombre);
 

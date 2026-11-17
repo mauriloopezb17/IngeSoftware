@@ -85,7 +85,7 @@ function Nosotros() {
               <blockquote className="mt-8 border-l-2 border-gold pl-5">
                 <p className="font-display text-h3 italic text-ink">“{cita.texto}”</p>
                 {cita.autor && (
-                  <footer className="mt-2 font-body text-meta text-muted">— {cita.autor}</footer>
+                  <cite className="mt-2 block font-body text-meta not-italic text-muted">— {cita.autor}</cite>
                 )}
               </blockquote>
             )}

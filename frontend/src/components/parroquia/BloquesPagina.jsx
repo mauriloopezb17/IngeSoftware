@@ -126,7 +126,7 @@ export function BloqueCita({ contenido }) {
       <p className="font-display text-h2 italic text-ink">“{contenido.texto}”</p>
 
       {contenido.autor && (
-        <footer className="mt-3 font-body text-meta text-muted">— {contenido.autor}</footer>
+        <cite className="mt-3 block font-body text-meta not-italic text-muted">— {contenido.autor}</cite>
       )}
     </blockquote>
   );

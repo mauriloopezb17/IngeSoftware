@@ -67,7 +67,7 @@ test('rutas internas multipágina cargan sin errores ni desbordamiento en escrit
     { ruta: '/calendario', titulo: 'Calendario de eventos' },
     { ruta: '/proclamas', titulo: 'Proclamas matrimoniales' },
     { ruta: '/boletines', titulo: 'Boletines parroquiales' },
-    { ruta: '/paginas/historia', titulo: 'Nuestra historia' },
+    { ruta: '/paginas/nosotros', titulo: 'Quiénes somos' },
   ];
 
   const { erroresConsola, erroresPagina } = capturarErrores(page);

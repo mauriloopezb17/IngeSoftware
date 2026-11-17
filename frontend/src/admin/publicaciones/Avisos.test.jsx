@@ -134,9 +134,7 @@ describe('avisos parroquiales', () => {
     await usuario.click(screen.getByRole('button', { name: 'Publicar' }));
 
     expect(await screen.findByText('«Misa de difuntos el lunes a las 19:00» se publicó.', {}, esperar)).toBeInTheDocument();
-    await waitFor(() =>
-      expect(screen.getByTestId('ubicacion')).toHaveTextContent(/^\/admin\/publicaciones\/avisos$/),
-    );
+    expect(screen.getByTestId('ubicacion')).toHaveTextContent(/^\/admin\/publicaciones\/avisos$/);
     const nueva = await screen.findByRole('row', { name: /Misa de difuntos/ });
     expect(within(nueva).getByText('Publicada')).toBeInTheDocument();
     expect(within(nueva).getByText('Secretaría (desarrollo)')).toBeInTheDocument();
@@ -165,16 +163,9 @@ describe('avisos parroquiales', () => {
     fireEvent.change(screen.getByLabelText('Fecha de expiración (opcional)'), { target: { value: '2020-01-02T08:00' } });
     await usuario.click(screen.getByRole('button', { name: 'Publicar' }));
 
-    await waitFor(
-      () => expect(screen.getByTestId('ubicacion')).toHaveTextContent(/\/admin\/publicaciones\/\d+\/editar/),
-      esperar,
-    );
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Editar aviso' }, esperar),
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByText(/Se guardó como borrador, pero no se pudo publicar/).length,
-    ).toBeGreaterThanOrEqual(1);
+    expect(await screen.findByText(/Se guardó como borrador, pero no se pudo publicar/, {}, esperar)).toBeInTheDocument();
+    expect(screen.getByTestId('ubicacion')).toHaveTextContent(/\/admin\/publicaciones\/\d+\/editar/);
+    expect(screen.getByRole('heading', { level: 1, name: 'Editar aviso' })).toBeInTheDocument();
   });
 
   it('edita un aviso publicado (los cambios se guardan sin cambiar el estado)', async () => {
