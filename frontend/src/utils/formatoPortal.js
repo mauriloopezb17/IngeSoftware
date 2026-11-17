@@ -73,6 +73,15 @@ function obtenerPartesBolivia(fechaIso) {
   };
 }
 
+/**
+ * Devuelve el día de la semana actual en Bolivia (`1` = lunes … `7` = domingo),
+ * coincidiendo con el arreglo `dias` devuelto por el endpoint de horarios.
+ */
+export function obtenerDiaSemanaBolivia(fecha = new Date()) {
+  const { diaSemana } = obtenerPartesBolivia(fecha.toISOString());
+  return diaSemana === 0 ? 7 : diaSemana;
+}
+
 export function formatearDiaMes(fechaIso) {
   const { dia, mes } = obtenerPartesBolivia(fechaIso);
   return {

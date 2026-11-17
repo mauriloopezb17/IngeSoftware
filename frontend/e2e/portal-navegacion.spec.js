@@ -21,9 +21,8 @@ async function verificarSeccionesInicio(page) {
   await expect(page.locator('#horarios')).toContainText('Santa Misa');
   await expect(page.locator('#sacramentos')).toContainText('Bautismo');
   await expect(page.locator('#agenda')).toBeVisible();
-  await expect(page.locator('#comunidad')).toContainText('Monaguillos');
-  await expect(page.locator('#comunidades')).toBeVisible();
-  await expect(page.locator('#contacto')).toBeVisible();
+  await expect(page.locator('#noticias')).toBeVisible();
+  await expect(page.locator('#proclamas')).toBeVisible();
   await expect(page.locator('footer')).toBeVisible();
 }
 
@@ -34,6 +33,8 @@ test('inicio carga todas sus secciones en escritorio sin errores de consola', as
   await page.goto('/');
   await verificarSeccionesInicio(page);
 
+  const anchoScroll = await page.evaluate(() => document.documentElement.scrollWidth);
+  expect(anchoScroll).toBeLessThanOrEqual(1280);
   expect(erroresPagina).toEqual([]);
   expect(erroresConsola).toEqual([]);
 });
@@ -49,6 +50,41 @@ test('inicio carga todas sus secciones en móvil (390 px) sin desbordamiento ni 
 
   const anchoScroll = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(anchoScroll).toBeLessThanOrEqual(390);
+  expect(erroresPagina).toEqual([]);
+  expect(erroresConsola).toEqual([]);
+});
+
+test('rutas internas multipágina cargan sin errores ni desbordamiento en escritorio y móvil', async ({
+  page,
+}) => {
+  const rutasEsperadas = [
+    { ruta: '/nosotros', titulo: 'Quiénes somos' },
+    { ruta: '/horarios', titulo: 'Horarios de misa y secretaría' },
+    { ruta: '/sacramentos', titulo: 'Sacramentos y catequesis' },
+    { ruta: '/sacramentos/bautismo', titulo: 'Bautismo' },
+    { ruta: '/comunidad', titulo: 'Grupos y pastorales' },
+    { ruta: '/contacto', titulo: 'Visítanos o escríbenos' },
+    { ruta: '/calendario', titulo: 'Calendario de eventos' },
+    { ruta: '/proclamas', titulo: 'Proclamas matrimoniales' },
+    { ruta: '/boletines', titulo: 'Boletines parroquiales' },
+    { ruta: '/paginas/nosotros', titulo: 'Quiénes somos' },
+  ];
+
+  const { erroresConsola, erroresPagina } = capturarErrores(page);
+
+  for (const { width, height } of [
+    { width: 1280, height: 800 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize({ width, height });
+    for (const { ruta, titulo } of rutasEsperadas) {
+      await page.goto(ruta);
+      await expect(page.getByRole('heading', { level: 1, name: titulo })).toBeVisible();
+      const anchoScroll = await page.evaluate(() => document.documentElement.scrollWidth);
+      expect(anchoScroll).toBeLessThanOrEqual(width);
+    }
+  }
+
   expect(erroresPagina).toEqual([]);
   expect(erroresConsola).toEqual([]);
 });

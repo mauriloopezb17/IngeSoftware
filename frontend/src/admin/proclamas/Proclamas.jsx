@@ -1,11 +1,11 @@
-import { Link, Route, Routes, useLocation, useParams } from 'react-router';
+import { Link, Route, Routes, useParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 
-import { AvisoSoloLectura, Cargando, ErrorConsulta } from '../componentes/EstadoConsulta.jsx';
 import SinPermiso from '../componentes/SinPermiso.jsx';
 import { formatearFecha } from '../multimedia/formato.js';
 import NoEncontrada from '../paginas/NoEncontrada.jsx';
 import { usePermisos } from '../permisos/usePermisos.js';
+import { Aviso, Boton, EncabezadoPantalla, EsqueletoFormulario } from '../ui/index.js';
 import { CLAVE_PROCLAMAS, obtenerProclama } from './api.js';
 import FormularioProclama from './FormularioProclama.jsx';
 import ListadoProclamas from './ListadoProclamas.jsx';
@@ -15,9 +15,8 @@ function NuevaProclama() {
   const { puede } = usePermisos();
   if (!puede('proclamas.gestionar')) return <SinPermiso />;
   return (
-    <section className="mx-auto max-w-4xl">
-      <h1 className="font-display text-4xl font-semibold text-ink">Nueva proclama</h1>
-      <p className="mt-2 text-muted">Registra a los contrayentes y la fecha del matrimonio.</p>
+    <section className="mx-auto max-w-3xl">
+      <EncabezadoPantalla titulo="Nueva proclama" descripcion="Registra a los contrayentes y la fecha del matrimonio." />
       <FormularioProclama />
     </section>
   );
@@ -27,7 +26,6 @@ function NuevaProclama() {
 // (Marketing) ve los mismos datos en solo lectura.
 function DetalleProclama() {
   const { id } = useParams();
-  const { state } = useLocation();
   const { puede } = usePermisos();
   const editable = puede('proclamas.gestionar');
   const esId = /^\d+$/.test(id);
@@ -40,40 +38,54 @@ function DetalleProclama() {
   });
 
   if (!esId || (isError && error.estado === 404)) return <NoEncontrada />;
-  if (isPending) return <Cargando texto="Cargando la proclama…" />;
+  if (isPending)
+    return (
+      <section className="mx-auto max-w-3xl">
+        <EsqueletoFormulario campos={4} etiqueta="Cargando la proclama…" />
+      </section>
+    );
   if (isError)
     return (
-      <section className="mx-auto max-w-4xl">
-        <ErrorConsulta texto="No se pudo cargar la proclama" error={error} onReintentar={refetch} />
+      <section className="mx-auto max-w-3xl">
+        <Aviso
+          tipo="error"
+          accion={
+            <Boton variante="secundario" tamano="sm" onClick={() => refetch()}>
+              Reintentar
+            </Boton>
+          }
+        >
+          <p>No se pudo cargar la proclama: {error.message}</p>
+        </Aviso>
       </section>
     );
 
   return (
-    <section className="mx-auto max-w-4xl">
-      <h1 className="font-display text-4xl font-semibold text-ink">
-        {editable ? 'Editar proclama' : 'Proclama'}
-      </h1>
-      <p className="mt-2 text-muted">
-        {proclama.contrayente1} y {proclama.contrayente2}
-      </p>
-      {state?.aviso && (
-        <p role="status" className="mt-4 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark">
-          {state.aviso}
-        </p>
-      )}
+    <section className="mx-auto max-w-3xl">
+      <EncabezadoPantalla
+        titulo={editable ? 'Editar proclama' : 'Proclama'}
+        descripcion={`${proclama.contrayente1} y ${proclama.contrayente2}`}
+      />
 
       {editable ? (
         <FormularioProclama key={proclama.id} proclama={proclama} />
       ) : (
         <>
-          <AvisoSoloLectura>Tu rol puede consultar las proclamas, pero no modificarlas.</AvisoSoloLectura>
-          <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-[auto_1fr]">
-            <dt className="font-semibold">Matrimonio</dt>
-            <dd>{formatearFecha(proclama.fechaMatrimonio)}</dd>
+          <Aviso tipo="soloLectura" className="mt-4">
+            <p>
+              <strong className="font-semibold text-ink">Solo lectura.</strong> Tu rol puede consultar las proclamas, pero
+              no modificarlas.
+            </p>
+          </Aviso>
+          <dl className="mt-4 grid gap-2 rounded-lg border border-sand bg-white p-5 text-sm sm:grid-cols-[auto_1fr]">
+            <dt className="font-semibold text-ink">Matrimonio</dt>
+            <dd className="text-muted">{formatearFecha(proclama.fechaMatrimonio)}</dd>
           </dl>
-          <Link to="/admin/proclamas" className="mt-4 inline-block text-sm font-medium underline">
-            Volver a proclamas
-          </Link>
+          <div className="mt-4">
+            <Boton como={Link} to="/admin/proclamas" variante="secundario">
+              Volver a proclamas
+            </Boton>
+          </div>
         </>
       )}
 

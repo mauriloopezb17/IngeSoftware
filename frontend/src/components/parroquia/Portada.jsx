@@ -1,22 +1,31 @@
 import { useRef, useState } from 'react';
+import { ArrowRight, Pause, Play } from 'lucide-react';
 
-import { ArrowRight, Play, Pause } from 'lucide-react';
+import '../../styles/portal.css';
 
-import Encabezado from './Encabezado.jsx';
+import { Boton, BotonEnlace, Contenedor, Eyebrow } from '../portal/index.js';
+import ModalVideo from '../portal/ModalVideo.jsx';
 import EnlacePortal from './EnlacePortal.jsx';
-import { anchoContenido, EtiquetaSeccion } from './ElementosComunes.jsx';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { IconoDinamico } from './IconoDinamico.jsx';
 import { usePagina } from '../../hooks/index.js';
 
-import '../../styles/Portada.css';
+function debeMostrarSoloPoster() {
+  if (typeof window === 'undefined') return false;
+  const reduceMotion =
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const saveData = Boolean(navigator.connection?.saveData);
+  return reduceMotion || saveData;
+}
 
 function Portada() {
   const referenciaVideo = useRef(null);
   const { data: pagina, isPending, isError, refetch } = usePagina('inicio');
 
-  const [videoIniciado, setVideoIniciado] = useState(false);
-  const [reproduciendo, setReproduciendo] = useState(false);
+  const soloPoster = debeMostrarSoloPoster();
+  const [reproduciendo, setReproduciendo] = useState(!soloPoster);
+  const [modalVideoAbierto, setModalVideoAbierto] = useState(false);
 
   const bloques = pagina?.bloques ?? [];
   const hero = bloques.find((bloque) => bloque.tipo === 'hero_video')?.contenido;
@@ -28,61 +37,60 @@ function Portada() {
 
     if (!video.paused) {
       video.pause();
+      setReproduciendo(false);
       return;
     }
 
     try {
       await video.play();
-    } catch (error) {
-      console.error('No se pudo reproducir el video:', error);
+      setReproduciendo(true);
+    } catch {
+      setReproduciendo(false);
     }
   };
 
   return (
-    <section id="inicio" className="portada relative bg-cream">
-      <div className="portada-fondo relative min-h-[860px] overflow-hidden bg-deep">
-        {/* Imagen inicial */}
+    <section id="inicio" className="bg-white">
+      <div className="relative flex min-h-[600px] items-center overflow-hidden bg-ink pt-36 pb-20 text-white md:min-h-[720px] md:pt-44 md:pb-28">
         {hero?.url_poster && (
           <img
             src={hero.url_poster}
             alt=""
+            aria-hidden="true"
+            fetchPriority="high"
             className="absolute inset-0 h-full w-full object-cover"
           />
         )}
 
-        {/* Video */}
-        {hero?.url_video && (
+        {hero?.url_video && !soloPoster && (
           <video
             ref={referenciaVideo}
+            autoPlay
             muted
             loop
             playsInline
-            preload="none"
+            preload="metadata"
             poster={hero.url_poster || undefined}
             aria-hidden="true"
-            onPlay={() => {
-              setVideoIniciado(true);
-              setReproduciendo(true);
-            }}
+            onPlay={() => setReproduciendo(true)}
             onPause={() => setReproduciendo(false)}
             onEnded={() => setReproduciendo(false)}
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
-              videoIniciado ? 'opacity-100' : 'opacity-0'
-            }`}
+            className="absolute inset-0 h-full w-full object-cover"
           >
             <source src={hero.url_video} type="video/mp4" />
           </video>
         )}
 
-        {/* Capa oscura */}
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(23,20,20,.78)_0%,rgba(23,20,20,.45)_55%,rgba(23,20,20,.22)_100%),linear-gradient(180deg,rgba(23,20,20,.62)_0%,transparent_38%,rgba(23,20,20,.76)_100%)]" />
+        {/* Único overlay oscuro para legibilidad WCAG sobre el video */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-[linear-gradient(90deg,rgba(35,31,30,0.9)_0%,rgba(35,31,30,0.65)_55%,rgba(35,31,30,0.38)_100%)]"
+        />
 
-        <div className="relative z-10">
-          <Encabezado />
-
-          <div className={`${anchoContenido} portada-contenido pt-32 md:pt-[150px]`}>
+        <Contenedor className="relative z-10">
+          <div className="max-w-3xl">
             {isPending ? (
-              <CargandoSeccion oscuro alturaMinima={340} etiqueta="Cargando portada" />
+              <CargandoSeccion oscuro alturaMinima={300} etiqueta="Cargando portada" />
             ) : isError ? (
               <ErrorSeccion
                 oscuro
@@ -90,106 +98,115 @@ function Portada() {
                 onReintentar={refetch}
               />
             ) : !hero ? (
-              <SinResultados
-                oscuro
-                mensaje="No hay contenido publicado para la portada."
-              />
+              <SinResultados oscuro mensaje="No hay contenido publicado para la portada." />
             ) : (
               <>
-                {hero.etiqueta && <EtiquetaSeccion light>{hero.etiqueta}</EtiquetaSeccion>}
+                {hero.etiqueta && (
+                  <Eyebrow oscuro className="hero-entrada mb-4">
+                    {hero.etiqueta}
+                  </Eyebrow>
+                )}
 
-                <h1 className="serif-title portada-titulo mt-5 max-w-[680px] text-[64px] leading-[.99] tracking-tight text-white md:text-[88px]">
+                <h1 className="hero-entrada font-display text-display font-semibold text-balance text-white">
                   {hero.titulo}
                 </h1>
 
                 {hero.subtitulo && (
-                  <p className="portada-descripcion mt-7 max-w-[620px] text-[16px] leading-[1.8] text-white/90 md:text-lg">
+                  <p className="hero-entrada hero-entrada-retraso-1 mt-6 max-w-prose font-body text-lead text-pretty text-white/90">
                     {hero.subtitulo}
                   </p>
                 )}
 
-                {hero.botones?.length > 0 && (
-                  <div className="portada-botones mt-9 flex flex-wrap items-center gap-4">
-                    {hero.botones.map((boton, indice) => (
-                      <EnlacePortal
-                        key={boton.texto}
-                        to={boton.enlace}
-                        className={
-                          indice === 0
-                            ? 'static-cta'
-                            : 'static-cta-outline portada-boton-secundario text-white'
-                        }
-                      >
-                        {boton.texto}
-                        {indice === 0 && <ArrowRight size={18} />}
-                      </EnlacePortal>
-                    ))}
-                  </div>
-                )}
+                <div className="hero-entrada hero-entrada-retraso-2 mt-8 flex flex-wrap items-center gap-4">
+                  {hero.botones?.map((boton, indice) => (
+                    <BotonEnlace
+                      key={boton.texto}
+                      to={boton.enlace}
+                      variante={indice === 0 ? 'primarioOscuro' : 'secundarioOscuro'}
+                    >
+                      <span>{boton.texto}</span>
+                      {indice === 0 && <ArrowRight size={17} aria-hidden="true" />}
+                    </BotonEnlace>
+                  ))}
+
+                  {hero.url_video && (
+                    <Boton
+                      variante="secundarioOscuro"
+                      onClick={() => setModalVideoAbierto(true)}
+                    >
+                      <Play size={16} aria-hidden="true" />
+                      <span>{hero.texto_video || 'Video institucional'}</span>
+                    </Boton>
+                  )}
+                </div>
               </>
             )}
           </div>
 
-          {hero?.url_video && (
-            <div className={`${anchoContenido} portada-video-wrap`}>
+          {hero?.url_video && !soloPoster && (
+            <div className="mt-10 flex items-center justify-end">
               <button
                 type="button"
                 onClick={alternarReproduccion}
                 aria-label={
-                  reproduciendo
-                    ? 'Pausar video institucional'
-                    : 'Reproducir video institucional'
+                  reproduciendo ? 'Pausar video de fondo' : 'Reproducir video de fondo'
                 }
                 aria-pressed={reproduciendo}
-                className="portada-video-chip"
+                className="inline-flex size-11 cursor-pointer items-center justify-center rounded-full border border-white/35 bg-ink/80 text-white transition-colors duration-150 hover:border-gold hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
               >
-                <span className="portada-video-icono">
-                  {reproduciendo ? (
-                    <Pause size={18} fill="currentColor" />
-                  ) : (
-                    <Play size={18} fill="currentColor" />
-                  )}
-                </span>
-
-                <span className="portada-video-texto">
-                  <span className="portada-video-titulo">
-                    {hero.texto_video || 'Video institucional'}
-                  </span>
-
-                  {hero.detalle_video && (
-                    <span className="portada-video-subtitulo">{hero.detalle_video}</span>
-                  )}
-                </span>
+                {reproduciendo ? (
+                  <Pause size={18} aria-hidden="true" />
+                ) : (
+                  <Play size={18} aria-hidden="true" />
+                )}
               </button>
             </div>
           )}
-        </div>
+        </Contenedor>
       </div>
 
-      {/* Accesos rápidos */}
+      {/* Accesos rápidos sobre el borde inferior del hero */}
       {tarjetas.length > 0 && (
-        <div className={`${anchoContenido} portada-accesos`}>
-          {tarjetas.map(({ titulo, subtitulo, icono, enlace }) => (
-            <EnlacePortal
-              key={titulo}
-              to={enlace || '#'}
-              className="portada-acceso"
-              aria-label={`Ir a ${titulo}`}
-            >
-              <span className="portada-acceso-icono">
-                <IconoDinamico nombre={icono} size={22} />
-              </span>
+        <Contenedor className="relative z-20 -mt-10 pb-8 md:-mt-12 md:pb-12">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {tarjetas.map(({ titulo, subtitulo, icono, enlace }) => (
+              <EnlacePortal
+                key={titulo}
+                to={enlace || '/'}
+                aria-label={`Ir a ${titulo}`}
+                className="group flex items-start gap-4 rounded-md border border-sand bg-white p-5 shadow-soft transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-sm bg-gold-soft text-ink">
+                  <IconoDinamico nombre={icono} size={20} strokeWidth={1.8} />
+                </span>
 
-              <span className="portada-acceso-texto">
-                <span className="portada-acceso-titulo">{titulo}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-h3 font-semibold text-ink">
+                    {titulo}
+                  </span>
+                  {subtitulo && (
+                    <span className="mt-1 block font-body text-meta text-muted">{subtitulo}</span>
+                  )}
+                </span>
 
-                {subtitulo && (
-                  <span className="portada-acceso-subtitulo">{subtitulo}</span>
-                )}
-              </span>
-            </EnlacePortal>
-          ))}
-        </div>
+                <ArrowRight
+                  size={16}
+                  aria-hidden="true"
+                  className="mt-1 shrink-0 text-muted transition-transform duration-200 ease-salida group-hover:translate-x-1 group-hover:text-ink"
+                />
+              </EnlacePortal>
+            ))}
+          </div>
+        </Contenedor>
+      )}
+
+      {hero?.url_video && (
+        <ModalVideo
+          abierto={modalVideoAbierto}
+          alCerrar={() => setModalVideoAbierto(false)}
+          urlVideo={hero.url_video}
+          titulo={hero.texto_video || 'Video institucional'}
+        />
       )}
     </section>
   );

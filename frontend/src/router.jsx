@@ -1,6 +1,13 @@
 import { createBrowserRouter } from 'react-router';
 
+import LayoutPortal from './components/portal/LayoutPortal.jsx';
 import InicioParroquia from './pages/InicioParroquia.jsx';
+import NosotrosPagina from './pages/NosotrosPagina.jsx';
+import HorariosPagina from './pages/HorariosPagina.jsx';
+import SacramentosPagina from './pages/SacramentosPagina.jsx';
+import SacramentoDetalle from './pages/SacramentoDetalle.jsx';
+import ComunidadPagina from './pages/ComunidadPagina.jsx';
+import ContactoPagina from './pages/ContactoPagina.jsx';
 import Noticias from './pages/Noticias.jsx';
 import NoticiaDetalle from './pages/NoticiaDetalle.jsx';
 import Proclamas from './pages/Proclamas.jsx';
@@ -21,16 +28,27 @@ export const rutas = [
     // Ruta sin ruta propia: solo aporta la pantalla de carga inicial.
     HydrateFallback: CargandoPagina,
     children: [
-      { path: '/', Component: InicioParroquia },
-      { path: '/noticias', Component: Noticias },
-      { path: '/noticias/:slug', Component: NoticiaDetalle },
-      { path: '/proclamas', Component: Proclamas },
-      { path: '/calendario', Component: Calendario },
-      { path: '/boletines', Component: Boletines },
-      { path: '/paginas/:slug', Component: PaginaPublica },
+      {
+        Component: LayoutPortal,
+        children: [
+          { path: '/', Component: InicioParroquia },
+          { path: '/nosotros', Component: NosotrosPagina },
+          { path: '/horarios', Component: HorariosPagina },
+          { path: '/sacramentos', Component: SacramentosPagina },
+          { path: '/sacramentos/:slug', Component: SacramentoDetalle },
+          { path: '/comunidad', Component: ComunidadPagina },
+          { path: '/contacto', Component: ContactoPagina },
+          { path: '/noticias', Component: Noticias },
+          { path: '/noticias/:slug', Component: NoticiaDetalle },
+          { path: '/proclamas', Component: Proclamas },
+          { path: '/calendario', Component: Calendario },
+          { path: '/boletines', Component: Boletines },
+          { path: '/paginas/:slug', Component: PaginaPublica },
+          { path: '*', Component: NoEncontrado },
+        ],
+      },
       // El panel define sus propias subrutas dentro de AdminApp.
       { path: '/admin/*', lazy: cargarAdmin },
-      { path: '*', Component: NoEncontrado },
     ],
   },
 ];

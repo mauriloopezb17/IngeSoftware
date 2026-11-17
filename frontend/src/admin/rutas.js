@@ -33,3 +33,11 @@ export const SECCIONES = [
   { clave: 'bitacora', ruta: 'bitacora', titulo: 'Bitácora', icono: History },
   { clave: 'usuarios', ruta: 'usuarios', titulo: 'Usuarios', icono: UserCog },
 ];
+
+export const GRUPOS_MENU = [
+  { titulo: 'General', claves: ['inicio'] },
+  { titulo: 'Contenido', claves: ['publicaciones', 'eventos', 'proclamas', 'boletines'] },
+  { titulo: 'Parroquia', claves: ['horarios', 'servicios', 'grupos', 'videos', 'sedes', 'paginas'] },
+  { titulo: 'Archivos', claves: ['multimedia'] },
+  { titulo: 'Administración', claves: ['usuarios', 'bitacora'] },
+];

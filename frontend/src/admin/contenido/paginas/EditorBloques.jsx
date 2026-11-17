@@ -1,12 +1,18 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowLeft, ArrowUp, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, EyeOff, Inbox, Pencil, Plus, Trash2 } from 'lucide-react';
 
+import ConfirmarAccion from '../../componentes/ConfirmarAccion.jsx';
 import NoEncontrada from '../../paginas/NoEncontrada.jsx';
-import BannerSoloLectura from '../componentes/BannerSoloLectura.jsx';
-import ConfirmarBorrado from '../componentes/ConfirmarBorrado.jsx';
-import EstadoLista from '../componentes/EstadoLista.jsx';
+import {
+  Aviso,
+  Boton,
+  EsqueletoTarjetas,
+  EstadoVacio,
+  Insignia,
+  useToast,
+} from '../../ui/index.js';
 import {
   CLAVE_PAGINAS,
   eliminarBloque,
@@ -21,13 +27,13 @@ import FormularioPagina from './FormularioPagina.jsx';
 // Editor de bloques de una página (/admin/paginas/:id). `paginaId` sale de la ruta.
 export default function EditorBloques({ paginaId, paginasDisponibles, puedeGestionar }) {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const tituloRef = useRef(null);
 
   const [creandoBloque, setCreandoBloque] = useState(false);
   const [editandoBloque, setEditandoBloque] = useState(null);
   const [editandoPagina, setEditandoPagina] = useState(false);
   const [bloquePorEliminar, setBloquePorEliminar] = useState(null);
-  const [aviso, setAviso] = useState('');
 
   const paginaQuery = useQuery({
     queryKey: [...CLAVE_PAGINAS, paginaId],
@@ -38,6 +44,16 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
     mutationFn: (ids) => reordenarBloques(paginaId, ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...CLAVE_PAGINAS, paginaId] });
+    },
+  });
+
+  const eliminarMut = useMutation({
+    mutationFn: (bloque) => eliminarBloque(paginaId, bloque.id),
+    onSuccess: (_, bloque) => {
+      queryClient.invalidateQueries({ queryKey: [...CLAVE_PAGINAS, paginaId] });
+      toast.exito(`Se eliminó el bloque «${NOMBRES_TIPO_BLOQUE[bloque.tipo] ?? bloque.tipo}».`);
+      setBloquePorEliminar(null);
+      setTimeout(() => tituloRef.current?.focus(), 0);
     },
   });
 
@@ -52,57 +68,58 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
     reordenarMut.mutate(ids);
   }
 
-  async function confirmarBorradoBloque() {
-    await eliminarBloque(paginaId, bloquePorEliminar.id);
-    await queryClient.invalidateQueries({ queryKey: [...CLAVE_PAGINAS, paginaId] });
-    setAviso(
-      `Se eliminó el bloque «${NOMBRES_TIPO_BLOQUE[bloquePorEliminar.tipo] ?? bloquePorEliminar.tipo}».`,
-    );
-    setBloquePorEliminar(null);
-    setTimeout(() => tituloRef.current?.focus(), 0);
-  }
-
   // Una página que no existe (id desconocido) es una ruta desconocida.
   if (paginaQuery.isError && paginaQuery.error.estado === 404) return <NoEncontrada />;
 
   return (
     <section className="mx-auto max-w-5xl">
       <div className="mb-4">
-        <Link
+        <Boton
+          como={Link}
           to="/admin/paginas"
           state={{ enfocarTitulo: true }}
-          className="inline-flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-sm font-medium text-ink hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
+          variante="secundario"
+          tamano="sm"
+          icono={ArrowLeft}
         >
-          <ArrowLeft className="size-4" aria-hidden="true" />
           Volver a páginas
-        </Link>
+        </Boton>
       </div>
 
-      {paginaQuery.isPending || paginaQuery.isError ? (
-        <EstadoLista
-          cargando={paginaQuery.isPending}
-          error={paginaQuery.isError ? paginaQuery.error : null}
-          vacio={false}
-          textoCargando="Cargando página y bloques…"
-          onReintentar={() => paginaQuery.refetch()}
-        />
-      ) : (
+      {paginaQuery.isPending && (
+        <EsqueletoTarjetas cantidad={3} columnas="grid-cols-1" etiqueta="Cargando página y bloques…" />
+      )}
+
+      {paginaQuery.isError && (
+        <Aviso
+          tipo="error"
+          accion={
+            <Boton variante="secundario" tamano="sm" onClick={() => paginaQuery.refetch()}>
+              Reintentar
+            </Boton>
+          }
+        >
+          <p>{paginaQuery.error.message || 'No se pudieron cargar los datos.'}</p>
+        </Aviso>
+      )}
+
+      {!paginaQuery.isPending && !paginaQuery.isError && pagina && (
         <>
           <header className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <h1
                   ref={tituloRef}
                   tabIndex={-1}
-                  className="font-display text-4xl font-semibold text-ink outline-none"
+                  className="font-body text-2xl font-semibold tracking-tight text-ink outline-none sm:text-[28px]"
                 >
                   {pagina.titulo}
                 </h1>
-                <span className="rounded-full bg-goldPale px-2.5 py-0.5 text-xs font-semibold text-goldDark">
+                <Insignia variante={pagina.estado.codigo === 'PUBLICADO' ? 'publicado' : 'borrador'}>
                   {pagina.estado.nombre}
-                </span>
+                </Insignia>
               </div>
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-1.5 text-sm text-muted">
                 Slug: <code>/{pagina.slug}</code>
                 {pagina.paginaPadre && ` · Subpágina de «${pagina.paginaPadre.titulo}»`}
                 {pagina.mostrarEnMenu && ` · En el menú (orden ${pagina.ordenMenu})`}
@@ -111,66 +128,50 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
 
             {puedeGestionar && (
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAviso('');
-                    setEditandoPagina(true);
-                  }}
-                  className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3.5 py-2.5 text-sm font-medium text-ink hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
+                <Boton
+                  variante="secundario"
+                  icono={Pencil}
+                  onClick={() => setEditandoPagina(true)}
                 >
-                  <Pencil className="size-4" aria-hidden="true" />
                   Editar datos
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAviso('');
-                    setCreandoBloque(true);
-                  }}
-                  className="flex items-center gap-2 rounded-md bg-gold px-4 py-2.5 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark"
+                </Boton>
+                <Boton
+                  variante="primario"
+                  icono={Plus}
+                  onClick={() => setCreandoBloque(true)}
                 >
-                  <Plus className="size-4" aria-hidden="true" />
                   Agregar bloque
-                </button>
+                </Boton>
               </div>
             )}
           </header>
 
-          {!puedeGestionar && <BannerSoloLectura recurso="esta página y sus bloques" />}
-
-          <p
-            role="status"
-            className={aviso ? 'mt-4 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark' : 'sr-only'}
-          >
-            {aviso}
-          </p>
+          {!puedeGestionar && (
+            <Aviso tipo="soloLectura" className="mt-4">
+              <p>
+                <strong className="font-semibold text-ink">Solo lectura:</strong> tu rol puede consultar esta página y
+                sus bloques, pero no realizar cambios.
+              </p>
+            </Aviso>
+          )}
 
           {reordenarMut.isError && (
-            <p
-              role="alert"
-              className="mt-4 rounded-md border border-redParish/30 bg-redParish/5 px-3 py-2 text-sm text-redParish"
-            >
-              {reordenarMut.error.message}
-            </p>
+            <Aviso tipo="error" className="mt-4">
+              <p>{reordenarMut.error.message}</p>
+            </Aviso>
           )}
 
           <div className="mt-6">
             {bloques.length === 0 ? (
-              <EstadoLista
-                cargando={false}
-                error={null}
-                vacio
-                textoVacio="Esta página todavía no tiene bloques."
-                accionVacio={
+              <EstadoVacio
+                icono={Inbox}
+                titulo="Esta página todavía no tiene bloques."
+                descripcion="Agrega bloques de texto, tarjetas, citas, videos o galería."
+                accion={
                   puedeGestionar && (
-                    <button
-                      type="button"
-                      onClick={() => setCreandoBloque(true)}
-                      className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white"
-                    >
+                    <Boton variante="primario" icono={Plus} onClick={() => setCreandoBloque(true)}>
                       Agregar el primer bloque
-                    </button>
+                    </Boton>
                   )
                 }
               />
@@ -181,70 +182,60 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
                   return (
                     <li
                       key={bloque.id}
-                      className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-borderSoft bg-white p-4"
+                      className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-sand bg-white p-5"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded bg-stone px-2 py-0.5 text-xs font-semibold text-charcoal">
-                            #{bloque.orden}
-                          </span>
+                          <Insignia variante="borrador">#{bloque.orden}</Insignia>
                           <span className="font-semibold text-ink">{nombreTipo}</span>
                           {!bloque.visible && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-stone px-2 py-0.5 text-xs font-medium text-muted">
-                              <EyeOff className="size-3" aria-hidden="true" />
+                            <Insignia variante="archivado">
+                              <EyeOff className="mr-1 size-3" aria-hidden="true" />
                               Oculto
-                            </span>
+                            </Insignia>
                           )}
                         </div>
-                        <p className="mt-1.5 break-words text-sm text-charcoal">
-                          {resumenBloque(bloque)}
-                        </p>
+                        <p className="mt-1.5 break-words text-sm text-muted">{resumenBloque(bloque)}</p>
                       </div>
 
                       {puedeGestionar && (
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <button
-                            type="button"
+                          <Boton
+                            variante="secundario"
+                            tamano="sm"
                             onClick={() => mover(indice, -1)}
                             disabled={indice === 0 || reordenarMut.isPending}
                             aria-label={`Subir bloque ${bloque.orden}: ${nombreTipo}`}
-                            className="rounded-md border border-borderSoft bg-white p-2 text-charcoal hover:bg-stone disabled:opacity-40"
                           >
-                            <ArrowUp className="size-4" aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
+                            <ArrowUp className="size-3.5" aria-hidden="true" />
+                          </Boton>
+                          <Boton
+                            variante="secundario"
+                            tamano="sm"
                             onClick={() => mover(indice, 1)}
                             disabled={indice === bloques.length - 1 || reordenarMut.isPending}
                             aria-label={`Bajar bloque ${bloque.orden}: ${nombreTipo}`}
-                            className="rounded-md border border-borderSoft bg-white p-2 text-charcoal hover:bg-stone disabled:opacity-40"
                           >
-                            <ArrowDown className="size-4" aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setAviso('');
-                              setEditandoBloque(bloque);
-                            }}
+                            <ArrowDown className="size-3.5" aria-hidden="true" />
+                          </Boton>
+                          <Boton
+                            variante="secundario"
+                            tamano="sm"
+                            icono={Pencil}
+                            onClick={() => setEditandoBloque(bloque)}
                             aria-label={`Editar bloque ${bloque.orden}: ${nombreTipo}`}
-                            className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium text-ink hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
                           >
-                            <Pencil className="size-4" aria-hidden="true" />
                             Editar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setAviso('');
-                              setBloquePorEliminar(bloque);
-                            }}
+                          </Boton>
+                          <Boton
+                            variante="secundario"
+                            tamano="sm"
+                            icono={Trash2}
+                            onClick={() => setBloquePorEliminar(bloque)}
                             aria-label={`Eliminar bloque ${bloque.orden}: ${nombreTipo}`}
-                            className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium text-redParish hover:bg-redParish/5 focus-visible:outline-2 focus-visible:outline-redParish"
                           >
-                            <Trash2 className="size-4" aria-hidden="true" />
                             Eliminar
-                          </button>
+                          </Boton>
                         </div>
                       )}
                     </li>
@@ -262,11 +253,10 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
           bloque={editandoBloque}
           onGuardado={(guardado) => {
             const nombreTipo = NOMBRES_TIPO_BLOQUE[guardado.tipo] ?? guardado.tipo;
-            setAviso(
-              editandoBloque
-                ? `Se actualizó el bloque «${nombreTipo}».`
-                : `Se agregó el bloque «${nombreTipo}».`,
-            );
+            const msg = editandoBloque
+              ? `Se actualizó el bloque «${nombreTipo}».`
+              : `Se agregó el bloque «${nombreTipo}».`;
+            toast.exito(msg);
             setCreandoBloque(false);
             setEditandoBloque(null);
             setTimeout(() => tituloRef.current?.focus(), 0);
@@ -284,7 +274,7 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
           paginasDisponibles={paginasDisponibles}
           onGuardado={async (guardada) => {
             await queryClient.invalidateQueries({ queryKey: [...CLAVE_PAGINAS, paginaId] });
-            setAviso(`Se guardaron los cambios de la página «${guardada.titulo}».`);
+            toast.exito(`Se guardaron los cambios de la página «${guardada.titulo}».`);
             setEditandoPagina(false);
             setTimeout(() => tituloRef.current?.focus(), 0);
           }}
@@ -293,14 +283,19 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
       )}
 
       {bloquePorEliminar && (
-        <ConfirmarBorrado
+        <ConfirmarAccion
           titulo={`Eliminar bloque «${NOMBRES_TIPO_BLOQUE[bloquePorEliminar.tipo] ?? bloquePorEliminar.tipo}»`}
-          descripcion="El bloque dejará de mostrarse en esta página."
-          onConfirmar={confirmarBorradoBloque}
-          onCancelar={() => setBloquePorEliminar(null)}
-        />
+          pendiente={eliminarMut.isPending}
+          error={eliminarMut.error}
+          onConfirmar={() => eliminarMut.mutate(bloquePorEliminar)}
+          onCancelar={() => {
+            eliminarMut.reset();
+            setBloquePorEliminar(null);
+          }}
+        >
+          El bloque dejará de mostrarse en esta página.
+        </ConfirmarAccion>
       )}
     </section>
   );
 }
-

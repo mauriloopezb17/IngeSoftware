@@ -7,12 +7,15 @@ import { http, HttpResponse } from 'msw';
 import { server } from '../mocks/server.js';
 import { api } from '../mocks/api.js';
 import { renderConRouterYQuery } from '../test/utilidadesQuery.jsx';
+import LayoutPortal from '../components/portal/LayoutPortal.jsx';
 import PaginaPublica from './PaginaPublica.jsx';
 
 function renderPagina(rutaInicial = '/paginas/historia') {
   return renderConRouterYQuery(
     <Routes>
-      <Route path="/paginas/:slug" element={<PaginaPublica />} />
+      <Route element={<LayoutPortal />}>
+        <Route path="/paginas/:slug" element={<PaginaPublica />} />
+      </Route>
     </Routes>,
     [rutaInicial],
   );
@@ -20,6 +23,7 @@ function renderPagina(rutaInicial = '/paginas/historia') {
 
 describe('PaginaPublica (/paginas/:slug)', () => {
   it('renderiza la página creada en el panel con sus bloques y la agrega al menú', async () => {
+    const usuario = userEvent.setup();
     renderPagina('/paginas/historia');
 
     expect(
@@ -35,8 +39,9 @@ describe('PaginaPublica (/paginas/:slug)', () => {
     expect(screen.getByText(/San Pablo de la Cruz/)).toBeInTheDocument();
     expect(screen.getByText('Fachada sobre la Av. Héctor Ormachea')).toBeInTheDocument();
 
-    // El menú dinámico incluye la página publicada con mostrarEnMenu=true.
+    // El menú dinámico incluye la página publicada con mostrarEnMenu=true dentro de Nosotros.
     const navegacion = screen.getByRole('navigation', { name: 'Navegación principal' });
+    await usuario.click(within(navegacion).getByRole('button', { name: 'Nosotros' }));
     await waitFor(() => {
       expect(
         within(navegacion).getByRole('link', { name: 'Nuestra historia' }),

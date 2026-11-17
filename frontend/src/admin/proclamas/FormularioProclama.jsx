@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Loader2, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 
-import CampoTexto from '../componentes/CampoTexto.jsx';
 import { erroresDe } from '../componentes/erroresFormulario.js';
 import { aCampoFecha, deCampoFecha } from '../publicaciones/fechas.js';
+import { Aviso, Boton, CampoTexto, useToast } from '../ui/index.js';
 import { actualizarProclama, CLAVE_PROCLAMAS, crearProclama } from './api.js';
 
 const CAMPO_DE_ERROR = {
@@ -33,6 +33,7 @@ function validarLocal(campos, editando) {
 export default function FormularioProclama({ proclama }) {
   const navegar = useNavigate();
   const clienteConsultas = useQueryClient();
+  const toast = useToast();
   const avisos = useRef(null);
   const editando = Boolean(proclama);
 
@@ -44,13 +45,11 @@ export default function FormularioProclama({ proclama }) {
   }));
   const [errores, setErrores] = useState({});
   const [generales, setGenerales] = useState([]);
-  const [guardado, setGuardado] = useState('');
   const cambiar = (cambios) => setCampos((actuales) => ({ ...actuales, ...cambios }));
 
   function mostrar(porCampo, avisosGenerales = []) {
     setErrores(porCampo);
     setGenerales(avisosGenerales);
-    setGuardado('');
     requestAnimationFrame(() => avisos.current?.focus());
   }
 
@@ -61,13 +60,12 @@ export default function FormularioProclama({ proclama }) {
       if (editando) {
         setErrores({});
         setGenerales([]);
-        setGuardado('Cambios guardados.');
+        toast.exito('Cambios guardados.');
         return;
       }
-      navegar(`/admin/proclamas/${resultado.id}/editar`, {
-        replace: true,
-        state: { aviso: 'Proclama creada. Aquí puedes agregar o cambiar sus publicaciones.' },
-      });
+      const mensaje = 'Proclama creada. Aquí puedes agregar o cambiar sus publicaciones.';
+      toast.exito(mensaje);
+      navegar(`/admin/proclamas/${resultado.id}/editar`, { replace: true });
     },
     onError: (error) => {
       const { errores: porCampo, generales: g } = erroresDe(error, CAMPO_DE_ERROR);
@@ -94,29 +92,20 @@ export default function FormularioProclama({ proclama }) {
   const mensajes = [...Object.values(errores), ...generales];
 
   return (
-    <form onSubmit={enviar} noValidate className="mt-6 flex flex-col gap-5">
+    <form onSubmit={enviar} noValidate className="mt-6 flex flex-col gap-5 rounded-lg border border-sand bg-white p-5 sm:p-6">
       <div ref={avisos} tabIndex={-1} className="outline-none">
         {mensajes.length > 0 && (
-          <div role="alert" className="flex items-start gap-2 rounded-lg border border-redParish/30 bg-redParish/5 p-4 text-sm text-redParish">
-            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            <div>
-              <p className="font-semibold">No se pudo guardar. Revisa lo siguiente:</p>
-              <ul className="mt-1 list-disc pl-5">
-                {mensajes.map((m) => (
-                  <li key={m}>{m}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-        {guardado && !mensajes.length && (
-          <p role="status" className="rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark">
-            {guardado}
-          </p>
+          <Aviso tipo="error" titulo="No se pudo guardar. Revisa lo siguiente:">
+            <ul className="mt-1 list-disc pl-5">
+              {mensajes.map((m, i) => (
+                <li key={`${i}-${m}`}>{m}</li>
+              ))}
+            </ul>
+          </Aviso>
         )}
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="flex flex-col gap-5">
         <CampoTexto
           etiqueta="Contrayente 1"
           value={campos.contrayente1}
@@ -156,25 +145,13 @@ export default function FormularioProclama({ proclama }) {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-borderSoft pt-5">
-        <button
-          type="submit"
-          disabled={guardar.isPending}
-          className="flex items-center gap-2 rounded-md bg-gold px-5 py-2.5 font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {guardar.isPending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <Save className="size-4" aria-hidden="true" />
-          )}
+      <div className="flex flex-wrap items-center gap-3 border-t border-sand pt-5">
+        <Boton type="submit" variante="primario" icono={Save} cargando={guardar.isPending}>
           {editando ? 'Guardar datos' : 'Crear proclama'}
-        </button>
-        <Link
-          to="/admin/proclamas"
-          className="rounded-md border border-borderSoft bg-white px-4 py-2.5 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-        >
+        </Boton>
+        <Boton como={Link} to="/admin/proclamas" variante="secundario">
           Volver a proclamas
-        </Link>
+        </Boton>
       </div>
     </form>
   );

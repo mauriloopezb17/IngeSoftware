@@ -1,166 +1,224 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { NavLink, useInRouterContext, useLocation } from 'react-router';
+import { ChevronDown, Clock3, Menu, MessageCircle, Phone, X } from 'lucide-react';
 
-import {
-  Clock3,
-  Phone,
-  MessageCircle,
-  Search,
-  ArrowRight,
-  Menu,
-  X,
-} from 'lucide-react';
-
-import { anchoContenido } from './ElementosComunes.jsx';
+import { BotonEnlace } from '../portal/Boton.jsx';
+import Contenedor from '../portal/Contenedor.jsx';
 import EnlacePortal from './EnlacePortal.jsx';
 import { IconoRedSocial } from './IconoDinamico.jsx';
 import { useMenuPaginas, useSede } from '../../hooks/index.js';
 import { armarHrefTelefono } from '../../utils/formatoPortal.js';
-
 import logoBlanco from '../../assets/parroquia/logos/logo-horizontal-blanco.svg';
 
-import '../../styles/Encabezado.css';
-
-const enlacesNavegacion = [
-  { nombre: 'Nosotros', enlace: '/#nosotros' },
-  { nombre: 'Sacramentos', enlace: '/#sacramentos' },
-  { nombre: 'Comunidad', enlace: '/#comunidad' },
+const ENLACES_ACTUALIDAD = [
   { nombre: 'Noticias', enlace: '/noticias' },
   { nombre: 'Calendario', enlace: '/calendario' },
   { nombre: 'Proclamas', enlace: '/proclamas' },
   { nombre: 'Boletines', enlace: '/boletines' },
-  { nombre: 'Contacto', enlace: '/#contacto' },
 ];
 
-const seccionesBusqueda = [
-  {
-    nombre: 'Inicio',
-    descripcion: 'Portada de la parroquia',
-    enlace: '/#inicio',
-    palabrasClave: 'portada principal',
-  },
-  {
-    nombre: 'Nosotros',
-    descripcion: 'Conoce nuestra parroquia',
-    enlace: '/#nosotros',
-    palabrasClave: 'quienes somos historia parroco pasionistas',
-  },
-  {
-    nombre: 'Horarios de misa',
-    descripcion: 'Misas, confesiones y atención',
-    enlace: '/#horarios',
-    palabrasClave: 'horarios misas confesiones adoracion secretaria',
-  },
-  {
-    nombre: 'Sacramentos y catequesis',
-    descripcion: 'Bautismo, comunión, confirmación y más',
-    enlace: '/#sacramentos',
-    palabrasClave: 'bautismo comunion confirmacion matrimonio uncion requisitos',
-  },
-  {
-    nombre: 'Calendario',
-    descripcion: 'Calendario completo de eventos parroquiales',
-    enlace: '/calendario',
-    palabrasClave: 'agenda actividades encuentros eventos calendario',
-  },
-  {
-    nombre: 'Boletines parroquiales',
-    descripcion: 'Archivo mensual de boletines en PDF',
-    enlace: '/boletines',
-    palabrasClave: 'boletin boletines pdf archivo mensual',
-  },
-  {
-    nombre: 'Vida parroquial y noticias',
-    descripcion: 'Noticias y actividades de la parroquia',
-    enlace: '/noticias',
-    palabrasClave: 'noticias pastoral familiar publicaciones prensa',
-  },
-  {
-    nombre: 'Proclamas matrimoniales',
-    descripcion: 'Proclamas vigentes e historial público',
-    enlace: '/proclamas',
-    palabrasClave: 'bodas matrimonio proclamas historial',
-  },
-  {
-    nombre: 'Video institucional',
-    descripcion: 'Recorrido por nuestro templo',
-    enlace: '/#video-institucional',
-    palabrasClave: 'video templo recorrido',
-  },
-  {
-    nombre: 'Grupos y pastorales',
-    descripcion: 'Participa en nuestra comunidad',
-    enlace: '/#comunidad',
-    palabrasClave: 'grupos monaguillos coro catequistas pastoral',
-  },
-  {
-    nombre: 'Nuestras comunidades',
-    descripcion: 'Sedes y comunidades pasionistas',
-    enlace: '/#comunidades',
-    palabrasClave: 'comunidades sedes capillas',
-  },
-  {
-    nombre: 'Contacto',
-    descripcion: 'Dirección, teléfono y Messenger',
-    enlace: '/#contacto',
-    palabrasClave: 'contacto ubicacion direccion correo telefono messenger',
-  },
-];
+function EnlaceNavPortal({ to, children, onClick, className = '' }) {
+  const enRouter = useInRouterContext();
 
-const normalizarTexto = (texto) =>
-  texto
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
+  if (!enRouter) {
+    return (
+      <a
+        href={to}
+        onClick={onClick}
+        className={`relative inline-flex min-h-11 items-center px-3 py-2 font-body text-button font-semibold text-white/90 transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${className}`.trim()}
+      >
+        {children}
+      </a>
+    );
+  }
 
-function Encabezado() {
+  return (
+    <NavLink
+      to={to}
+      onClick={onClick}
+      className={({ isActive }) =>
+        `relative inline-flex min-h-11 items-center px-3 py-2 font-body text-button font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${
+          isActive ? 'text-white' : 'text-white/85 hover:text-white'
+        } ${className}`.trim()
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <span>{children}</span>
+          {isActive && (
+            <span aria-hidden="true" className="absolute inset-x-3 bottom-1.5 h-[2px] bg-gold" />
+          )}
+        </>
+      )}
+    </NavLink>
+  );
+}
+
+function MenuDesplegable({ titulo, enlaces, activo = false, abierto, alAlternar, alCerrar }) {
+  const idMenu = useId();
+  const contenedorRef = useRef(null);
+  const botonRef = useRef(null);
+
+  useEffect(() => {
+    if (!abierto) return undefined;
+
+    const alClicFuera = (evento) => {
+      if (contenedorRef.current && !contenedorRef.current.contains(evento.target)) {
+        alCerrar();
+      }
+    };
+
+    const alTecla = (evento) => {
+      if (evento.key === 'Escape') {
+        alCerrar();
+        botonRef.current?.focus();
+      }
+    };
+
+    document.addEventListener('mousedown', alClicFuera);
+    document.addEventListener('keydown', alTecla);
+    return () => {
+      document.removeEventListener('mousedown', alClicFuera);
+      document.removeEventListener('keydown', alTecla);
+    };
+  }, [abierto, alCerrar]);
+
+  return (
+    <div
+      ref={contenedorRef}
+      className="relative"
+      onBlur={(evento) => {
+        if (!contenedorRef.current?.contains(evento.relatedTarget)) {
+          alCerrar();
+        }
+      }}
+    >
+      <button
+        ref={botonRef}
+        type="button"
+        aria-expanded={abierto}
+        aria-controls={idMenu}
+        onClick={alAlternar}
+        className={`relative inline-flex min-h-11 cursor-pointer items-center gap-1.5 px-3 py-2 font-body text-button font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${
+          activo || abierto ? 'text-white' : 'text-white/85 hover:text-white'
+        }`}
+      >
+        <span>{titulo}</span>
+        <ChevronDown
+          size={15}
+          aria-hidden="true"
+          className={`transition-transform duration-150 ease-salida ${abierto ? 'rotate-180' : ''}`}
+        />
+        {activo && (
+          <span aria-hidden="true" className="absolute inset-x-3 bottom-1.5 h-[2px] bg-gold" />
+        )}
+      </button>
+
+      {abierto && (
+        <div
+          id={idMenu}
+          className="absolute left-0 top-full z-50 mt-1 min-w-52 rounded-sm border border-sand bg-white py-1.5 text-ink shadow-soft"
+        >
+          {enlaces.map((item) => (
+            <EnlacePortal
+              key={item.enlace}
+              to={item.enlace}
+              onClick={alCerrar}
+              className="flex min-h-11 items-center px-4 py-2 font-body text-button font-medium text-ink transition-colors duration-150 hover:bg-cream focus-visible:bg-cream focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
+            >
+              {item.nombre}
+            </EnlacePortal>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EncabezadoBase({ transparente, rutaActual }) {
   const { data: sede } = useSede();
   const { data: paginasMenu = [] } = useMenuPaginas();
-  const [menuAbierto, setMenuAbierto] = useState(false);
-  const [buscadorAbierto, setBuscadorAbierto] = useState(false);
-  const [busqueda, setBusqueda] = useState('');
 
-  const cerrarMenu = () => {
-    setMenuAbierto(false);
-    setBuscadorAbierto(false);
-    setBusqueda('');
-  };
+  const [cajonAbierto, setCajonAbierto] = useState(false);
+  const [submenuAbierto, setSubmenuAbierto] = useState(null);
+  const [actualidadMovilAbierta, setActualidadMovilAbierta] = useState(false);
+  const [desplazado, setDesplazado] = useState(false);
+  const [rutaAnterior, setRutaAnterior] = useState(rutaActual);
 
-  const alternarBuscador = () => {
-    setBuscadorAbierto((actual) => !actual);
-    setBusqueda('');
-    setMenuAbierto(false);
-  };
+  if (rutaAnterior !== rutaActual) {
+    setRutaAnterior(rutaActual);
+    setCajonAbierto(false);
+    setSubmenuAbierto(null);
+  }
 
-  const termino = normalizarTexto(busqueda);
+  const botonMenuRef = useRef(null);
+  const botonCerrarRef = useRef(null);
+  const cajonRef = useRef(null);
+  const idMenuMovil = useId();
 
-  const resultados = termino
-    ? seccionesBusqueda.filter((seccion) =>
-        normalizarTexto(
-          `${seccion.nombre} ${seccion.descripcion} ${seccion.palabrasClave}`
-        ).includes(termino)
-      )
-    : seccionesBusqueda;
+  useEffect(() => {
+    if (!transparente || typeof window === 'undefined') return undefined;
 
-  const buscarSeccion = (evento) => {
-    evento.preventDefault();
+    const actualizarScroll = () => {
+      setDesplazado(window.scrollY > 36);
+    };
 
-    if (!termino || resultados.length === 0) return;
+    actualizarScroll();
+    window.addEventListener('scroll', actualizarScroll, { passive: true });
+    return () => window.removeEventListener('scroll', actualizarScroll);
+  }, [transparente]);
 
-    const destino = resultados[0].enlace;
+  useEffect(() => {
+    if (!cajonAbierto) return undefined;
 
-    cerrarMenu();
+    const overflowAnterior = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    botonCerrarRef.current?.focus();
 
-    window.location.hash = destino;
-  };
+    const manejarTecla = (evento) => {
+      if (evento.key === 'Escape') {
+        setCajonAbierto(false);
+        botonMenuRef.current?.focus();
+        return;
+      }
 
-  const enlacesMenuDinamico = paginasMenu
+      if (evento.key === 'Tab' && cajonRef.current) {
+        const enfocables = cajonRef.current.querySelectorAll(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        );
+        if (enfocables.length === 0) return;
+
+        const primero = enfocables[0];
+        const ultimo = enfocables[enfocables.length - 1];
+
+        if (evento.shiftKey && document.activeElement === primero) {
+          evento.preventDefault();
+          ultimo.focus();
+        } else if (!evento.shiftKey && document.activeElement === ultimo) {
+          evento.preventDefault();
+          primero.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', manejarTecla);
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+      document.removeEventListener('keydown', manejarTecla);
+    };
+  }, [cajonAbierto]);
+
+  const paginasNosotros = paginasMenu
     .filter((pagina) => pagina.slug !== 'inicio' && pagina.slug !== 'nosotros')
     .map((pagina) => ({
       nombre: pagina.titulo,
       enlace: `/paginas/${pagina.slug}`,
     }));
-  const todosEnlacesMenu = [...enlacesNavegacion, ...enlacesMenuDinamico];
+
+  const enlacesNosotros = [
+    { nombre: 'Quiénes somos', enlace: '/nosotros' },
+    ...paginasNosotros,
+  ];
 
   const configuracion = sede?.configuracion ?? {};
   const redesSociales = sede?.redesSociales ?? [];
@@ -172,217 +230,332 @@ function Encabezado() {
     ? `https://wa.me/${sede.whatsapp.replace(/\D/g, '')}`
     : null;
 
+  const nosotrosActivo = rutaActual === '/nosotros' || rutaActual.startsWith('/paginas/');
+  const actualidadActiva = ENLACES_ACTUALIDAD.some(
+    (item) => rutaActual === item.enlace || rutaActual.startsWith(`${item.enlace}/`),
+  );
+
+  const cerrarTodo = () => {
+    setCajonAbierto(false);
+    setSubmenuAbierto(null);
+  };
+
+  const barraSolida = !transparente || desplazado;
+  const claseBarraNavegacion = barraSolida
+    ? 'bg-ink shadow-soft border-b border-white/10'
+    : 'bg-transparent border-b border-white/10';
+
   return (
-    <div
-      className="encabezado"
-      onKeyDown={(evento) => {
-        if (evento.key === 'Escape') cerrarMenu();
-      }}
-    >
-      {/* Barra superior */}
-      <div className="encabezado-superior">
-        <div className={`${anchoContenido} encabezado-superior-contenido`}>
-          <div className="encabezado-aviso">
+    <header className={transparente ? 'fixed inset-x-0 top-0 z-40' : 'sticky top-0 z-40'}>
+      {/* Barra superior: en móvil solo teléfono y WhatsApp; en escritorio suma horarios resumidos y redes */}
+      <div className="border-b border-white/10 bg-ink text-white">
+        <Contenedor className="flex min-h-11 items-center justify-between gap-4 py-1 text-meta">
+          <div className="hidden min-w-0 items-center gap-2 text-muted-on-dark md:flex">
             {textoBarraSuperior && (
               <>
-                <Clock3 size={15} />
-                <span>{textoBarraSuperior}</span>
+                <Clock3 size={14} aria-hidden="true" className="shrink-0 text-gold" />
+                <span className="truncate">{textoBarraSuperior}</span>
               </>
             )}
           </div>
 
-          <div className="encabezado-contactos">
-            {telefono && (
-              <a
-                href={hrefTelefono}
-                className="encabezado-contacto"
-                aria-label="Llamar a la parroquia"
-              >
-                <Phone size={15} />
-                <span>{telefono}</span>
-              </a>
-            )}
-
-            {whatsappUrl ? (
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="encabezado-contacto"
-                aria-label="Escribir por WhatsApp"
-              >
-                <MessageCircle size={15} />
-                <span>{textoWhatsapp || 'WhatsApp Secretaría'}</span>
-              </a>
-            ) : (
-              textoWhatsapp && (
-                <span
-                  className="encabezado-whatsapp"
-                  title="Número de WhatsApp pendiente de confirmación"
-                >
-                  <MessageCircle size={15} />
-                  <span>{textoWhatsapp}</span>
-                </span>
-              )
-            )}
-
-            {redesSociales.length > 0 && <span className="encabezado-separador" />}
-
-            <div className="encabezado-redes">
-              {redesSociales.map(({ nombre, url, icono }) => (
+          <div className="flex w-full items-center justify-between gap-4 md:w-auto md:justify-end">
+            <div className="flex items-center gap-4">
+              {telefono && (
                 <a
-                  key={nombre}
-                  href={url}
+                  href={hrefTelefono}
+                  className="inline-flex min-h-11 items-center gap-1.5 text-white/90 transition-colors duration-150 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold md:min-h-9"
+                  aria-label={`Llamar a la parroquia al ${telefono}`}
+                >
+                  <Phone size={14} aria-hidden="true" className="text-gold" />
+                  <span className="tabular-nums">{telefono}</span>
+                </a>
+              )}
+
+              {whatsappUrl && (
+                <a
+                  href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`Visitar ${nombre}`}
-                  title={nombre}
+                  className="inline-flex min-h-11 items-center gap-1.5 text-white/90 transition-colors duration-150 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold md:min-h-9"
+                  aria-label="Escribir por WhatsApp"
                 >
-                  <IconoRedSocial nombre={icono} size={15} />
+                  <MessageCircle size={14} aria-hidden="true" className="text-gold" />
+                  <span>{textoWhatsapp || 'WhatsApp Secretaría'}</span>
                 </a>
-              ))}
+              )}
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Navegación principal */}
-      <header className={`${anchoContenido} encabezado-principal`}>
-        <EnlacePortal
-          to="/"
-          className="encabezado-logo-enlace"
-          onClick={cerrarMenu}
-          aria-label="Volver al inicio"
-        >
-          <img
-            src={logoBlanco}
-            alt="Parroquia Señor de la Exaltación"
-            className="encabezado-logo"
-          />
-        </EnlacePortal>
-
-        <nav
-          id="menu-navegacion"
-          className={`encabezado-navegacion ${
-            menuAbierto ? 'encabezado-navegacion-abierta' : ''
-          }`}
-          aria-label="Navegación principal"
-        >
-          {todosEnlacesMenu.map(({ nombre, enlace }) => (
-            <EnlacePortal
-              key={enlace}
-              to={enlace}
-              className="encabezado-enlace"
-              onClick={cerrarMenu}
-            >
-              {nombre}
-            </EnlacePortal>
-          ))}
-        </nav>
-
-        <div className="encabezado-acciones">
-          <button
-            type="button"
-            className="encabezado-buscar"
-            onClick={alternarBuscador}
-            aria-label={buscadorAbierto ? 'Cerrar buscador' : 'Buscar en la página'}
-            aria-expanded={buscadorAbierto}
-            aria-controls="buscador-parroquia"
-            title="Buscar en la página"
-          >
-            {buscadorAbierto ? <X size={19} /> : <Search size={19} />}
-          </button>
-
-          <a
-            href="/#horarios"
-            className="encabezado-boton-horarios"
-            onClick={cerrarMenu}
-          >
-            Horarios de misa
-            <ArrowRight size={17} />
-          </a>
-
-          <button
-            type="button"
-            className="encabezado-boton-menu"
-            onClick={() => {
-              setMenuAbierto((actual) => !actual);
-                        setBuscadorAbierto(false);
-            }}
-            aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
-            aria-expanded={menuAbierto}
-            aria-controls="menu-navegacion"
-          >
-            {menuAbierto ? <X size={23} /> : <Menu size={23} />}
-            <span>Menú</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Buscador de secciones */}
-      {buscadorAbierto && (
-        <div
-          id="buscador-parroquia"
-          className="encabezado-buscador-panel"
-        >
-          <form
-            className="encabezado-buscador-formulario"
-            onSubmit={buscarSeccion}
-            role="search"
-          >
-            <Search size={19} />
-
-            <input
-              type="search"
-              className="encabezado-buscador-input"
-              placeholder="Buscar horarios, sacramentos, comunidad..."
-              aria-label="Buscar secciones de la parroquia"
-              value={busqueda}
-              onChange={(evento) => setBusqueda(evento.target.value)}
-              autoFocus
-            />
-
-            <button
-              type="submit"
-              className="encabezado-buscador-enviar"
-              disabled={!termino || resultados.length === 0}
-            >
-              Buscar
-              <ArrowRight size={16} />
-            </button>
-          </form>
-
-          <div className="encabezado-buscador-resultados">
-            <p className="encabezado-buscador-etiqueta">
-              {termino ? 'Resultados de búsqueda' : 'Explorar secciones'}
-            </p>
-
-            {resultados.length > 0 ? (
-              resultados.map((seccion) => (
-                <EnlacePortal
-                  key={seccion.enlace}
-                  to={seccion.enlace}
-                  className="encabezado-buscador-resultado"
-                  onClick={cerrarMenu}
-                >
-                  <span>
-                    <strong>{seccion.nombre}</strong>
-                    <small>{seccion.descripcion}</small>
-                  </span>
-
-                  <ArrowRight size={16} />
-                </EnlacePortal>
-              ))
-            ) : (
-              <p className="encabezado-buscador-vacio">
-                No encontramos esa sección. Prueba con otra palabra.
-              </p>
+            {redesSociales.length > 0 && (
+              <div className="hidden items-center gap-1 border-l border-white/15 pl-3 md:flex">
+                {redesSociales.map(({ nombre, url, icono }) => (
+                  <a
+                    key={nombre}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Visitar ${nombre}`}
+                    title={nombre}
+                    className="inline-flex size-9 items-center justify-center rounded-sm text-white/80 transition-colors duration-150 hover:bg-white/10 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                  >
+                    <IconoRedSocial nombre={icono} size={14} />
+                  </a>
+                ))}
+              </div>
             )}
           </div>
+        </Contenedor>
+      </div>
+
+      {/* Barra principal */}
+      <div className={`transition-colors duration-200 ease-salida ${claseBarraNavegacion}`}>
+        <Contenedor className="flex min-h-20 items-center justify-between gap-4 py-1.5">
+          <EnlacePortal
+            to="/"
+            onClick={cerrarTodo}
+            aria-label="Parroquia Señor de la Exaltación — Ir al inicio"
+            className="inline-flex shrink-0 items-center py-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+          >
+            <img
+              src={logoBlanco}
+              alt="Parroquia Señor de la Exaltación"
+              width={239}
+              height={134}
+              className="h-14 w-auto md:h-16"
+            />
+          </EnlacePortal>
+
+          <nav aria-label="Navegación principal" className="hidden items-center gap-0.5 lg:flex">
+            <MenuDesplegable
+              titulo="Nosotros"
+              enlaces={enlacesNosotros}
+              activo={nosotrosActivo}
+              abierto={submenuAbierto === 'nosotros'}
+              alAlternar={() =>
+                setSubmenuAbierto((actual) => (actual === 'nosotros' ? null : 'nosotros'))
+              }
+              alCerrar={() => setSubmenuAbierto((actual) => (actual === 'nosotros' ? null : actual))}
+            />
+
+            <EnlaceNavPortal to="/horarios">Horarios</EnlaceNavPortal>
+            <EnlaceNavPortal to="/sacramentos">Sacramentos</EnlaceNavPortal>
+            <EnlaceNavPortal to="/comunidad">Comunidad</EnlaceNavPortal>
+
+            <MenuDesplegable
+              titulo="Actualidad"
+              enlaces={ENLACES_ACTUALIDAD}
+              activo={actualidadActiva}
+              abierto={submenuAbierto === 'actualidad'}
+              alAlternar={() =>
+                setSubmenuAbierto((actual) => (actual === 'actualidad' ? null : 'actualidad'))
+              }
+              alCerrar={() =>
+                setSubmenuAbierto((actual) => (actual === 'actualidad' ? null : actual))
+              }
+            />
+
+            <EnlaceNavPortal to="/contacto">Contacto</EnlaceNavPortal>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <BotonEnlace
+              to="/horarios"
+              variante="primarioOscuro"
+              onClick={cerrarTodo}
+              className="hidden sm:inline-flex"
+            >
+              Horarios de misa
+            </BotonEnlace>
+
+            <button
+              ref={botonMenuRef}
+              type="button"
+              onClick={() => setCajonAbierto(true)}
+              aria-label="Abrir menú"
+              aria-expanded={cajonAbierto}
+              aria-controls={idMenuMovil}
+              className="inline-flex size-11 cursor-pointer items-center justify-center rounded-sm border border-white/25 text-white transition-colors duration-150 hover:border-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:hidden"
+            >
+              <Menu size={22} aria-hidden="true" />
+            </button>
+          </div>
+        </Contenedor>
+      </div>
+
+      {/* Menú móvil a pantalla completa */}
+      {cajonAbierto && (
+        <div
+          id={idMenuMovil}
+          ref={cajonRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menú de navegación"
+          className="fixed inset-0 z-50 flex flex-col overflow-y-auto overscroll-contain bg-ink text-white lg:hidden"
+        >
+          <Contenedor className="flex h-20 shrink-0 items-center justify-between border-b border-white/10">
+            <EnlacePortal
+              to="/"
+              onClick={cerrarTodo}
+              aria-label="Parroquia Señor de la Exaltación — Ir al inicio"
+              className="inline-flex items-center py-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+            >
+              <img
+                src={logoBlanco}
+                alt="Parroquia Señor de la Exaltación"
+                width={239}
+                height={134}
+                className="h-11 w-auto"
+              />
+            </EnlacePortal>
+
+            <button
+              ref={botonCerrarRef}
+              type="button"
+              onClick={() => {
+                setCajonAbierto(false);
+                botonMenuRef.current?.focus();
+              }}
+              aria-label="Cerrar menú"
+              className="inline-flex size-11 cursor-pointer items-center justify-center rounded-sm border border-white/25 text-white transition-colors duration-150 hover:border-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+            >
+              <X size={22} aria-hidden="true" />
+            </button>
+          </Contenedor>
+
+          <Contenedor className="flex flex-1 flex-col justify-between py-6">
+            <nav aria-label="Menú móvil" className="flex flex-col divide-y divide-white/10">
+              <EnlacePortal
+                to="/"
+                onClick={cerrarTodo}
+                className="flex min-h-[48px] items-center font-body text-lead font-medium text-white transition-colors hover:text-gold"
+              >
+                Inicio
+              </EnlacePortal>
+
+              {enlacesNosotros.map((item) => (
+                <EnlacePortal
+                  key={item.enlace}
+                  to={item.enlace}
+                  onClick={cerrarTodo}
+                  className="flex min-h-[48px] items-center font-body text-lead font-medium text-white transition-colors hover:text-gold"
+                >
+                  {item.nombre}
+                </EnlacePortal>
+              ))}
+
+              <EnlacePortal
+                to="/horarios"
+                onClick={cerrarTodo}
+                className="flex min-h-[48px] items-center font-body text-lead font-medium text-white transition-colors hover:text-gold"
+              >
+                Horarios
+              </EnlacePortal>
+
+              <EnlacePortal
+                to="/sacramentos"
+                onClick={cerrarTodo}
+                className="flex min-h-[48px] items-center font-body text-lead font-medium text-white transition-colors hover:text-gold"
+              >
+                Sacramentos
+              </EnlacePortal>
+
+              <EnlacePortal
+                to="/comunidad"
+                onClick={cerrarTodo}
+                className="flex min-h-[48px] items-center font-body text-lead font-medium text-white transition-colors hover:text-gold"
+              >
+                Comunidad
+              </EnlacePortal>
+
+              <div>
+                <button
+                  type="button"
+                  aria-expanded={actualidadMovilAbierta}
+                  onClick={() => setActualidadMovilAbierta((abierta) => !abierta)}
+                  className="flex min-h-[48px] w-full cursor-pointer items-center justify-between font-body text-lead font-medium text-white transition-colors hover:text-gold"
+                >
+                  <span>Actualidad</span>
+                  <ChevronDown
+                    size={18}
+                    aria-hidden="true"
+                    className={`transition-transform duration-150 ${
+                      actualidadMovilAbierta ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {actualidadMovilAbierta && (
+                  <div className="flex flex-col pb-2 pl-4">
+                    {ENLACES_ACTUALIDAD.map((item) => (
+                      <EnlacePortal
+                        key={item.enlace}
+                        to={item.enlace}
+                        onClick={cerrarTodo}
+                        className="flex min-h-[48px] items-center font-body text-body text-muted-on-dark transition-colors hover:text-gold"
+                      >
+                        {item.nombre}
+                      </EnlacePortal>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <EnlacePortal
+                to="/contacto"
+                onClick={cerrarTodo}
+                className="flex min-h-[48px] items-center font-body text-lead font-medium text-white transition-colors hover:text-gold"
+              >
+                Contacto
+              </EnlacePortal>
+            </nav>
+
+            <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6">
+              <BotonEnlace to="/horarios" variante="primarioOscuro" onClick={cerrarTodo}>
+                Horarios de misa
+              </BotonEnlace>
+
+              <div className="flex flex-wrap items-center gap-4 text-meta text-muted-on-dark">
+                {telefono && (
+                  <a
+                    href={hrefTelefono}
+                    className="inline-flex min-h-11 items-center gap-2 text-white hover:text-gold"
+                  >
+                    <Phone size={16} aria-hidden="true" className="text-gold" />
+                    <span className="tabular-nums">{telefono}</span>
+                  </a>
+                )}
+
+                {whatsappUrl && (
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center gap-2 text-white hover:text-gold"
+                  >
+                    <MessageCircle size={16} aria-hidden="true" className="text-gold" />
+                    <span>{textoWhatsapp || 'WhatsApp Secretaría'}</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          </Contenedor>
         </div>
       )}
-    </div>
+    </header>
   );
+}
+
+function EncabezadoConRuta({ transparente }) {
+  const { pathname } = useLocation();
+  return <EncabezadoBase transparente={transparente} rutaActual={pathname} />;
+}
+
+function Encabezado({ transparente = false }) {
+  const enRouter = useInRouterContext();
+  if (enRouter) {
+    return <EncabezadoConRuta transparente={transparente} />;
+  }
+  return <EncabezadoBase transparente={transparente} rutaActual="/" />;
 }
 
 export default Encabezado;

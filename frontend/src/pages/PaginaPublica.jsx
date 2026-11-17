@@ -1,14 +1,6 @@
-import { Link, useParams } from 'react-router';
-import { ArrowLeft } from 'lucide-react';
+import { useParams } from 'react-router';
 
-import '../styles/parroquia.css';
-import '../styles/Nosotros.css';
-import '../styles/Noticias.css';
-import '../styles/SubpaginasPortal.css';
-
-import Encabezado from '../components/parroquia/Encabezado.jsx';
-import PiePagina from '../components/parroquia/PiePagina.jsx';
-import { anchoContenido } from '../components/parroquia/ElementosComunes.jsx';
+import { EncabezadoPagina, Seccion } from '../components/portal/index.js';
 import {
   CargandoSeccion,
   ErrorSeccion,
@@ -35,78 +27,64 @@ function PaginaPublica() {
       ? `${pagina.titulo} — Parroquia Señor de la Exaltación en Obrajes, La Paz.`
       : 'Información parroquial de la Parroquia Señor de la Exaltación en Obrajes, La Paz.');
 
+  if (isPending) {
+    return (
+      <>
+        <title>{tituloPagina}</title>
+        <meta name="description" content={descripcionPagina} />
+        <Seccion fondo="blanco">
+          <CargandoSeccion alturaMinima={360} etiqueta="Cargando página" />
+        </Seccion>
+      </>
+    );
+  }
+
+  if (isError) {
+    return (
+      <>
+        <title>{tituloPagina}</title>
+        <meta name="description" content={descripcionPagina} />
+        <Seccion fondo="blanco">
+          <ErrorSeccion mensaje="No pudimos cargar esta página." onReintentar={refetch} />
+        </Seccion>
+      </>
+    );
+  }
+
+  if (!pagina) {
+    return <NoEncontrado />;
+  }
+
+  const migas = [{ texto: 'Inicio', enlace: '/' }];
+  if (pagina.paginaPadre) {
+    migas.push({
+      texto: pagina.paginaPadre.titulo,
+      enlace: `/paginas/${pagina.paginaPadre.slug}`,
+    });
+  }
+  migas.push({ texto: pagina.titulo });
+
   return (
-    <div className="font-body">
+    <>
       <title>{tituloPagina}</title>
       <meta name="description" content={descripcionPagina} />
-      <div className="subpagina-encabezado">
-        <Encabezado />
-      </div>
 
-      <main>
-        {isPending ? (
-          <section className="noticias-cuerpo">
-            <div className={anchoContenido}>
-              <CargandoSeccion alturaMinima={360} etiqueta="Cargando página" />
-            </div>
-          </section>
-        ) : isError ? (
-          <section className="noticias-cuerpo">
-            <div className={anchoContenido}>
-              <ErrorSeccion
-                mensaje="No pudimos cargar esta página."
-                onReintentar={refetch}
-              />
-            </div>
-          </section>
-        ) : !pagina ? (
-          <NoEncontrado />
+      <EncabezadoPagina
+        migas={migas}
+        eyebrow="Parroquia Señor de la Exaltación"
+        titulo={pagina.titulo}
+        bajada={pagina.descripcionSeo || undefined}
+      />
+
+      <Seccion fondo="blanco">
+        {pagina.bloques?.length > 0 ? (
+          <RenderizadorBloquesPagina bloques={pagina.bloques} />
         ) : (
-          <>
-            <section className="noticias-cabecera">
-              <div className={anchoContenido}>
-                <nav className="noticias-miga" aria-label="Ruta de navegación">
-                  <Link to="/" className="inline-flex items-center gap-1.5">
-                    <ArrowLeft size={14} aria-hidden="true" />
-                    Inicio
-                  </Link>
-                  {pagina.paginaPadre && (
-                    <>
-                      <span aria-hidden="true">/</span>
-                      <Link to={`/paginas/${pagina.paginaPadre.slug}`}>
-                        {pagina.paginaPadre.titulo}
-                      </Link>
-                    </>
-                  )}
-                  <span aria-hidden="true">/</span>
-                  <span>{pagina.titulo}</span>
-                </nav>
-
-                <p className="eyebrow">Parroquia Señor de la Exaltación</p>
-                <h1 className="serif-title noticias-titulo">{pagina.titulo}</h1>
-                {pagina.descripcionSeo && (
-                  <p className="noticias-subtitulo">{pagina.descripcionSeo}</p>
-                )}
-              </div>
-            </section>
-
-            <section className="noticias-cuerpo">
-              <div className={anchoContenido}>
-                {pagina.bloques?.length > 0 ? (
-                  <RenderizadorBloquesPagina bloques={pagina.bloques} />
-                ) : (
-                  <SinResultados mensaje="Esta página aún no tiene bloques publicados." />
-                )}
-              </div>
-            </section>
-          </>
+          <SinResultados mensaje="Esta página aún no tiene bloques publicados." />
         )}
-      </main>
-
-      <PiePagina />
-    </div>
+      </Seccion>
+    </>
   );
 }
 
 export default PaginaPublica;
-

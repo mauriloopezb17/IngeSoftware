@@ -1,9 +1,8 @@
 import { useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { AlertCircle, ImageOff, Loader2 } from 'lucide-react';
+import { ImageOff } from 'lucide-react';
 
 import Paginacion from '../componentes/Paginacion.jsx';
-import { usePermisos } from '../permisos/usePermisos.js';
 import { ORDENES, POR_PAGINA } from '../multimedia/api.js';
 import FiltrosMultimedia from '../multimedia/FiltrosMultimedia.jsx';
 import { contarArchivos } from '../multimedia/formato.js';
@@ -12,6 +11,8 @@ import TarjetaArchivo from '../multimedia/TarjetaArchivo.jsx';
 import { CLASES } from '../multimedia/tipos.js';
 import { useBiblioteca } from '../multimedia/useBiblioteca.js';
 import VistaPreviaArchivo from '../multimedia/VistaPreviaArchivo.jsx';
+import { usePermisos } from '../permisos/usePermisos.js';
+import { Aviso, Boton, EncabezadoPantalla, EsqueletoTarjetas, EstadoVacio, useToast } from '../ui/index.js';
 
 const ORDEN_INICIAL = '-fechaSubida';
 
@@ -36,9 +37,9 @@ export default function Multimedia() {
   const filtros = leerFiltros(parametros);
   const consulta = useBiblioteca(filtros);
   const [abierto, setAbierto] = useState(null);
-  const [aviso, setAviso] = useState('');
-  const titulo = useRef(null);
+  const inicioRef = useRef(null);
   const { puede } = usePermisos();
+  const toast = useToast();
 
   const hayFiltros = Boolean(filtros.buscar || filtros.clase || filtros.enUso || filtros.orden !== ORDEN_INICIAL);
 
@@ -59,20 +60,15 @@ export default function Multimedia() {
 
   return (
     <section className="mx-auto max-w-6xl">
-      <header>
-        <h1 ref={titulo} tabIndex={-1} className="font-display text-4xl font-semibold text-ink outline-none">
-          Multimedia
-        </h1>
-        <p className="mt-2 text-muted">Imágenes, videos y documentos de la sede.</p>
-      </header>
-
-      <p role="status" className={aviso ? 'mt-4 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark' : 'sr-only'}>
-        {aviso}
-      </p>
+      <EncabezadoPantalla
+        titulo="Multimedia"
+        descripcion="Imágenes, videos y documentos de la sede."
+        headingRef={inicioRef}
+      />
 
       {puede('multimedia.subir') && <SubidaArchivos />}
 
-      <div className="mt-6 rounded-lg border border-borderSoft bg-white p-4">
+      <div className="mt-6 rounded-lg border border-sand bg-white p-4">
         <FiltrosMultimedia
           valores={filtros}
           hayFiltros={hayFiltros}
@@ -83,30 +79,25 @@ export default function Multimedia() {
 
       <div className="mt-6" aria-busy={isPending || isPlaceholderData}>
         {isPending && (
-          <p role="status" className="flex items-center gap-2 py-10 text-sm text-muted">
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" /> Cargando archivos…
-          </p>
+          <EsqueletoTarjetas cantidad={4} columnas="grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" etiqueta="Cargando archivos…" />
         )}
 
         {isError && !data && (
-          <div role="alert" className="flex flex-col items-start gap-3 rounded-lg border border-redParish/30 bg-redParish/5 p-4 text-sm text-redParish">
-            <p className="flex items-start gap-2">
-              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              No se pudo cargar la biblioteca: {error.message}
-            </p>
-            <button
-              type="button"
-              onClick={() => refetch()}
-              className="rounded-md border border-redParish/40 bg-white px-3 py-1.5 font-medium hover:bg-redParish/5 focus-visible:outline-2 focus-visible:outline-redParish"
-            >
-              Reintentar
-            </button>
-          </div>
+          <Aviso
+            tipo="error"
+            accion={
+              <Boton variante="secundario" tamano="sm" onClick={() => refetch()}>
+                Reintentar
+              </Boton>
+            }
+          >
+            <p>No se pudo cargar la biblioteca: {error.message}</p>
+          </Aviso>
         )}
 
         {data && (
           <>
-            <p className="mb-3 text-sm text-muted" aria-live="polite">
+            <p className="mb-3 text-sm tabular-nums text-muted" aria-live="polite">
               {contarArchivos(data.paginacion.total)}
               {hayFiltros && ' con estos filtros'}
             </p>
@@ -120,27 +111,34 @@ export default function Multimedia() {
                   <TarjetaArchivo
                     key={archivo.id}
                     archivo={archivo}
-                    onAbrir={(a) => {
-                      setAviso('');
-                      setAbierto(a);
-                    }}
+                    onAbrir={(a) => setAbierto(a)}
                   />
                 ))}
               </ul>
             ) : (
-              <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-borderSoft bg-white py-12 text-center text-muted">
-                <ImageOff className="size-10" aria-hidden="true" />
-                <p>{hayFiltros ? 'No hay archivos que coincidan con los filtros.' : 'Todavía no hay archivos en la biblioteca.'}</p>
-                {hayFiltros && (
-                  <button
-                    type="button"
-                    onClick={() => setParametros(new URLSearchParams(), { replace: true })}
-                    className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark"
-                  >
-                    Quitar los filtros
-                  </button>
-                )}
-              </div>
+              <EstadoVacio
+                icono={ImageOff}
+                titulo={
+                  hayFiltros
+                    ? 'No hay archivos que coincidan con los filtros.'
+                    : 'Todavía no hay archivos en la biblioteca.'
+                }
+                descripcion={
+                  hayFiltros
+                    ? 'Limpia los filtros para volver a ver toda la biblioteca.'
+                    : 'Sube imágenes, videos o documentos PDF desde la zona superior.'
+                }
+                accion={
+                  hayFiltros && (
+                    <Boton
+                      variante="primario"
+                      onClick={() => setParametros(new URLSearchParams(), { replace: true })}
+                    >
+                      Quitar los filtros
+                    </Boton>
+                  )
+                }
+              />
             )}
 
             <Paginacion
@@ -159,9 +157,9 @@ export default function Multimedia() {
           onCambio={setAbierto}
           onEliminado={(eliminado) => {
             setAbierto(null);
-            setAviso(`Se eliminó «${eliminado.nombreOriginal}».`);
-            // La tarjeta desaparece: el foco pasa al título para no perderse.
-            setTimeout(() => titulo.current?.focus(), 0);
+            toast.exito(`Se eliminó «${eliminado.nombreOriginal}».`);
+            // La tarjeta desaparece: el foco pasa al inicio de la sección para no perderse.
+            setTimeout(() => inicioRef.current?.focus(), 0);
           }}
         />
       )}

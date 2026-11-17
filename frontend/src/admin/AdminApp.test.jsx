@@ -11,7 +11,7 @@ import { queryClient } from '../services/queryClient.js';
 import AdminApp from './AdminApp.jsx';
 import { reiniciarMocksAdmin } from './mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from './mocks/usuarios.js';
-import { SECCIONES } from './rutas.js';
+import { GRUPOS_MENU, SECCIONES } from './rutas.js';
 
 function UbicacionActual() {
   const { pathname, search } = useLocation();
@@ -39,7 +39,10 @@ const titulosDelMenu = async () => {
     .map((enlace) => enlace.textContent);
 };
 
-const titulos = (...claves) => SECCIONES.filter((s) => claves.includes(s.clave)).map((s) => s.titulo);
+const titulos = (...claves) =>
+  GRUPOS_MENU.flatMap((g) => g.claves)
+    .filter((c) => claves.includes(c))
+    .map((c) => SECCIONES.find((s) => s.clave === c).titulo);
 const todas = SECCIONES.map((s) => s.clave);
 
 describe('panel: rutas protegidas y menú por rol', () => {
@@ -56,7 +59,7 @@ describe('panel: rutas protegidas y menú por rol', () => {
     it('redirige al login desde cualquier ruta del panel', async () => {
       montar('/admin/eventos');
 
-      expect(await screen.findByRole('heading', { name: 'Panel de administración' })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Panel de gestión' })).toBeInTheDocument();
       expect(screen.getByTestId('ubicacion')).toHaveTextContent('/admin/login');
     });
 

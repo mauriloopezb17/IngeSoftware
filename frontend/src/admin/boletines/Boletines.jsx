@@ -1,10 +1,10 @@
 import { Link, Route, Routes, useParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 
-import { Cargando, ErrorConsulta } from '../componentes/EstadoConsulta.jsx';
 import SinPermiso from '../componentes/SinPermiso.jsx';
 import NoEncontrada from '../paginas/NoEncontrada.jsx';
 import { usePermisos } from '../permisos/usePermisos.js';
+import { Aviso, Boton, EncabezadoPantalla, EsqueletoFormulario } from '../ui/index.js';
 import { CLAVE_BOLETINES, obtenerBoletin } from './api.js';
 import FormularioBoletin from './FormularioBoletin.jsx';
 import ListadoBoletines from './ListadoBoletines.jsx';
@@ -14,8 +14,10 @@ function NuevoBoletin() {
   if (!puede('boletines.gestionar')) return <SinPermiso />;
   return (
     <section className="mx-auto max-w-3xl">
-      <h1 className="font-display text-4xl font-semibold text-ink">Nuevo boletín</h1>
-      <p className="mt-2 text-muted">Se publica directamente, sin revisión. Solo puede haber un boletín por mes.</p>
+      <EncabezadoPantalla
+        titulo="Nuevo boletín"
+        descripcion="Se publica directamente, sin revisión. Solo puede haber un boletín por mes."
+      />
       <FormularioBoletin />
     </section>
   );
@@ -34,21 +36,36 @@ function EditarBoletin() {
 
   if (!puede('boletines.gestionar')) return <SinPermiso />;
   if (!esId || (isError && error.estado === 404)) return <NoEncontrada />;
-  if (isPending) return <Cargando texto="Cargando el boletín…" />;
+  if (isPending)
+    return (
+      <section className="mx-auto max-w-3xl">
+        <EsqueletoFormulario campos={3} etiqueta="Cargando el boletín…" />
+      </section>
+    );
   if (isError)
     return (
       <section className="mx-auto max-w-3xl">
-        <ErrorConsulta texto="No se pudo cargar el boletín" error={error} onReintentar={refetch} />
-        <Link to="/admin/boletines" className="mt-4 inline-block text-sm font-medium underline">
-          Volver a boletines
-        </Link>
+        <Aviso
+          tipo="error"
+          accion={
+            <Boton variante="secundario" tamano="sm" onClick={() => refetch()}>
+              Reintentar
+            </Boton>
+          }
+        >
+          <p>No se pudo cargar el boletín: {error.message}</p>
+        </Aviso>
+        <div className="mt-4">
+          <Boton como={Link} to="/admin/boletines" variante="secundario">
+            Volver a boletines
+          </Boton>
+        </div>
       </section>
     );
 
   return (
     <section className="mx-auto max-w-3xl">
-      <h1 className="font-display text-4xl font-semibold text-ink">Editar boletín</h1>
-      <p className="mt-2 text-muted">{boletin.titulo}</p>
+      <EncabezadoPantalla titulo="Editar boletín" descripcion={boletin.titulo} />
       <FormularioBoletin key={boletin.id} boletin={boletin} />
     </section>
   );

@@ -1,5 +1,6 @@
-import { usePermisos } from '../permisos/usePermisos.js';
 import SinPermiso from '../componentes/SinPermiso.jsx';
+import { usePermisos } from '../permisos/usePermisos.js';
+import { EncabezadoPantalla } from '../ui/index.js';
 import FormularioPublicacion from './FormularioPublicacion.jsx';
 
 // /admin/publicaciones/nueva. Quien no puede redactar noticias (por ejemplo, Secretaría) ve «sin permiso».
@@ -8,11 +9,11 @@ export default function NuevaPublicacion() {
   if (!puede('noticias.redactar')) return <SinPermiso />;
 
   return (
-    <section className="mx-auto max-w-6xl">
-      <header>
-        <h1 className="font-display text-4xl font-semibold text-ink">Nueva publicación</h1>
-        <p className="mt-2 text-muted">Redacta una noticia o una nota de prensa. Se guarda como borrador.</p>
-      </header>
+    <section className="mx-auto max-w-3xl">
+      <EncabezadoPantalla
+        titulo="Nueva publicación"
+        descripcion="Redacta una noticia o una nota de prensa. Se guarda como borrador."
+      />
       <FormularioPublicacion />
     </section>
   );

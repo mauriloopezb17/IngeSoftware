@@ -1,5 +1,6 @@
 import SinPermiso from '../componentes/SinPermiso.jsx';
 import { usePermisos } from '../permisos/usePermisos.js';
+import { EncabezadoPantalla } from '../ui/index.js';
 import { TIPO_AVISO } from './api.js';
 import FormularioPublicacion from './FormularioPublicacion.jsx';
 
@@ -10,13 +11,11 @@ export default function NuevoAviso() {
   if (!puede('avisos.gestionar')) return <SinPermiso />;
 
   return (
-    <section className="mx-auto max-w-6xl">
-      <header>
-        <h1 className="font-display text-4xl font-semibold text-ink">Nuevo aviso</h1>
-        <p className="mt-2 text-muted">
-          Se publica directamente, sin revisión. Para programarlo, indica una fecha de publicación futura.
-        </p>
-      </header>
+    <section className="mx-auto max-w-3xl">
+      <EncabezadoPantalla
+        titulo="Nuevo aviso"
+        descripcion="Se publica directamente, sin revisión. Para programarlo, indica una fecha de publicación futura."
+      />
       <FormularioPublicacion tipoInicial={TIPO_AVISO} />
     </section>
   );

@@ -53,10 +53,10 @@ describe('pantalla de inicio de sesión', () => {
   beforeEach(reiniciarMocksAdmin);
   afterEach(reiniciarMocksAdmin);
 
-  it('muestra el título «Panel de administración» y el formulario', async () => {
+  it('muestra el título «Panel de gestión» y el formulario', async () => {
     montar();
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Panel de administración' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Panel de gestión' })).toBeInTheDocument();
     expect(await campoCorreo()).toBeInTheDocument();
     expect(campoContrasena()).toHaveAttribute('type', 'password');
   });
@@ -73,7 +73,7 @@ describe('pantalla de inicio de sesión', () => {
     await escribirYEntrar('secretaria@parroquia.test', 'clave-equivocada');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Correo o contraseña incorrectos.');
-    expect(screen.getByRole('heading', { name: 'Panel de administración' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Panel de gestión' })).toBeInTheDocument();
     // Se conserva el correo, se limpia la contraseña y el foco vuelve a ella.
     expect(await campoCorreo()).toHaveValue('secretaria@parroquia.test');
     expect(campoContrasena()).toHaveValue('');

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArchiveRestore, Archive, Rocket, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, Rocket, Trash2 } from 'lucide-react';
 
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
+import { Boton } from '../ui/index.js';
 import {
   archivarPublicacion,
   CLAVE_PUBLICACIONES,
@@ -11,9 +12,6 @@ import {
   restaurarPublicacion,
 } from './api.js';
 import { situacionDe } from './situacion.js';
-
-const boton =
-  'inline-flex items-center justify-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark';
 
 // Cada acción: botón, confirmación y llamada. Los botones salen de `acciones` (lo que la API dice que
 // esta sesión puede hacer): el componente no decide permisos.
@@ -72,7 +70,7 @@ export default function AccionesEstado({ publicacion, alTerminar }) {
     onSuccess: (_, clave) => {
       clienteConsultas.invalidateQueries({ queryKey: CLAVE_PUBLICACIONES });
       setPendiente(null);
-      alTerminar?.(ACCIONES[clave].exito(publicacion));
+      alTerminar?.(ACCIONES[clave].exito(publicacion), clave);
     },
   });
 
@@ -84,17 +82,22 @@ export default function AccionesEstado({ publicacion, alTerminar }) {
   return (
     <>
       {disponibles.map((clave) => {
-        const { texto, icono: Icono } = ACCIONES[clave];
+        const { texto, icono, peligro } = ACCIONES[clave];
         return (
-          <button
+          <Boton
             key={clave}
-            type="button"
+            variante="secundario"
+            tamano="sm"
+            icono={icono}
+            title={texto}
+            className={`md:gap-0 md:px-2 2xl:gap-2 2xl:px-3 ${
+              peligro ? 'hover:border-danger/50 hover:text-danger' : ''
+            }`.trim()}
             onClick={() => setPendiente(clave)}
             aria-label={`${texto} «${publicacion.titulo}»`}
-            className={boton}
           >
-            <Icono className="size-3.5" aria-hidden="true" /> {texto}
-          </button>
+            <span className="md:sr-only 2xl:not-sr-only">{texto}</span>
+          </Boton>
         );
       })}
 

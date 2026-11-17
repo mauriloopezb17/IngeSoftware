@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
 
-import CampoTexto from '../componentes/CampoTexto.jsx';
 import Dialogo from '../componentes/Dialogo.jsx';
 import { extraerErroresApi } from '../contenido/componentes/errores.js';
+import { Aviso, Boton, CampoTexto } from '../ui/index.js';
 import { restablecerContrasena } from './api.js';
 
 export default function RestablecerContrasena({ usuario, onGuardado, onCerrar }) {
@@ -37,16 +36,13 @@ export default function RestablecerContrasena({ usuario, onGuardado, onCerrar })
     >
       <form onSubmit={enviar} noValidate className="flex flex-col gap-4">
         {errorGeneral && (
-          <p
-            role="alert"
-            className="rounded-md border border-redParish/30 bg-redParish/5 px-3 py-2 text-sm text-redParish"
-          >
-            {errorGeneral}
-          </p>
+          <Aviso tipo="error">
+            <p>{errorGeneral}</p>
+          </Aviso>
         )}
 
         <p className="text-sm text-muted">
-          Se reemplazará la contraseña actual de <strong>{usuario.correo}</strong>.
+          Se reemplazará la contraseña actual de <strong className="text-ink">{usuario.correo}</strong>.
         </p>
 
         <CampoTexto
@@ -59,26 +55,15 @@ export default function RestablecerContrasena({ usuario, onGuardado, onCerrar })
           disabled={isPending}
         />
 
-        <div className="mt-2 flex flex-wrap justify-end gap-2">
-          <button
-            type="button"
-            onClick={onCerrar}
-            disabled={isPending}
-            className="rounded-md border border-borderSoft bg-white px-4 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark disabled:opacity-50"
-          >
+        <div className="mt-2 flex flex-wrap justify-end gap-2 border-t border-sand pt-4">
+          <Boton variante="secundario" onClick={onCerrar} disabled={isPending}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="flex items-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+          </Boton>
+          <Boton type="submit" variante="primario" cargando={isPending}>
             {isPending ? 'Actualizando…' : 'Restablecer contraseña'}
-          </button>
+          </Boton>
         </div>
       </form>
     </Dialogo>
   );
 }
-

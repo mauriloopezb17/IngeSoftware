@@ -8,9 +8,9 @@ import { formatearHora, formatearRestante, MINUTOS_DE_AVISO, useEstadoDeSesion }
 const MS_MENSAJE_RENOVADA = 8000;
 
 const botonPrimario =
-  'flex items-center justify-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60';
+  'flex min-h-9 items-center justify-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink transition-colors duration-150 ease-salida hover:bg-gold-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none';
 const botonSecundario =
-  'flex items-center justify-center gap-2 rounded-md border border-borderSoft bg-white px-4 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark disabled:opacity-60';
+  'flex min-h-9 items-center justify-center gap-2 rounded-md border border-sand bg-white px-4 py-2 text-sm font-medium text-ink transition-colors duration-150 ease-salida hover:bg-panel focus-visible:outline-2 focus-visible:outline-ink disabled:opacity-60 motion-reduce:transition-none';
 
 // Aviso de la sesión del panel (autenticacion.md: la cookie vence a las `sesionExpiraEn`):
 //  * unos minutos antes de que venza, avisa con la hora y una cuenta atrás, sin tapar ni bloquear nada: se puede
@@ -79,7 +79,7 @@ export default function AvisoSesion() {
     return (
       <p
         role="status"
-        className="fixed inset-x-3 bottom-3 z-50 rounded-md border border-borderSoft bg-white px-4 py-3 text-sm shadow-lg sm:left-auto sm:right-4 sm:max-w-sm"
+        className="fixed inset-x-3 bottom-3 z-50 rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm text-success shadow-lg sm:left-auto sm:right-4 sm:max-w-sm"
       >
         Sesión renovada. Vence a las {formatearHora(usuario.sesionExpiraEn)}.
       </p>
@@ -93,15 +93,15 @@ export default function AvisoSesion() {
     <section
       aria-label="Estado de la sesión"
       className={`fixed inset-x-3 bottom-3 z-50 rounded-lg border bg-white p-4 text-sm shadow-lg sm:left-auto sm:right-4 sm:max-w-md ${
-        vencida ? 'border-redParish/40' : 'border-goldDark/50'
+        vencida ? 'border-danger/40' : 'border-gold-dark/50'
       }`}
     >
       {/* El texto del aviso no cambia: así se anuncia una sola vez. La cuenta atrás es solo visual. */}
       <div role="alert" className="flex items-start gap-2">
         {vencida ? (
-          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-redParish" aria-hidden="true" />
+          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden="true" />
         ) : (
-          <Clock className="mt-0.5 size-4 shrink-0 text-goldDark" aria-hidden="true" />
+          <Clock className="mt-0.5 size-4 shrink-0 text-ink" aria-hidden="true" />
         )}
         <p>
           {vencida ? (
@@ -137,12 +137,12 @@ export default function AvisoSesion() {
             onChange={(e) => setContrasena(e.target.value)}
             aria-invalid={error ? 'true' : undefined}
             aria-describedby={error ? `${idContrasena}-error` : undefined}
-            className={`rounded-md border bg-white px-3 py-2 text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-goldDark ${
-              error ? 'border-redParish' : 'border-borderSoft'
+            className={`rounded-md border bg-white px-3 py-2 text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink ${
+              error ? 'border-danger' : 'border-sand'
             }`}
           />
           {error && (
-            <p id={`${idContrasena}-error`} role="alert" className="text-sm text-redParish">
+            <p id={`${idContrasena}-error`} role="alert" className="text-sm text-danger">
               {error}
             </p>
           )}

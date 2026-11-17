@@ -1,0 +1,257 @@
+import { ChevronDown, Clock3, MessageCircle, Phone } from 'lucide-react';
+import { Link, useParams } from 'react-router';
+
+import {
+  BotonEnlace,
+  Contenedor,
+  EncabezadoPagina,
+  EnlaceFlecha,
+  Seccion,
+} from '../components/portal/index.js';
+import { CargandoSeccion, ErrorSeccion } from '../components/parroquia/EstadoSeccion.jsx';
+import { IconoDinamico } from '../components/parroquia/IconoDinamico.jsx';
+import { TIPOS_HORARIO } from '../config/sede.js';
+import { useHorarios, useSede, useServicio, useServicios } from '../hooks/index.js';
+import { armarHrefTelefono, formatearRangoHorario } from '../utils/formatoPortal.js';
+import NoEncontrado from './NoEncontrado.jsx';
+
+function SacramentoDetalle() {
+  const { slug } = useParams();
+  const { data: servicio, isPending, isError, error, refetch } = useServicio(slug);
+  const { data: todosServicios = [] } = useServicios();
+  const { data: sede } = useSede();
+  const { data: horarios = [] } = useHorarios();
+
+  const esNoEncontrado = error?.estado === 404 || error?.codigo === 'NO_ENCONTRADO';
+
+  if (!isPending && isError && esNoEncontrado) {
+    return <NoEncontrado />;
+  }
+
+  if (!isPending && !isError && !servicio) {
+    return <NoEncontrado />;
+  }
+
+  const datos = servicio?.contenido?.datos ?? [];
+  const preguntas = servicio?.preguntasFrecuentes ?? [];
+  const otrosServicios = todosServicios.filter((item) => item.slug !== slug);
+  const secretaria = horarios.find((grupo) => grupo.tipo?.nombre === TIPOS_HORARIO.SECRETARIA);
+  const telefono = sede?.telefono;
+  const hrefTelefono = armarHrefTelefono(telefono);
+  const whatsappUrl = sede?.whatsapp
+    ? `https://wa.me/${sede.whatsapp.replace(/\D/g, '')}`
+    : null;
+
+  const tituloSeo = servicio?.nombre
+    ? `${servicio.nombre} | Sacramentos | Parroquia Señor de la Exaltación`
+    : 'Sacramentos | Parroquia Señor de la Exaltación';
+
+  return (
+    <>
+      <title>{tituloSeo}</title>
+      <meta
+        name="description"
+        content={
+          servicio?.descripcionCorta ||
+          'Requisitos, preparación y documentación para sacramentos en la Parroquia Señor de la Exaltación.'
+        }
+      />
+
+      {isPending ? (
+        <Seccion fondo="blanco">
+          <CargandoSeccion alturaMinima={360} etiqueta="Cargando información del sacramento" />
+        </Seccion>
+      ) : isError ? (
+        <Seccion fondo="blanco">
+          <ErrorSeccion
+            mensaje="No pudimos cargar los detalles de este sacramento."
+            onReintentar={refetch}
+          />
+        </Seccion>
+      ) : (
+        <>
+          <EncabezadoPagina
+            migas={[
+              { texto: 'Inicio', enlace: '/' },
+              { texto: 'Sacramentos', enlace: '/sacramentos' },
+              { texto: servicio.nombre },
+            ]}
+            eyebrow="Sacramentos y catequesis"
+            titulo={servicio.nombre}
+            bajada={servicio.descripcionCorta}
+          />
+
+          <Seccion fondo="blanco">
+            <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
+              <div className="space-y-12 lg:col-span-8">
+                <section aria-labelledby="titulo-requisitos">
+                  <div className="mb-6 flex items-center gap-3">
+                    <span className="inline-flex size-11 items-center justify-center rounded-sm bg-gold-soft text-ink">
+                      <IconoDinamico
+                        nombre={servicio.icono || 'heart-handshake'}
+                        size={22}
+                        strokeWidth={1.8}
+                      />
+                    </span>
+                    <h2 id="titulo-requisitos" className="font-display text-h2 font-semibold text-ink">
+                      Información y requisitos
+                    </h2>
+                  </div>
+
+                  {datos.length > 0 ? (
+                    <dl className="divide-y divide-sand border-y border-sand">
+                      {datos.map((fila, indice) => (
+                        <div
+                          key={`${fila.etiqueta}-${indice}`}
+                          className="grid grid-cols-1 gap-2 py-4 sm:grid-cols-12 sm:gap-6"
+                        >
+                          <dt className="font-body text-body font-semibold text-ink sm:col-span-4">
+                            {fila.etiqueta}
+                          </dt>
+                          <dd className="max-w-prose font-body text-body text-muted sm:col-span-8">
+                            {fila.valor}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <p className="max-w-prose font-body text-body text-muted">
+                      Para conocer los requisitos detallados y fechas vigentes, acércate a la
+                      secretaría parroquial en nuestros horarios de atención.
+                    </p>
+                  )}
+                </section>
+
+                {preguntas.length > 0 && (
+                  <section aria-labelledby="titulo-preguntas">
+                    <h2 id="titulo-preguntas" className="mb-6 font-display text-h2 font-semibold text-ink">
+                      Preguntas frecuentes
+                    </h2>
+
+                    <div className="divide-y divide-sand border-y border-sand">
+                      {preguntas.map((item) => (
+                        <details key={item.id ?? item.pregunta} className="group py-4">
+                          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 font-body text-body font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink [&::-webkit-details-marker]:hidden">
+                            <span>{item.pregunta}</span>
+                            <ChevronDown
+                              size={18}
+                              aria-hidden="true"
+                              className="shrink-0 text-muted transition-transform duration-200 ease-salida group-open:rotate-180"
+                            />
+                          </summary>
+                          <p className="mt-3 max-w-prose font-body text-body text-muted">
+                            {item.respuesta}
+                          </p>
+                        </details>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {slug === 'matrimonio' && (
+                  <div className="rounded-md border border-sand bg-cream p-6">
+                    <h3 className="font-display text-h3 font-semibold text-ink">
+                      Proclamas matrimoniales
+                    </h3>
+                    <p className="mt-2 font-body text-body text-muted">
+                      Consulta las proclamas vigentes publicadas esta semana y el registro histórico
+                      de la parroquia.
+                    </p>
+                    <div className="mt-4">
+                      <EnlaceFlecha to="/proclamas">Ir a proclamas matrimoniales</EnlaceFlecha>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <aside className="lg:col-span-4">
+                <div className="rounded-md border border-sand bg-cream p-6 lg:sticky lg:top-28">
+                  <h2 className="font-display text-h3 font-semibold text-ink">
+                    ¿Dudas? Consulta en secretaría
+                  </h2>
+                  <p className="mt-2 font-body text-body text-muted">
+                    Te orientamos sobre documentos, fechas disponibles e inscripciones.
+                  </p>
+
+                  {secretaria?.filas?.length > 0 && (
+                    <div className="mt-5 border-t border-sand pt-5">
+                      <p className="flex items-center gap-2 font-body text-meta font-semibold text-ink">
+                        <Clock3 size={16} aria-hidden="true" />
+                        <span>Horario de atención</span>
+                      </p>
+                      <ul className="mt-2 space-y-1.5 font-body text-meta text-muted">
+                        {secretaria.filas.map((fila) => (
+                          <li key={fila.etiqueta}>
+                            <span className="font-semibold text-ink">{fila.etiqueta}:</span>{' '}
+                            <span className="tabular-nums">
+                              {fila.horarios
+                                .map((h) => formatearRangoHorario(h.horaInicio, h.horaFin))
+                                .join(' · ')}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="mt-6 flex flex-col gap-3">
+                    {telefono && (
+                      <BotonEnlace to={hrefTelefono} variante="primario">
+                        <Phone size={16} aria-hidden="true" />
+                        Llamar: {telefono}
+                      </BotonEnlace>
+                    )}
+                    {whatsappUrl && (
+                      <BotonEnlace to={whatsappUrl} variante="secundario">
+                        <MessageCircle size={16} aria-hidden="true" />
+                        {sede?.configuracion?.textoWhatsapp || 'WhatsApp Secretaría'}
+                      </BotonEnlace>
+                    )}
+                    <EnlaceFlecha to="/contacto">Ver dirección y mapa</EnlaceFlecha>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </Seccion>
+
+          {otrosServicios.length > 0 && (
+            <section className="border-t border-sand bg-cream py-16 md:py-24">
+              <Contenedor>
+                <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+                  <h2 className="font-display text-h2 font-semibold text-ink">
+                    Otros sacramentos y servicios
+                  </h2>
+                  <EnlaceFlecha to="/sacramentos">Ver todos</EnlaceFlecha>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {otrosServicios.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={`/sacramentos/${item.slug}`}
+                      className="flex flex-col justify-between rounded-md border border-sand bg-white p-6 transition-[border-color,transform] duration-200 ease-salida hover:-translate-y-1 hover:border-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    >
+                      <div>
+                        <h3 className="font-display text-h3 font-semibold text-ink">
+                          {item.nombre}
+                        </h3>
+                        <p className="mt-2 font-body text-meta text-muted">
+                          {item.descripcionCorta}
+                        </p>
+                      </div>
+                      <span className="mt-4 font-body text-meta font-semibold text-ink">
+                        Ver requisitos →
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </Contenedor>
+            </section>
+          )}
+        </>
+      )}
+    </>
+  );
+}
+
+export default SacramentoDetalle;

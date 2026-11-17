@@ -1,10 +1,9 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, Loader2, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 
-import CampoTexto from '../../componentes/CampoTexto.jsx';
 import Dialogo from '../../componentes/Dialogo.jsx';
-import CampoArea from '../componentes/CampoArea.jsx';
+import { Aviso, Boton, CampoArea, CampoCasilla, CampoTexto } from '../../ui/index.js';
 import SelectorIcono from '../componentes/SelectorIcono.jsx';
 import { extraerErroresApi } from '../componentes/errores.js';
 import { actualizarServicio, CLAVE_SERVICIOS, crearServicio } from './api.js';
@@ -13,7 +12,6 @@ const MAX_REQUISITOS = 20;
 
 export default function FormularioServicio({ servicio, onGuardado, onCerrar }) {
   const esEdicion = Boolean(servicio);
-  const idVisible = useId();
   const queryClient = useQueryClient();
 
   const [nombre, setNombre] = useState(servicio?.nombre ?? '');
@@ -94,12 +92,9 @@ export default function FormularioServicio({ servicio, onGuardado, onCerrar }) {
     >
       <form onSubmit={enviar} noValidate className="flex flex-col gap-4">
         {errorGeneral && (
-          <p
-            role="alert"
-            className="rounded-md border border-redParish/30 bg-redParish/5 px-3 py-2 text-sm text-redParish"
-          >
-            {errorGeneral}
-          </p>
+          <Aviso tipo="error">
+            <p>{errorGeneral}</p>
+          </Aviso>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -128,8 +123,8 @@ export default function FormularioServicio({ servicio, onGuardado, onCerrar }) {
           onChange={(e) => setDescripcionCorta(e.target.value)}
           maxLength={300}
           rows={3}
+          mostrarContador
           error={erroresCampo.descripcionCorta}
-          ayuda={`${descripcionCorta.length}/300 caracteres`}
           disabled={isPending}
         />
 
@@ -140,23 +135,26 @@ export default function FormularioServicio({ servicio, onGuardado, onCerrar }) {
           disabled={isPending}
         />
 
-        <fieldset className="rounded-lg border border-borderSoft bg-cream/40 p-4">
+        <fieldset className="rounded-lg border border-sand bg-panel p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <legend className="text-sm font-semibold text-ink">
               Requisitos y detalles ({requisitos.length}/{MAX_REQUISITOS})
             </legend>
-            <button
-              type="button"
+            <Boton
+              variante="secundario"
+              tamano="sm"
+              icono={Plus}
               onClick={agregarRequisito}
               disabled={isPending || requisitos.length >= MAX_REQUISITOS}
-              className="flex items-center gap-1 rounded-md border border-borderSoft bg-white px-2.5 py-1.5 text-xs font-semibold text-ink hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark disabled:opacity-50"
             >
-              <Plus className="size-3.5" aria-hidden="true" />
               Agregar requisito
-            </button>
+            </Boton>
           </div>
           {erroresCampo.contenido && (
-            <p className="mt-2 text-sm text-redParish">{erroresCampo.contenido}</p>
+            <p className="mt-2 flex items-start gap-1.5 text-sm text-danger">
+              <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+              <span>{erroresCampo.contenido}</span>
+            </p>
           )}
 
           {requisitos.length === 0 ? (
@@ -166,10 +164,7 @@ export default function FormularioServicio({ servicio, onGuardado, onCerrar }) {
           ) : (
             <ul className="mt-3 flex flex-col gap-3">
               {requisitos.map((item, i) => (
-                <li
-                  key={i}
-                  className="rounded-md border border-borderSoft bg-white p-3"
-                >
+                <li key={i} className="rounded-md border border-sand bg-white p-3">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <CampoTexto
                       etiqueta={`Etiqueta ${i + 1}`}
@@ -191,33 +186,33 @@ export default function FormularioServicio({ servicio, onGuardado, onCerrar }) {
                     />
                   </div>
                   <div className="mt-2 flex justify-end gap-1.5">
-                    <button
-                      type="button"
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
                       onClick={() => moverRequisito(i, -1)}
                       disabled={isPending || i === 0}
                       aria-label={`Subir requisito ${i + 1}`}
-                      className="rounded-md border border-borderSoft p-1.5 text-muted hover:bg-stone hover:text-ink disabled:opacity-40"
                     >
                       <ArrowUp className="size-3.5" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
+                    </Boton>
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
                       onClick={() => moverRequisito(i, 1)}
                       disabled={isPending || i === requisitos.length - 1}
                       aria-label={`Bajar requisito ${i + 1}`}
-                      className="rounded-md border border-borderSoft p-1.5 text-muted hover:bg-stone hover:text-ink disabled:opacity-40"
                     >
                       <ArrowDown className="size-3.5" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
+                    </Boton>
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
                       onClick={() => eliminarRequisito(i)}
                       disabled={isPending}
                       aria-label={`Quitar requisito ${i + 1}`}
-                      className="rounded-md border border-redParish/30 p-1.5 text-redParish hover:bg-redParish/5 disabled:opacity-40"
                     >
-                      <Trash2 className="size-3.5" aria-hidden="true" />
-                    </button>
+                      <Trash2 className="size-3.5 text-danger" aria-hidden="true" />
+                    </Boton>
                   </div>
                 </li>
               ))}
@@ -225,38 +220,22 @@ export default function FormularioServicio({ servicio, onGuardado, onCerrar }) {
           )}
         </fieldset>
 
-        <label htmlFor={idVisible} className="flex items-center gap-2.5 text-sm font-medium text-ink">
-          <input
-            id={idVisible}
-            type="checkbox"
-            checked={visible}
-            onChange={(e) => setVisible(e.target.checked)}
-            disabled={isPending}
-            className="size-4 rounded border-borderSoft accent-goldDark focus-visible:outline-2 focus-visible:outline-goldDark"
-          />
-          Visible en el portal público
-        </label>
+        <CampoCasilla
+          etiqueta="Visible en el portal público"
+          checked={visible}
+          onChange={(e) => setVisible(e.target.checked)}
+          disabled={isPending}
+        />
 
-        <div className="mt-2 flex justify-end gap-2 border-t border-borderSoft pt-4">
-          <button
-            type="button"
-            onClick={onCerrar}
-            disabled={isPending}
-            className="rounded-md border border-borderSoft bg-white px-4 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark disabled:opacity-50"
-          >
+        <div className="mt-2 flex justify-end gap-2 border-t border-sand pt-4">
+          <Boton variante="secundario" onClick={onCerrar} disabled={isPending}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="flex items-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+          </Boton>
+          <Boton type="submit" variante="primario" cargando={isPending}>
             {isPending ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Crear servicio'}
-          </button>
+          </Boton>
         </div>
       </form>
     </Dialogo>
   );
 }
-

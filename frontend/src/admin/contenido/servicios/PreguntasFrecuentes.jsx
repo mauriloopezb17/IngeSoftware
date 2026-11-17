@@ -1,12 +1,20 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Inbox, Pencil, Plus, Trash2 } from 'lucide-react';
 
-import CampoTexto from '../../componentes/CampoTexto.jsx';
+import ConfirmarAccion from '../../componentes/ConfirmarAccion.jsx';
 import Dialogo from '../../componentes/Dialogo.jsx';
-import CampoArea from '../componentes/CampoArea.jsx';
-import ConfirmarBorrado from '../componentes/ConfirmarBorrado.jsx';
-import EstadoLista from '../componentes/EstadoLista.jsx';
+import {
+  Aviso,
+  Boton,
+  CampoArea,
+  CampoCasilla,
+  CampoTexto,
+  EsqueletoTarjetas,
+  EstadoVacio,
+  Insignia,
+  useToast,
+} from '../../ui/index.js';
 import { extraerErroresApi } from '../componentes/errores.js';
 import {
   actualizarPreguntaFrecuente,
@@ -19,7 +27,6 @@ import {
 
 function FormularioPregunta({ servicioId, preguntaActual, onGuardado, onCancelar }) {
   const esEdicion = Boolean(preguntaActual);
-  const idActiva = useId();
   const [pregunta, setPregunta] = useState(preguntaActual?.pregunta ?? '');
   const [respuesta, setRespuesta] = useState(preguntaActual?.respuesta ?? '');
   const [activa, setActiva] = useState(preguntaActual?.activa ?? true);
@@ -54,19 +61,16 @@ function FormularioPregunta({ servicioId, preguntaActual, onGuardado, onCancelar
     <form
       onSubmit={enviar}
       noValidate
-      className="flex flex-col gap-3 rounded-lg border border-borderSoft bg-cream/50 p-4"
+      className="flex flex-col gap-3 rounded-lg border border-sand bg-panel p-4"
     >
       <h3 className="font-semibold text-ink">
         {esEdicion ? 'Editar pregunta frecuente' : 'Nueva pregunta frecuente'}
       </h3>
 
       {errorGeneral && (
-        <p
-          role="alert"
-          className="rounded-md border border-redParish/30 bg-redParish/5 px-3 py-2 text-sm text-redParish"
-        >
-          {errorGeneral}
-        </p>
+        <Aviso tipo="error">
+          <p>{errorGeneral}</p>
+        </Aviso>
       )}
 
       <CampoTexto
@@ -88,35 +92,20 @@ function FormularioPregunta({ servicioId, preguntaActual, onGuardado, onCancelar
         disabled={isPending}
       />
 
-      <label htmlFor={idActiva} className="flex items-center gap-2 text-sm text-ink">
-        <input
-          id={idActiva}
-          type="checkbox"
-          checked={activa}
-          onChange={(e) => setActiva(e.target.checked)}
-          disabled={isPending}
-          className="size-4 rounded border-borderSoft accent-goldDark"
-        />
-        Activa en el portal y asistente virtual
-      </label>
+      <CampoCasilla
+        etiqueta="Activa en el portal y asistente virtual"
+        checked={activa}
+        onChange={(e) => setActiva(e.target.checked)}
+        disabled={isPending}
+      />
 
       <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancelar}
-          disabled={isPending}
-          className="rounded-md border border-borderSoft bg-white px-3 py-1.5 text-sm font-medium hover:bg-stone disabled:opacity-50"
-        >
+        <Boton variante="secundario" tamano="sm" onClick={onCancelar} disabled={isPending}>
           Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={isPending}
-          className="flex items-center gap-2 rounded-md bg-gold px-3 py-1.5 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white disabled:opacity-60"
-        >
-          {isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+        </Boton>
+        <Boton type="submit" variante="primario" tamano="sm" cargando={isPending}>
           {esEdicion ? 'Guardar pregunta' : 'Agregar pregunta'}
-        </button>
+        </Boton>
       </div>
     </form>
   );
@@ -124,9 +113,9 @@ function FormularioPregunta({ servicioId, preguntaActual, onGuardado, onCancelar
 
 export default function PreguntasFrecuentes({ servicio, puedeGestionar, onCerrar }) {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [formAbierto, setFormAbierto] = useState(null); // null | 'nueva' | objeto pregunta
   const [porEliminar, setPorEliminar] = useState(null);
-  const [aviso, setAviso] = useState('');
 
   const detalleQuery = useQuery({
     queryKey: [...CLAVE_SERVICIOS, servicio.id],
@@ -145,7 +134,7 @@ export default function PreguntasFrecuentes({ servicio, puedeGestionar, onCerrar
 
   function recargar(mensaje) {
     setFormAbierto(null);
-    setAviso(mensaje);
+    toast.exito(mensaje);
     queryClient.invalidateQueries({ queryKey: [...CLAVE_SERVICIOS, servicio.id] });
     queryClient.invalidateQueries({ queryKey: CLAVE_SERVICIOS });
   }
@@ -158,11 +147,13 @@ export default function PreguntasFrecuentes({ servicio, puedeGestionar, onCerrar
     reordenarMut.mutate(ids);
   }
 
-  async function confirmarBorrado() {
-    await eliminarPreguntaFrecuente(servicio.id, porEliminar.id);
-    setPorEliminar(null);
-    recargar('Se eliminó la pregunta frecuente.');
-  }
+  const eliminarMut = useMutation({
+    mutationFn: (pregunta) => eliminarPreguntaFrecuente(servicio.id, pregunta.id),
+    onSuccess: () => {
+      setPorEliminar(null);
+      recargar('Se eliminó la pregunta frecuente.');
+    },
+  });
 
   return (
     <Dialogo
@@ -171,26 +162,16 @@ export default function PreguntasFrecuentes({ servicio, puedeGestionar, onCerrar
       ancho="max-w-2xl"
     >
       <div className="flex flex-col gap-4">
-        <p
-          role="status"
-          className={aviso ? 'rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark' : 'sr-only'}
-        >
-          {aviso}
-        </p>
-
         {puedeGestionar && !formAbierto && (
           <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => {
-                setAviso('');
-                setFormAbierto('nueva');
-              }}
-              className="flex items-center gap-1.5 rounded-md bg-gold px-3.5 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-goldDark"
+            <Boton
+              variante="primario"
+              tamano="sm"
+              icono={Plus}
+              onClick={() => setFormAbierto('nueva')}
             >
-              <Plus className="size-4" aria-hidden="true" />
               Nueva pregunta
-            </button>
+            </Boton>
           </div>
         )}
 
@@ -209,77 +190,79 @@ export default function PreguntasFrecuentes({ servicio, puedeGestionar, onCerrar
           />
         )}
 
-        <EstadoLista
-          cargando={detalleQuery.isPending}
-          error={detalleQuery.error}
-          vacio={!detalleQuery.isPending && !detalleQuery.error && preguntas.length === 0}
-          textoCargando="Cargando preguntas frecuentes…"
-          textoVacio="Este servicio todavía no tiene preguntas frecuentes."
-          onReintentar={() => detalleQuery.refetch()}
-        />
+        {detalleQuery.isPending && (
+          <EsqueletoTarjetas cantidad={2} columnas="grid-cols-1" etiqueta="Cargando preguntas frecuentes…" />
+        )}
+
+        {detalleQuery.error && (
+          <Aviso
+            tipo="error"
+            accion={
+              <Boton variante="secundario" tamano="sm" onClick={() => detalleQuery.refetch()}>
+                Reintentar
+              </Boton>
+            }
+          >
+            <p>{detalleQuery.error.message || 'No se pudieron cargar los datos.'}</p>
+          </Aviso>
+        )}
+
+        {!detalleQuery.isPending && !detalleQuery.error && preguntas.length === 0 && (
+          <EstadoVacio
+            icono={Inbox}
+            titulo="Este servicio todavía no tiene preguntas frecuentes."
+          />
+        )}
 
         {preguntas.length > 0 && (
           <ul className="flex flex-col gap-3" aria-label="Lista de preguntas frecuentes">
             {preguntas.map((pf, i) => (
-              <li
-                key={pf.id}
-                className="rounded-lg border border-borderSoft bg-white p-3.5"
-              >
+              <li key={pf.id} className="rounded-lg border border-sand bg-white p-3.5">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-semibold text-ink">{pf.pregunta}</p>
-                      {!pf.activa && (
-                        <span className="rounded-full bg-stone px-2 py-0.5 text-xs font-medium text-muted">
-                          Inactiva
-                        </span>
-                      )}
+                      {!pf.activa && <Insignia variante="archivado">Inactiva</Insignia>}
                     </div>
-                    <p className="mt-1 text-sm text-charcoal">{pf.respuesta}</p>
+                    <p className="mt-1 text-sm text-ink">{pf.respuesta}</p>
                   </div>
 
                   {puedeGestionar && (
                     <div className="flex items-center gap-1">
-                      <button
-                        type="button"
+                      <Boton
+                        variante="secundario"
+                        tamano="sm"
                         onClick={() => mover(i, -1)}
                         disabled={i === 0 || reordenarMut.isPending}
                         aria-label={`Subir pregunta ${i + 1}`}
-                        className="rounded-md border border-borderSoft p-1.5 text-muted hover:bg-stone hover:text-ink disabled:opacity-40"
                       >
                         <ArrowUp className="size-3.5" aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
+                      </Boton>
+                      <Boton
+                        variante="secundario"
+                        tamano="sm"
                         onClick={() => mover(i, 1)}
                         disabled={i === preguntas.length - 1 || reordenarMut.isPending}
                         aria-label={`Bajar pregunta ${i + 1}`}
-                        className="rounded-md border border-borderSoft p-1.5 text-muted hover:bg-stone hover:text-ink disabled:opacity-40"
                       >
                         <ArrowDown className="size-3.5" aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAviso('');
-                          setFormAbierto(pf);
-                        }}
+                      </Boton>
+                      <Boton
+                        variante="secundario"
+                        tamano="sm"
+                        onClick={() => setFormAbierto(pf)}
                         aria-label={`Editar pregunta ${i + 1}`}
-                        className="rounded-md border border-borderSoft p-1.5 text-ink hover:bg-stone"
                       >
                         <Pencil className="size-3.5" aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAviso('');
-                          setPorEliminar(pf);
-                        }}
+                      </Boton>
+                      <Boton
+                        variante="secundario"
+                        tamano="sm"
+                        onClick={() => setPorEliminar(pf)}
                         aria-label={`Eliminar pregunta ${i + 1}`}
-                        className="rounded-md border border-redParish/30 p-1.5 text-redParish hover:bg-redParish/5"
                       >
-                        <Trash2 className="size-3.5" aria-hidden="true" />
-                      </button>
+                        <Trash2 className="size-3.5 text-danger" aria-hidden="true" />
+                      </Boton>
                     </div>
                   )}
                 </div>
@@ -290,14 +273,19 @@ export default function PreguntasFrecuentes({ servicio, puedeGestionar, onCerrar
       </div>
 
       {porEliminar && (
-        <ConfirmarBorrado
+        <ConfirmarAccion
           titulo="¿Eliminar pregunta frecuente?"
-          descripcion={`Se eliminará «${porEliminar.pregunta}». Esta acción no se puede deshacer.`}
-          onConfirmar={confirmarBorrado}
-          onCancelar={() => setPorEliminar(null)}
-        />
+          pendiente={eliminarMut.isPending}
+          error={eliminarMut.error}
+          onConfirmar={() => eliminarMut.mutate(porEliminar)}
+          onCancelar={() => {
+            eliminarMut.reset();
+            setPorEliminar(null);
+          }}
+        >
+          Se eliminará «{porEliminar.pregunta}». Esta acción no se puede deshacer.
+        </ConfirmarAccion>
       )}
     </Dialogo>
   );
 }
-

@@ -13,6 +13,7 @@ import { reiniciarMocksContenido } from '../contenido/mocks/handlers.js';
 import { reiniciarMocksAdmin } from '../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from '../mocks/usuarios.js';
 import { SesionProvider } from '../sesion/SesionProvider.jsx';
+import { ProveedorToasts } from '../ui/index.js';
 import Usuarios from './Usuarios.jsx';
 
 const entrar = (rol = 'admin') =>
@@ -25,11 +26,13 @@ function montar() {
   const cliente = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={cliente}>
-      <SesionProvider>
-        <MemoryRouter initialEntries={['/admin/usuarios']}>
-          <Usuarios />
-        </MemoryRouter>
-      </SesionProvider>
+      <ProveedorToasts>
+        <SesionProvider>
+          <MemoryRouter initialEntries={['/admin/usuarios']}>
+            <Usuarios />
+          </MemoryRouter>
+        </SesionProvider>
+      </ProveedorToasts>
     </QueryClientProvider>,
   );
 }
@@ -110,9 +113,9 @@ describe('gestión de usuarios', () => {
 
     // Editar y desactivar/activar otro usuario
     await u.click(screen.getByRole('button', { name: 'Desactivar a Marketing (desarrollo)' }));
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      /Se desactivó la cuenta de «Marketing \(desarrollo\)»/,
-    );
+    expect(
+      await screen.findByText(/Se desactivó la cuenta de «Marketing \(desarrollo\)»/),
+    ).toBeInTheDocument();
     expect(
       await screen.findByRole('button', { name: 'Activar a Marketing (desarrollo)' }),
     ).toBeInTheDocument();
@@ -126,9 +129,9 @@ describe('gestión de usuarios', () => {
     });
     await u.type(within(dialogoPass).getByLabelText('Nueva contraseña'), 'NuevaClaveSegura2026!');
     await u.click(within(dialogoPass).getByRole('button', { name: 'Restablecer contraseña' }));
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      /Se restableció la contraseña de «Secretaría \(desarrollo\)»/,
-    );
+    expect(
+      await screen.findByText(/Se restableció la contraseña de «Secretaría \(desarrollo\)»/),
+    ).toBeInTheDocument();
   }, 15000);
 
   it('el endpoint responde 403 si intenta acceder un rol sin usuarios.gestionar', async () => {

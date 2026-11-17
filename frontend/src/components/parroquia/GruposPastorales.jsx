@@ -1,71 +1,61 @@
 import { ArrowRight } from 'lucide-react';
 
-import { anchoContenido } from './ElementosComunes.jsx';
+import { BotonEnlace, EncabezadoSeccion, Seccion } from '../portal/index.js';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { IconoDinamico } from './IconoDinamico.jsx';
 import { useGruposPastorales } from '../../hooks/index.js';
-
-import '../../styles/GruposPastorales.css';
 
 function GruposPastorales() {
   const { data: grupos = [], isPending, isError, refetch } = useGruposPastorales();
 
   return (
-    <section id="comunidad" className="grupos-pastorales">
-      <div className={`${anchoContenido} grupos-contenedor`}>
-        <div className="grupos-informacion">
-          <p className="eyebrow">Comunidad</p>
+    <Seccion id="comunidad" fondo="crema">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
+        <div className="lg:col-span-5">
+          <EncabezadoSeccion
+            eyebrow="Comunidad"
+            titulo="Grupos y pastorales"
+            bajada="Hay un lugar para ti. Niños, jóvenes, familias y adultos mayores encuentran aquí un espacio para servir, formarse y crecer en la fe."
+            className="mb-6"
+          />
 
-          <h2 className="serif-title grupos-titulo">
-            Grupos y
-            <br />
-            pastorales
-          </h2>
-
-          <p className="grupos-descripcion">
-            Hay un lugar para ti. Niños, jóvenes, familias y adultos mayores
-            encuentran aquí un espacio para servir, formarse y crecer en la fe.
-          </p>
-
-          <a href="#contacto" className="grupos-boton">
-            Quiero participar
-            <ArrowRight size={17} />
-          </a>
+          <BotonEnlace to="/contacto" variante="primario">
+            <span>Quiero participar</span>
+            <ArrowRight size={16} aria-hidden="true" />
+          </BotonEnlace>
         </div>
 
-        <div className="grupos-tarjetas">
+        <div className="lg:col-span-7">
           {isPending ? (
-            <div style={{ gridColumn: '1 / -1' }}>
-              <CargandoSeccion alturaMinima={240} etiqueta="Cargando grupos pastorales" />
-            </div>
+            <CargandoSeccion alturaMinima={240} etiqueta="Cargando grupos pastorales" />
           ) : isError ? (
-            <div style={{ gridColumn: '1 / -1' }}>
-              <ErrorSeccion
-                mensaje="No pudimos cargar los grupos pastorales."
-                onReintentar={refetch}
-              />
-            </div>
+            <ErrorSeccion
+              mensaje="No pudimos cargar los grupos pastorales."
+              onReintentar={refetch}
+            />
           ) : grupos.length === 0 ? (
-            <div style={{ gridColumn: '1 / -1' }}>
-              <SinResultados mensaje="No hay grupos pastorales publicados por el momento." />
-            </div>
+            <SinResultados mensaje="No hay grupos pastorales publicados por el momento." />
           ) : (
-            grupos.map(({ id, nombre, horarioReunion, icono }) => (
-              <article key={id} className="grupos-tarjeta">
-                <span className="grupos-icono">
-                  <IconoDinamico nombre={icono} size={17} strokeWidth={1.8} />
-                </span>
+            <ul className="divide-y divide-sand rounded-md border border-sand bg-white px-6">
+              {grupos.map(({ id, nombre, horarioReunion, icono }) => (
+                <li key={id} className="flex items-center justify-between gap-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-sm bg-gold-soft text-ink">
+                      <IconoDinamico nombre={icono} size={18} strokeWidth={1.8} />
+                    </span>
+                    <h3 className="font-display text-h3 font-semibold text-ink">{nombre}</h3>
+                  </div>
 
-                <div className="grupos-tarjeta-informacion">
-                  <h3>{nombre}</h3>
-                  {horarioReunion && <p>{horarioReunion}</p>}
-                </div>
-              </article>
-            ))
+                  {horarioReunion && (
+                    <p className="font-body text-meta text-muted">{horarioReunion}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>
-    </section>
+    </Seccion>
   );
 }
 

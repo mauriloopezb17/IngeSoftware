@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ban, FileText, UploadCloud } from 'lucide-react';
 
 import Dialogo from '../componentes/Dialogo.jsx';
-import { Cargando, ErrorConsulta } from '../componentes/EstadoConsulta.jsx';
 import Paginacion from '../componentes/Paginacion.jsx';
 import { CLAVE_MULTIMEDIA, subirArchivo } from '../multimedia/api.js';
 import BarraProgreso from '../multimedia/BarraProgreso.jsx';
@@ -12,6 +11,7 @@ import { fueCancelada } from '../multimedia/subidaXhr.js';
 import { useBiblioteca } from '../multimedia/useBiblioteca.js';
 import { tipoDelArchivo, validarArchivoCliente } from '../multimedia/validacion.js';
 import { usePermisos } from '../permisos/usePermisos.js';
+import { Aviso, Boton, EsqueletoTarjetas } from '../ui/index.js';
 
 const POR_PAGINA_SELECTOR = 6;
 
@@ -78,8 +78,8 @@ export default function SelectorPdf({ seleccionadoId, onSeleccionar, onCerrar })
   return (
     <Dialogo titulo="PDF del boletín" onCerrar={onCerrar} ancho="max-w-2xl">
       {puede('multimedia.subir') && (
-        <section aria-label="Subir un PDF nuevo" className="rounded-lg border border-dashed border-borderSoft p-4">
-          <p className="text-sm text-charcoal">
+        <section aria-label="Subir un PDF nuevo" className="rounded-lg border border-dashed border-sand bg-panel p-4">
+          <p className="text-sm text-ink">
             Sube el PDF del boletín. Queda guardado en la biblioteca multimedia (hasta 50 MB).
           </p>
           <input
@@ -94,29 +94,35 @@ export default function SelectorPdf({ seleccionadoId, onSeleccionar, onCerrar })
           {subir.isPending ? (
             <div className="mt-3 flex flex-col gap-2">
               <BarraProgreso nombre={nombreSubiendo} progreso={progreso} />
-              <button
-                type="button"
-                onClick={() => control.current?.abort()}
-                aria-label={`Cancelar la subida de ${nombreSubiendo}`}
-                className="flex w-fit items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-              >
-                <Ban className="size-4" aria-hidden="true" /> Cancelar
-              </button>
+              <div className="flex">
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  icono={Ban}
+                  onClick={() => control.current?.abort()}
+                  aria-label={`Cancelar la subida de ${nombreSubiendo}`}
+                >
+                  Cancelar
+                </Boton>
+              </div>
             </div>
           ) : (
-            <button
-              ref={botonSubir}
-              type="button"
-              onClick={() => entrada.current?.click()}
-              className="mt-3 flex items-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark"
-            >
-              <UploadCloud className="size-4" aria-hidden="true" /> Subir un PDF
-            </button>
+            <div className="mt-3">
+              <Boton
+                ref={botonSubir}
+                variante="primario"
+                tamano="sm"
+                icono={UploadCloud}
+                onClick={() => entrada.current?.click()}
+              >
+                Subir un PDF
+              </Boton>
+            </div>
           )}
           {errorSubida && (
-            <p role="alert" className="mt-2 text-sm text-redParish">
-              {errorSubida}
-            </p>
+            <Aviso tipo="error" className="mt-3">
+              <p>{errorSubida}</p>
+            </Aviso>
           )}
         </section>
       )}
@@ -124,9 +130,18 @@ export default function SelectorPdf({ seleccionadoId, onSeleccionar, onCerrar })
       <section aria-label="PDF de la biblioteca" className="mt-5">
         <h3 className="text-sm font-semibold text-ink">O elige uno de la biblioteca</h3>
         <div className="mt-3" aria-busy={isPending || isPlaceholderData}>
-          {isPending && <Cargando texto="Cargando documentos…" />}
+          {isPending && <EsqueletoTarjetas cantidad={3} columnas="grid-cols-1" etiqueta="Cargando documentos…" />}
           {isError && !data && (
-            <ErrorConsulta texto="No se pudieron cargar los documentos" error={error} onReintentar={refetch} />
+            <Aviso
+              tipo="error"
+              accion={
+                <Boton variante="secundario" tamano="sm" onClick={() => refetch()}>
+                  Reintentar
+                </Boton>
+              }
+            >
+              <p>No se pudieron cargar los documentos: {error.message}</p>
+            </Aviso>
           )}
           {data &&
             (documentos.length ? (
@@ -137,13 +152,15 @@ export default function SelectorPdf({ seleccionadoId, onSeleccionar, onCerrar })
                       type="button"
                       onClick={() => onSeleccionar(doc)}
                       aria-pressed={doc.id === seleccionadoId}
-                      className={`flex w-full items-start gap-3 rounded-lg border-2 bg-white p-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark ${
-                        doc.id === seleccionadoId ? 'border-gold ring-2 ring-gold/40' : 'border-borderSoft hover:border-gold'
+                      className={`flex w-full items-start gap-3 rounded-lg border-2 bg-white p-3 text-left transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink motion-reduce:transition-none ${
+                        doc.id === seleccionadoId
+                          ? 'border-ink ring-2 ring-gold/60'
+                          : 'border-sand hover:border-ink/40'
                       }`}
                     >
                       <FileText className="mt-0.5 size-5 shrink-0 text-muted" aria-hidden="true" />
                       <span className="min-w-0">
-                        <span className="block break-words text-sm font-semibold">{doc.nombreOriginal}</span>
+                        <span className="block break-words text-sm font-semibold text-ink">{doc.nombreOriginal}</span>
                         <span className="block text-xs text-muted">
                           {formatearTamano(doc.tamanoBytes)} · subido el {formatearFecha(doc.fechaSubida)}
                           {doc.enUso && ' · en uso'}

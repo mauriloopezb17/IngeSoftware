@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { AlertCircle } from 'lucide-react';
 
 import { IconoDinamico } from '../../../components/parroquia/IconoDinamico.jsx';
 
@@ -39,7 +40,7 @@ export default function SelectorIcono({
       <div className="flex items-center gap-3">
         <span
           aria-hidden="true"
-          className="flex size-10 shrink-0 items-center justify-center rounded-md border border-borderSoft bg-cream text-goldDark"
+          className="flex size-11 shrink-0 items-center justify-center rounded-md border border-sand bg-panel text-ink"
         >
           <IconoDinamico nombre={valor || null} size={20} />
         </span>
@@ -50,8 +51,8 @@ export default function SelectorIcono({
           disabled={disabled}
           aria-invalid={error ? 'true' : undefined}
           aria-describedby={describedBy}
-          className={`w-full rounded-md border bg-white px-3 py-2.5 text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-goldDark disabled:bg-stone ${
-            error ? 'border-redParish' : 'border-borderSoft'
+          className={`min-h-11 w-full rounded-md border bg-white px-3 py-2 text-sm text-ink transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink disabled:bg-panel ${
+            error ? 'border-danger' : 'border-sand'
           }`}
         >
           <option value="">Sin ícono (por defecto)</option>
@@ -66,11 +67,11 @@ export default function SelectorIcono({
         Nombre de lucide-react en kebab-case usado en el portal.
       </p>
       {error && (
-        <p id={idError} className="text-sm text-redParish">
-          {error}
+        <p id={idError} className="flex items-start gap-1.5 text-sm text-danger">
+          <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+          <span>{error}</span>
         </p>
       )}
     </div>
   );
 }
-

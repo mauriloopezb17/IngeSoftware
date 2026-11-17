@@ -1,18 +1,18 @@
+import { ArrowRight } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
-import '../styles/parroquia.css';
-import '../styles/VidaParroquial.css';
-import '../styles/Noticias.css';
-
-import Encabezado from '../components/parroquia/Encabezado.jsx';
-import PiePagina from '../components/parroquia/PiePagina.jsx';
-import { anchoContenido } from '../components/parroquia/ElementosComunes.jsx';
+import {
+  EncabezadoPagina,
+  Reveal,
+  Seccion,
+} from '../components/portal/index.js';
+import PaginacionPortal from '../components/parroquia/PaginacionPortal.jsx';
 import {
   CargandoSeccion,
   ErrorSeccion,
   SinResultados,
 } from '../components/parroquia/EstadoSeccion.jsx';
+import { construirAtributosImagen } from '../components/parroquia/imagenSrcSet.js';
 import { useCategorias, usePublicaciones } from '../hooks/index.js';
 import { formatearFechaLarga } from '../utils/formatoPortal.js';
 
@@ -80,229 +80,220 @@ function Noticias() {
   const hayFiltrosActivos = Boolean(tipoActivo || categoriaActiva);
 
   return (
-    <div className="font-body">
+    <>
       <title>Noticias | Parroquia Señor de la Exaltación</title>
       <meta
         name="description"
         content="Noticias, actividades pastorales y notas de prensa de la Parroquia Señor de la Exaltación en Obrajes, La Paz."
       />
-      <div className="subpagina-encabezado">
-        <Encabezado />
-      </div>
 
-      <main>
-        <section className="noticias-cabecera">
-          <div className={anchoContenido}>
-            <nav className="noticias-miga" aria-label="Ruta de navegación">
-              <Link to="/" className="inline-flex items-center gap-1.5">
-                <ArrowLeft size={14} aria-hidden="true" />
-                Inicio
-              </Link>
-              <span aria-hidden="true">/</span>
-              <span>Noticias</span>
-            </nav>
+      <EncabezadoPagina
+        migas={[{ texto: 'Inicio', enlace: '/' }, { texto: 'Noticias' }]}
+        eyebrow="Vida parroquial"
+        titulo="Noticias"
+        bajada="Crónicas, actividades pastorales y notas de prensa de nuestra comunidad parroquial."
+      />
 
-            <p className="eyebrow">Vida parroquial</p>
-            <h1 className="serif-title noticias-titulo">Noticias</h1>
-            <p className="noticias-subtitulo">
-              Crónicas, actividades pastorales y notas de prensa de nuestra comunidad parroquial.
-            </p>
-          </div>
-        </section>
-
-        <section className="noticias-cuerpo">
-          <div className={anchoContenido}>
-            <div className="noticias-filtros">
-              <div className="noticias-tipos" role="group" aria-label="Filtrar por tipo de publicación">
-                {OPCIONES_TIPO.map(({ valor, etiqueta }) => {
-                  const activo = tipoActivo === valor;
-                  return (
-                    <button
-                      key={etiqueta}
-                      type="button"
-                      onClick={() => actualizarFiltros({ tipo: valor })}
-                      className={`noticias-filtro-boton ${
-                        activo ? 'noticias-filtro-boton-activo' : ''
-                      }`}
-                      aria-pressed={activo}
-                    >
-                      {etiqueta}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="noticias-categoria-grupo">
-                <label htmlFor="filtro-categoria-noticias" className="noticias-categoria-etiqueta">
-                  Categoría
-                </label>
-                <select
-                  id="filtro-categoria-noticias"
-                  className="noticias-categoria-select"
-                  value={categoriaActiva}
-                  onChange={(evento) => actualizarFiltros({ categoria: evento.target.value })}
+      <Seccion fondo="blanco">
+        <div className="mb-10 flex flex-col gap-4 border-b border-sand pb-6 md:flex-row md:items-center md:justify-between">
+          <div
+            className="flex flex-wrap items-center gap-2"
+            role="group"
+            aria-label="Filtrar por tipo de publicación"
+          >
+            {OPCIONES_TIPO.map(({ valor, etiqueta }) => {
+              const activo = tipoActivo === valor;
+              return (
+                <button
+                  key={etiqueta}
+                  type="button"
+                  onClick={() => actualizarFiltros({ tipo: valor })}
+                  aria-pressed={activo}
+                  className={`min-h-11 cursor-pointer rounded-sm border px-4 py-2 font-body text-meta font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+                    activo
+                      ? 'border-ink bg-ink text-white'
+                      : 'border-sand bg-white text-ink hover:border-ink'
+                  }`}
                 >
-                  <option value="">Todas las categorías</option>
-                  {categorias.map((categoria) => (
-                    <option key={categoria.id} value={categoria.slug}>
-                      {categoria.nombre}
-                    </option>
-                  ))}
-                </select>
+                  {etiqueta}
+                </button>
+              );
+            })}
+          </div>
 
-                {hayFiltrosActivos && (
-                  <button
-                    type="button"
-                    className="noticias-limpiar"
-                    onClick={() => setSearchParams({})}
-                  >
-                    Limpiar filtros
-                  </button>
-                )}
-              </div>
-            </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <label
+              htmlFor="filtro-categoria-noticias"
+              className="font-body text-meta font-semibold text-muted"
+            >
+              Categoría
+            </label>
+            <select
+              id="filtro-categoria-noticias"
+              className="min-h-11 rounded-sm border border-sand bg-white px-3 py-2 font-body text-meta font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              value={categoriaActiva}
+              onChange={(evento) => actualizarFiltros({ categoria: evento.target.value })}
+            >
+              <option value="">Todas las categorías</option>
+              {categorias.map((categoria) => (
+                <option key={categoria.id} value={categoria.slug}>
+                  {categoria.nombre}
+                </option>
+              ))}
+            </select>
 
-            {isPending ? (
-              <CargandoSeccion alturaMinima={360} etiqueta="Cargando noticias" />
-            ) : isError ? (
-              <ErrorSeccion
-                mensaje="No pudimos cargar las noticias."
-                onReintentar={refetch}
-              />
-            ) : publicaciones.length === 0 ? (
-              <SinResultados
-                mensaje={
-                  hayFiltrosActivos
-                    ? 'No hay noticias que coincidan con los filtros seleccionados.'
-                    : 'No hay noticias publicadas por el momento.'
-                }
-              />
-            ) : (
-              <>
-                <div className="vida-parroquial-tarjetas">
-                  {publicaciones.map((noticia) => {
-                    const imagen = noticia.imagenPortada;
-                    const esAfiche = Boolean(
-                      imagen?.alto && imagen?.ancho && imagen.alto > imagen.ancho,
-                    );
-
-                    const contenidoImagen = imagen ? (
-                      <img
-                        src={imagen.url}
-                        alt={imagen.textoAlternativo || noticia.titulo}
-                        width={imagen.ancho ?? undefined}
-                        height={imagen.alto ?? undefined}
-                        className={`vida-parroquial-imagen ${
-                          esAfiche ? 'vida-parroquial-imagen-afiche' : ''
-                        }`}
-                        loading="lazy"
-                      />
-                    ) : null;
-
-                    return (
-                      <article key={noticia.id} className="vida-parroquial-tarjeta">
-                        <div className="vida-parroquial-imagen-contenedor">
-                          {contenidoImagen &&
-                            (noticia.urlExterna ? (
-                              <a
-                                href={noticia.urlExterna}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="vida-parroquial-imagen-enlace"
-                                aria-label={`Abrir ${noticia.titulo} en enlace externo`}
-                              >
-                                {contenidoImagen}
-                              </a>
-                            ) : (
-                              <Link
-                                to={`/noticias/${noticia.slug}`}
-                                className="vida-parroquial-imagen-enlace"
-                                aria-label={`Leer ${noticia.titulo}`}
-                              >
-                                {contenidoImagen}
-                              </Link>
-                            ))}
-                        </div>
-
-                        <div className="vida-parroquial-contenido">
-                          <div className="vida-parroquial-metadatos">
-                            <span className="vida-parroquial-categoria">
-                              {noticia.categoria?.nombre || noticia.tipo?.nombre}
-                            </span>
-
-                            <span className="vida-parroquial-separador" />
-
-                            <span>{formatearFechaLarga(noticia.fechaPublicacion)}</span>
-                          </div>
-
-                          <h2 className="vida-parroquial-tarjeta-titulo">{noticia.titulo}</h2>
-
-                          {noticia.resumen && (
-                            <p className="vida-parroquial-descripcion">{noticia.resumen}</p>
-                          )}
-
-                          {noticia.urlExterna ? (
-                            <a
-                              href={noticia.urlExterna}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="vida-parroquial-enlace"
-                              aria-label={`Leer publicación: ${noticia.titulo}`}
-                            >
-                              Leer nota
-                              <ArrowRight size={15} />
-                            </a>
-                          ) : (
-                            <Link
-                              to={`/noticias/${noticia.slug}`}
-                              className="vida-parroquial-enlace"
-                              aria-label={`Leer publicación: ${noticia.titulo}`}
-                            >
-                              Leer nota
-                              <ArrowRight size={15} />
-                            </Link>
-                          )}
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-
-                {paginacion.totalPaginas > 1 && (
-                  <nav className="noticias-paginacion" aria-label="Paginación de noticias">
-                    <button
-                      type="button"
-                      className="noticias-paginacion-boton"
-                      disabled={paginaActual <= 1}
-                      onClick={() => actualizarFiltros({ pagina: paginaActual - 1 })}
-                    >
-                      <ChevronLeft size={16} aria-hidden="true" />
-                      Anterior
-                    </button>
-
-                    <span className="noticias-paginacion-estado">
-                      Página {paginaActual} de {paginacion.totalPaginas}
-                    </span>
-
-                    <button
-                      type="button"
-                      className="noticias-paginacion-boton"
-                      disabled={paginaActual >= paginacion.totalPaginas}
-                      onClick={() => actualizarFiltros({ pagina: paginaActual + 1 })}
-                    >
-                      Siguiente
-                      <ChevronRight size={16} aria-hidden="true" />
-                    </button>
-                  </nav>
-                )}
-              </>
+            {hayFiltrosActivos && (
+              <button
+                type="button"
+                className="min-h-11 cursor-pointer px-3 py-2 font-body text-meta font-semibold text-ink underline underline-offset-4 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                onClick={() => setSearchParams({})}
+              >
+                Limpiar filtros
+              </button>
             )}
           </div>
-        </section>
-      </main>
+        </div>
 
-      <PiePagina />
-    </div>
+        {isPending ? (
+          <CargandoSeccion alturaMinima={360} etiqueta="Cargando noticias" />
+        ) : isError ? (
+          <ErrorSeccion mensaje="No pudimos cargar las noticias." onReintentar={refetch} />
+        ) : publicaciones.length === 0 ? (
+          <SinResultados
+            mensaje={
+              hayFiltrosActivos
+                ? 'No hay noticias que coincidan con los filtros seleccionados.'
+                : 'No hay noticias publicadas por el momento.'
+            }
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {publicaciones.map((noticia, indice) => {
+                const imagen = noticia.imagenPortada;
+                const esAfiche = Boolean(
+                  imagen?.alto && imagen?.ancho && imagen.alto > imagen.ancho,
+                );
+
+                const contenidoImagen = imagen ? (
+                  <img
+                    src={imagen.url}
+                    {...construirAtributosImagen(
+                      imagen,
+                      '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw',
+                    )}
+                    alt={imagen.textoAlternativo || noticia.titulo}
+                    width={imagen.ancho ?? undefined}
+                    height={imagen.alto ?? undefined}
+                    className={`aspect-[16/10] w-full transition-transform duration-500 ease-out group-hover:scale-[1.04] ${
+                      esAfiche ? 'object-contain bg-cream' : 'object-cover'
+                    }`}
+                    loading="lazy"
+                  />
+                ) : null;
+
+                return (
+                  <Reveal
+                    key={noticia.id}
+                    variante="tarjeta"
+                    retraso={indice * 90}
+                    as="article"
+                    className="group flex flex-col overflow-hidden rounded-md border border-sand bg-white transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold"
+                  >
+                    {contenidoImagen && (
+                      <div className="overflow-hidden bg-cream">
+                        {noticia.urlExterna ? (
+                          <a
+                            href={noticia.urlExterna}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Abrir ${noticia.titulo} en enlace externo`}
+                            className="block"
+                          >
+                            {contenidoImagen}
+                          </a>
+                        ) : (
+                          <Link
+                            to={`/noticias/${noticia.slug}`}
+                            aria-label={`Leer ${noticia.titulo}`}
+                            className="block"
+                          >
+                            {contenidoImagen}
+                          </Link>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex flex-1 flex-col justify-between p-6">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 font-body text-meta text-muted">
+                          <span className="font-semibold text-ink">
+                            {noticia.categoria?.nombre || noticia.tipo?.nombre}
+                          </span>
+                          <span aria-hidden="true">·</span>
+                          <time dateTime={noticia.fechaPublicacion}>
+                            {formatearFechaLarga(noticia.fechaPublicacion)}
+                          </time>
+                        </div>
+
+                        <h2 className="mt-2 font-display text-h3 font-semibold text-ink">
+                          {noticia.titulo}
+                        </h2>
+
+                        {noticia.resumen && (
+                          <p className="mt-3 line-clamp-3 font-body text-body text-muted">
+                            {noticia.resumen}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="mt-5 pt-3">
+                        {noticia.urlExterna ? (
+                          <a
+                            href={noticia.urlExterna}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Leer publicación: ${noticia.titulo}`}
+                            className="inline-flex min-h-11 items-center gap-2 font-body text-button font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                          >
+                            <span>Leer nota</span>
+                            <ArrowRight
+                              size={15}
+                              aria-hidden="true"
+                              className="transition-transform duration-200 ease-salida group-hover:translate-x-1"
+                            />
+                          </a>
+                        ) : (
+                          <Link
+                            to={`/noticias/${noticia.slug}`}
+                            aria-label={`Leer publicación: ${noticia.titulo}`}
+                            className="inline-flex min-h-11 items-center gap-2 font-body text-button font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                          >
+                            <span>Leer nota</span>
+                            <ArrowRight
+                              size={15}
+                              aria-hidden="true"
+                              className="transition-transform duration-200 ease-salida group-hover:translate-x-1"
+                            />
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
+
+            <PaginacionPortal
+              paginaActual={paginacion.pagina}
+              totalPaginas={paginacion.totalPaginas}
+              etiqueta="Paginación de noticias"
+              alCambiarPagina={(siguiente) => actualizarFiltros({ pagina: siguiente })}
+            />
+          </>
+        )}
+      </Seccion>
+    </>
   );
 }
 

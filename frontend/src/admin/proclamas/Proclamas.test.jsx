@@ -10,6 +10,7 @@ import { hoyBolivia } from '../mocks/apoyoMock.js';
 import { reiniciarMocksAdmin } from '../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from '../mocks/usuarios.js';
 import { SesionProvider } from '../sesion/SesionProvider.jsx';
+import { ProveedorToasts } from '../ui/index.js';
 import Proclamas from './Proclamas.jsx';
 
 const entrar = (usuario) =>
@@ -23,14 +24,16 @@ function Ubicacion() {
 function montar(entrada = '/admin/proclamas') {
   return render(
     <QueryClientProvider client={crearQueryClient()}>
-      <SesionProvider>
-        <MemoryRouter initialEntries={[entrada]}>
-          <Routes>
-            <Route path="/admin/proclamas/*" element={<Proclamas />} />
-          </Routes>
-          <Ubicacion />
-        </MemoryRouter>
-      </SesionProvider>
+      <ProveedorToasts>
+        <SesionProvider>
+          <MemoryRouter initialEntries={[entrada]}>
+            <Routes>
+              <Route path="/admin/proclamas/*" element={<Proclamas />} />
+            </Routes>
+            <Ubicacion />
+          </MemoryRouter>
+        </SesionProvider>
+      </ProveedorToasts>
     </QueryClientProvider>,
   );
 }
@@ -167,9 +170,11 @@ describe('proclamas del panel', () => {
     await usuario.click(screen.getByRole('button', { name: 'Quitar la 3.ª proclama' }));
     const confirmar = screen.getByRole('dialog', { name: '¿Quitar la 3.ª proclama?' });
     await usuario.click(within(confirmar).getByRole('button', { name: 'Quitar' }));
-    const confirmacion = await screen.findByText('Se quitó la 3.ª proclama.');
-    // El botón «Quitar» desapareció con la publicación: el foco pasa al mensaje de confirmación.
-    await waitFor(() => expect(confirmacion).toHaveFocus());
+    expect(await screen.findByText('Se quitó la 3.ª proclama.')).toBeInTheDocument();
+    // El botón «Quitar» desapareció con la publicación: el foco pasa al encabezado de la sección.
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { level: 2, name: 'Publicaciones' })).toHaveFocus(),
+    );
     expect(screen.queryByRole('button', { name: 'Cambiar la fecha de la 3.ª proclama' })).not.toBeInTheDocument();
   });
 

@@ -1,19 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
 import Dialogo from '../componentes/Dialogo.jsx';
 import { usePermisos } from '../permisos/usePermisos.js';
-import ConfirmarEliminacion from './ConfirmarEliminacion.jsx';
-import FormularioTextoAlternativo from './FormularioTextoAlternativo.jsx';
+import { Boton } from '../ui/index.js';
+import { CLAVE_MULTIMEDIA, eliminarArchivo } from './api.js';
 import { formatearFecha, formatearTamano } from './formato.js';
+import FormularioTextoAlternativo from './FormularioTextoAlternativo.jsx';
 import MiniaturaArchivo from './MiniaturaArchivo.jsx';
 import { claseDeTipo, nombreDeTipo } from './tipos.js';
 
 function Dato({ etiqueta, children }) {
   return (
-    <div className="grid grid-cols-[8rem_1fr] gap-2 py-1.5 text-sm">
+    <div className="grid grid-cols-[8rem_1fr] gap-2 py-2 text-sm">
       <dt className="text-muted">{etiqueta}</dt>
-      <dd className="min-w-0 break-words">{children}</dd>
+      <dd className="min-w-0 break-words text-ink">{children}</dd>
     </div>
   );
 }
@@ -23,7 +26,7 @@ function Contenido({ archivo }) {
 
   if (clase === 'VIDEO') {
     return (
-      <video controls preload="metadata" src={archivo.url} className="max-h-[50vh] w-full rounded-md bg-deep">
+      <video controls preload="metadata" src={archivo.url} className="max-h-[50vh] w-full rounded-md bg-ink">
         Tu navegador no puede reproducir este video.
       </video>
     );
@@ -31,24 +34,25 @@ function Contenido({ archivo }) {
 
   if (clase === 'DOCUMENTO') {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-md bg-stone py-8">
+      <div className="flex flex-col items-center gap-3 rounded-md bg-panel py-8">
         <div className="size-24">
           <MiniaturaArchivo archivo={archivo} />
         </div>
-        <a
+        <Boton
+          como="a"
           href={archivo.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark"
+          variante="primario"
         >
           Abrir el PDF <ExternalLink className="size-4" aria-hidden="true" />
-        </a>
+        </Boton>
       </div>
     );
   }
 
   return (
-    <div className="flex max-h-[50vh] justify-center overflow-hidden rounded-md bg-stone">
+    <div className="flex max-h-[50vh] justify-center overflow-hidden rounded-md bg-panel">
       <MiniaturaArchivo
         key={archivo.url}
         archivo={archivo}
@@ -61,14 +65,22 @@ function Contenido({ archivo }) {
 
 // Vista previa de un archivo con todos sus datos, en un diálogo. Desde aquí se edita su texto
 // alternativo y se elimina, según los permisos del rol.
-//   onCambio(archivo): el archivo se actualizó (la página muestra la versión nueva).
-//   onEliminado(archivo): el archivo se eliminó (la página cierra la vista previa).
 export default function VistaPreviaArchivo({ archivo, onCerrar, onCambio, onEliminado }) {
+  const queryClient = useQueryClient();
   const { puede, puedeEliminarArchivo } = usePermisos();
   const [editando, setEditando] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
   const botonEditar = useRef(null);
   const eraEditando = useRef(false);
+
+  const eliminar = useMutation({
+    mutationKey: [...CLAVE_MULTIMEDIA, 'eliminar'],
+    mutationFn: () => eliminarArchivo(archivo.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CLAVE_MULTIMEDIA });
+      onEliminado(archivo);
+    },
+  });
 
   // Al terminar de editar, el foco vuelve al botón «Editar».
   useEffect(() => {
@@ -92,7 +104,7 @@ export default function VistaPreviaArchivo({ archivo, onCerrar, onCambio, onElim
       <Dialogo titulo={archivo.nombreOriginal} onCerrar={onCerrar}>
         <Contenido archivo={archivo} />
 
-        <dl className="mt-4 divide-y divide-borderSoft">
+        <dl className="mt-4 divide-y divide-sand">
           <Dato etiqueta="Tipo">
             {nombreDeTipo(archivo.tipoMime)} ({archivo.tipoMime})
           </Dato>
@@ -121,21 +133,24 @@ export default function VistaPreviaArchivo({ archivo, onCerrar, onCambio, onElim
                 {archivo.textoAlternativo ? (
                   <p>{archivo.textoAlternativo}</p>
                 ) : (
-                  <p className="text-terracotta">
+                  <p className="text-danger">
                     {esImagen
                       ? 'Sin texto alternativo: es necesario para publicar la imagen en el portal.'
                       : 'Sin texto alternativo.'}
                   </p>
                 )}
                 {puedeEditar && (
-                  <button
-                    ref={botonEditar}
-                    type="button"
-                    onClick={() => setEditando(true)}
-                    className="mt-2 flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-                  >
-                    <Pencil className="size-3.5" aria-hidden="true" /> Editar texto alternativo
-                  </button>
+                  <div className="mt-2">
+                    <Boton
+                      ref={botonEditar}
+                      variante="secundario"
+                      tamano="sm"
+                      icono={Pencil}
+                      onClick={() => setEditando(true)}
+                    >
+                      Editar texto alternativo
+                    </Boton>
+                  </div>
                 )}
               </>
             )}
@@ -146,16 +161,17 @@ export default function VistaPreviaArchivo({ archivo, onCerrar, onCambio, onElim
         </dl>
 
         {puedeEliminar && (
-          <div className="mt-5 border-t border-borderSoft pt-4">
-            <button
-              type="button"
+          <div className="mt-5 border-t border-sand pt-4">
+            <Boton
+              variante="peligro"
+              tamano="sm"
+              icono={Trash2}
               onClick={() => setConfirmando(true)}
               disabled={Boolean(motivoSinEliminar)}
               aria-describedby={motivoSinEliminar ? 'motivo-sin-eliminar' : undefined}
-              className="flex items-center gap-2 rounded-md border border-redParish/40 px-4 py-2 text-sm font-medium text-redParish hover:bg-redParish/5 focus-visible:outline-2 focus-visible:outline-redParish disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
             >
-              <Trash2 className="size-4" aria-hidden="true" /> Eliminar archivo
-            </button>
+              Eliminar archivo
+            </Boton>
             {motivoSinEliminar && (
               <p id="motivo-sin-eliminar" className="mt-2 text-xs text-muted">
                 {motivoSinEliminar}
@@ -166,7 +182,21 @@ export default function VistaPreviaArchivo({ archivo, onCerrar, onCambio, onElim
       </Dialogo>
 
       {confirmando && (
-        <ConfirmarEliminacion archivo={archivo} onCancelar={() => setConfirmando(false)} onEliminado={onEliminado} />
+        <ConfirmarAccion
+          titulo={`¿Eliminar «${archivo.nombreOriginal}»?`}
+          pendiente={eliminar.isPending}
+          error={eliminar.error}
+          onConfirmar={() => {
+            eliminar.reset();
+            eliminar.mutate();
+          }}
+          onCancelar={() => {
+            eliminar.reset();
+            setConfirmando(false);
+          }}
+        >
+          Se borrará de la biblioteca y del almacenamiento. Esta acción no se puede deshacer.
+        </ConfirmarAccion>
       )}
     </>
   );
