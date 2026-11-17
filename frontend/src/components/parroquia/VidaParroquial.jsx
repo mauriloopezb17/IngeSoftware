@@ -61,7 +61,7 @@ function VidaParroquial() {
       ) : noticias.length === 0 ? (
         <SinResultados mensaje="No hay noticias publicadas por el momento." />
       ) : (
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
           {/* Noticia destacada */}
           {destacada && (
             <Reveal
@@ -144,7 +144,7 @@ function VidaParroquial() {
                     variante="tarjeta"
                     retraso={(indice + 1) * 90}
                     as="article"
-                    className="group flex flex-1 flex-col justify-between rounded-md border border-sand bg-white p-6 transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold"
+                    className="group flex flex-col justify-between rounded-md border border-sand bg-white p-6 transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold"
                   >
                     <div className="flex flex-col gap-4 sm:flex-row">
                       {imagen && (

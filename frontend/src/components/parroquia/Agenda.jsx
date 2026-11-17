@@ -77,7 +77,7 @@ function Agenda() {
                       className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:gap-6"
                     >
                       <div className="flex w-20 shrink-0 items-baseline gap-2 sm:flex-col sm:items-center sm:gap-0 sm:border-r sm:border-sand sm:pr-6">
-                        <span className="font-display text-h2 font-semibold tabular-nums text-ink">
+                        <span className="font-display text-h2 font-semibold lining-nums tabular-nums text-ink">
                           {dia}
                         </span>
                         <span className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-muted">

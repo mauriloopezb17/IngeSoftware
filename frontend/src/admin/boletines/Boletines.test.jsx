@@ -13,6 +13,7 @@ import { crearQueryClient } from '../../services/queryClient.js';
 import { reiniciarMocksAdmin } from '../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from '../mocks/usuarios.js';
 import { SesionProvider } from '../sesion/SesionProvider.jsx';
+import { ProveedorToasts } from '../ui/index.js';
 import Boletines from './Boletines.jsx';
 
 const entrar = (usuario) =>
@@ -26,14 +27,16 @@ function Ubicacion() {
 function montar(entrada = '/admin/boletines') {
   return render(
     <QueryClientProvider client={crearQueryClient()}>
-      <SesionProvider>
-        <MemoryRouter initialEntries={[entrada]}>
-          <Routes>
-            <Route path="/admin/boletines/*" element={<Boletines />} />
-          </Routes>
-          <Ubicacion />
-        </MemoryRouter>
-      </SesionProvider>
+      <ProveedorToasts>
+        <SesionProvider>
+          <MemoryRouter initialEntries={[entrada]}>
+            <Routes>
+              <Route path="/admin/boletines/*" element={<Boletines />} />
+            </Routes>
+            <Ubicacion />
+          </MemoryRouter>
+        </SesionProvider>
+      </ProveedorToasts>
     </QueryClientProvider>,
   );
 }

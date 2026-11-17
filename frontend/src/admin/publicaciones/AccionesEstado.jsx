@@ -70,7 +70,7 @@ export default function AccionesEstado({ publicacion, alTerminar }) {
     onSuccess: (_, clave) => {
       clienteConsultas.invalidateQueries({ queryKey: CLAVE_PUBLICACIONES });
       setPendiente(null);
-      alTerminar?.(ACCIONES[clave].exito(publicacion));
+      alTerminar?.(ACCIONES[clave].exito(publicacion), clave);
     },
   });
 
@@ -82,17 +82,21 @@ export default function AccionesEstado({ publicacion, alTerminar }) {
   return (
     <>
       {disponibles.map((clave) => {
-        const { texto, icono } = ACCIONES[clave];
+        const { texto, icono, peligro } = ACCIONES[clave];
         return (
           <Boton
             key={clave}
             variante="secundario"
             tamano="sm"
             icono={icono}
+            title={texto}
+            className={`md:gap-0 md:px-2 2xl:gap-2 2xl:px-3 ${
+              peligro ? 'hover:border-danger/50 hover:text-danger' : ''
+            }`.trim()}
             onClick={() => setPendiente(clave)}
             aria-label={`${texto} «${publicacion.titulo}»`}
           >
-            {texto}
+            <span className="md:sr-only 2xl:not-sr-only">{texto}</span>
           </Boton>
         );
       })}

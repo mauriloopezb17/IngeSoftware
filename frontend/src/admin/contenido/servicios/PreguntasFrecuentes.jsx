@@ -116,7 +116,6 @@ export default function PreguntasFrecuentes({ servicio, puedeGestionar, onCerrar
   const toast = useToast();
   const [formAbierto, setFormAbierto] = useState(null); // null | 'nueva' | objeto pregunta
   const [porEliminar, setPorEliminar] = useState(null);
-  const [aviso, setAviso] = useState('');
 
   const detalleQuery = useQuery({
     queryKey: [...CLAVE_SERVICIOS, servicio.id],
@@ -135,7 +134,6 @@ export default function PreguntasFrecuentes({ servicio, puedeGestionar, onCerrar
 
   function recargar(mensaje) {
     setFormAbierto(null);
-    setAviso(mensaje);
     toast.exito(mensaje);
     queryClient.invalidateQueries({ queryKey: [...CLAVE_SERVICIOS, servicio.id] });
     queryClient.invalidateQueries({ queryKey: CLAVE_SERVICIOS });
@@ -164,22 +162,13 @@ export default function PreguntasFrecuentes({ servicio, puedeGestionar, onCerrar
       ancho="max-w-2xl"
     >
       <div className="flex flex-col gap-4">
-        {aviso ? (
-          <Aviso tipo="exito">{aviso}</Aviso>
-        ) : (
-          <p role="status" className="sr-only" />
-        )}
-
         {puedeGestionar && !formAbierto && (
           <div className="flex justify-end">
             <Boton
               variante="primario"
               tamano="sm"
               icono={Plus}
-              onClick={() => {
-                setAviso('');
-                setFormAbierto('nueva');
-              }}
+              onClick={() => setFormAbierto('nueva')}
             >
               Nueva pregunta
             </Boton>
@@ -261,10 +250,7 @@ export default function PreguntasFrecuentes({ servicio, puedeGestionar, onCerrar
                       <Boton
                         variante="secundario"
                         tamano="sm"
-                        onClick={() => {
-                          setAviso('');
-                          setFormAbierto(pf);
-                        }}
+                        onClick={() => setFormAbierto(pf)}
                         aria-label={`Editar pregunta ${i + 1}`}
                       >
                         <Pencil className="size-3.5" aria-hidden="true" />
@@ -272,10 +258,7 @@ export default function PreguntasFrecuentes({ servicio, puedeGestionar, onCerrar
                       <Boton
                         variante="secundario"
                         tamano="sm"
-                        onClick={() => {
-                          setAviso('');
-                          setPorEliminar(pf);
-                        }}
+                        onClick={() => setPorEliminar(pf)}
                         aria-label={`Eliminar pregunta ${i + 1}`}
                       >
                         <Trash2 className="size-3.5 text-danger" aria-hidden="true" />

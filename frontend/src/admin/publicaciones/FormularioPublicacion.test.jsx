@@ -13,6 +13,7 @@ import { reiniciarMocksAdmin } from '../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from '../mocks/usuarios.js';
 import { useSesion } from '../sesion/SesionContexto.js';
 import { SesionProvider } from '../sesion/SesionProvider.jsx';
+import { ProveedorToasts } from '../ui/index.js';
 import { prepararEditorEnJsdom } from './apoyoPruebas.js';
 import Publicaciones from './Publicaciones.jsx';
 
@@ -49,11 +50,13 @@ function montar(entrada) {
   );
   render(
     <QueryClientProvider client={crearQueryClient()}>
-      <SesionProvider>
-        <ConSesion>
-          <RouterProvider router={router} />
-        </ConSesion>
-      </SesionProvider>
+      <ProveedorToasts>
+        <SesionProvider>
+          <ConSesion>
+            <RouterProvider router={router} />
+          </ConSesion>
+        </SesionProvider>
+      </ProveedorToasts>
     </QueryClientProvider>,
   );
   return router;

@@ -1,11 +1,10 @@
-import { useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router';
+import { useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarX2, Clock, MapPin, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
 import Paginacion from '../componentes/Paginacion.jsx';
-import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import { usePermisos } from '../permisos/usePermisos.js';
 import { CLAVE_CATALOGOS, obtenerCatalogos } from '../publicaciones/api.js';
 import {
@@ -117,10 +116,8 @@ export default function ListadoEventos() {
   const { puede } = usePermisos();
   const editable = puede('eventos.gestionar');
   const clienteConsultas = useQueryClient();
-  const ubicacion = useLocation();
   const toast = useToast();
-  const [aviso, setAviso] = useState(ubicacion.state?.aviso ?? '');
-  const avisoRef = useEnfocarAviso(aviso); // tras eliminar, el foco pasa al mensaje (la fila y su botón desaparecen)
+  const tituloRef = useRef(null);
   const [porEliminar, setPorEliminar] = useState(null);
 
   const catalogos = useQuery({ queryKey: CLAVE_CATALOGOS, queryFn: obtenerCatalogos, staleTime: 5 * 60 * 1000 });
@@ -134,10 +131,9 @@ export default function ListadoEventos() {
     mutationFn: (evento) => eliminarEvento(evento.id),
     onSuccess: (_, evento) => {
       clienteConsultas.invalidateQueries({ queryKey: CLAVE_EVENTOS });
-      const mensaje = `Se eliminó el evento «${evento.titulo}».`;
-      setAviso(mensaje);
-      toast.exito(mensaje);
+      toast.exito(`Se eliminó el evento «${evento.titulo}».`);
       setPorEliminar(null);
+      setTimeout(() => tituloRef.current?.focus(), 0);
     },
   });
 
@@ -159,6 +155,7 @@ export default function ListadoEventos() {
       <EncabezadoPantalla
         titulo="Eventos"
         descripcion="Calendario parroquial. Los eventos se publican directamente, sin revisión."
+        headingRef={tituloRef}
         acciones={
           editable && (
             <Boton como={Link} to="/admin/eventos/nuevo" variante="primario" icono={Plus}>
@@ -174,16 +171,6 @@ export default function ListadoEventos() {
             <strong className="font-semibold text-ink">Solo lectura.</strong> Tu rol puede consultar el calendario, pero no
             modificarlo.
           </p>
-        </Aviso>
-      )}
-      {aviso && (
-        <Aviso
-          ref={avisoRef}
-          tipo="exito"
-          tabIndex={-1}
-          className="mt-4 outline-none focus-visible:outline-2 focus-visible:outline-ink"
-        >
-          {aviso}
         </Aviso>
       )}
 

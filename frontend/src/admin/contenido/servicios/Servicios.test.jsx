@@ -8,6 +8,7 @@ import { clienteHttp } from '../../../services/clienteHttp.js';
 import { reiniciarMocksAdmin } from '../../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from '../../mocks/usuarios.js';
 import { SesionProvider } from '../../sesion/SesionProvider.jsx';
+import { ProveedorToasts } from '../../ui/index.js';
 import { reiniciarMocksContenido } from '../mocks/handlers.js';
 import Servicios from './Servicios.jsx';
 
@@ -21,11 +22,13 @@ function montar() {
   const cliente = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={cliente}>
-      <SesionProvider>
-        <MemoryRouter initialEntries={['/admin/servicios']}>
-          <Servicios />
-        </MemoryRouter>
-      </SesionProvider>
+      <ProveedorToasts>
+        <SesionProvider>
+          <MemoryRouter initialEntries={['/admin/servicios']}>
+            <Servicios />
+          </MemoryRouter>
+        </SesionProvider>
+      </ProveedorToasts>
     </QueryClientProvider>,
   );
 }

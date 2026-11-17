@@ -25,7 +25,6 @@ export default function Sedes() {
 
   const [sedeSeleccionadaId, setSedeSeleccionadaId] = useState(null);
   const [creando, setCreando] = useState(false);
-  const [aviso, setAviso] = useState('');
 
   const sedesQuery = useQuery({
     queryKey: CLAVE_SEDES,
@@ -51,10 +50,7 @@ export default function Sedes() {
             <Boton
               variante="primario"
               icono={Plus}
-              onClick={() => {
-                setAviso('');
-                setCreando(true);
-              }}
+              onClick={() => setCreando(true)}
             >
               Nueva sede
             </Boton>
@@ -71,23 +67,12 @@ export default function Sedes() {
         </Aviso>
       )}
 
-      {aviso ? (
-        <Aviso tipo="exito" className="mt-4">
-          {aviso}
-        </Aviso>
-      ) : (
-        <p role="status" className="sr-only" />
-      )}
-
       {puedeGestionarSedes && sedes.length > 1 && (
         <div className="mt-6 rounded-lg border border-sand bg-white p-4 sm:max-w-md">
           <CampoSelect
             etiqueta="Sede a editar"
             value={sedeActiva?.id ?? ''}
-            onChange={(e) => {
-              setAviso('');
-              setSedeSeleccionadaId(Number(e.target.value));
-            }}
+            onChange={(e) => setSedeSeleccionadaId(Number(e.target.value))}
           >
             {sedes.map((s) => (
               <option key={s.id} value={s.id}>
@@ -128,9 +113,7 @@ export default function Sedes() {
             puedeEditar={puedeEditar}
             puedeGestionarSedes={puedeGestionarSedes}
             onGuardado={(actualizada) => {
-              const msg = `Se guardaron los cambios de «${actualizada.nombre}».`;
-              setAviso(msg);
-              toast.exito(msg);
+              toast.exito(`Se guardaron los cambios de «${actualizada.nombre}».`);
             }}
           />
         )}
@@ -142,11 +125,9 @@ export default function Sedes() {
           tiposSede={catalogosQuery.data?.tiposSede ?? []}
           onCerrar={() => setCreando(false)}
           onCreada={(creada) => {
-            const msg = `Se creó la sede «${creada.nombre}».`;
             setCreando(false);
             setSedeSeleccionadaId(creada.id);
-            setAviso(msg);
-            toast.exito(msg);
+            toast.exito(`Se creó la sede «${creada.nombre}».`);
           }}
         />
       )}

@@ -159,7 +159,7 @@ function Horarios() {
                           </span>
                         )}
                       </dt>
-                      <dd className="font-display text-h3 font-semibold tabular-nums text-white">
+                      <dd className="font-display text-h3 font-semibold lining-nums tabular-nums text-white">
                         {horas}
                       </dd>
                     </div>

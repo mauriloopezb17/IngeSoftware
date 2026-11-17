@@ -30,7 +30,6 @@ export default function Grupos() {
   const [creando, setCreando] = useState(false);
   const [editando, setEditando] = useState(null);
   const [porEliminar, setPorEliminar] = useState(null);
-  const [aviso, setAviso] = useState('');
 
   const gruposQuery = useQuery({
     queryKey: [...CLAVE_GRUPOS, { visible: filtroVisible }],
@@ -46,9 +45,7 @@ export default function Grupos() {
     mutationFn: (grupo) => eliminarGrupo(grupo.id),
     onSuccess: (_, grupo) => {
       queryClient.invalidateQueries({ queryKey: CLAVE_GRUPOS });
-      const msg = `Se eliminó el grupo «${grupo.nombre}».`;
-      setAviso(msg);
-      toast.exito(msg);
+      toast.exito(`Se eliminó el grupo «${grupo.nombre}».`);
       setPorEliminar(null);
       setTimeout(() => tituloRef.current?.focus(), 0);
     },
@@ -75,10 +72,7 @@ export default function Grupos() {
             <Boton
               variante="primario"
               icono={Plus}
-              onClick={() => {
-                setAviso('');
-                setCreando(true);
-              }}
+              onClick={() => setCreando(true)}
             >
               Nuevo grupo
             </Boton>
@@ -93,14 +87,6 @@ export default function Grupos() {
             pastorales, pero no realizar cambios.
           </p>
         </Aviso>
-      )}
-
-      {aviso ? (
-        <Aviso tipo="exito" className="mt-4">
-          {aviso}
-        </Aviso>
-      ) : (
-        <p role="status" className="sr-only" />
       )}
 
       <div className="mt-6 rounded-lg border border-sand bg-white p-4 sm:max-w-xs">
@@ -143,10 +129,7 @@ export default function Grupos() {
                 <Boton
                   variante="primario"
                   icono={Plus}
-                  onClick={() => {
-                    setAviso('');
-                    setCreando(true);
-                  }}
+                  onClick={() => setCreando(true)}
                 >
                   Agregar el primer grupo
                 </Boton>
@@ -219,10 +202,7 @@ export default function Grupos() {
                       variante="secundario"
                       tamano="sm"
                       icono={Pencil}
-                      onClick={() => {
-                        setAviso('');
-                        setEditando(grupo);
-                      }}
+                      onClick={() => setEditando(grupo)}
                       aria-label={`Editar ${grupo.nombre}`}
                     >
                       Editar
@@ -231,10 +211,7 @@ export default function Grupos() {
                       variante="secundario"
                       tamano="sm"
                       icono={Trash2}
-                      onClick={() => {
-                        setAviso('');
-                        setPorEliminar(grupo);
-                      }}
+                      onClick={() => setPorEliminar(grupo)}
                       aria-label={`Eliminar ${grupo.nombre}`}
                     >
                       Eliminar
@@ -260,7 +237,6 @@ export default function Grupos() {
               : `Se creó el grupo «${guardado.nombre}».`;
             setCreando(false);
             setEditando(null);
-            setAviso(msg);
             toast.exito(msg);
           }}
         />

@@ -1,11 +1,10 @@
-import { useEffect, useEffectEvent, useId, useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router';
+import { useEffect, useEffectEvent, useId, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Inbox, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
 import Paginacion from '../componentes/Paginacion.jsx';
-import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import { formatearFecha } from '../multimedia/formato.js';
 import { usePermisos } from '../permisos/usePermisos.js';
 import {
@@ -137,10 +136,8 @@ export default function ListadoProclamas() {
   const { puede } = usePermisos();
   const editable = puede('proclamas.gestionar');
   const clienteConsultas = useQueryClient();
-  const ubicacion = useLocation();
   const toast = useToast();
-  const [aviso, setAviso] = useState(ubicacion.state?.aviso ?? '');
-  const avisoRef = useEnfocarAviso(aviso); // tras eliminar, el foco pasa al mensaje (la fila y su botón desaparecen)
+  const tituloRef = useRef(null);
   const [porEliminar, setPorEliminar] = useState(null);
 
   const { data, isPending, isError, error, isPlaceholderData, refetch } = useQuery({
@@ -153,10 +150,9 @@ export default function ListadoProclamas() {
     mutationFn: (proclama) => eliminarProclama(proclama.id),
     onSuccess: (_, proclama) => {
       clienteConsultas.invalidateQueries({ queryKey: CLAVE_PROCLAMAS });
-      const mensaje = `Se eliminó la proclama de ${proclama.contrayente1} y ${proclama.contrayente2}.`;
-      setAviso(mensaje);
-      toast.exito(mensaje);
+      toast.exito(`Se eliminó la proclama de ${proclama.contrayente1} y ${proclama.contrayente2}.`);
       setPorEliminar(null);
+      setTimeout(() => tituloRef.current?.focus(), 0);
     },
   });
 
@@ -177,6 +173,7 @@ export default function ListadoProclamas() {
       <EncabezadoPantalla
         titulo="Proclamas"
         descripcion="Proclamas matrimoniales y su historial de publicaciones."
+        headingRef={tituloRef}
         acciones={
           editable && (
             <Boton como={Link} to="/admin/proclamas/nueva" variante="primario" icono={Plus}>
@@ -192,16 +189,6 @@ export default function ListadoProclamas() {
             <strong className="font-semibold text-ink">Solo lectura.</strong> Tu rol puede consultar las proclamas, pero no
             modificarlas.
           </p>
-        </Aviso>
-      )}
-      {aviso && (
-        <Aviso
-          ref={avisoRef}
-          tipo="exito"
-          tabIndex={-1}
-          className="mt-4 outline-none focus-visible:outline-2 focus-visible:outline-ink"
-        >
-          {aviso}
         </Aviso>
       )}
 

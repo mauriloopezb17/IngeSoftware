@@ -35,7 +35,6 @@ export default function Videos() {
   const [creando, setCreando] = useState(false);
   const [editando, setEditando] = useState(null);
   const [porEliminar, setPorEliminar] = useState(null);
-  const [aviso, setAviso] = useState('');
 
   const videosQuery = useQuery({
     queryKey: [...CLAVE_VIDEOS, { destacado: filtroDestacado }],
@@ -51,9 +50,7 @@ export default function Videos() {
     mutationFn: (video) => eliminarVideo(video.id),
     onSuccess: (_, video) => {
       queryClient.invalidateQueries({ queryKey: CLAVE_VIDEOS });
-      const msg = `Se eliminó el video «${video.titulo}».`;
-      setAviso(msg);
-      toast.exito(msg);
+      toast.exito(`Se eliminó el video «${video.titulo}».`);
       setPorEliminar(null);
       setTimeout(() => tituloRef.current?.focus(), 0);
     },
@@ -80,10 +77,7 @@ export default function Videos() {
             <Boton
               variante="primario"
               icono={Plus}
-              onClick={() => {
-                setAviso('');
-                setCreando(true);
-              }}
+              onClick={() => setCreando(true)}
             >
               Nuevo video
             </Boton>
@@ -98,14 +92,6 @@ export default function Videos() {
             realizar cambios.
           </p>
         </Aviso>
-      )}
-
-      {aviso ? (
-        <Aviso tipo="exito" className="mt-4">
-          {aviso}
-        </Aviso>
-      ) : (
-        <p role="status" className="sr-only" />
       )}
 
       <div className="mt-6 rounded-lg border border-sand bg-white p-4 sm:max-w-xs">
@@ -148,10 +134,7 @@ export default function Videos() {
                 <Boton
                   variante="primario"
                   icono={Plus}
-                  onClick={() => {
-                    setAviso('');
-                    setCreando(true);
-                  }}
+                  onClick={() => setCreando(true)}
                 >
                   Agregar el primer video
                 </Boton>
@@ -231,10 +214,7 @@ export default function Videos() {
                         variante="secundario"
                         tamano="sm"
                         icono={Pencil}
-                        onClick={() => {
-                          setAviso('');
-                          setEditando(video);
-                        }}
+                        onClick={() => setEditando(video)}
                         aria-label={`Editar ${video.titulo}`}
                       >
                         Editar
@@ -243,10 +223,7 @@ export default function Videos() {
                         variante="secundario"
                         tamano="sm"
                         icono={Trash2}
-                        onClick={() => {
-                          setAviso('');
-                          setPorEliminar(video);
-                        }}
+                        onClick={() => setPorEliminar(video)}
                         aria-label={`Eliminar ${video.titulo}`}
                       >
                         Eliminar
@@ -273,7 +250,6 @@ export default function Videos() {
               : `Se agregó el video «${guardado.titulo}».`;
             setCreando(false);
             setEditando(null);
-            setAviso(msg);
             toast.exito(msg);
           }}
         />

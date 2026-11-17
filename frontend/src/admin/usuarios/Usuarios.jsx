@@ -39,7 +39,6 @@ export default function Usuarios() {
   const [creando, setCreando] = useState(false);
   const [editando, setEditando] = useState(null);
   const [restableciendo, setRestableciendo] = useState(null);
-  const [aviso, setAviso] = useState('');
   const [errorAccion, setErrorAccion] = useState('');
 
   const sedesQuery = useQuery({
@@ -69,11 +68,9 @@ export default function Usuarios() {
       const msg = actualizado.activo
         ? `Se activó la cuenta de «${actualizado.nombreCompleto}».`
         : `Se desactivó la cuenta de «${actualizado.nombreCompleto}».`;
-      setAviso(msg);
       toast.exito(msg);
     },
     onError: (err) => {
-      setAviso('');
       setErrorAccion(err.message);
     },
   });
@@ -93,7 +90,6 @@ export default function Usuarios() {
             variante="primario"
             icono={Plus}
             onClick={() => {
-              setAviso('');
               setErrorAccion('');
               setCreando(true);
             }}
@@ -102,14 +98,6 @@ export default function Usuarios() {
           </Boton>
         }
       />
-
-      {aviso ? (
-        <Aviso tipo="exito" className="mt-4">
-          {aviso}
-        </Aviso>
-      ) : (
-        <p role="status" className="sr-only" />
-      )}
 
       {errorAccion && (
         <Aviso tipo="error" className="mt-4">
@@ -229,7 +217,6 @@ export default function Usuarios() {
                     tamano="sm"
                     icono={Pencil}
                     onClick={() => {
-                      setAviso('');
                       setErrorAccion('');
                       setEditando(usuario);
                     }}
@@ -243,7 +230,6 @@ export default function Usuarios() {
                     tamano="sm"
                     icono={KeyRound}
                     onClick={() => {
-                      setAviso('');
                       setErrorAccion('');
                       setRestableciendo(usuario);
                     }}
@@ -294,7 +280,6 @@ export default function Usuarios() {
             const msg = editando
               ? `Se actualizaron los datos de «${guardado.nombreCompleto}».`
               : `Se creó el usuario «${guardado.nombreCompleto}».`;
-            setAviso(msg);
             toast.exito(msg);
             setCreando(false);
             setEditando(null);
@@ -311,9 +296,7 @@ export default function Usuarios() {
         <RestablecerContrasena
           usuario={restableciendo}
           onGuardado={() => {
-            const msg = `Se restableció la contraseña de «${restableciendo.nombreCompleto}».`;
-            setAviso(msg);
-            toast.exito(msg);
+            toast.exito(`Se restableció la contraseña de «${restableciendo.nombreCompleto}».`);
             setRestableciendo(null);
             setTimeout(() => tituloRef.current?.focus(), 0);
           }}

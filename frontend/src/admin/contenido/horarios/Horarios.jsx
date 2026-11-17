@@ -61,7 +61,6 @@ export default function Horarios() {
   const [editando, setEditando] = useState(null);
   const [creando, setCreando] = useState(false);
   const [porEliminar, setPorEliminar] = useState(null);
-  const [aviso, setAviso] = useState('');
 
   const catalogosQuery = useQuery({
     queryKey: CLAVE_CATALOGOS,
@@ -81,9 +80,7 @@ export default function Horarios() {
     mutationFn: (horario) => eliminarHorario(horario.id),
     onSuccess: (_, horario) => {
       queryClient.invalidateQueries({ queryKey: CLAVE_HORARIOS });
-      const msg = `Se eliminó el horario de ${horario.tipo.nombre} (${nombreDia(horario.diaSemana)}, ${horario.horaInicio}).`;
-      setAviso(msg);
-      toast.exito(msg);
+      toast.exito(`Se eliminó el horario de ${horario.tipo.nombre} (${nombreDia(horario.diaSemana)}, ${horario.horaInicio}).`);
       setPorEliminar(null);
       setTimeout(() => tituloRef.current?.focus(), 0);
     },
@@ -105,10 +102,7 @@ export default function Horarios() {
               variante="primario"
               icono={Plus}
               disabled={!tiposHorario.length}
-              onClick={() => {
-                setAviso('');
-                setCreando(true);
-              }}
+              onClick={() => setCreando(true)}
             >
               Nuevo horario
             </Boton>
@@ -123,14 +117,6 @@ export default function Horarios() {
             no realizar cambios.
           </p>
         </Aviso>
-      )}
-
-      {aviso ? (
-        <Aviso tipo="exito" className="mt-4">
-          {aviso}
-        </Aviso>
-      ) : (
-        <p role="status" className="sr-only" />
       )}
 
       <div className="mt-6 grid gap-4 rounded-lg border border-sand bg-white p-4 sm:max-w-lg sm:grid-cols-2">
@@ -187,10 +173,7 @@ export default function Horarios() {
                 <Boton
                   variante="primario"
                   icono={Plus}
-                  onClick={() => {
-                    setAviso('');
-                    setCreando(true);
-                  }}
+                  onClick={() => setCreando(true)}
                 >
                   Agregar el primer horario
                 </Boton>
@@ -241,10 +224,7 @@ export default function Horarios() {
                                   variante="secundario"
                                   tamano="sm"
                                   icono={Pencil}
-                                  onClick={() => {
-                                    setAviso('');
-                                    setEditando(h);
-                                  }}
+                                  onClick={() => setEditando(h)}
                                   aria-label={`Editar horario ${tipo.nombre} ${nombre} ${h.horaInicio}`}
                                 >
                                   Editar
@@ -253,10 +233,7 @@ export default function Horarios() {
                                   variante="secundario"
                                   tamano="sm"
                                   icono={Trash2}
-                                  onClick={() => {
-                                    setAviso('');
-                                    setPorEliminar(h);
-                                  }}
+                                  onClick={() => setPorEliminar(h)}
                                   aria-label={`Eliminar horario ${tipo.nombre} ${nombre} ${h.horaInicio}`}
                                 >
                                   Eliminar
@@ -289,7 +266,6 @@ export default function Horarios() {
               : `Se creó el horario de ${guardado.tipo.nombre} (${nombreDia(guardado.diaSemana)}, ${guardado.horaInicio}).`;
             setCreando(false);
             setEditando(null);
-            setAviso(msg);
             toast.exito(msg);
           }}
         />

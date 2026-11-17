@@ -1,10 +1,9 @@
-import { useEffect, useEffectEvent, useId, useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router';
+import { useEffect, useEffectEvent, useId, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ClipboardCheck, Inbox, Pencil, Plus, Search, X } from 'lucide-react';
 
 import Paginacion from '../componentes/Paginacion.jsx';
-import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import { formatearFecha } from '../multimedia/formato.js';
 import { usePermisos } from '../permisos/usePermisos.js';
 import {
@@ -132,12 +131,9 @@ function Filtros({ valores, hayFiltros, mostrarTipo, onCambiar, onLimpiar }) {
 export default function ListadoPublicaciones({ modo = 'noticias' }) {
   const esAvisos = modo === 'avisos';
   const [parametros, setParametros] = useSearchParams();
-  const ubicacion = useLocation();
   const toast = useToast();
-  const [avisoAccion, setAvisoAccion] = useState('');
-  const aviso = avisoAccion || ubicacion.state?.aviso;
-  // Archivar, restaurar o eliminar cambia o quita la fila: el foco pasa al mensaje de confirmación.
-  const avisoRef = useEnfocarAviso(aviso);
+  // Al desaparecer una fila o su botón de acción, el foco vuelve al <h1> de la pantalla.
+  const tituloRef = useRef(null);
   const filtros = leerFiltros(parametros, esAvisos);
   const { puede } = usePermisos();
   const hayFiltros = Boolean(filtros.estado || (!esAvisos && filtros.tipo) || filtros.buscar || filtros.autor);
@@ -167,6 +163,7 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
     <section className="mx-auto max-w-6xl">
       <EncabezadoPantalla
         titulo={esAvisos ? 'Avisos' : 'Publicaciones'}
+        headingRef={tituloRef}
         descripcion={
           esAvisos
             ? 'Avisos parroquiales. Se publican directamente, sin revisión, y se pueden programar y archivar.'
@@ -200,17 +197,6 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
             <strong className="font-semibold text-ink">Solo lectura.</strong> Tu rol puede consultar los avisos, pero no
             crearlos ni modificarlos.
           </p>
-        </Aviso>
-      )}
-
-      {aviso && (
-        <Aviso
-          ref={avisoRef}
-          tipo="exito"
-          tabIndex={-1}
-          className="mt-4 outline-none focus-visible:outline-2 focus-visible:outline-ink"
-        >
-          {aviso}
         </Aviso>
       )}
 
@@ -270,19 +256,23 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
                   <caption className="sr-only">{esAvisos ? 'Avisos' : 'Publicaciones'}</caption>
                   <thead className="border-b border-sand bg-panel text-xs uppercase tracking-wide text-muted">
                     <tr>
-                      <th scope="col" className="px-4 py-3 font-semibold">Título</th>
-                      <th scope="col" className="hidden px-4 py-3 font-semibold md:table-cell">Tipo</th>
-                      <th scope="col" className="px-4 py-3 font-semibold">Situación</th>
-                      <th scope="col" className="hidden px-4 py-3 font-semibold md:table-cell">Autor</th>
-                      <th scope="col" className="hidden px-4 py-3 font-semibold md:table-cell">Publicación</th>
-                      <th scope="col" className="px-4 py-3 font-semibold"><span className="sr-only">Acciones</span></th>
+                      <th scope="col" className="px-3 py-3 font-semibold md:min-w-64 2xl:px-4">Título</th>
+                      <th scope="col" className="hidden px-3 py-3 font-semibold md:table-cell 2xl:px-4">Tipo</th>
+                      <th scope="col" className="px-3 py-3 font-semibold 2xl:px-4">Situación</th>
+                      <th scope="col" className="hidden px-3 py-3 font-semibold 2xl:table-cell 2xl:px-4">Autor</th>
+                      <th scope="col" className="hidden px-3 py-3 font-semibold md:table-cell 2xl:px-4">Publicación</th>
+                      <th scope="col" className="px-3 py-3 font-semibold 2xl:px-4"><span className="sr-only">Acciones</span></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-sand bg-white">
                     {publicaciones.map((publicacion) => (
                       <tr key={publicacion.id} className="transition-colors duration-150 ease-salida hover:bg-panel/70 motion-reduce:transition-none">
-                        <th scope="row" className="px-3 py-3 font-semibold text-ink md:px-4">
+                        <th scope="row" className="px-3 py-3 font-semibold text-ink 2xl:px-4">
                           {publicacion.titulo}
+                          {/* En anchos intermedios (`md`–`xl`), Autor baja bajo el título para priorizar su ancho y evitar recorte en acciones. */}
+                          <span className="mt-0.5 hidden text-xs font-normal text-muted md:block 2xl:hidden">
+                            Por {publicacion.autor.nombreCompleto}
+                          </span>
                           {/* Solo en móvil: lo que las columnas ocultas muestran en escritorio. */}
                           <span className="mt-1 block text-xs font-normal text-muted md:hidden">
                             {[
@@ -292,12 +282,12 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
                             ].join(' · ')}
                           </span>
                         </th>
-                        <td className="hidden px-4 py-3 text-ink md:table-cell">{publicacion.tipo.nombre}</td>
-                        <td className="px-3 py-3 md:px-4">
+                        <td className="hidden px-3 py-3 text-ink md:table-cell 2xl:px-4">{publicacion.tipo.nombre}</td>
+                        <td className="px-3 py-3 2xl:px-4">
                           <InsigniaSituacion publicacion={publicacion} />
                         </td>
-                        <td className="hidden px-4 py-3 text-ink md:table-cell">{publicacion.autor.nombreCompleto}</td>
-                        <td className="hidden whitespace-nowrap px-4 py-3 tabular-nums text-ink md:table-cell">
+                        <td className="hidden px-3 py-3 text-ink 2xl:table-cell 2xl:px-4">{publicacion.autor.nombreCompleto}</td>
+                        <td className="hidden whitespace-nowrap px-3 py-3 tabular-nums text-ink md:table-cell 2xl:px-4">
                           {publicacion.fechaPublicacion ? formatearFecha(publicacion.fechaPublicacion) : 'Sin fecha'}
                           {esAvisos && publicacion.fechaExpiracion && (
                             <span className="block text-xs text-muted">
@@ -305,9 +295,9 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-3 text-right md:w-px md:whitespace-nowrap md:px-4">
+                        <td className="px-3 py-3 text-right md:w-px md:whitespace-nowrap 2xl:px-4">
                           {/* En móvil los botones se apilan (columna estrecha); desde `sm` van en fila. */}
-                          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-nowrap sm:justify-end">
+                          <div className="flex flex-col items-stretch gap-1.5 sm:flex-row sm:flex-nowrap sm:justify-end">
                             {/* Los botones salen de `acciones`: la API dice qué puede hacer esta sesión. */}
                             {publicacion.acciones.includes('EDITAR') && (
                               <Boton
@@ -316,6 +306,7 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
                                 variante="secundario"
                                 tamano="sm"
                                 icono={Pencil}
+                                className="md:px-2.5 2xl:px-3"
                                 aria-label={`Editar «${publicacion.titulo}»`}
                               >
                                 Editar
@@ -324,8 +315,8 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
                             <AccionesEstado
                               publicacion={publicacion}
                               alTerminar={(mensaje) => {
-                                setAvisoAccion(mensaje);
                                 toast.exito(mensaje);
+                                setTimeout(() => tituloRef.current?.focus(), 0);
                               }}
                             />
                           </div>

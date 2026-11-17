@@ -96,7 +96,7 @@ export default function EditarPublicacion() {
           </Aviso>
         </section>
       )}
-      <FormularioPublicacion key={publicacion.id} publicacion={publicacion} aviso={state?.aviso} />
+      <FormularioPublicacion key={publicacion.id} publicacion={publicacion} errorInicial={state?.errorInicial} />
     </section>
   );
 }

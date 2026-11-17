@@ -58,7 +58,7 @@ function TablaGrupoHorario({ grupo, diaHoy, nota }) {
                     <ul className="flex flex-col gap-1.5">
                       {fila.horarios.map((h, indice) => (
                         <li key={`${fila.etiqueta}-${indice}`} className="flex flex-wrap items-baseline gap-x-3">
-                          <span className="font-display text-h3 font-semibold tabular-nums text-ink">
+                          <span className="font-display text-h3 font-semibold lining-nums tabular-nums text-ink">
                             {formatearRangoHorario(h.horaInicio, h.horaFin)}
                           </span>
                           {h.descripcion && (

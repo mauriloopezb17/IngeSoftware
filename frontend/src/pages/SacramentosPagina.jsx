@@ -55,7 +55,7 @@ function SacramentosPagina() {
                       className="grid grid-cols-1 items-center gap-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink md:grid-cols-12 md:gap-8"
                     >
                       <div className="flex items-center gap-4 md:col-span-4">
-                        <span className="font-display text-h2 font-semibold tabular-nums text-muted">
+                        <span className="font-display text-h2 font-semibold lining-nums tabular-nums text-muted">
                           {numero}
                         </span>
 

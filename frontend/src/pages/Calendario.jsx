@@ -272,7 +272,7 @@ function Calendario() {
                     className="flex flex-col gap-4 rounded-md border border-sand bg-white p-6 sm:flex-row sm:items-start"
                   >
                     <div className="flex w-20 shrink-0 items-baseline gap-2 border-sand sm:flex-col sm:items-center sm:gap-0 sm:border-r sm:pr-4">
-                      <span className="font-display text-h2 font-semibold tabular-nums text-ink">
+                      <span className="font-display text-h2 font-semibold lining-nums tabular-nums text-ink">
                         {dia}
                       </span>
                       <span className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-muted">

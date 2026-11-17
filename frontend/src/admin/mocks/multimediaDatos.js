@@ -14,9 +14,12 @@ const MARKETING = { id: 4, nombreCompleto: 'Marketing (desarrollo)' };
 // `variantes` (admin.md §2): [] en lo que no es imagen, en las imágenes del seed y en las de menos de 480 px.
 const archivo = (datos) => ({ sede: SEDE_PRINCIPAL, textoAlternativo: null, enUso: false, variantes: [], ...datos });
 
-// Variantes de una imagen del CDN: solo los anchos menores que el de la imagen (480, 960 y 1600).
-const variantesDe = (url, ancho) =>
-  [480, 960, 1600].filter((v) => v < ancho).map((v) => ({ ancho: v, url: url.replace(/\.\w+$/, `-${v}w.webp`) }));
+// Variantes de una imagen remota: solo los anchos menores que el de la imagen (480, 960 y 1600).
+// Nunca inventa rutas `-480w.webp` para archivos locales del seed en `public/media/seed/`.
+const variantesDe = (url, ancho) => {
+  if (!url || url.startsWith('/')) return [];
+  return [480, 960, 1600].filter((v) => v < ancho).map((v) => ({ ancho: v, url: url.replace(/\.\w+$/, `-${v}w.webp`) }));
+};
 
 export function crearArchivosIniciales() {
   return [

@@ -9,6 +9,7 @@ import { crearQueryClient } from '../../services/queryClient.js';
 import { reiniciarMocksAdmin } from '../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from '../mocks/usuarios.js';
 import { SesionProvider } from '../sesion/SesionProvider.jsx';
+import { ProveedorToasts } from '../ui/index.js';
 import Eventos from './Eventos.jsx';
 
 const entrar = (usuario) =>
@@ -22,14 +23,16 @@ function Ubicacion() {
 function montar(entrada = '/admin/eventos') {
   return render(
     <QueryClientProvider client={crearQueryClient()}>
-      <SesionProvider>
-        <MemoryRouter initialEntries={[entrada]}>
-          <Routes>
-            <Route path="/admin/eventos/*" element={<Eventos />} />
-          </Routes>
-          <Ubicacion />
-        </MemoryRouter>
-      </SesionProvider>
+      <ProveedorToasts>
+        <SesionProvider>
+          <MemoryRouter initialEntries={[entrada]}>
+            <Routes>
+              <Route path="/admin/eventos/*" element={<Eventos />} />
+            </Routes>
+            <Ubicacion />
+          </MemoryRouter>
+        </SesionProvider>
+      </ProveedorToasts>
     </QueryClientProvider>,
   );
 }
@@ -125,7 +128,7 @@ describe('eventos del panel', () => {
     await usuario.click(screen.getByRole('button', { name: 'Crear evento' }));
 
     expect(await screen.findByText('Se creó el evento «Peregrinación a Copacabana».')).toBeInTheDocument();
-    expect(screen.getByTestId('ubicacion')).toHaveTextContent(/^\/admin\/eventos$/);
+    await waitFor(() => expect(screen.getByTestId('ubicacion')).toHaveTextContent(/^\/admin\/eventos$/));
     const nueva = await screen.findByRole('article', { name: /Peregrinación a Copacabana/ });
     expect(within(nueva).getByText(/Todo el día/)).toBeInTheDocument();
   });
@@ -164,7 +167,8 @@ describe('eventos del panel', () => {
     await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
     expect(await screen.findByText('Se guardaron los cambios de «Solemnidad de Cristo Rey del Universo».')).toBeInTheDocument();
-    expect(await within(tarjeta('Solemnidad de Cristo Rey')).findByText('Archivado')).toBeInTheDocument();
+    const eventoEditado = await screen.findByRole('article', { name: /Solemnidad de Cristo Rey/ });
+    expect(await within(eventoEditado).findByText('Archivado')).toBeInTheDocument();
   });
 
   it('elimina un evento después de confirmar', async () => {
@@ -177,10 +181,10 @@ describe('eventos del panel', () => {
     const dialogo = screen.getByRole('dialog', { name: '¿Eliminar «Misa de sanación»?' });
     await usuario.click(within(dialogo).getByRole('button', { name: 'Eliminar' }));
 
-    const confirmacion = await screen.findByText('Se eliminó el evento «Misa de sanación».');
+    expect(await screen.findByText('Se eliminó el evento «Misa de sanación».')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    // La fila (y su botón) desaparece: el foco pasa al mensaje de confirmación y no se pierde en <body>.
-    await waitFor(() => expect(confirmacion).toHaveFocus());
+    // La fila (y su botón) desaparece: el foco pasa al título h1 de la pantalla.
+    await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: 'Eventos' })).toHaveFocus());
     expect(screen.queryByRole('heading', { name: 'Misa de sanación' })).not.toBeInTheDocument();
   });
 

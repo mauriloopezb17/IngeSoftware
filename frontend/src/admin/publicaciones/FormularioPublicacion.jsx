@@ -104,8 +104,8 @@ function Grupo({ legend, error, children, ayuda }) {
 
 // Formulario de noticia, nota de prensa o aviso. `publicacion` (opcional): la que se edita.
 // `tipoInicial`: el tipo de una publicación nueva (los avisos pasan 'AVISO'; el tipo no se puede cambiar después).
-// `aviso`: mensaje inicial (por ejemplo, «Borrador guardado.» al venir de crear).
-export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTICIA', aviso: avisoInicial = '' }) {
+// `errorInicial`: error parcial tras guardar borrador (por ejemplo, si falló al publicar inmediatamente).
+export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTICIA', errorInicial = '' }) {
   const navegar = useNavigate();
   const clienteConsultas = useQueryClient();
   const toast = useToast();
@@ -118,8 +118,7 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
   const [bloques, setBloques] = useState(null);
 
   const [errores, setErrores] = useState({});
-  const [generales, setGenerales] = useState([]);
-  const [aviso, setAviso] = useState(avisoInicial);
+  const [generales, setGenerales] = useState(() => (errorInicial ? [errorInicial] : []));
   const [eligiendoPortada, setEligiendoPortada] = useState(false);
   const [verPrevia, setVerPrevia] = useState(false);
   const [confirmandoEnvio, setConfirmandoEnvio] = useState(false);
@@ -170,14 +169,12 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
       const guardados = camposDe(guardada);
       setBase(huella(guardados));
       setBloquesBase(JSON.stringify(bloques ?? bloquesBase ?? []));
-      setAviso('Cambios guardados.');
       toast.exito('Cambios guardados.');
     },
     onError: (error) => {
       const { errores: porCampo, generales: avisosGenerales } = erroresDe(error);
       setErrores(porCampo);
       setGenerales(avisosGenerales);
-      setAviso('');
       requestAnimationFrame(() => avisos.current?.focus());
     },
   });
@@ -228,16 +225,17 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
       if (error.creadaId) {
         clienteConsultas.invalidateQueries({ queryKey: CLAVE_PUBLICACIONES });
         omitirAvisoRef.current = true;
+        const mensajeError = `Se guardó como borrador, pero no se pudo publicar: ${error.message}`;
+        toast.error(mensajeError);
         navegar(`/admin/publicaciones/${error.creadaId}/editar`, {
           replace: true,
-          state: { aviso: `Se guardó como borrador, pero no se pudo publicar: ${error.message}` },
+          state: { errorInicial: mensajeError },
         });
         return;
       }
       const { errores: porCampo, generales: avisosGenerales } = erroresDe(error);
       setErrores(porCampo);
       setGenerales(avisosGenerales);
-      setAviso('');
       requestAnimationFrame(() => avisos.current?.focus());
     },
   });
@@ -247,7 +245,6 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
     if (Object.keys(locales).length) {
       setErrores(locales);
       setGenerales([]);
-      setAviso('');
       requestAnimationFrame(() => avisos.current?.focus());
       return;
     }
@@ -272,7 +269,6 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
       const { errores: porCampo, generales: avisosGenerales } = erroresDe(error);
       setErrores(porCampo);
       setGenerales(avisosGenerales);
-      setAviso('');
       requestAnimationFrame(() => avisos.current?.focus());
     },
   });
@@ -282,7 +278,6 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
     if (Object.keys(locales).length) {
       setErrores(locales);
       setGenerales([]);
-      setAviso('');
       requestAnimationFrame(() => avisos.current?.focus());
       return;
     }
@@ -295,7 +290,6 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
     if (Object.keys(locales).length) {
       setErrores(locales);
       setGenerales([]);
-      setAviso('');
       requestAnimationFrame(() => avisos.current?.focus());
       return;
     }
@@ -319,11 +313,6 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
                 <li key={`${i}-${mensaje}`}>{mensaje}</li>
               ))}
             </ul>
-          </Aviso>
-        )}
-        {aviso && !mensajesDeError.length && (
-          <Aviso tipo="exito">
-            <p>{aviso}</p>
           </Aviso>
         )}
       </div>

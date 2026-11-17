@@ -1,11 +1,10 @@
-import { useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router';
+import { useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ExternalLink, FileText, Inbox, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
 import Paginacion from '../componentes/Paginacion.jsx';
-import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import { formatearFecha, formatearTamano } from '../multimedia/formato.js';
 import { usePermisos } from '../permisos/usePermisos.js';
 import {
@@ -32,10 +31,8 @@ export default function ListadoBoletines() {
   const { puede } = usePermisos();
   const editable = puede('boletines.gestionar');
   const clienteConsultas = useQueryClient();
-  const ubicacion = useLocation();
   const toast = useToast();
-  const [aviso, setAviso] = useState(ubicacion.state?.aviso ?? '');
-  const avisoRef = useEnfocarAviso(aviso); // tras eliminar, el foco pasa al mensaje (la fila y su botón desaparecen)
+  const tituloRef = useRef(null);
   const [porEliminar, setPorEliminar] = useState(null);
 
   const { data, isPending, isError, error, isPlaceholderData, refetch } = useQuery({
@@ -48,10 +45,9 @@ export default function ListadoBoletines() {
     mutationFn: (boletin) => eliminarBoletin(boletin.id),
     onSuccess: (_, boletin) => {
       clienteConsultas.invalidateQueries({ queryKey: CLAVE_BOLETINES });
-      const mensaje = `Se eliminó el boletín «${boletin.titulo}». Su PDF sigue en la biblioteca multimedia.`;
-      setAviso(mensaje);
-      toast.exito(mensaje);
+      toast.exito(`Se eliminó el boletín «${boletin.titulo}». Su PDF sigue en la biblioteca multimedia.`);
       setPorEliminar(null);
+      setTimeout(() => tituloRef.current?.focus(), 0);
     },
   });
 
@@ -70,6 +66,7 @@ export default function ListadoBoletines() {
       <EncabezadoPantalla
         titulo="Boletines"
         descripcion="Boletines parroquiales en PDF. Se publican directamente, sin revisión."
+        headingRef={tituloRef}
         acciones={
           editable && (
             <Boton como={Link} to="/admin/boletines/nuevo" variante="primario" icono={Plus}>
@@ -85,16 +82,6 @@ export default function ListadoBoletines() {
             <strong className="font-semibold text-ink">Solo lectura.</strong> Tu rol puede consultar los boletines, pero no
             modificarlos.
           </p>
-        </Aviso>
-      )}
-      {aviso && (
-        <Aviso
-          ref={avisoRef}
-          tipo="exito"
-          tabIndex={-1}
-          className="mt-4 outline-none focus-visible:outline-2 focus-visible:outline-ink"
-        >
-          {aviso}
         </Aviso>
       )}
 

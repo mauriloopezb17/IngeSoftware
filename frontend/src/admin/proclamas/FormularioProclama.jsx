@@ -45,13 +45,11 @@ export default function FormularioProclama({ proclama }) {
   }));
   const [errores, setErrores] = useState({});
   const [generales, setGenerales] = useState([]);
-  const [guardado, setGuardado] = useState('');
   const cambiar = (cambios) => setCampos((actuales) => ({ ...actuales, ...cambios }));
 
   function mostrar(porCampo, avisosGenerales = []) {
     setErrores(porCampo);
     setGenerales(avisosGenerales);
-    setGuardado('');
     requestAnimationFrame(() => avisos.current?.focus());
   }
 
@@ -62,13 +60,12 @@ export default function FormularioProclama({ proclama }) {
       if (editando) {
         setErrores({});
         setGenerales([]);
-        setGuardado('Cambios guardados.');
         toast.exito('Cambios guardados.');
         return;
       }
       const mensaje = 'Proclama creada. Aquí puedes agregar o cambiar sus publicaciones.';
       toast.exito(mensaje);
-      navegar(`/admin/proclamas/${resultado.id}/editar`, { replace: true, state: { aviso: mensaje } });
+      navegar(`/admin/proclamas/${resultado.id}/editar`, { replace: true });
     },
     onError: (error) => {
       const { errores: porCampo, generales: g } = erroresDe(error, CAMPO_DE_ERROR);
@@ -106,7 +103,6 @@ export default function FormularioProclama({ proclama }) {
             </ul>
           </Aviso>
         )}
-        {guardado && !mensajes.length && <Aviso tipo="exito">{guardado}</Aviso>}
       </div>
 
       <div className="flex flex-col gap-5">

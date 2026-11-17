@@ -121,7 +121,7 @@ export default function InicioSesion() {
             Parroquia Señor de la Exaltación
           </p>
           <h1 className="mt-1.5 font-body text-2xl font-semibold tracking-tight text-ink">
-            Panel de administración
+            Panel de gestión
           </h1>
           <p className="mt-2 text-sm text-muted">
             Inicia sesión con tu cuenta para gestionar el contenido del portal.

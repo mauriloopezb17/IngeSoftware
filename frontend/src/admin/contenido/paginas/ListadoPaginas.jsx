@@ -36,7 +36,6 @@ export default function ListadoPaginas() {
   const [creando, setCreando] = useState(false);
   const [editando, setEditando] = useState(null);
   const [porEliminar, setPorEliminar] = useState(null);
-  const [aviso, setAviso] = useState('');
 
   const paginasQuery = useQuery({
     queryKey: [...CLAVE_PAGINAS, { estado: filtroEstado }],
@@ -47,9 +46,7 @@ export default function ListadoPaginas() {
     mutationFn: (pagina) => eliminarPagina(pagina.id),
     onSuccess: (_, pagina) => {
       queryClient.invalidateQueries({ queryKey: CLAVE_PAGINAS });
-      const msg = `Se eliminó la página «${pagina.titulo}».`;
-      setAviso(msg);
-      toast.exito(msg);
+      toast.exito(`Se eliminó la página «${pagina.titulo}».`);
       setPorEliminar(null);
       setTimeout(() => tituloRef.current?.focus(), 0);
     },
@@ -74,10 +71,7 @@ export default function ListadoPaginas() {
             <Boton
               variante="primario"
               icono={Plus}
-              onClick={() => {
-                setAviso('');
-                setCreando(true);
-              }}
+              onClick={() => setCreando(true)}
             >
               Nueva página
             </Boton>
@@ -92,14 +86,6 @@ export default function ListadoPaginas() {
             bloques, pero no realizar cambios.
           </p>
         </Aviso>
-      )}
-
-      {aviso ? (
-        <Aviso tipo="exito" className="mt-4">
-          {aviso}
-        </Aviso>
-      ) : (
-        <p role="status" className="sr-only" />
       )}
 
       <div className="mt-6 rounded-lg border border-sand bg-white p-4 sm:max-w-xs">
@@ -187,10 +173,7 @@ export default function ListadoPaginas() {
                         variante="secundario"
                         tamano="sm"
                         icono={Pencil}
-                        onClick={() => {
-                          setAviso('');
-                          setEditando(pagina);
-                        }}
+                        onClick={() => setEditando(pagina)}
                         aria-label={`Editar datos de «${pagina.titulo}»`}
                       >
                         Editar
@@ -199,10 +182,7 @@ export default function ListadoPaginas() {
                         variante="secundario"
                         tamano="sm"
                         icono={Trash2}
-                        onClick={() => {
-                          setAviso('');
-                          setPorEliminar(pagina);
-                        }}
+                        onClick={() => setPorEliminar(pagina)}
                         aria-label={`Eliminar «${pagina.titulo}»`}
                       >
                         Eliminar
@@ -224,7 +204,6 @@ export default function ListadoPaginas() {
             const msg = editando
               ? `Se actualizaron los datos de «${guardada.titulo}».`
               : `Se creó la página «${guardada.titulo}».`;
-            setAviso(msg);
             toast.exito(msg);
             setCreando(false);
             setEditando(null);

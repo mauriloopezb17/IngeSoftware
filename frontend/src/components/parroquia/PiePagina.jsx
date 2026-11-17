@@ -96,7 +96,7 @@ function PiePagina() {
                 alt={sede?.nombre || 'Parroquia Señor de la Exaltación'}
                 width={239}
                 height={134}
-                className="h-12 w-auto"
+                className="h-16 w-auto md:h-20"
               />
             </EnlacePortal>
 
@@ -136,7 +136,7 @@ function PiePagina() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 lg:col-span-8">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 lg:col-span-8 lg:grid-cols-[1fr_1fr_1fr_1.45fr]">
             <div>
               <h3 className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-gold">
                 Parroquia
@@ -196,24 +196,35 @@ function PiePagina() {
                 Secretaría
               </h3>
               <ul className="mt-4 space-y-2.5">
-                {datosSecretaria.map(({ contenido, href }) => (
-                  <li key={contenido}>
-                    {href ? (
-                      <a
-                        href={href}
-                        target={href.startsWith('https') ? '_blank' : undefined}
-                        rel={href.startsWith('https') ? 'noopener noreferrer' : undefined}
-                        className="inline-flex min-h-9 items-center break-all font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-                      >
-                        {contenido}
-                      </a>
-                    ) : (
-                      <span className="block font-body text-meta tabular-nums text-muted-on-dark">
-                        {contenido}
-                      </span>
-                    )}
-                  </li>
-                ))}
+                {datosSecretaria.map(({ contenido, href }) => {
+                  const indiceArroba = contenido.indexOf('@');
+                  return (
+                    <li key={contenido}>
+                      {href ? (
+                        <a
+                          href={href}
+                          target={href.startsWith('https') ? '_blank' : undefined}
+                          rel={href.startsWith('https') ? 'noopener noreferrer' : undefined}
+                          className="inline-flex min-h-9 items-center font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                        >
+                          {indiceArroba > 0 ? (
+                            <span>
+                              {contenido.slice(0, indiceArroba + 1)}
+                              <wbr />
+                              {contenido.slice(indiceArroba + 1)}
+                            </span>
+                          ) : (
+                            contenido
+                          )}
+                        </a>
+                      ) : (
+                        <span className="block font-body text-meta tabular-nums text-muted-on-dark">
+                          {contenido}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>

@@ -37,7 +37,6 @@ export default function Multimedia() {
   const filtros = leerFiltros(parametros);
   const consulta = useBiblioteca(filtros);
   const [abierto, setAbierto] = useState(null);
-  const [aviso, setAviso] = useState('');
   const inicioRef = useRef(null);
   const { puede } = usePermisos();
   const toast = useToast();
@@ -66,14 +65,6 @@ export default function Multimedia() {
         descripcion="Imágenes, videos y documentos de la sede."
         headingRef={inicioRef}
       />
-
-      {aviso ? (
-        <Aviso tipo="exito" className="mt-4">
-          {aviso}
-        </Aviso>
-      ) : (
-        <p role="status" className="sr-only" />
-      )}
 
       {puede('multimedia.subir') && <SubidaArchivos />}
 
@@ -120,10 +111,7 @@ export default function Multimedia() {
                   <TarjetaArchivo
                     key={archivo.id}
                     archivo={archivo}
-                    onAbrir={(a) => {
-                      setAviso('');
-                      setAbierto(a);
-                    }}
+                    onAbrir={(a) => setAbierto(a)}
                   />
                 ))}
               </ul>
@@ -169,9 +157,7 @@ export default function Multimedia() {
           onCambio={setAbierto}
           onEliminado={(eliminado) => {
             setAbierto(null);
-            const mensaje = `Se eliminó «${eliminado.nombreOriginal}».`;
-            setAviso(mensaje);
-            toast.exito(mensaje);
+            toast.exito(`Se eliminó «${eliminado.nombreOriginal}».`);
             // La tarjeta desaparece: el foco pasa al inicio de la sección para no perderse.
             setTimeout(() => inicioRef.current?.focus(), 0);
           }}

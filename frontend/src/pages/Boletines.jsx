@@ -147,6 +147,7 @@ function Boletines() {
                 const tamano = boletin.archivo?.tamanoBytes
                   ? formatearTamanoArchivo(boletin.archivo.tamanoBytes)
                   : '';
+                const esMasReciente = indice === 0 && !anioActivo && paginaActual === 1;
 
                 return (
                   <Reveal
@@ -165,7 +166,7 @@ function Boletines() {
                         {formatearPeriodoMes(boletin.periodo)}
                       </p>
 
-                      <h2 className="mt-2 font-display text-h3 font-semibold text-ink">
+                      <h2 className="mt-2 font-display text-h3 font-semibold lining-nums text-ink">
                         {boletin.titulo}
                       </h2>
 
@@ -179,7 +180,7 @@ function Boletines() {
                       <div className="mt-6">
                         <BotonEnlace
                           to={boletin.archivo.url}
-                          variante="primario"
+                          variante={esMasReciente ? 'primario' : 'secundario'}
                           aria-label={`Descargar PDF: ${boletin.titulo}`}
                         >
                           <span>Descargar PDF</span>

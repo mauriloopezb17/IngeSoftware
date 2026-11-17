@@ -128,7 +128,7 @@ export default function LayoutPanel() {
 
           <div className="ml-auto flex min-w-0 items-center gap-3">
             {usuario && (
-              <p className="min-w-0 text-right text-sm leading-tight">
+              <p className="hidden min-w-0 text-right text-sm leading-tight sm:block">
                 <span className="block truncate font-semibold text-ink">{usuario.nombreCompleto}</span>
                 <span className="block truncate text-xs text-muted">
                   {usuario.rol.nombre} · {usuario.sede?.nombre ?? 'Todas las sedes'}

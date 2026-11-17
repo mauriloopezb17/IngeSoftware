@@ -38,7 +38,6 @@ export default function Servicios() {
   const [editando, setEditando] = useState(null);
   const [faqServicio, setFaqServicio] = useState(null);
   const [porEliminar, setPorEliminar] = useState(null);
-  const [aviso, setAviso] = useState('');
 
   const serviciosQuery = useQuery({
     queryKey: [...CLAVE_SERVICIOS, { visible: filtroVisible }],
@@ -54,9 +53,7 @@ export default function Servicios() {
     mutationFn: (servicio) => eliminarServicio(servicio.id),
     onSuccess: (_, servicio) => {
       queryClient.invalidateQueries({ queryKey: CLAVE_SERVICIOS });
-      const msg = `Se eliminó el servicio «${servicio.nombre}».`;
-      setAviso(msg);
-      toast.exito(msg);
+      toast.exito(`Se eliminó el servicio «${servicio.nombre}».`);
       setPorEliminar(null);
       setTimeout(() => tituloRef.current?.focus(), 0);
     },
@@ -83,10 +80,7 @@ export default function Servicios() {
             <Boton
               variante="primario"
               icono={Plus}
-              onClick={() => {
-                setAviso('');
-                setCreando(true);
-              }}
+              onClick={() => setCreando(true)}
             >
               Nuevo servicio
             </Boton>
@@ -101,14 +95,6 @@ export default function Servicios() {
             no realizar cambios.
           </p>
         </Aviso>
-      )}
-
-      {aviso ? (
-        <Aviso tipo="exito" className="mt-4">
-          {aviso}
-        </Aviso>
-      ) : (
-        <p role="status" className="sr-only" />
       )}
 
       <div className="mt-6 rounded-lg border border-sand bg-white p-4 sm:max-w-xs">
@@ -151,10 +137,7 @@ export default function Servicios() {
                 <Boton
                   variante="primario"
                   icono={Plus}
-                  onClick={() => {
-                    setAviso('');
-                    setCreando(true);
-                  }}
+                  onClick={() => setCreando(true)}
                 >
                   Agregar el primer servicio
                 </Boton>
@@ -199,10 +182,7 @@ export default function Servicios() {
                     variante="secundario"
                     tamano="sm"
                     icono={HelpCircle}
-                    onClick={() => {
-                      setAviso('');
-                      setFaqServicio(servicio);
-                    }}
+                    onClick={() => setFaqServicio(servicio)}
                   >
                     Preguntas frecuentes
                   </Boton>
@@ -235,10 +215,7 @@ export default function Servicios() {
                         variante="secundario"
                         tamano="sm"
                         icono={Pencil}
-                        onClick={() => {
-                          setAviso('');
-                          setEditando(servicio);
-                        }}
+                        onClick={() => setEditando(servicio)}
                         aria-label={`Editar ${servicio.nombre}`}
                       >
                         Editar
@@ -247,10 +224,7 @@ export default function Servicios() {
                         variante="secundario"
                         tamano="sm"
                         icono={Trash2}
-                        onClick={() => {
-                          setAviso('');
-                          setPorEliminar(servicio);
-                        }}
+                        onClick={() => setPorEliminar(servicio)}
                         aria-label={`Eliminar ${servicio.nombre}`}
                       >
                         Eliminar
@@ -277,7 +251,6 @@ export default function Servicios() {
               : `Se creó el servicio «${guardado.nombre}».`;
             setCreando(false);
             setEditando(null);
-            setAviso(msg);
             toast.exito(msg);
           }}
         />

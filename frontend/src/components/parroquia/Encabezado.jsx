@@ -309,7 +309,7 @@ function EncabezadoBase({ transparente, rutaActual }) {
 
       {/* Barra principal */}
       <div className={`transition-colors duration-200 ease-salida ${claseBarraNavegacion}`}>
-        <Contenedor className="flex h-20 items-center justify-between gap-4">
+        <Contenedor className="flex min-h-20 items-center justify-between gap-4 py-1.5">
           <EnlacePortal
             to="/"
             onClick={cerrarTodo}
@@ -321,7 +321,7 @@ function EncabezadoBase({ transparente, rutaActual }) {
               alt="Parroquia Señor de la Exaltación"
               width={239}
               height={134}
-              className="h-11 w-auto md:h-12"
+              className="h-14 w-auto md:h-16"
             />
           </EnlacePortal>
 

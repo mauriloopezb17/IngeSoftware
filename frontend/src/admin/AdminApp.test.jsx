@@ -59,7 +59,7 @@ describe('panel: rutas protegidas y menú por rol', () => {
     it('redirige al login desde cualquier ruta del panel', async () => {
       montar('/admin/eventos');
 
-      expect(await screen.findByRole('heading', { name: 'Panel de administración' })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Panel de gestión' })).toBeInTheDocument();
       expect(screen.getByTestId('ubicacion')).toHaveTextContent('/admin/login');
     });
 

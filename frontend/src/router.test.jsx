@@ -56,7 +56,7 @@ describe('rutas del frontend', () => {
     // cargarAdmin() dispara import('./admin/AdminApp.jsx') bajo demanda; con la suite en paralelo
     // Vite transforma el árbol completo del panel dentro de esta ventana y supera los 1000 ms por defecto.
     expect(
-      await screen.findByRole('heading', { name: 'Panel de administración' }, { timeout: 5000 }),
+      await screen.findByRole('heading', { name: 'Panel de gestión' }, { timeout: 5000 }),
     ).toBeInTheDocument();
   });
 

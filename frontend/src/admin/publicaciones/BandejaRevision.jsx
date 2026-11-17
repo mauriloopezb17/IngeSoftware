@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Inbox, Pencil, X } from 'lucide-react';
@@ -21,8 +21,8 @@ export default function BandejaRevision() {
   const { puede } = usePermisos();
   const clienteConsultas = useQueryClient();
   const toast = useToast();
+  const tituloRef = useRef(null);
   const [pagina, setPagina] = useState(1);
-  const [aviso, setAviso] = useState('');
   // { publicacion, accion: 'aprobar' | 'rechazar' } mientras hay un diálogo abierto.
   const [revisando, setRevisando] = useState(null);
   const autorizado = puede('noticias.publicar');
@@ -40,12 +40,12 @@ export default function BandejaRevision() {
 
   function terminar(mensaje) {
     setRevisando(null);
-    setAviso(mensaje);
     toast.exito(mensaje);
     // Listado y bandeja salen de la misma clave: se refrescan juntos.
     clienteConsultas.invalidateQueries({ queryKey: CLAVE_PUBLICACIONES });
     // Si era la última de una página posterior, se vuelve a la anterior.
     if (publicaciones.length === 1 && pagina > 1) setPagina(pagina - 1);
+    setTimeout(() => tituloRef.current?.focus(), 0);
   }
 
   return (
@@ -53,18 +53,13 @@ export default function BandejaRevision() {
       <EncabezadoPantalla
         titulo="Bandeja de revisión"
         descripcion="Publicaciones que esperan tu aprobación."
+        headingRef={tituloRef}
         acciones={
           <Boton como={Link} to="/admin/publicaciones" variante="secundario">
             Volver a publicaciones
           </Boton>
         }
       />
-
-      {aviso && (
-        <Aviso tipo="exito" className="mt-5">
-          <p>{aviso}</p>
-        </Aviso>
-      )}
 
       <div className="mt-6" aria-busy={isPending || isPlaceholderData}>
         {isPending && <EsqueletoTarjetas cantidad={3} columnas="grid-cols-1" etiqueta="Cargando la bandeja…" />}

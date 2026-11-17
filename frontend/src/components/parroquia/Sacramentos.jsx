@@ -39,18 +39,18 @@ function Sacramentos() {
           ) : servicios.length === 0 ? (
             <SinResultados mensaje="No hay servicios publicados por el momento." />
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 divide-y divide-sand border-y border-sand md:grid-cols-2 md:gap-4 md:divide-y-0 md:border-y-0">
               {servicios.map(({ id, slug, nombre, descripcionCorta, icono }, indice) => (
                 <Reveal
                   key={id}
                   variante="tarjeta"
                   retraso={indice * 90}
                   as="article"
-                  className="group flex flex-col justify-between rounded-md border border-sand bg-white p-6 transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold"
+                  className="group relative flex items-center justify-between gap-3 py-2 transition-[border-color,transform] duration-200 ease-out md:flex-col md:items-stretch md:rounded-md md:border md:border-sand md:bg-white md:p-6 md:hover:-translate-y-1 md:hover:border-gold"
                 >
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-sm bg-gold-soft text-ink">
+                      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-sm bg-gold-soft text-ink md:size-10">
                         <IconoDinamico
                           nombre={icono || 'heart-handshake'}
                           size={20}
@@ -60,20 +60,22 @@ function Sacramentos() {
                       <h3 className="font-display text-h3 font-semibold text-ink">{nombre}</h3>
                     </div>
 
-                    <p className="mt-3 font-body text-body text-muted">{descripcionCorta}</p>
+                    <p className="mt-3 hidden font-body text-body text-muted md:block">
+                      {descripcionCorta}
+                    </p>
                   </div>
 
-                  <div className="mt-5 pt-3">
+                  <div className="shrink-0 md:mt-5 md:pt-3">
                     <EnlacePortal
                       to={slug ? `/sacramentos/${slug}` : '/sacramentos'}
                       aria-label={`Consultar requisitos de ${nombre}`}
-                      className="inline-flex min-h-11 items-center gap-2 font-body text-button font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                      className="inline-flex min-h-11 items-center gap-2 font-body text-button font-semibold text-ink underline-offset-4 after:absolute after:inset-0 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink md:after:hidden"
                     >
-                      <span>Ver requisitos</span>
+                      <span className="hidden md:inline">Ver requisitos</span>
                       <ArrowRight
                         size={15}
                         aria-hidden="true"
-                        className="transition-transform duration-200 ease-salida group-hover:translate-x-1"
+                        className="text-muted transition-transform duration-200 ease-salida group-hover:translate-x-1 group-hover:text-ink"
                       />
                     </EnlacePortal>
                   </div>

@@ -1,4 +1,4 @@
-import { Link, Route, Routes, useLocation, useParams } from 'react-router';
+import { Link, Route, Routes, useParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 
 import SinPermiso from '../componentes/SinPermiso.jsx';
@@ -26,7 +26,6 @@ function NuevaProclama() {
 // (Marketing) ve los mismos datos en solo lectura.
 function DetalleProclama() {
   const { id } = useParams();
-  const { state } = useLocation();
   const { puede } = usePermisos();
   const editable = puede('proclamas.gestionar');
   const esId = /^\d+$/.test(id);
@@ -67,11 +66,6 @@ function DetalleProclama() {
         titulo={editable ? 'Editar proclama' : 'Proclama'}
         descripcion={`${proclama.contrayente1} y ${proclama.contrayente2}`}
       />
-      {state?.aviso && (
-        <Aviso tipo="exito" className="mt-4">
-          {state.aviso}
-        </Aviso>
-      )}
 
       {editable ? (
         <FormularioProclama key={proclama.id} proclama={proclama} />

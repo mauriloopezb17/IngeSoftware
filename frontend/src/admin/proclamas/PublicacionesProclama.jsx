@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CalendarPlus, Pencil, Trash2 } from 'lucide-react';
 
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
 import Dialogo from '../componentes/Dialogo.jsx';
-import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import { Aviso, Boton, CampoTexto, Insignia, useToast } from '../ui/index.js';
 import {
   agregarPublicacion,
@@ -56,13 +55,11 @@ function DialogoFecha({ titulo, fechaInicial, pendiente, error, onGuardar, onCan
 export default function PublicacionesProclama({ proclama, editable }) {
   const clienteConsultas = useQueryClient();
   const toast = useToast();
+  const tituloRef = useRef(null);
   const { publicaciones } = proclama;
   const siguiente = publicaciones.length + 1;
   const ultima = publicaciones[publicaciones.length - 1];
   const [fechaNueva, setFechaNueva] = useState('');
-  const [aviso, setAviso] = useState('');
-  // El botón de una publicación quitada desaparece: el foco pasa al mensaje de confirmación.
-  const avisoRef = useEnfocarAviso(aviso);
   const [cambiando, setCambiando] = useState(null); // publicación cuya fecha se cambia
   const [quitando, setQuitando] = useState(null);
 
@@ -78,9 +75,7 @@ export default function PublicacionesProclama({ proclama, editable }) {
     onSuccess: (actualizada) => {
       refrescar(actualizada);
       setFechaNueva('');
-      const msg = `Se agregó la ${ordinal(siguiente)} proclama.`;
-      setAviso(msg);
-      toast.exito(msg);
+      toast.exito(`Se agregó la ${ordinal(siguiente)} proclama.`);
     },
   });
   const cambiar = useMutation({
@@ -88,9 +83,7 @@ export default function PublicacionesProclama({ proclama, editable }) {
     onSuccess: (actualizada, { numero }) => {
       refrescar(actualizada);
       setCambiando(null);
-      const msg = `Se cambió la fecha de la ${ordinal(numero)} proclama.`;
-      setAviso(msg);
-      toast.exito(msg);
+      toast.exito(`Se cambió la fecha de la ${ordinal(numero)} proclama.`);
     },
   });
   const quitar = useMutation({
@@ -98,31 +91,24 @@ export default function PublicacionesProclama({ proclama, editable }) {
     onSuccess: (actualizada, { numero }) => {
       refrescar(actualizada);
       setQuitando(null);
-      const msg = `Se quitó la ${ordinal(numero)} proclama.`;
-      setAviso(msg);
-      toast.exito(msg);
+      toast.exito(`Se quitó la ${ordinal(numero)} proclama.`);
+      setTimeout(() => tituloRef.current?.focus(), 0);
     },
   });
 
   return (
     <section aria-labelledby="historial-proclama" className="mt-10 border-t border-sand pt-6">
-      <h2 id="historial-proclama" className="font-body text-xl font-semibold text-ink">
+      <h2
+        id="historial-proclama"
+        ref={tituloRef}
+        tabIndex={-1}
+        className="font-body text-xl font-semibold text-ink outline-none"
+      >
         Publicaciones
       </h2>
       <p className="mt-1 text-sm text-muted">
         Una proclama se publica hasta 3 veces, antes del matrimonio. En el portal aparece cuando llega su fecha.
       </p>
-
-      {aviso && (
-        <Aviso
-          ref={avisoRef}
-          tipo="exito"
-          tabIndex={-1}
-          className="mt-3 outline-none focus-visible:outline-2 focus-visible:outline-ink"
-        >
-          {aviso}
-        </Aviso>
-      )}
 
       {publicaciones.length ? (
         <ol aria-label="Historial de publicaciones" className="mt-4 flex flex-col gap-2">

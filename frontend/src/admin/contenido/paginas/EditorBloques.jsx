@@ -34,7 +34,6 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
   const [editandoBloque, setEditandoBloque] = useState(null);
   const [editandoPagina, setEditandoPagina] = useState(false);
   const [bloquePorEliminar, setBloquePorEliminar] = useState(null);
-  const [aviso, setAviso] = useState('');
 
   const paginaQuery = useQuery({
     queryKey: [...CLAVE_PAGINAS, paginaId],
@@ -52,9 +51,7 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
     mutationFn: (bloque) => eliminarBloque(paginaId, bloque.id),
     onSuccess: (_, bloque) => {
       queryClient.invalidateQueries({ queryKey: [...CLAVE_PAGINAS, paginaId] });
-      const msg = `Se eliminó el bloque «${NOMBRES_TIPO_BLOQUE[bloque.tipo] ?? bloque.tipo}».`;
-      setAviso(msg);
-      toast.exito(msg);
+      toast.exito(`Se eliminó el bloque «${NOMBRES_TIPO_BLOQUE[bloque.tipo] ?? bloque.tipo}».`);
       setBloquePorEliminar(null);
       setTimeout(() => tituloRef.current?.focus(), 0);
     },
@@ -134,20 +131,14 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
                 <Boton
                   variante="secundario"
                   icono={Pencil}
-                  onClick={() => {
-                    setAviso('');
-                    setEditandoPagina(true);
-                  }}
+                  onClick={() => setEditandoPagina(true)}
                 >
                   Editar datos
                 </Boton>
                 <Boton
                   variante="primario"
                   icono={Plus}
-                  onClick={() => {
-                    setAviso('');
-                    setCreandoBloque(true);
-                  }}
+                  onClick={() => setCreandoBloque(true)}
                 >
                   Agregar bloque
                 </Boton>
@@ -162,14 +153,6 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
                 sus bloques, pero no realizar cambios.
               </p>
             </Aviso>
-          )}
-
-          {aviso ? (
-            <Aviso tipo="exito" className="mt-4">
-              {aviso}
-            </Aviso>
-          ) : (
-            <p role="status" className="sr-only" />
           )}
 
           {reordenarMut.isError && (
@@ -239,10 +222,7 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
                             variante="secundario"
                             tamano="sm"
                             icono={Pencil}
-                            onClick={() => {
-                              setAviso('');
-                              setEditandoBloque(bloque);
-                            }}
+                            onClick={() => setEditandoBloque(bloque)}
                             aria-label={`Editar bloque ${bloque.orden}: ${nombreTipo}`}
                           >
                             Editar
@@ -251,10 +231,7 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
                             variante="secundario"
                             tamano="sm"
                             icono={Trash2}
-                            onClick={() => {
-                              setAviso('');
-                              setBloquePorEliminar(bloque);
-                            }}
+                            onClick={() => setBloquePorEliminar(bloque)}
                             aria-label={`Eliminar bloque ${bloque.orden}: ${nombreTipo}`}
                           >
                             Eliminar
@@ -279,7 +256,6 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
             const msg = editandoBloque
               ? `Se actualizó el bloque «${nombreTipo}».`
               : `Se agregó el bloque «${nombreTipo}».`;
-            setAviso(msg);
             toast.exito(msg);
             setCreandoBloque(false);
             setEditandoBloque(null);
@@ -298,9 +274,7 @@ export default function EditorBloques({ paginaId, paginasDisponibles, puedeGesti
           paginasDisponibles={paginasDisponibles}
           onGuardado={async (guardada) => {
             await queryClient.invalidateQueries({ queryKey: [...CLAVE_PAGINAS, paginaId] });
-            const msg = `Se guardaron los cambios de la página «${guardada.titulo}».`;
-            setAviso(msg);
-            toast.exito(msg);
+            toast.exito(`Se guardaron los cambios de la página «${guardada.titulo}».`);
             setEditandoPagina(false);
             setTimeout(() => tituloRef.current?.focus(), 0);
           }}
