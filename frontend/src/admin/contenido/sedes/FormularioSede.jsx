@@ -1,11 +1,9 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ImagePlus, Loader2, Plus, Trash2, X } from 'lucide-react';
+import { ImagePlus, Plus, Trash2, X } from 'lucide-react';
 
-import CampoTexto from '../../componentes/CampoTexto.jsx';
 import SelectorImagenes from '../../multimedia/SelectorImagenes.jsx';
-import CampoArea from '../componentes/CampoArea.jsx';
-import CampoSelect from '../componentes/CampoSelect.jsx';
+import { Aviso, Boton, CampoArea, CampoCasilla, CampoSelect, CampoTexto } from '../../ui/index.js';
 import { extraerErroresApi } from '../componentes/errores.js';
 import { actualizarSede, CLAVE_SEDES } from './api.js';
 
@@ -16,7 +14,6 @@ export default function FormularioSede({
   puedeGestionarSedes,
   onGuardado,
 }) {
-  const idActivo = useId();
   const queryClient = useQueryClient();
 
   const [nombre, setNombre] = useState(sede.nombre ?? '');
@@ -152,16 +149,13 @@ export default function FormularioSede({
     <>
       <form onSubmit={enviar} noValidate className="flex flex-col gap-6">
         {errorGeneral && (
-          <p
-            role="alert"
-            className="rounded-md border border-redParish/30 bg-redParish/5 px-3 py-2 text-sm text-redParish"
-          >
-            {errorGeneral}
-          </p>
+          <Aviso tipo="error">
+            <p>{errorGeneral}</p>
+          </Aviso>
         )}
 
-        <fieldset className="rounded-lg border border-borderSoft bg-white p-5">
-          <legend className="px-1 font-display text-2xl font-semibold text-ink">
+        <fieldset className="rounded-lg border border-sand bg-white p-5 sm:p-6">
+          <legend className="px-1 font-body text-lg font-semibold text-ink">
             Datos generales
           </legend>
           <div className="mt-3 flex flex-col gap-4">
@@ -197,7 +191,7 @@ export default function FormularioSede({
             <div className="flex flex-col gap-2">
               <span className="text-sm font-semibold text-ink">Imagen de portada</span>
               {imagenPortada ? (
-                <div className="flex flex-wrap items-center gap-4 rounded-lg border border-borderSoft bg-cream/40 p-3">
+                <div className="flex flex-wrap items-center gap-4 rounded-lg border border-sand bg-panel p-3">
                   <img
                     src={imagenPortada.url}
                     alt={imagenPortada.textoAlternativo || nombre || 'Portada de la sede'}
@@ -205,61 +199,56 @@ export default function FormularioSede({
                   />
                   {puedeEditar && (
                     <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
+                      <Boton
+                        variante="secundario"
+                        tamano="sm"
                         onClick={() => setSelectorAbierto(true)}
                         disabled={isPending}
-                        className="rounded-md border border-borderSoft bg-white px-3 py-1.5 text-sm font-medium text-ink hover:bg-stone"
                       >
                         Cambiar imagen
-                      </button>
-                      <button
-                        type="button"
+                      </Boton>
+                      <Boton
+                        variante="peligro"
+                        tamano="sm"
+                        icono={X}
                         onClick={() => setImagenPortada(null)}
                         disabled={isPending}
-                        className="flex items-center gap-1 rounded-md border border-redParish/30 bg-white px-3 py-1.5 text-sm font-medium text-redParish hover:bg-redParish/5"
                       >
-                        <X className="size-4" aria-hidden="true" />
                         Quitar imagen
-                      </button>
+                      </Boton>
                     </div>
                   )}
                 </div>
               ) : (
                 puedeEditar && (
                   <div>
-                    <button
-                      type="button"
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
+                      icono={ImagePlus}
                       onClick={() => setSelectorAbierto(true)}
                       disabled={isPending}
-                      className="flex items-center gap-2 rounded-md border border-borderSoft bg-white px-3.5 py-2 text-sm font-medium text-ink hover:bg-stone"
                     >
-                      <ImagePlus className="size-4 text-goldDark" aria-hidden="true" />
                       Elegir imagen
-                    </button>
+                    </Boton>
                   </div>
                 )
               )}
             </div>
 
             {puedeGestionarSedes && (
-              <label htmlFor={idActivo} className="flex items-center gap-2.5 text-sm font-medium text-ink">
-                <input
-                  id={idActivo}
-                  type="checkbox"
-                  checked={activo}
-                  onChange={(e) => setActivo(e.target.checked)}
-                  disabled={deshabilitado}
-                  className="size-4 rounded border-borderSoft accent-goldDark"
-                />
-                Sede activa en el portal
-              </label>
+              <CampoCasilla
+                etiqueta="Sede activa en el portal"
+                checked={activo}
+                onChange={(e) => setActivo(e.target.checked)}
+                disabled={deshabilitado}
+              />
             )}
           </div>
         </fieldset>
 
-        <fieldset className="rounded-lg border border-borderSoft bg-white p-5">
-          <legend className="px-1 font-display text-2xl font-semibold text-ink">
+        <fieldset className="rounded-lg border border-sand bg-white p-5 sm:p-6">
+          <legend className="px-1 font-body text-lg font-semibold text-ink">
             Contacto y ubicación
           </legend>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
@@ -305,8 +294,8 @@ export default function FormularioSede({
           </div>
         </fieldset>
 
-        <fieldset className="rounded-lg border border-borderSoft bg-white p-5">
-          <legend className="px-1 font-display text-2xl font-semibold text-ink">
+        <fieldset className="rounded-lg border border-sand bg-white p-5 sm:p-6">
+          <legend className="px-1 font-body text-lg font-semibold text-ink">
             Configuración del portal
           </legend>
           <div className="mt-3 flex flex-col gap-4">
@@ -396,21 +385,21 @@ export default function FormularioSede({
           </div>
         </fieldset>
 
-        <fieldset className="rounded-lg border border-borderSoft bg-white p-5">
+        <fieldset className="rounded-lg border border-sand bg-white p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <legend className="px-1 font-display text-2xl font-semibold text-ink">
+            <legend className="px-1 font-body text-lg font-semibold text-ink">
               Redes sociales
             </legend>
             {puedeEditar && (
-              <button
-                type="button"
+              <Boton
+                variante="secundario"
+                tamano="sm"
+                icono={Plus}
                 onClick={agregarRed}
                 disabled={isPending || catalogoRedes.length === 0}
-                className="flex items-center gap-1 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-semibold text-ink hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
               >
-                <Plus className="size-3.5" aria-hidden="true" />
                 Agregar red social
-              </button>
+              </Boton>
             )}
           </div>
 
@@ -421,7 +410,7 @@ export default function FormularioSede({
               {redes.map((red, i) => (
                 <li
                   key={i}
-                  className="grid gap-3 rounded-md border border-borderSoft bg-cream/40 p-3 sm:grid-cols-[12rem_1fr_auto] sm:items-end"
+                  className="grid gap-3 rounded-md border border-sand bg-panel p-3 sm:grid-cols-[12rem_1fr_auto] sm:items-end"
                 >
                   <CampoSelect
                     etiqueta={`Red social ${i + 1}`}
@@ -447,15 +436,14 @@ export default function FormularioSede({
                   />
 
                   {puedeEditar && (
-                    <button
-                      type="button"
+                    <Boton
+                      variante="secundario"
                       onClick={() => quitarRed(i)}
                       disabled={isPending}
                       aria-label={`Quitar red social ${i + 1}`}
-                      className="flex items-center justify-center rounded-md border border-redParish/30 bg-white p-2.5 text-redParish hover:bg-redParish/5"
                     >
-                      <Trash2 className="size-4" aria-hidden="true" />
-                    </button>
+                      <Trash2 className="size-4 text-danger" aria-hidden="true" />
+                    </Boton>
                   )}
                 </li>
               ))}
@@ -465,14 +453,9 @@ export default function FormularioSede({
 
         {puedeEditar && (
           <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={isPending}
-              className="flex items-center gap-2 rounded-md bg-gold px-5 py-2.5 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            <Boton type="submit" variante="primario" cargando={isPending}>
               {isPending ? 'Guardando…' : 'Guardar cambios'}
-            </button>
+            </Boton>
           </div>
         )}
       </form>
@@ -490,4 +473,3 @@ export default function FormularioSede({
     </>
   );
 }
-

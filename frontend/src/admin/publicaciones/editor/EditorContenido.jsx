@@ -45,7 +45,7 @@ function PanelArchivo({ blockId, editor, alElegirDeBiblioteca }) {
           <button
             type="button"
             onClick={() => alElegirDeBiblioteca(blockId)}
-            className="rounded-md bg-gold px-3 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white"
+            className="rounded-md bg-gold px-3 py-2 text-sm font-semibold text-ink hover:bg-gold-dark focus-visible:outline-2 focus-visible:outline-ink"
           >
             Elegir de la biblioteca
           </button>
@@ -119,7 +119,7 @@ export default function EditorContenido({ valorInicial, alIniciar, alCambiar, et
   const tiposDeBloque = blockTypeSelectItems(editor).filter(esTipoDeBloquePermitido);
 
   return (
-    <div role="group" aria-label={etiqueta} className="rounded-md border border-borderSoft bg-white py-2">
+    <div role="group" aria-label={etiqueta} className="rounded-md border border-sand bg-white py-2">
       <BlockNoteView
         editor={editor}
         theme="light"
@@ -155,7 +155,7 @@ export default function EditorContenido({ valorInicial, alIniciar, alCambiar, et
         />
       </BlockNoteView>
       {subidas.length > 0 && (
-        <ul aria-label="Archivos que se están subiendo" aria-live="polite" className="mx-3 mt-2 flex flex-col gap-2 border-t border-borderSoft pt-3">
+        <ul aria-label="Archivos que se están subiendo" aria-live="polite" className="mx-3 mt-2 flex flex-col gap-2 border-t border-sand pt-3">
           {subidas.map(({ id, nombre, progreso }) => (
             <li key={id} className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <p className="min-w-0 break-words text-sm font-medium sm:w-1/3">{nombre}</p>
@@ -166,7 +166,7 @@ export default function EditorContenido({ valorInicial, alIniciar, alCambiar, et
                 type="button"
                 onClick={() => cancelar(id)}
                 aria-label={`Cancelar la subida de ${nombre}`}
-                className="w-fit rounded-md border border-borderSoft bg-white px-3 py-1.5 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
+                className="w-fit rounded-md border border-sand bg-white px-3 py-1.5 text-sm font-medium text-ink hover:bg-panel focus-visible:outline-2 focus-visible:outline-ink"
               >
                 Cancelar
               </button>

@@ -1,11 +1,8 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
 
-import CampoTexto from '../../componentes/CampoTexto.jsx';
 import Dialogo from '../../componentes/Dialogo.jsx';
-import CampoArea from '../componentes/CampoArea.jsx';
-import CampoSelect from '../componentes/CampoSelect.jsx';
+import { Aviso, Boton, CampoArea, CampoCasilla, CampoSelect, CampoTexto } from '../../ui/index.js';
 import { extraerErroresApi } from '../componentes/errores.js';
 import {
   actualizarPagina,
@@ -17,7 +14,6 @@ import {
 
 export default function FormularioPagina({ pagina, paginasDisponibles = [], onGuardado, onCerrar }) {
   const esEdicion = Boolean(pagina);
-  const idMenu = useId();
   const queryClient = useQueryClient();
 
   const [titulo, setTitulo] = useState(pagina?.titulo ?? '');
@@ -90,12 +86,9 @@ export default function FormularioPagina({ pagina, paginasDisponibles = [], onGu
     >
       <form onSubmit={enviar} noValidate className="flex flex-col gap-4">
         {errorGeneral && (
-          <p
-            role="alert"
-            className="rounded-md border border-redParish/30 bg-redParish/5 px-3 py-2 text-sm text-redParish"
-          >
-            {errorGeneral}
-          </p>
+          <Aviso tipo="error">
+            <p>{errorGeneral}</p>
+          </Aviso>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -164,26 +157,20 @@ export default function FormularioPagina({ pagina, paginasDisponibles = [], onGu
           onChange={(e) => setDescripcionSeo(e.target.value)}
           maxLength={300}
           rows={2}
-          ayuda={`${descripcionSeo.length}/300 caracteres`}
+          mostrarContador
           error={erroresCampo.descripcionSeo}
           disabled={isPending}
         />
 
         <div className="grid items-end gap-4 sm:grid-cols-2">
-          <label
-            htmlFor={idMenu}
-            className="flex items-center gap-2.5 rounded-md border border-borderSoft bg-cream/40 px-3 py-2.5 text-sm font-medium text-ink"
-          >
-            <input
-              id={idMenu}
-              type="checkbox"
+          <div className="rounded-md border border-sand bg-panel px-3 py-2.5">
+            <CampoCasilla
+              etiqueta="Mostrar en el menú de navegación"
               checked={mostrarEnMenu}
               onChange={(e) => setMostrarEnMenu(e.target.checked)}
               disabled={isPending}
-              className="size-4 accent-goldDark"
             />
-            Mostrar en el menú de navegación
-          </label>
+          </div>
 
           <CampoTexto
             etiqueta="Orden en el menú"
@@ -196,26 +183,15 @@ export default function FormularioPagina({ pagina, paginasDisponibles = [], onGu
           />
         </div>
 
-        <div className="mt-2 flex flex-wrap justify-end gap-2">
-          <button
-            type="button"
-            onClick={onCerrar}
-            disabled={isPending}
-            className="rounded-md border border-borderSoft bg-white px-4 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark disabled:opacity-50"
-          >
+        <div className="mt-2 flex flex-wrap justify-end gap-2 border-t border-sand pt-4">
+          <Boton variante="secundario" onClick={onCerrar} disabled={isPending}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="flex items-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+          </Boton>
+          <Boton type="submit" variante="primario" cargando={isPending}>
             {isPending ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Crear página'}
-          </button>
+          </Boton>
         </div>
       </form>
     </Dialogo>
   );
 }
-

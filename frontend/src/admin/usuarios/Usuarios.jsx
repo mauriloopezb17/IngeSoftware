@@ -1,10 +1,20 @@
-import { useId, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { KeyRound, Pencil, Plus, UserCheck, UserX } from 'lucide-react';
+import { Inbox, KeyRound, Pencil, Plus, UserCheck, UserX } from 'lucide-react';
 
 import Paginacion from '../componentes/Paginacion.jsx';
-import EstadoLista from '../contenido/componentes/EstadoLista.jsx';
 import { CLAVE_SEDES, listarSedes } from '../contenido/sedes/api.js';
+import {
+  Aviso,
+  Boton,
+  CampoSelect,
+  CampoTexto,
+  EncabezadoPantalla,
+  EsqueletoTarjetas,
+  EstadoVacio,
+  Insignia,
+  useToast,
+} from '../ui/index.js';
 import {
   actualizarUsuario,
   CLAVE_USUARIOS,
@@ -17,10 +27,7 @@ import RestablecerContrasena from './RestablecerContrasena.jsx';
 
 export default function Usuarios() {
   const queryClient = useQueryClient();
-  const idBuscar = useId();
-  const idRol = useId();
-  const idSede = useId();
-  const idActivo = useId();
+  const toast = useToast();
   const tituloRef = useRef(null);
 
   const [buscar, setBuscar] = useState('');
@@ -59,11 +66,11 @@ export default function Usuarios() {
     onSuccess: (actualizado) => {
       setErrorAccion('');
       queryClient.invalidateQueries({ queryKey: CLAVE_USUARIOS });
-      setAviso(
-        actualizado.activo
-          ? `Se activó la cuenta de «${actualizado.nombreCompleto}».`
-          : `Se desactivó la cuenta de «${actualizado.nombreCompleto}».`,
-      );
+      const msg = actualizado.activo
+        ? `Se activó la cuenta de «${actualizado.nombreCompleto}».`
+        : `Se desactivó la cuenta de «${actualizado.nombreCompleto}».`;
+      setAviso(msg);
+      toast.exito(msg);
     },
     onError: (err) => {
       setAviso('');
@@ -77,166 +84,139 @@ export default function Usuarios() {
 
   return (
     <section className="mx-auto max-w-5xl">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1
-            ref={tituloRef}
-            tabIndex={-1}
-            className="font-display text-4xl font-semibold text-ink outline-none"
+      <EncabezadoPantalla
+        titulo="Usuarios"
+        descripcion="Cuentas de acceso al panel parroquial, roles y sedes asignadas."
+        headingRef={tituloRef}
+        acciones={
+          <Boton
+            variante="primario"
+            icono={Plus}
+            onClick={() => {
+              setAviso('');
+              setErrorAccion('');
+              setCreando(true);
+            }}
           >
-            Usuarios
-          </h1>
-          <p className="mt-2 text-muted">
-            Cuentas de acceso al panel parroquial, roles y sedes asignadas.
-          </p>
-        </div>
+            Nuevo usuario
+          </Boton>
+        }
+      />
 
-        <button
-          type="button"
-          onClick={() => {
-            setAviso('');
-            setErrorAccion('');
-            setCreando(true);
-          }}
-          className="flex items-center gap-2 rounded-md bg-gold px-4 py-2.5 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark"
-        >
-          <Plus className="size-4" aria-hidden="true" />
-          Nuevo usuario
-        </button>
-      </header>
-
-      <p
-        role="status"
-        className={aviso ? 'mt-4 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark' : 'sr-only'}
-      >
-        {aviso}
-      </p>
-
-      {errorAccion && (
-        <p
-          role="alert"
-          className="mt-4 rounded-md border border-redParish/30 bg-redParish/5 px-3 py-2 text-sm text-redParish"
-        >
-          {errorAccion}
-        </p>
+      {aviso ? (
+        <Aviso tipo="exito" className="mt-4">
+          {aviso}
+        </Aviso>
+      ) : (
+        <p role="status" className="sr-only" />
       )}
 
-      <div className="mt-6 grid gap-3 rounded-lg border border-borderSoft bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="flex flex-col gap-1">
-          <label htmlFor={idBuscar} className="text-xs font-semibold text-muted">
-            Buscar
-          </label>
-          <input
-            id={idBuscar}
-            type="search"
-            value={buscar}
-            onChange={(e) => {
-              setBuscar(e.target.value);
-              setPagina(1);
-            }}
-            placeholder="Nombre o correo"
-            className="rounded-md border border-borderSoft bg-white px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-goldDark"
-          />
-        </div>
+      {errorAccion && (
+        <Aviso tipo="error" className="mt-4">
+          <p>{errorAccion}</p>
+        </Aviso>
+      )}
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor={idRol} className="text-xs font-semibold text-muted">
-            Rol
-          </label>
-          <select
-            id={idRol}
-            value={rol}
-            onChange={(e) => {
-              setRol(e.target.value);
-              setPagina(1);
-            }}
-            className="rounded-md border border-borderSoft bg-white px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-goldDark"
-          >
-            <option value="">Todos los roles</option>
-            {ROLES_USUARIO.map((r) => (
-              <option key={r.codigo} value={r.codigo}>
-                {r.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="mt-6 grid gap-3 rounded-lg border border-sand bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <CampoTexto
+          etiqueta="Buscar"
+          type="search"
+          value={buscar}
+          onChange={(e) => {
+            setBuscar(e.target.value);
+            setPagina(1);
+          }}
+          placeholder="Nombre o correo"
+        />
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor={idSede} className="text-xs font-semibold text-muted">
-            Sede
-          </label>
-          <select
-            id={idSede}
-            value={sede}
-            onChange={(e) => {
-              setSede(e.target.value);
-              setPagina(1);
-            }}
-            className="rounded-md border border-borderSoft bg-white px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-goldDark"
-          >
-            <option value="">Todas las sedes</option>
-            {sedes.map((s) => (
-              <option key={s.id} value={s.slug}>
-                {s.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
+        <CampoSelect
+          etiqueta="Rol"
+          value={rol}
+          onChange={(e) => {
+            setRol(e.target.value);
+            setPagina(1);
+          }}
+        >
+          <option value="">Todos los roles</option>
+          {ROLES_USUARIO.map((r) => (
+            <option key={r.codigo} value={r.codigo}>
+              {r.nombre}
+            </option>
+          ))}
+        </CampoSelect>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor={idActivo} className="text-xs font-semibold text-muted">
-            Estado
-          </label>
-          <select
-            id={idActivo}
-            value={activo}
-            onChange={(e) => {
-              setActivo(e.target.value);
-              setPagina(1);
-            }}
-            className="rounded-md border border-borderSoft bg-white px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-goldDark"
-          >
-            <option value="">Todos</option>
-            <option value="true">Activos</option>
-            <option value="false">Inactivos</option>
-          </select>
-        </div>
+        <CampoSelect
+          etiqueta="Sede"
+          value={sede}
+          onChange={(e) => {
+            setSede(e.target.value);
+            setPagina(1);
+          }}
+        >
+          <option value="">Todas las sedes</option>
+          {sedes.map((s) => (
+            <option key={s.id} value={s.slug}>
+              {s.nombre}
+            </option>
+          ))}
+        </CampoSelect>
+
+        <CampoSelect
+          etiqueta="Estado"
+          value={activo}
+          onChange={(e) => {
+            setActivo(e.target.value);
+            setPagina(1);
+          }}
+        >
+          <option value="">Todos</option>
+          <option value="true">Activos</option>
+          <option value="false">Inactivos</option>
+        </CampoSelect>
       </div>
 
-      <div className="mt-6">
-        <EstadoLista
-          cargando={usuariosQuery.isPending}
-          error={usuariosQuery.isError ? usuariosQuery.error : null}
-          vacio={!usuariosQuery.isPending && !usuariosQuery.isError && usuarios.length === 0}
-          textoCargando="Cargando usuarios…"
-          textoVacio="No hay usuarios que coincidan con los filtros."
-          onReintentar={() => usuariosQuery.refetch()}
-        />
+      <div className="mt-6" aria-busy={usuariosQuery.isPending}>
+        {usuariosQuery.isPending && (
+          <EsqueletoTarjetas cantidad={3} columnas="grid-cols-1" etiqueta="Cargando usuarios…" />
+        )}
+
+        {usuariosQuery.isError && (
+          <Aviso
+            tipo="error"
+            accion={
+              <Boton variante="secundario" tamano="sm" onClick={() => usuariosQuery.refetch()}>
+                Reintentar
+              </Boton>
+            }
+          >
+            <p>{usuariosQuery.error?.message || 'No se pudieron cargar los datos.'}</p>
+          </Aviso>
+        )}
+
+        {!usuariosQuery.isPending && !usuariosQuery.isError && usuarios.length === 0 && (
+          <EstadoVacio
+            icono={Inbox}
+            titulo="No hay usuarios que coincidan con los filtros."
+            descripcion="Ajusta los filtros de búsqueda o crea un usuario nuevo."
+          />
+        )}
 
         {usuarios.length > 0 && (
           <ul aria-label="Usuarios" className="flex flex-col gap-3">
             {usuarios.map((usuario) => (
               <li
                 key={usuario.id}
-                className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-borderSoft bg-white p-4"
+                className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-sand bg-white p-5"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg font-semibold text-ink">{usuario.nombreCompleto}</h2>
-                    <span className="rounded-full bg-goldPale px-2.5 py-0.5 text-xs font-semibold text-goldDark">
-                      {usuario.rol.nombre}
-                    </span>
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        usuario.activo
-                          ? 'bg-emerald-50 text-emerald-800'
-                          : 'bg-stone text-muted'
-                      }`}
-                    >
+                    <h2 className="font-body text-base font-semibold text-ink">{usuario.nombreCompleto}</h2>
+                    <Insignia variante="programado">{usuario.rol.nombre}</Insignia>
+                    <Insignia variante={usuario.activo ? 'publicado' : 'archivado'}>
                       {usuario.activo ? 'Activo' : 'Inactivo'}
-                    </span>
+                    </Insignia>
                   </div>
-                  <p className="mt-1 break-all text-sm text-charcoal">{usuario.correo}</p>
+                  <p className="mt-1 break-all text-sm text-ink">{usuario.correo}</p>
                   <p className="mt-1 text-xs text-muted">
                     Sede: {usuario.sede ? usuario.sede.nombre : 'Todas las sedes'} · Último acceso:{' '}
                     {formatearFechaUsuario(usuario.fechaUltimoAcceso)}
@@ -244,36 +224,38 @@ export default function Usuarios() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
+                  <Boton
+                    variante="secundario"
+                    tamano="sm"
+                    icono={Pencil}
                     onClick={() => {
                       setAviso('');
                       setErrorAccion('');
                       setEditando(usuario);
                     }}
                     aria-label={`Editar a ${usuario.nombreCompleto}`}
-                    className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium text-ink hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
                   >
-                    <Pencil className="size-4" aria-hidden="true" />
                     Editar
-                  </button>
+                  </Boton>
 
-                  <button
-                    type="button"
+                  <Boton
+                    variante="secundario"
+                    tamano="sm"
+                    icono={KeyRound}
                     onClick={() => {
                       setAviso('');
                       setErrorAccion('');
                       setRestableciendo(usuario);
                     }}
                     aria-label={`Restablecer contraseña de ${usuario.nombreCompleto}`}
-                    className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium text-ink hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
                   >
-                    <KeyRound className="size-4" aria-hidden="true" />
                     Contraseña
-                  </button>
+                  </Boton>
 
-                  <button
-                    type="button"
+                  <Boton
+                    variante="secundario"
+                    tamano="sm"
+                    icono={usuario.activo ? UserX : UserCheck}
                     onClick={() =>
                       cambiarEstadoMut.mutate({
                         id: usuario.id,
@@ -286,24 +268,9 @@ export default function Usuarios() {
                         ? `Desactivar a ${usuario.nombreCompleto}`
                         : `Activar a ${usuario.nombreCompleto}`
                     }
-                    className={`flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium focus-visible:outline-2 ${
-                      usuario.activo
-                        ? 'text-redParish hover:bg-redParish/5 focus-visible:outline-redParish'
-                        : 'text-ink hover:bg-stone focus-visible:outline-goldDark'
-                    }`}
                   >
-                    {usuario.activo ? (
-                      <>
-                        <UserX className="size-4" aria-hidden="true" />
-                        Desactivar
-                      </>
-                    ) : (
-                      <>
-                        <UserCheck className="size-4" aria-hidden="true" />
-                        Activar
-                      </>
-                    )}
-                  </button>
+                    {usuario.activo ? 'Desactivar' : 'Activar'}
+                  </Boton>
                 </div>
               </li>
             ))}
@@ -324,11 +291,11 @@ export default function Usuarios() {
           usuario={editando}
           sedes={sedes}
           onGuardado={(guardado) => {
-            setAviso(
-              editando
-                ? `Se actualizaron los datos de «${guardado.nombreCompleto}».`
-                : `Se creó el usuario «${guardado.nombreCompleto}».`,
-            );
+            const msg = editando
+              ? `Se actualizaron los datos de «${guardado.nombreCompleto}».`
+              : `Se creó el usuario «${guardado.nombreCompleto}».`;
+            setAviso(msg);
+            toast.exito(msg);
             setCreando(false);
             setEditando(null);
             setTimeout(() => tituloRef.current?.focus(), 0);
@@ -344,7 +311,9 @@ export default function Usuarios() {
         <RestablecerContrasena
           usuario={restableciendo}
           onGuardado={() => {
-            setAviso(`Se restableció la contraseña de «${restableciendo.nombreCompleto}».`);
+            const msg = `Se restableció la contraseña de «${restableciendo.nombreCompleto}».`;
+            setAviso(msg);
+            toast.exito(msg);
             setRestableciendo(null);
             setTimeout(() => tituloRef.current?.focus(), 0);
           }}
@@ -354,4 +323,3 @@ export default function Usuarios() {
     </section>
   );
 }
-

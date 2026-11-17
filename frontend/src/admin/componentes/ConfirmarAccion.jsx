@@ -1,5 +1,7 @@
-import { Loader2, TriangleAlert } from 'lucide-react';
+import { useRef } from 'react';
 
+import Aviso from '../ui/Aviso.jsx';
+import Boton from '../ui/Boton.jsx';
 import Dialogo from './Dialogo.jsx';
 
 // Confirmación de una acción que no se puede deshacer (eliminar, quitar...). Quien lo usa maneja
@@ -14,51 +16,35 @@ export default function ConfirmarAccion({
   onConfirmar,
   onCancelar,
 }) {
+  const refCancelar = useRef(null);
   const detalles = error?.detalles ?? [];
 
   return (
-    <Dialogo titulo={titulo} onCerrar={pendiente ? () => {} : onCancelar} ancho="max-w-md">
-      <div className="text-sm text-charcoal">{children}</div>
+    <Dialogo titulo={titulo} onCerrar={pendiente ? () => {} : onCancelar} ancho="max-w-md" refInicial={refCancelar}>
+      <div className="text-sm text-ink">{children}</div>
 
       {error && (
-        <div
-          role="alert"
-          className="mt-4 flex items-start gap-2 rounded-md border border-redParish/30 bg-redParish/5 p-3 text-sm text-redParish"
-        >
-          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          <div>
-            <p>{error.message}</p>
-            {detalles.map((detalle) => (
-              <p key={`${detalle.campo}-${detalle.mensaje}`} className="mt-1">
-                {detalle.mensaje}
-              </p>
-            ))}
-          </div>
-        </div>
+        <Aviso tipo="error" className="mt-4">
+          <p>{error.message}</p>
+          {detalles.map((detalle) => (
+            <p key={`${detalle.campo}-${detalle.mensaje}`} className="mt-1">
+              {detalle.mensaje}
+            </p>
+          ))}
+        </Aviso>
       )}
 
       <div className="mt-5 flex flex-wrap justify-end gap-3">
-        <button
-          type="button"
-          onClick={onCancelar}
-          disabled={pendiente}
-          className="rounded-md border border-borderSoft bg-white px-4 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark disabled:opacity-60"
-        >
+        <Boton ref={refCancelar} variante="secundario" onClick={onCancelar} disabled={pendiente}>
           Cancelar
-        </button>
-        <button
-          type="button"
+        </Boton>
+        <Boton
+          variante={peligro ? 'peligro' : 'primario'}
           onClick={onConfirmar}
-          disabled={pendiente}
-          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
-            peligro
-              ? 'bg-redParish text-white hover:bg-redParish/90 focus-visible:outline-redParish'
-              : 'bg-gold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-goldDark'
-          }`}
+          cargando={pendiente}
         >
-          {pendiente && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
           {textoConfirmar}
-        </button>
+        </Boton>
       </div>
     </Dialogo>
   );

@@ -1,18 +1,24 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ExternalLink, FileText, Inbox, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
-import { AvisoExito, AvisoSoloLectura, Cargando, ErrorConsulta } from '../componentes/EstadoConsulta.jsx';
-import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import Paginacion from '../componentes/Paginacion.jsx';
+import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import { formatearFecha, formatearTamano } from '../multimedia/formato.js';
 import { usePermisos } from '../permisos/usePermisos.js';
+import {
+  Aviso,
+  Boton,
+  CampoTexto,
+  EncabezadoPantalla,
+  EsqueletoTarjetas,
+  EstadoVacio,
+  Insignia,
+  useToast,
+} from '../ui/index.js';
 import { CLAVE_BOLETINES, eliminarBoletin, formatearPeriodo, listarBoletines } from './api.js';
-
-const botonFila =
-  'inline-flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark';
 
 function leerFiltros(parametros) {
   const anio = parametros.get('anio') ?? '';
@@ -27,10 +33,10 @@ export default function ListadoBoletines() {
   const editable = puede('boletines.gestionar');
   const clienteConsultas = useQueryClient();
   const ubicacion = useLocation();
+  const toast = useToast();
   const [aviso, setAviso] = useState(ubicacion.state?.aviso ?? '');
   const avisoRef = useEnfocarAviso(aviso); // tras eliminar, el foco pasa al mensaje (la fila y su botón desaparecen)
   const [porEliminar, setPorEliminar] = useState(null);
-  const idAnio = useId();
 
   const { data, isPending, isError, error, isPlaceholderData, refetch } = useQuery({
     queryKey: [...CLAVE_BOLETINES, 'lista', filtros],
@@ -42,7 +48,9 @@ export default function ListadoBoletines() {
     mutationFn: (boletin) => eliminarBoletin(boletin.id),
     onSuccess: (_, boletin) => {
       clienteConsultas.invalidateQueries({ queryKey: CLAVE_BOLETINES });
-      setAviso(`Se eliminó el boletín «${boletin.titulo}». Su PDF sigue en la biblioteca multimedia.`);
+      const mensaje = `Se eliminó el boletín «${boletin.titulo}». Su PDF sigue en la biblioteca multimedia.`;
+      setAviso(mensaje);
+      toast.exito(mensaje);
       setPorEliminar(null);
     },
   });
@@ -59,30 +67,40 @@ export default function ListadoBoletines() {
 
   return (
     <section className="mx-auto max-w-5xl">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-4xl font-semibold text-ink">Boletines</h1>
-          <p className="mt-2 text-muted">Boletines parroquiales en PDF. Se publican directamente, sin revisión.</p>
-        </div>
-        {editable && (
-          <Link
-            to="/admin/boletines/nuevo"
-            className="flex items-center gap-2 rounded-md bg-gold px-4 py-2.5 font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark"
-          >
-            <Plus className="size-4" aria-hidden="true" /> Nuevo boletín
-          </Link>
-        )}
-      </header>
+      <EncabezadoPantalla
+        titulo="Boletines"
+        descripcion="Boletines parroquiales en PDF. Se publican directamente, sin revisión."
+        acciones={
+          editable && (
+            <Boton como={Link} to="/admin/boletines/nuevo" variante="primario" icono={Plus}>
+              Nuevo boletín
+            </Boton>
+          )
+        }
+      />
 
-      {!editable && <AvisoSoloLectura>Tu rol puede consultar los boletines, pero no modificarlos.</AvisoSoloLectura>}
-      <AvisoExito ref={avisoRef}>{aviso}</AvisoExito>
+      {!editable && (
+        <Aviso tipo="soloLectura" className="mt-4">
+          <p>
+            <strong className="font-semibold text-ink">Solo lectura.</strong> Tu rol puede consultar los boletines, pero no
+            modificarlos.
+          </p>
+        </Aviso>
+      )}
+      {aviso && (
+        <Aviso
+          ref={avisoRef}
+          tipo="exito"
+          tabIndex={-1}
+          className="mt-4 outline-none focus-visible:outline-2 focus-visible:outline-ink"
+        >
+          {aviso}
+        </Aviso>
+      )}
 
-      <div className="mt-6 flex flex-col gap-1 rounded-lg border border-borderSoft bg-white p-4 sm:w-56">
-        <label htmlFor={idAnio} className="text-xs font-semibold text-muted">
-          Año
-        </label>
-        <input
-          id={idAnio}
+      <div className="mt-6 rounded-lg border border-sand bg-white p-4 sm:w-60">
+        <CampoTexto
+          etiqueta="Año"
           type="number"
           inputMode="numeric"
           min="2000"
@@ -90,16 +108,26 @@ export default function ListadoBoletines() {
           value={filtros.anio}
           onChange={(e) => cambiar({ anio: e.target.value })}
           placeholder="Todos"
-          className="w-full rounded-md border border-borderSoft bg-white px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-goldDark"
         />
       </div>
 
       <div className="mt-6" aria-busy={isPending || isPlaceholderData}>
-        {isPending && <Cargando texto="Cargando boletines…" />}
-        {isError && !data && <ErrorConsulta texto="No se pudieron cargar los boletines" error={error} onReintentar={refetch} />}
+        {isPending && <EsqueletoTarjetas cantidad={3} columnas="grid-cols-1" etiqueta="Cargando boletines…" />}
+        {isError && !data && (
+          <Aviso
+            tipo="error"
+            accion={
+              <Boton variante="secundario" tamano="sm" onClick={() => refetch()}>
+                Reintentar
+              </Boton>
+            }
+          >
+            <p>No se pudieron cargar los boletines: {error.message}</p>
+          </Aviso>
+        )}
         {data && (
           <>
-            <p className="mb-3 text-sm text-muted" aria-live="polite">
+            <p className="mb-3 text-sm tabular-nums text-muted" aria-live="polite">
               {data.paginacion.total} {data.paginacion.total === 1 ? 'boletín' : 'boletines'}
             </p>
             {boletines.length ? (
@@ -108,14 +136,14 @@ export default function ListadoBoletines() {
                   <li key={boletin.id}>
                     <article
                       aria-labelledby={`boletin-${boletin.id}`}
-                      className="flex flex-col gap-3 rounded-lg border border-borderSoft bg-white p-4 sm:flex-row sm:items-start sm:justify-between"
+                      className="flex flex-col gap-3 rounded-lg border border-sand bg-white p-5 sm:flex-row sm:items-start sm:justify-between"
                     >
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold uppercase text-goldDark">{formatearPeriodo(boletin.periodo)}</p>
-                        <h2 id={`boletin-${boletin.id}`} className="mt-1 break-words font-semibold text-ink">
+                        <Insignia variante="programado">{formatearPeriodo(boletin.periodo)}</Insignia>
+                        <h2 id={`boletin-${boletin.id}`} className="mt-2 break-words text-base font-semibold text-ink">
                           {boletin.titulo}
                         </h2>
-                        <p className="mt-1 flex items-start gap-1.5 text-sm text-charcoal">
+                        <p className="mt-1 flex items-start gap-1.5 text-sm text-ink">
                           <FileText className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden="true" />
                           <span className="break-words">
                             {boletin.archivo.nombreOriginal} · {formatearTamano(boletin.archivo.tamanoBytes)}
@@ -126,23 +154,39 @@ export default function ListadoBoletines() {
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-wrap gap-2">
-                        <a
+                        <Boton
+                          como="a"
                           href={boletin.archivo.url}
                           target="_blank"
                           rel="noopener noreferrer"
+                          variante="secundario"
+                          tamano="sm"
+                          icono={ExternalLink}
                           aria-label={`Abrir el PDF de «${boletin.titulo}» (se abre en otra pestaña)`}
-                          className={botonFila}
                         >
-                          <ExternalLink className="size-3.5" aria-hidden="true" /> Abrir PDF
-                        </a>
+                          Abrir PDF
+                        </Boton>
                         {editable && (
                           <>
-                            <Link to={`/admin/boletines/${boletin.id}/editar`} aria-label={`Editar «${boletin.titulo}»`} className={botonFila}>
-                              <Pencil className="size-3.5" aria-hidden="true" /> Editar
-                            </Link>
-                            <button type="button" onClick={() => setPorEliminar(boletin)} aria-label={`Eliminar «${boletin.titulo}»`} className={botonFila}>
-                              <Trash2 className="size-3.5" aria-hidden="true" /> Eliminar
-                            </button>
+                            <Boton
+                              como={Link}
+                              to={`/admin/boletines/${boletin.id}/editar`}
+                              variante="secundario"
+                              tamano="sm"
+                              icono={Pencil}
+                              aria-label={`Editar «${boletin.titulo}»`}
+                            >
+                              Editar
+                            </Boton>
+                            <Boton
+                              variante="secundario"
+                              tamano="sm"
+                              icono={Trash2}
+                              onClick={() => setPorEliminar(boletin)}
+                              aria-label={`Eliminar «${boletin.titulo}»`}
+                            >
+                              Eliminar
+                            </Boton>
                           </>
                         )}
                       </div>
@@ -151,12 +195,24 @@ export default function ListadoBoletines() {
                 ))}
               </ul>
             ) : (
-              <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-borderSoft bg-white py-12 text-center text-muted">
-                <Inbox className="size-10" aria-hidden="true" />
-                <p>{filtros.anio ? 'No hay boletines de ese año.' : 'Todavía no hay boletines.'}</p>
-              </div>
+              <EstadoVacio
+                icono={Inbox}
+                titulo={filtros.anio ? 'No hay boletines de ese año.' : 'Todavía no hay boletines.'}
+                descripcion="Sube y publica el primer boletín parroquial en PDF."
+                accion={
+                  editable && (
+                    <Boton como={Link} to="/admin/boletines/nuevo" variante="primario" icono={Plus}>
+                      Nuevo boletín
+                    </Boton>
+                  )
+                }
+              />
             )}
-            <Paginacion paginacion={data.paginacion} nombre="Paginación de boletines" onCambiar={(pagina) => cambiar({ pagina })} />
+            <Paginacion
+              paginacion={data.paginacion}
+              nombre="Paginación de boletines"
+              onCambiar={(pagina) => cambiar({ pagina })}
+            />
           </>
         )}
       </div>

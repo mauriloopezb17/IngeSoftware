@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, FileText, Loader2, Save } from 'lucide-react';
+import { AlertCircle, FileText, Save } from 'lucide-react';
 
-import CampoTexto from '../componentes/CampoTexto.jsx';
 import { erroresDe } from '../componentes/erroresFormulario.js';
 import { formatearTamano } from '../multimedia/formato.js';
+import { Aviso, Boton, CampoTexto, useToast } from '../ui/index.js';
 import { actualizarBoletin, CLAVE_BOLETINES, crearBoletin } from './api.js';
 import SelectorPdf from './SelectorPdf.jsx';
 
@@ -27,6 +27,7 @@ function validarLocal(campos) {
 export default function FormularioBoletin({ boletin }) {
   const navegar = useNavigate();
   const clienteConsultas = useQueryClient();
+  const toast = useToast();
   const avisos = useRef(null);
   const editando = Boolean(boletin);
 
@@ -50,9 +51,11 @@ export default function FormularioBoletin({ boletin }) {
     mutationFn: (cuerpo) => (editando ? actualizarBoletin(boletin.id, cuerpo) : crearBoletin(cuerpo)),
     onSuccess: (guardado) => {
       clienteConsultas.invalidateQueries({ queryKey: CLAVE_BOLETINES });
-      navegar('/admin/boletines', {
-        state: { aviso: editando ? `Se guardaron los cambios de «${guardado.titulo}».` : `Se publicó el boletín «${guardado.titulo}».` },
-      });
+      const mensaje = editando
+        ? `Se guardaron los cambios de «${guardado.titulo}».`
+        : `Se publicó el boletín «${guardado.titulo}».`;
+      toast.exito(mensaje);
+      navegar('/admin/boletines', { state: { aviso: mensaje } });
     },
     onError: (error) => {
       const { errores: porCampo, generales: g } = erroresDe(error, CAMPO_DE_ERROR);
@@ -73,20 +76,16 @@ export default function FormularioBoletin({ boletin }) {
   const mensajes = [...Object.values(errores), ...generales];
 
   return (
-    <form onSubmit={enviar} noValidate className="mt-6 flex flex-col gap-5">
+    <form onSubmit={enviar} noValidate className="mt-6 flex flex-col gap-5 rounded-lg border border-sand bg-white p-5 sm:p-6">
       <div ref={avisos} tabIndex={-1} className="outline-none">
         {mensajes.length > 0 && (
-          <div role="alert" className="flex items-start gap-2 rounded-lg border border-redParish/30 bg-redParish/5 p-4 text-sm text-redParish">
-            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            <div>
-              <p className="font-semibold">No se pudo guardar. Revisa lo siguiente:</p>
-              <ul className="mt-1 list-disc pl-5">
-                {mensajes.map((m) => (
-                  <li key={m}>{m}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <Aviso tipo="error" titulo="No se pudo guardar. Revisa lo siguiente:">
+            <ul className="mt-1 list-disc pl-5">
+              {mensajes.map((m, i) => (
+                <li key={`${i}-${m}`}>{m}</li>
+              ))}
+            </ul>
+          </Aviso>
         )}
       </div>
 
@@ -117,10 +116,10 @@ export default function FormularioBoletin({ boletin }) {
       <fieldset aria-describedby={errores.archivo ? 'error-archivo' : undefined} className="flex flex-col gap-2">
         <legend className="text-sm font-semibold text-ink">Archivo PDF</legend>
         {campos.archivo ? (
-          <p className="flex items-start gap-2 rounded-md border border-borderSoft bg-white p-3 text-sm">
+          <p className="flex items-start gap-2.5 rounded-md border border-sand bg-panel p-3 text-sm">
             <FileText className="mt-0.5 size-5 shrink-0 text-muted" aria-hidden="true" />
             <span className="min-w-0">
-              <span className="block break-words font-semibold">{campos.archivo.nombreOriginal}</span>
+              <span className="block break-words font-semibold text-ink">{campos.archivo.nombreOriginal}</span>
               <span className="block text-xs text-muted">{formatearTamano(campos.archivo.tamanoBytes)}</span>
             </span>
           </p>
@@ -128,40 +127,25 @@ export default function FormularioBoletin({ boletin }) {
           <p className="text-sm text-muted">Todavía no elegiste el PDF.</p>
         )}
         {errores.archivo && (
-          <p id="error-archivo" className="text-sm text-redParish">
-            {errores.archivo}
+          <p id="error-archivo" className="flex items-start gap-1.5 text-sm text-danger">
+            <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+            <span>{errores.archivo}</span>
           </p>
         )}
         <div>
-          <button
-            type="button"
-            onClick={() => setEligiendo(true)}
-            className="rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-          >
+          <Boton variante="secundario" tamano="sm" onClick={() => setEligiendo(true)}>
             {campos.archivo ? (editando ? 'Reemplazar PDF' : 'Cambiar PDF') : 'Elegir PDF'}
-          </button>
+          </Boton>
         </div>
       </fieldset>
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-borderSoft pt-5">
-        <button
-          type="submit"
-          disabled={guardar.isPending}
-          className="flex items-center gap-2 rounded-md bg-gold px-5 py-2.5 font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {guardar.isPending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <Save className="size-4" aria-hidden="true" />
-          )}
+      <div className="flex flex-wrap items-center gap-3 border-t border-sand pt-5">
+        <Boton type="submit" variante="primario" icono={Save} cargando={guardar.isPending}>
           {editando ? 'Guardar cambios' : 'Publicar boletín'}
-        </button>
-        <Link
-          to="/admin/boletines"
-          className="rounded-md border border-borderSoft bg-white px-4 py-2.5 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-        >
+        </Boton>
+        <Boton como={Link} to="/admin/boletines" variante="secundario">
           Cancelar
-        </Link>
+        </Boton>
       </div>
 
       {eligiendo && (

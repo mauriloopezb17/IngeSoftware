@@ -1,17 +1,14 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
 
-import CampoTexto from '../../componentes/CampoTexto.jsx';
 import Dialogo from '../../componentes/Dialogo.jsx';
-import CampoSelect from '../componentes/CampoSelect.jsx';
+import { Aviso, Boton, CampoCasilla, CampoSelect, CampoTexto } from '../../ui/index.js';
 import { extraerErroresApi } from '../componentes/errores.js';
 import { actualizarHorario, CLAVE_HORARIOS, crearHorario, DIAS_SEMANA } from './api.js';
 
 // Formulario modal para crear o editar un horario.
 export default function FormularioHorario({ horario, tiposHorario, onGuardado, onCerrar }) {
   const esEdicion = Boolean(horario);
-  const idActivo = useId();
   const queryClient = useQueryClient();
 
   const [tipoHorarioId, setTipoHorarioId] = useState(
@@ -62,12 +59,9 @@ export default function FormularioHorario({ horario, tiposHorario, onGuardado, o
     >
       <form onSubmit={enviar} noValidate className="flex flex-col gap-4">
         {errorGeneral && (
-          <p
-            role="alert"
-            className="rounded-md border border-redParish/30 bg-redParish/5 px-3 py-2 text-sm text-redParish"
-          >
-            {errorGeneral}
-          </p>
+          <Aviso tipo="error">
+            <p>{errorGeneral}</p>
+          </Aviso>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -132,38 +126,22 @@ export default function FormularioHorario({ horario, tiposHorario, onGuardado, o
           disabled={isPending}
         />
 
-        <label htmlFor={idActivo} className="flex items-center gap-2.5 text-sm font-medium text-ink">
-          <input
-            id={idActivo}
-            type="checkbox"
-            checked={activo}
-            onChange={(e) => setActivo(e.target.checked)}
-            disabled={isPending}
-            className="size-4 rounded border-borderSoft accent-goldDark focus-visible:outline-2 focus-visible:outline-goldDark"
-          />
-          Visible en el portal público
-        </label>
+        <CampoCasilla
+          etiqueta="Visible en el portal público"
+          checked={activo}
+          onChange={(e) => setActivo(e.target.checked)}
+          disabled={isPending}
+        />
 
-        <div className="mt-2 flex justify-end gap-2 border-t border-borderSoft pt-4">
-          <button
-            type="button"
-            onClick={onCerrar}
-            disabled={isPending}
-            className="rounded-md border border-borderSoft bg-white px-4 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark disabled:opacity-50"
-          >
+        <div className="mt-2 flex justify-end gap-2 border-t border-sand pt-4">
+          <Boton variante="secundario" onClick={onCerrar} disabled={isPending}>
             Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="flex items-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+          </Boton>
+          <Boton type="submit" variante="primario" cargando={isPending}>
             {isPending ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Crear horario'}
-          </button>
+          </Boton>
         </div>
       </form>
     </Dialogo>
   );
 }
-

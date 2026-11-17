@@ -4,18 +4,22 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { Inbox, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
-import { AvisoExito, AvisoSoloLectura, Cargando, ErrorConsulta } from '../componentes/EstadoConsulta.jsx';
-import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import Paginacion from '../componentes/Paginacion.jsx';
+import { useEnfocarAviso } from '../componentes/useEnfocarAviso.js';
 import { formatearFecha } from '../multimedia/formato.js';
 import { usePermisos } from '../permisos/usePermisos.js';
+import {
+  Aviso,
+  Boton,
+  CampoTexto,
+  EncabezadoPantalla,
+  EsqueletoTarjetas,
+  EstadoVacio,
+  Insignia,
+  useToast,
+} from '../ui/index.js';
 import { CLAVE_PROCLAMAS, eliminarProclama, listarProclamas, VISTAS } from './api.js';
 import { estaPublicada, formatearDia, ordinal } from './fechas.js';
-
-const estiloControl =
-  'w-full rounded-md border border-borderSoft bg-white px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-goldDark';
-const botonFila =
-  'inline-flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark';
 
 function leerFiltros(parametros) {
   const vista = parametros.get('vista');
@@ -42,8 +46,8 @@ function Buscador({ valor, onBuscar }) {
   }, [texto, valor]);
 
   return (
-    <div className="flex flex-1 flex-col gap-1">
-      <label htmlFor={id} className="text-xs font-semibold text-muted">
+    <div className="flex flex-1 flex-col gap-1.5">
+      <label htmlFor={id} className="text-sm font-semibold text-ink">
         Buscar por nombre
       </label>
       <div className="relative">
@@ -54,7 +58,7 @@ function Buscador({ valor, onBuscar }) {
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           placeholder="Nombre de un contrayente"
-          className={`${estiloControl} pl-9`}
+          className="min-h-11 w-full rounded-md border border-sand bg-white py-2 pl-9 pr-3 text-sm text-ink placeholder:text-muted/75 transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
         />
       </div>
     </div>
@@ -66,32 +70,32 @@ function FilaProclama({ proclama, editable, onEliminar }) {
   const nombres = `${contrayente1} y ${contrayente2}`;
   return (
     <li>
-      <article aria-labelledby={`proclama-${proclama.id}`} className="flex flex-col gap-3 rounded-lg border border-borderSoft bg-white p-4 sm:flex-row sm:items-start sm:justify-between">
+      <article
+        aria-labelledby={`proclama-${proclama.id}`}
+        className="flex flex-col gap-3 rounded-lg border border-sand bg-white p-5 sm:flex-row sm:items-start sm:justify-between"
+      >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             {vigente ? (
-              <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Vigente</span>
+              <Insignia variante="publicado">Vigente</Insignia>
             ) : (
-              <span className="rounded-full bg-borderSoft/60 px-2.5 py-0.5 text-xs font-semibold text-muted">
+              <Insignia variante="archivado">
                 {new Date(fechaMatrimonio) > new Date() ? 'Aún sin publicar' : 'Celebrada'}
-              </span>
+              </Insignia>
             )}
           </div>
-          <h2 id={`proclama-${proclama.id}`} className="mt-2 break-words font-semibold text-ink">
+          <h2 id={`proclama-${proclama.id}`} className="mt-2.5 break-words text-base font-semibold text-ink">
             {nombres}
           </h2>
-          <p className="mt-1 text-sm text-charcoal">Matrimonio: {formatearFecha(fechaMatrimonio)}</p>
+          <p className="mt-1 text-sm text-ink">Matrimonio: {formatearFecha(fechaMatrimonio)}</p>
           {publicaciones.length ? (
-            <ul aria-label={`Publicaciones de ${nombres}`} className="mt-2 flex flex-wrap gap-2">
+            <ul aria-label={`Publicaciones de ${nombres}`} className="mt-2.5 flex flex-wrap gap-2">
               {publicaciones.map((pub) => (
-                <li
-                  key={pub.numero}
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    estaPublicada(pub) ? 'bg-goldPale text-goldDark' : 'bg-stone text-muted'
-                  }`}
-                >
-                  {ordinal(pub.numero)} · {formatearDia(pub.fecha)}
-                  {estaPublicada(pub) ? '' : ' (programada)'}
+                <li key={pub.numero}>
+                  <Insignia variante={estaPublicada(pub) ? 'programado' : 'archivado'}>
+                    {ordinal(pub.numero)} · {formatearDia(pub.fecha)}
+                    {estaPublicada(pub) ? '' : ' (programada)'}
+                  </Insignia>
                 </li>
               ))}
             </ul>
@@ -100,17 +104,26 @@ function FilaProclama({ proclama, editable, onEliminar }) {
           )}
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <Link
+          <Boton
+            como={Link}
             to={`/admin/proclamas/${proclama.id}/editar`}
+            variante="secundario"
+            tamano="sm"
+            icono={Pencil}
             aria-label={`${editable ? 'Editar' : 'Ver'} «${nombres}»`}
-            className={botonFila}
           >
-            <Pencil className="size-3.5" aria-hidden="true" /> {editable ? 'Editar' : 'Ver'}
-          </Link>
+            {editable ? 'Editar' : 'Ver'}
+          </Boton>
           {editable && (
-            <button type="button" onClick={() => onEliminar(proclama)} aria-label={`Eliminar «${nombres}»`} className={botonFila}>
-              <Trash2 className="size-3.5" aria-hidden="true" /> Eliminar
-            </button>
+            <Boton
+              variante="secundario"
+              tamano="sm"
+              icono={Trash2}
+              onClick={() => onEliminar(proclama)}
+              aria-label={`Eliminar «${nombres}»`}
+            >
+              Eliminar
+            </Boton>
           )}
         </div>
       </article>
@@ -125,10 +138,10 @@ export default function ListadoProclamas() {
   const editable = puede('proclamas.gestionar');
   const clienteConsultas = useQueryClient();
   const ubicacion = useLocation();
+  const toast = useToast();
   const [aviso, setAviso] = useState(ubicacion.state?.aviso ?? '');
   const avisoRef = useEnfocarAviso(aviso); // tras eliminar, el foco pasa al mensaje (la fila y su botón desaparecen)
   const [porEliminar, setPorEliminar] = useState(null);
-  const idAnio = useId();
 
   const { data, isPending, isError, error, isPlaceholderData, refetch } = useQuery({
     queryKey: [...CLAVE_PROCLAMAS, 'lista', filtros],
@@ -140,7 +153,9 @@ export default function ListadoProclamas() {
     mutationFn: (proclama) => eliminarProclama(proclama.id),
     onSuccess: (_, proclama) => {
       clienteConsultas.invalidateQueries({ queryKey: CLAVE_PROCLAMAS });
-      setAviso(`Se eliminó la proclama de ${proclama.contrayente1} y ${proclama.contrayente2}.`);
+      const mensaje = `Se eliminó la proclama de ${proclama.contrayente1} y ${proclama.contrayente2}.`;
+      setAviso(mensaje);
+      toast.exito(mensaje);
       setPorEliminar(null);
     },
   });
@@ -159,34 +174,47 @@ export default function ListadoProclamas() {
 
   return (
     <section className="mx-auto max-w-5xl">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-4xl font-semibold text-ink">Proclamas</h1>
-          <p className="mt-2 text-muted">Proclamas matrimoniales y su historial de publicaciones.</p>
-        </div>
-        {editable && (
-          <Link
-            to="/admin/proclamas/nueva"
-            className="flex items-center gap-2 rounded-md bg-gold px-4 py-2.5 font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark"
-          >
-            <Plus className="size-4" aria-hidden="true" /> Nueva proclama
-          </Link>
-        )}
-      </header>
+      <EncabezadoPantalla
+        titulo="Proclamas"
+        descripcion="Proclamas matrimoniales y su historial de publicaciones."
+        acciones={
+          editable && (
+            <Boton como={Link} to="/admin/proclamas/nueva" variante="primario" icono={Plus}>
+              Nueva proclama
+            </Boton>
+          )
+        }
+      />
 
-      {!editable && <AvisoSoloLectura>Tu rol puede consultar las proclamas, pero no modificarlas.</AvisoSoloLectura>}
-      <AvisoExito ref={avisoRef}>{aviso}</AvisoExito>
+      {!editable && (
+        <Aviso tipo="soloLectura" className="mt-4">
+          <p>
+            <strong className="font-semibold text-ink">Solo lectura.</strong> Tu rol puede consultar las proclamas, pero no
+            modificarlas.
+          </p>
+        </Aviso>
+      )}
+      {aviso && (
+        <Aviso
+          ref={avisoRef}
+          tipo="exito"
+          tabIndex={-1}
+          className="mt-4 outline-none focus-visible:outline-2 focus-visible:outline-ink"
+        >
+          {aviso}
+        </Aviso>
+      )}
 
-      <div className="mt-6 flex flex-col gap-4 rounded-lg border border-borderSoft bg-white p-4 lg:flex-row lg:items-end">
-        <div role="group" aria-label="Mostrar proclamas" className="flex rounded-md border border-borderSoft p-0.5">
+      <div className="mt-6 flex flex-col gap-4 rounded-lg border border-sand bg-white p-4 lg:flex-row lg:items-end">
+        <div role="group" aria-label="Mostrar proclamas" className="flex rounded-md border border-sand bg-panel p-0.5">
           {Object.entries(VISTAS).map(([clave, { etiqueta }]) => (
             <button
               key={clave}
               type="button"
               aria-pressed={filtros.vista === clave}
               onClick={() => cambiar({ vista: clave })}
-              className={`flex-1 rounded px-3 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-goldDark ${
-                filtros.vista === clave ? 'bg-gold text-ink' : 'hover:bg-stone'
+              className={`flex-1 rounded px-3 py-2 text-sm font-medium transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-ink motion-reduce:transition-none ${
+                filtros.vista === clave ? 'bg-gold font-semibold text-ink' : 'text-ink hover:bg-white'
               }`}
             >
               {etiqueta}
@@ -194,29 +222,36 @@ export default function ListadoProclamas() {
           ))}
         </div>
         <Buscador valor={filtros.buscar} onBuscar={(buscar) => cambiar({ buscar })} />
-        <div className="flex flex-col gap-1 lg:w-32">
-          <label htmlFor={idAnio} className="text-xs font-semibold text-muted">
-            Año del matrimonio
-          </label>
-          <input
-            id={idAnio}
+        <div className="lg:w-36">
+          <CampoTexto
+            etiqueta="Año del matrimonio"
             type="number"
             inputMode="numeric"
             min="2000"
             max="2100"
             value={filtros.anio}
             onChange={(e) => cambiar({ anio: e.target.value })}
-            className={estiloControl}
           />
         </div>
       </div>
 
       <div className="mt-6" aria-busy={isPending || isPlaceholderData}>
-        {isPending && <Cargando texto="Cargando proclamas…" />}
-        {isError && !data && <ErrorConsulta texto="No se pudieron cargar las proclamas" error={error} onReintentar={refetch} />}
+        {isPending && <EsqueletoTarjetas cantidad={3} columnas="grid-cols-1" etiqueta="Cargando proclamas…" />}
+        {isError && !data && (
+          <Aviso
+            tipo="error"
+            accion={
+              <Boton variante="secundario" tamano="sm" onClick={() => refetch()}>
+                Reintentar
+              </Boton>
+            }
+          >
+            <p>No se pudieron cargar las proclamas: {error.message}</p>
+          </Aviso>
+        )}
         {data && (
           <>
-            <p className="mb-3 text-sm text-muted" aria-live="polite">
+            <p className="mb-3 text-sm tabular-nums text-muted" aria-live="polite">
               {data.paginacion.total} {data.paginacion.total === 1 ? 'proclama' : 'proclamas'}
             </p>
             {proclamas.length ? (
@@ -226,12 +261,24 @@ export default function ListadoProclamas() {
                 ))}
               </ul>
             ) : (
-              <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-borderSoft bg-white py-12 text-center text-muted">
-                <Inbox className="size-10" aria-hidden="true" />
-                <p>No hay proclamas con estos filtros.</p>
-              </div>
+              <EstadoVacio
+                icono={Inbox}
+                titulo="No hay proclamas con estos filtros."
+                descripcion="Ajusta el filtro de año o crea una proclama matrimonial."
+                accion={
+                  editable && (
+                    <Boton como={Link} to="/admin/proclamas/nueva" variante="primario" icono={Plus}>
+                      Nueva proclama
+                    </Boton>
+                  )
+                }
+              />
             )}
-            <Paginacion paginacion={data.paginacion} nombre="Paginación de proclamas" onCambiar={(pagina) => cambiar({ pagina })} />
+            <Paginacion
+              paginacion={data.paginacion}
+              nombre="Paginación de proclamas"
+              onCambiar={(pagina) => cambiar({ pagina })}
+            />
           </>
         )}
       </div>

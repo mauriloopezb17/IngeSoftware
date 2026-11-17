@@ -27,7 +27,7 @@ export default function MiniaturaArchivo({ archivo, alt = '', className = 'size-
   return (
     <span
       data-testid="miniatura-sustituta"
-      className="flex size-full min-h-32 items-center justify-center bg-stone text-muted"
+      className="flex size-full min-h-32 items-center justify-center bg-panel text-muted"
     >
       <Icono className="size-10" aria-hidden="true" />
     </span>

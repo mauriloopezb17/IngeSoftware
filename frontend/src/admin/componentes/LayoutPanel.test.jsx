@@ -11,7 +11,7 @@ import { clienteHttp } from '../../services/clienteHttp.js';
 import { crearQueryClient } from '../../services/queryClient.js';
 import { reiniciarMocksAdmin } from '../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO, crearSesion, usuariosSeed } from '../mocks/usuarios.js';
-import { SECCIONES } from '../rutas.js';
+import { GRUPOS_MENU, SECCIONES } from '../rutas.js';
 import { SesionProvider } from '../sesion/SesionProvider.jsx';
 import LayoutPanel from './LayoutPanel.jsx';
 
@@ -48,7 +48,10 @@ describe('layout del panel', () => {
     await screen.findByText('Administrador (desarrollo)'); // el menú se arma cuando carga el usuario
     const menu = screen.getByRole('navigation', { name: 'Menú principal' });
     const enlaces = within(menu).getAllByRole('link');
-    expect(enlaces.map((e) => e.textContent)).toEqual(SECCIONES.map((s) => s.titulo));
+    const titulosAgrupados = GRUPOS_MENU.flatMap((g) =>
+      g.claves.map((c) => SECCIONES.find((s) => s.clave === c).titulo),
+    );
+    expect(enlaces.map((e) => e.textContent)).toEqual(titulosAgrupados);
     expect(within(menu).getByRole('link', { name: 'Inicio' })).toHaveAttribute('aria-current', 'page');
     expect(within(menu).getByRole('link', { name: 'Eventos' })).not.toHaveAttribute('aria-current');
     expect(screen.getByRole('heading', { name: 'Contenido de inicio' })).toBeInTheDocument();
@@ -142,7 +145,7 @@ describe('layout del panel', () => {
     const columna = screen.getByRole('complementary');
     const clases = columna.className.split(/\s+/);
     // El fondo está en la columna, que se estira con el contenido: no tiene alto fijo en escritorio.
-    expect(clases).toContain('bg-deep');
+    expect(clases).toContain('bg-ink');
     expect(clases).toContain('lg:static');
     expect(clases).not.toContain('lg:h-screen');
     expect(clases).not.toContain('lg:sticky');

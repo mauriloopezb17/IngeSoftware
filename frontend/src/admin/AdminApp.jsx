@@ -17,6 +17,7 @@ import NoEncontrada from './paginas/NoEncontrada.jsx';
 import { pantallasPublicaciones } from './publicaciones/pantallas.jsx';
 import { SECCIONES } from './rutas.js';
 import { SesionProvider } from './sesion/SesionProvider.jsx';
+import { ProveedorToasts } from './ui/index.js';
 
 // Secciones que ya tienen su pantalla; el resto muestra la pantalla provisional.
 // Cada área registra las suyas en su propio archivo.
@@ -36,32 +37,34 @@ function AdminApp() {
     // funcione fuera de App (pruebas de enrutado).
     <QueryClientProvider client={queryClient}>
       <SesionProvider>
-        <Routes>
-          <Route path="login" element={<InicioSesion />} />
-          <Route element={<RutaProtegida />}>
-            <Route element={<LayoutPanel />}>
-              <Route index element={<Navigate to="inicio" replace />} />
-              <Route path="inicio" element={<Inicio />} />
-              {/* Una ruta por sección del índice de admin.md; cada una pasa por su guardia de permisos. */}
-              {SECCIONES.filter((s) => s.clave !== 'inicio').map(({ clave, ruta, titulo }) => {
-                const pantalla = PANTALLAS[clave] ?? (
-                  <SeccionSimple>
-                    <PantallaProvisional titulo={titulo} />
-                  </SeccionSimple>
-                );
-                return (
-                  <Route key={clave} path={ruta} element={<GuardiaSeccion clave={clave} />}>
-                    {/* Raíz y subrutas llegan a la misma pantalla, que decide qué muestra en cada una.
-                        (Con «*» solo, las <Routes> anidadas no resuelven la raíz de la sección.) */}
-                    <Route index element={pantalla} />
-                    <Route path="*" element={pantalla} />
-                  </Route>
-                );
-              })}
-              <Route path="*" element={<NoEncontrada />} />
+        <ProveedorToasts>
+          <Routes>
+            <Route path="login" element={<InicioSesion />} />
+            <Route element={<RutaProtegida />}>
+              <Route element={<LayoutPanel />}>
+                <Route index element={<Navigate to="inicio" replace />} />
+                <Route path="inicio" element={<Inicio />} />
+                {/* Una ruta por sección del índice de admin.md; cada una pasa por su guardia de permisos. */}
+                {SECCIONES.filter((s) => s.clave !== 'inicio').map(({ clave, ruta, titulo }) => {
+                  const pantalla = PANTALLAS[clave] ?? (
+                    <SeccionSimple>
+                      <PantallaProvisional titulo={titulo} />
+                    </SeccionSimple>
+                  );
+                  return (
+                    <Route key={clave} path={ruta} element={<GuardiaSeccion clave={clave} />}>
+                      {/* Raíz y subrutas llegan a la misma pantalla, que decide qué muestra en cada una.
+                          (Con «*» solo, las <Routes> anidadas no resuelven la raíz de la sección.) */}
+                      <Route index element={pantalla} />
+                      <Route path="*" element={pantalla} />
+                    </Route>
+                  );
+                })}
+                <Route path="*" element={<NoEncontrada />} />
+              </Route>
             </Route>
-          </Route>
-        </Routes>
+          </Routes>
+        </ProveedorToasts>
       </SesionProvider>
     </QueryClientProvider>
   );

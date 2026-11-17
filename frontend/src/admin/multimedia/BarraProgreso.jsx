@@ -14,12 +14,12 @@ export default function BarraProgreso({ nombre, progreso }) {
         max={100}
         aria-label={`Progreso de subida de ${nombre}`}
         aria-valuetext={procesando ? 'Enviado, procesando en el servidor' : `${enviado} %`}
-        className="h-2 w-full overflow-hidden rounded-full accent-goldDark"
+        className="h-2 w-full overflow-hidden rounded-full accent-ink"
       />
-      <p className="flex items-center gap-1.5 text-xs text-muted" aria-hidden="true">
+      <p className="flex items-center gap-1.5 text-xs tabular-nums text-muted" aria-hidden="true">
         {procesando ? (
           <>
-            <Loader2 className="size-3 animate-spin" /> Procesando…
+            <Loader2 className="size-3 animate-spin motion-reduce:animate-none" /> Procesando…
           </>
         ) : (
           `${enviado} %`

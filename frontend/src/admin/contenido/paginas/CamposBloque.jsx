@@ -1,10 +1,8 @@
 import { useId } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, ImagePlus, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, ArrowDown, ArrowUp, ImagePlus, Plus, Trash2 } from 'lucide-react';
 
-import CampoTexto from '../../componentes/CampoTexto.jsx';
-import CampoArea from '../componentes/CampoArea.jsx';
-import CampoSelect from '../componentes/CampoSelect.jsx';
+import { Boton, CampoArea, CampoCasilla, CampoSelect, CampoTexto } from '../../ui/index.js';
 import SelectorIcono from '../componentes/SelectorIcono.jsx';
 import { listarVideosBiblioteca } from './api.js';
 
@@ -26,28 +24,17 @@ function ImagenPreviewCampo({
   deshabilitado,
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-borderSoft bg-cream/30 p-3">
+    <div className="flex flex-col gap-3 rounded-lg border border-sand bg-panel p-3.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm font-semibold text-ink">{etiqueta}</span>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={onElegir}
-            disabled={deshabilitado}
-            className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-          >
-            <ImagePlus className="size-3.5" aria-hidden="true" />
+          <Boton variante="secundario" tamano="sm" icono={ImagePlus} onClick={onElegir} disabled={deshabilitado}>
             {url ? 'Cambiar de biblioteca' : 'Elegir de biblioteca'}
-          </button>
+          </Boton>
           {url && (
-            <button
-              type="button"
-              onClick={onQuitar}
-              disabled={deshabilitado}
-              className="rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium text-muted hover:text-redParish focus-visible:outline-2 focus-visible:outline-goldDark"
-            >
+            <Boton variante="peligro" tamano="sm" onClick={onQuitar} disabled={deshabilitado}>
               Quitar imagen
-            </button>
+            </Boton>
           )}
         </div>
       </div>
@@ -57,7 +44,7 @@ function ImagenPreviewCampo({
           <img
             src={url}
             alt={textoAlt || etiqueta}
-            className="h-16 w-24 shrink-0 rounded-md border border-borderSoft object-cover"
+            className="h-16 w-24 shrink-0 rounded-md border border-sand object-cover"
           />
           <p className="min-w-0 break-all text-xs text-muted">{url}</p>
         </div>
@@ -74,7 +61,12 @@ function ImagenPreviewCampo({
         />
       )}
 
-      {!onChangeUrl && errorUrl && <p className="text-sm text-redParish">{errorUrl}</p>}
+      {!onChangeUrl && errorUrl && (
+        <p className="flex items-start gap-1.5 text-sm text-danger">
+          <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+          <span>{errorUrl}</span>
+        </p>
+      )}
 
       {mostrarAlt && (
         <CampoTexto
@@ -202,31 +194,31 @@ export default function CamposBloque({
             />
           </div>
 
-          <div className="flex flex-col gap-3 rounded-lg border border-borderSoft p-3">
+          <div className="flex flex-col gap-3 rounded-lg border border-sand p-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <span className="text-sm font-semibold text-ink">Botones (hasta 3)</span>
                 {campoError(errores, 'botones') && (
-                  <p className="text-sm text-redParish">{campoError(errores, 'botones')}</p>
+                  <p className="text-sm text-danger">{campoError(errores, 'botones')}</p>
                 )}
               </div>
-              <button
-                type="button"
+              <Boton
+                variante="secundario"
+                tamano="sm"
+                icono={Plus}
                 onClick={() => {
                   const actuales = contenido.botones ?? [];
                   if (actuales.length >= 3) return;
                   actualizar({ botones: [...actuales, { texto: '', enlace: '' }] });
                 }}
                 disabled={deshabilitado || (contenido.botones?.length ?? 0) >= 3}
-                className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-semibold text-ink hover:bg-stone disabled:opacity-50"
               >
-                <Plus className="size-3.5" aria-hidden="true" />
                 Agregar botón
-              </button>
+              </Boton>
             </div>
 
             {(contenido.botones ?? []).map((boton, i) => (
-              <div key={i} className="grid items-start gap-3 rounded-md bg-cream/40 p-3 sm:grid-cols-[1fr_1fr_auto]">
+              <div key={i} className="grid items-start gap-3 rounded-md border border-sand bg-panel p-3 sm:grid-cols-[1fr_1fr_auto]">
                 <CampoTexto
                   etiqueta={`Texto del botón ${i + 1}`}
                   value={boton.texto ?? ''}
@@ -253,17 +245,18 @@ export default function CamposBloque({
                   error={campoError(errores, `botones.${i}.enlace`)}
                   disabled={deshabilitado}
                 />
-                <button
-                  type="button"
-                  onClick={() =>
-                    actualizar({ botones: contenido.botones.filter((_, idx) => idx !== i) })
-                  }
-                  disabled={deshabilitado}
-                  aria-label={`Quitar botón ${i + 1}`}
-                  className="mt-7 rounded-md border border-borderSoft bg-white p-2 text-muted hover:text-redParish focus-visible:outline-2 focus-visible:outline-redParish"
-                >
-                  <Trash2 className="size-4" aria-hidden="true" />
-                </button>
+                <div className="sm:mt-7">
+                  <Boton
+                    variante="secundario"
+                    onClick={() =>
+                      actualizar({ botones: contenido.botones.filter((_, idx) => idx !== i) })
+                    }
+                    disabled={deshabilitado}
+                    aria-label={`Quitar botón ${i + 1}`}
+                  >
+                    <Trash2 className="size-4 text-danger" aria-hidden="true" />
+                  </Boton>
+                </div>
               </div>
             ))}
           </div>
@@ -325,24 +318,20 @@ export default function CamposBloque({
             deshabilitado={deshabilitado}
           />
 
-          <div className="flex flex-col gap-3 rounded-lg border border-borderSoft p-3">
-            <label htmlFor={idTarjetaCheck} className="flex items-center gap-2 text-sm font-semibold text-ink">
-              <input
-                id={idTarjetaCheck}
-                type="checkbox"
-                checked={Boolean(contenido.tarjeta)}
-                onChange={(e) =>
-                  actualizar({
-                    tarjeta: e.target.checked
-                      ? { etiqueta: '', titulo: '', descripcion: '' }
-                      : null,
-                  })
-                }
-                disabled={deshabilitado}
-                className="size-4 accent-goldDark"
-              />
-              Incluir tarjeta superpuesta sobre la imagen
-            </label>
+          <div className="flex flex-col gap-3 rounded-lg border border-sand p-3.5">
+            <CampoCasilla
+              id={idTarjetaCheck}
+              etiqueta="Incluir tarjeta superpuesta sobre la imagen"
+              checked={Boolean(contenido.tarjeta)}
+              onChange={(e) =>
+                actualizar({
+                  tarjeta: e.target.checked
+                    ? { etiqueta: '', titulo: '', descripcion: '' }
+                    : null,
+                })
+              }
+              disabled={deshabilitado}
+            />
 
             {contenido.tarjeta && (
               <div className="grid gap-3 sm:grid-cols-2">
@@ -399,11 +388,13 @@ export default function CamposBloque({
             <div>
               <span className="text-sm font-semibold text-ink">Tarjetas (1 a 12)</span>
               {campoError(errores, 'items') && (
-                <p className="text-sm text-redParish">{campoError(errores, 'items')}</p>
+                <p className="text-sm text-danger">{campoError(errores, 'items')}</p>
               )}
             </div>
-            <button
-              type="button"
+            <Boton
+              variante="secundario"
+              tamano="sm"
+              icono={Plus}
               onClick={() => {
                 const items = contenido.items ?? [];
                 if (items.length >= 12) return;
@@ -415,21 +406,20 @@ export default function CamposBloque({
                 });
               }}
               disabled={deshabilitado || (contenido.items?.length ?? 0) >= 12}
-              className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-semibold text-ink hover:bg-stone disabled:opacity-50"
             >
-              <Plus className="size-3.5" aria-hidden="true" />
               Agregar tarjeta
-            </button>
+            </Boton>
           </div>
 
           <div className="flex flex-col gap-3">
             {(contenido.items ?? []).map((item, i) => (
-              <div key={i} className="flex flex-col gap-3 rounded-lg border border-borderSoft bg-cream/30 p-3">
+              <div key={i} className="flex flex-col gap-3 rounded-lg border border-sand bg-panel p-3.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-ink">Tarjeta {i + 1}</span>
                   <div className="flex items-center gap-1">
-                    <button
-                      type="button"
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
                       onClick={() => {
                         if (i === 0) return;
                         const copia = [...contenido.items];
@@ -438,12 +428,12 @@ export default function CamposBloque({
                       }}
                       disabled={deshabilitado || i === 0}
                       aria-label={`Subir tarjeta ${i + 1}`}
-                      className="rounded-md border border-borderSoft bg-white p-1.5 text-charcoal hover:bg-stone disabled:opacity-40"
                     >
                       <ArrowUp className="size-3.5" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
+                    </Boton>
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
                       onClick={() => {
                         if (i === contenido.items.length - 1) return;
                         const copia = [...contenido.items];
@@ -452,21 +442,20 @@ export default function CamposBloque({
                       }}
                       disabled={deshabilitado || i === contenido.items.length - 1}
                       aria-label={`Bajar tarjeta ${i + 1}`}
-                      className="rounded-md border border-borderSoft bg-white p-1.5 text-charcoal hover:bg-stone disabled:opacity-40"
                     >
                       <ArrowDown className="size-3.5" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
+                    </Boton>
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
                       onClick={() =>
                         actualizar({ items: contenido.items.filter((_, idx) => idx !== i) })
                       }
                       disabled={deshabilitado || contenido.items.length <= 1}
                       aria-label={`Quitar tarjeta ${i + 1}`}
-                      className="rounded-md border border-borderSoft bg-white p-1.5 text-muted hover:text-redParish disabled:opacity-40"
                     >
-                      <Trash2 className="size-3.5" aria-hidden="true" />
-                    </button>
+                      <Trash2 className="size-3.5 text-danger" aria-hidden="true" />
+                    </Boton>
                   </div>
                 </div>
 
@@ -593,21 +582,23 @@ export default function CamposBloque({
             <div>
               <span className="text-sm font-semibold text-ink">Imágenes (1 a 30)</span>
               {campoError(errores, 'imagenes') && (
-                <p className="text-sm text-redParish">{campoError(errores, 'imagenes')}</p>
+                <p className="text-sm text-danger">{campoError(errores, 'imagenes')}</p>
               )}
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
+              <Boton
+                variante="secundario"
+                tamano="sm"
+                icono={ImagePlus}
                 onClick={() => onAbrirSelector({ destino: 'galeria' })}
                 disabled={deshabilitado || (contenido.imagenes?.length ?? 0) >= 30}
-                className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-semibold text-ink hover:bg-stone disabled:opacity-50"
               >
-                <ImagePlus className="size-3.5" aria-hidden="true" />
                 Agregar desde biblioteca
-              </button>
-              <button
-                type="button"
+              </Boton>
+              <Boton
+                variante="secundario"
+                tamano="sm"
+                icono={Plus}
                 onClick={() => {
                   const imgs = contenido.imagenes ?? [];
                   if (imgs.length >= 30) return;
@@ -616,39 +607,37 @@ export default function CamposBloque({
                   });
                 }}
                 disabled={deshabilitado || (contenido.imagenes?.length ?? 0) >= 30}
-                className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-stone disabled:opacity-50"
               >
-                <Plus className="size-3.5" aria-hidden="true" />
                 Agregar fila vacía
-              </button>
+              </Boton>
             </div>
           </div>
 
           <div className="flex flex-col gap-3">
             {(contenido.imagenes ?? []).map((img, i) => (
-              <div key={i} className="flex flex-col gap-3 rounded-lg border border-borderSoft bg-cream/30 p-3">
+              <div key={i} className="flex flex-col gap-3 rounded-lg border border-sand bg-panel p-3.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-ink">Imagen {i + 1}</span>
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
                       onClick={() => onAbrirSelector({ destino: 'galeria', indice: i })}
                       disabled={deshabilitado}
-                      className="rounded-md border border-borderSoft bg-white px-2.5 py-1 text-xs font-medium hover:bg-stone"
                     >
                       Elegir de biblioteca
-                    </button>
-                    <button
-                      type="button"
+                    </Boton>
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
                       onClick={() =>
                         actualizar({ imagenes: contenido.imagenes.filter((_, idx) => idx !== i) })
                       }
                       disabled={deshabilitado || contenido.imagenes.length <= 1}
                       aria-label={`Quitar imagen ${i + 1}`}
-                      className="rounded-md border border-borderSoft bg-white p-1.5 text-muted hover:text-redParish disabled:opacity-40"
                     >
-                      <Trash2 className="size-3.5" aria-hidden="true" />
-                    </button>
+                      <Trash2 className="size-3.5 text-danger" aria-hidden="true" />
+                    </Boton>
                   </div>
                 </div>
 
@@ -656,7 +645,7 @@ export default function CamposBloque({
                   <img
                     src={img.url}
                     alt={img.texto_alternativo || `Imagen ${i + 1}`}
-                    className="h-20 w-32 rounded-md border border-borderSoft object-cover"
+                    className="h-20 w-32 rounded-md border border-sand object-cover"
                   />
                 )}
 

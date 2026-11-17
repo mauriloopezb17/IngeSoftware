@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArchiveRestore, Archive, Rocket, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, Rocket, Trash2 } from 'lucide-react';
 
 import ConfirmarAccion from '../componentes/ConfirmarAccion.jsx';
+import { Boton } from '../ui/index.js';
 import {
   archivarPublicacion,
   CLAVE_PUBLICACIONES,
@@ -11,9 +12,6 @@ import {
   restaurarPublicacion,
 } from './api.js';
 import { situacionDe } from './situacion.js';
-
-const boton =
-  'inline-flex items-center justify-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark';
 
 // Cada acción: botón, confirmación y llamada. Los botones salen de `acciones` (lo que la API dice que
 // esta sesión puede hacer): el componente no decide permisos.
@@ -84,17 +82,18 @@ export default function AccionesEstado({ publicacion, alTerminar }) {
   return (
     <>
       {disponibles.map((clave) => {
-        const { texto, icono: Icono } = ACCIONES[clave];
+        const { texto, icono } = ACCIONES[clave];
         return (
-          <button
+          <Boton
             key={clave}
-            type="button"
+            variante="secundario"
+            tamano="sm"
+            icono={icono}
             onClick={() => setPendiente(clave)}
             aria-label={`${texto} «${publicacion.titulo}»`}
-            className={boton}
           >
-            <Icono className="size-3.5" aria-hidden="true" /> {texto}
-          </button>
+            {texto}
+          </Boton>
         );
       })}
 

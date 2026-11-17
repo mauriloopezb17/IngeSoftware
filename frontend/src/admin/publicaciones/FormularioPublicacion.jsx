@@ -3,9 +3,9 @@ import { Link, useBlocker, useNavigate } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Eye, ImagePlus, Loader2, Rocket, Save, Send, Trash2 } from 'lucide-react';
 
-import CampoTexto from '../componentes/CampoTexto.jsx';
 import Dialogo from '../componentes/Dialogo.jsx';
 import SelectorImagenes from '../multimedia/SelectorImagenes.jsx';
+import { Aviso, Boton, CampoArea, CampoCasilla, CampoSelect, CampoTexto, useToast } from '../ui/index.js';
 import {
   actualizarPublicacion,
   CLAVE_CATALOGOS,
@@ -23,9 +23,6 @@ import PreviaPublicacion from './PreviaPublicacion.jsx';
 
 // BlockNote es pesado: el editor se descarga solo cuando se abre este formulario.
 const EditorContenido = lazy(() => import('./editor/EditorContenido.jsx'));
-
-const estiloControl =
-  'w-full rounded-md border bg-white px-3 py-2.5 text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-goldDark disabled:bg-stone';
 
 const MAX_RESUMEN = 400;
 
@@ -96,8 +93,9 @@ function Grupo({ legend, error, children, ayuda }) {
       {children}
       {ayuda && <p className="text-xs text-muted">{ayuda}</p>}
       {error && (
-        <p id={`${id}-error`} className="text-sm text-redParish">
-          {error}
+        <p id={`${id}-error`} className="flex items-start gap-1.5 text-sm text-danger">
+          <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+          <span>{error}</span>
         </p>
       )}
     </fieldset>
@@ -110,12 +108,7 @@ function Grupo({ legend, error, children, ayuda }) {
 export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTICIA', aviso: avisoInicial = '' }) {
   const navegar = useNavigate();
   const clienteConsultas = useQueryClient();
-  const idResumen = useId();
-  const idCategoria = useId();
-  const idFechaPublicacion = useId();
-  const idFechaExpiracion = useId();
-  const idDestacada = useId();
-  const idTipo = useId();
+  const toast = useToast();
   const avisos = useRef(null);
 
   const [campos, setCampos] = useState(() => camposDe(publicacion, tipoInicial));
@@ -170,6 +163,7 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
       setGenerales([]);
       if (!editando) {
         omitirAvisoRef.current = true;
+        toast.exito('Borrador guardado.');
         navegar(`/admin/publicaciones/${guardada.id}/editar`, { replace: true, state: { aviso: 'Borrador guardado.' } });
         return;
       }
@@ -177,6 +171,7 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
       setBase(huella(guardados));
       setBloquesBase(JSON.stringify(bloques ?? bloquesBase ?? []));
       setAviso('Cambios guardados.');
+      toast.exito('Cambios guardados.');
     },
     onError: (error) => {
       const { errores: porCampo, generales: avisosGenerales } = erroresDe(error);
@@ -200,9 +195,6 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
   });
 
   // ---- Publicar directamente (avisos: sin revisión) ----
-  // Guarda lo que haya en pantalla y publica. Con una fecha de publicación futura queda programada.
-  // Si el aviso se llegó a crear pero no se pudo publicar, queda como borrador y se lleva a su edición
-  // (no se reintenta desde «nuevo», para no duplicarlo).
   const publicar = useMutation({
     mutationFn: async () => {
       const cuerpo = construirCuerpo();
@@ -228,9 +220,9 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
       clienteConsultas.invalidateQueries({ queryKey: CLAVE_PUBLICACIONES });
       omitirAvisoRef.current = true;
       const programada = publicada.fechaPublicacion && new Date(publicada.fechaPublicacion) > new Date();
-      navegar(listadoVolver, {
-        state: { aviso: `«${publicada.titulo}» ${programada ? 'quedó programada' : 'se publicó'}.` },
-      });
+      const mensaje = `«${publicada.titulo}» ${programada ? 'quedó programada' : 'se publicó'}.`;
+      toast.exito(mensaje);
+      navegar(listadoVolver, { state: { aviso: mensaje } });
     },
     onError: (error) => {
       if (error.creadaId) {
@@ -263,7 +255,6 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
   }
 
   // ---- Enviar a revisión (Marketing) ----
-  // Guarda primero lo que haya en pantalla, para que el Párroco revise exactamente eso, y luego envía.
   const enviarRevision = useMutation({
     mutationFn: async (cuerpo) => {
       if (cuerpo) await actualizarPublicacion(publicacion.id, cuerpo);
@@ -272,7 +263,9 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
     onSuccess: () => {
       clienteConsultas.invalidateQueries({ queryKey: CLAVE_PUBLICACIONES });
       omitirAvisoRef.current = true;
-      navegar('/admin/publicaciones', { state: { aviso: `«${campos.titulo.trim()}» se envió a revisión.` } });
+      const mensaje = `«${campos.titulo.trim()}» se envió a revisión.`;
+      toast.exito(mensaje);
+      navegar('/admin/publicaciones', { state: { aviso: mensaje } });
     },
     onError: (error) => {
       setConfirmandoEnvio(false);
@@ -317,299 +310,212 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
   const mensajesDeError = [...Object.values(errores), ...generales];
 
   return (
-    <form onSubmit={enviar} noValidate className="mt-6 flex flex-col gap-6">
+    <form onSubmit={enviar} noValidate className="mt-6 flex flex-col gap-6 rounded-lg border border-sand bg-white p-5 sm:p-6">
       <div ref={avisos} tabIndex={-1} className="outline-none">
         {mensajesDeError.length > 0 && (
-          <div role="alert" className="flex items-start gap-2 rounded-lg border border-redParish/30 bg-redParish/5 p-4 text-sm text-redParish">
-            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            <div>
-              <p className="font-semibold">No se pudo guardar. Revisa lo siguiente:</p>
-              <ul className="mt-1 list-disc pl-5">
-                {mensajesDeError.map((mensaje) => (
-                  <li key={mensaje}>{mensaje}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <Aviso tipo="error" titulo="No se pudo guardar. Revisa lo siguiente:">
+            <ul className="mt-1 list-disc pl-5">
+              {mensajesDeError.map((mensaje, i) => (
+                <li key={`${i}-${mensaje}`}>{mensaje}</li>
+              ))}
+            </ul>
+          </Aviso>
         )}
         {aviso && !mensajesDeError.length && (
-          <p role="status" className="rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark">
-            {aviso}
-          </p>
+          <Aviso tipo="exito">
+            <p>{aviso}</p>
+          </Aviso>
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div className="flex flex-col gap-6">
-          <CampoTexto
-            etiqueta="Título"
-            value={campos.titulo}
-            onChange={(e) => cambiar({ titulo: e.target.value })}
-            error={errores.titulo}
-            maxLength={200}
-            required
-            autoComplete="off"
+      {/* Formulario en 1 columna cómoda dentro de max-w-3xl */}
+      <div className="flex flex-col gap-6">
+        <CampoTexto
+          etiqueta="Título"
+          value={campos.titulo}
+          onChange={(e) => cambiar({ titulo: e.target.value })}
+          error={errores.titulo}
+          maxLength={200}
+          required
+          autoComplete="off"
+        />
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <CampoSelect
+            etiqueta="Tipo"
+            value={campos.tipo}
+            onChange={(e) => cambiar({ tipo: e.target.value })}
+            disabled={editando || esAviso}
+            ayuda={editando || esAviso ? 'El tipo no se puede cambiar.' : undefined}
+            opciones={Object.entries(esAviso ? { [TIPO_AVISO]: 'Aviso' } : TIPOS_DE_ESTA_PANTALLA)}
           />
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={idResumen} className="text-sm font-semibold text-ink">
-              Resumen
-            </label>
-            <textarea
-              id={idResumen}
-              value={campos.resumen}
-              onChange={(e) => cambiar({ resumen: e.target.value })}
-              maxLength={MAX_RESUMEN}
-              rows={3}
-              aria-invalid={errores.resumen ? 'true' : undefined}
-              className={`${estiloControl} ${errores.resumen ? 'border-redParish' : 'border-borderSoft'}`}
-            />
-            <p className="text-xs text-muted">
-              Se muestra en las tarjetas del portal. {campos.resumen.length}/{MAX_RESUMEN}
-            </p>
-            {errores.resumen && <p className="text-sm text-redParish">{errores.resumen}</p>}
-          </div>
+          <CampoSelect
+            etiqueta="Categoría"
+            value={campos.categoriaId}
+            onChange={(e) => cambiar({ categoriaId: e.target.value })}
+            disabled={catalogos.isPending}
+            error={errores.categoriaId ?? (catalogos.isError ? 'No se pudieron cargar las categorías.' : undefined)}
+            opciones={[['', 'Sin categoría'], ...categorias.map((c) => [String(c.id), c.nombre])]}
+          />
+        </div>
 
-          <Grupo legend="Contenido" error={errores.contenido}>
-            <Suspense
-              fallback={
-                <p role="status" className="flex items-center gap-2 rounded-md border border-borderSoft bg-white px-3 py-6 text-sm text-muted">
-                  <Loader2 className="size-4 animate-spin" aria-hidden="true" /> Cargando el editor…
-                </p>
-              }
-            >
-              <EditorContenido
-                valorInicial={publicacion?.contenido}
-                alIniciar={(documento) => {
-                  setBloquesBase(JSON.stringify(documento));
-                  setBloques(documento);
-                }}
-                alCambiar={setBloques}
+        <CampoArea
+          etiqueta="Resumen"
+          value={campos.resumen}
+          onChange={(e) => cambiar({ resumen: e.target.value })}
+          maxLength={MAX_RESUMEN}
+          rows={3}
+          mostrarContador
+          ayuda="Se muestra en las tarjetas del portal."
+          error={errores.resumen}
+        />
+
+        <Grupo legend="Imagen de portada" error={errores.portada}>
+          {campos.portada ? (
+            <div className="flex flex-col gap-2 rounded-md border border-sand bg-panel p-3 sm:flex-row sm:items-center sm:gap-4">
+              <img
+                src={campos.portada.url}
+                alt={campos.portada.textoAlternativo ?? ''}
+                className="aspect-video w-full rounded object-cover sm:w-48 sm:shrink-0"
               />
-            </Suspense>
-          </Grupo>
+              <p className="text-xs text-muted">
+                {campos.portada.textoAlternativo ? (
+                  <>Texto alternativo: {campos.portada.textoAlternativo}</>
+                ) : (
+                  'Esta imagen no tiene texto alternativo: hace falta para publicar.'
+                )}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted">Sin imagen de portada.</p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Boton variante="secundario" tamano="sm" icono={ImagePlus} onClick={() => setEligiendoPortada(true)}>
+              {campos.portada ? 'Cambiar imagen' : 'Elegir imagen'}
+            </Boton>
+            {campos.portada && (
+              <Boton variante="secundario" tamano="sm" icono={Trash2} onClick={() => cambiar({ portada: null })}>
+                Quitar imagen
+              </Boton>
+            )}
+          </div>
+        </Grupo>
+
+        <Grupo legend="Contenido" error={errores.contenido}>
+          <Suspense
+            fallback={
+              <p role="status" className="flex items-center gap-2 rounded-md border border-sand bg-panel px-3 py-6 text-sm text-muted">
+                <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> Cargando el editor…
+              </p>
+            }
+          >
+            <EditorContenido
+              valorInicial={publicacion?.contenido}
+              alIniciar={(documento) => {
+                setBloquesBase(JSON.stringify(documento));
+                setBloques(documento);
+              }}
+              alCambiar={setBloques}
+            />
+          </Suspense>
+        </Grupo>
+
+        <CampoTexto
+          etiqueta="Enlace externo (opcional)"
+          type="url"
+          value={campos.urlExterna}
+          onChange={(e) => cambiar({ urlExterna: e.target.value })}
+          error={errores.urlExterna}
+          ayuda="Para una nota publicada en otro medio. Debe empezar con https://"
+          maxLength={500}
+          autoComplete="off"
+        />
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <CampoTexto
+            etiqueta="Fecha de publicación"
+            type="datetime-local"
+            value={campos.fechaPublicacion}
+            onChange={(e) => cambiar({ fechaPublicacion: e.target.value })}
+            error={errores.fechaPublicacion}
+            ayuda="Fecha deseada (hora de Bolivia): se aplica al publicar o aprobar. Si es futura, queda programada."
+          />
 
           <CampoTexto
-            etiqueta="Enlace externo (opcional)"
-            type="url"
-            value={campos.urlExterna}
-            onChange={(e) => cambiar({ urlExterna: e.target.value })}
-            error={errores.urlExterna}
-            ayuda="Para una nota publicada en otro medio. Debe empezar con https://"
-            maxLength={500}
-            autoComplete="off"
+            etiqueta="Fecha de expiración (opcional)"
+            type="datetime-local"
+            value={campos.fechaExpiracion}
+            onChange={(e) => cambiar({ fechaExpiracion: e.target.value })}
+            error={errores.fechaExpiracion}
+            ayuda="Después de esta fecha deja de verse en el portal."
           />
         </div>
 
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={idTipo} className="text-sm font-semibold text-ink">
-              Tipo
-            </label>
-            <select
-              id={idTipo}
-              value={campos.tipo}
-              onChange={(e) => cambiar({ tipo: e.target.value })}
-              disabled={editando || esAviso}
-              className={`${estiloControl} border-borderSoft`}
-            >
-              {Object.entries(esAviso ? { [TIPO_AVISO]: 'Aviso' } : TIPOS_DE_ESTA_PANTALLA).map(([codigo, nombre]) => (
-                <option key={codigo} value={codigo}>
-                  {nombre}
-                </option>
-              ))}
-            </select>
-            {(editando || esAviso) && <p className="text-xs text-muted">El tipo no se puede cambiar.</p>}
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={idCategoria} className="text-sm font-semibold text-ink">
-              Categoría
-            </label>
-            <select
-              id={idCategoria}
-              value={campos.categoriaId}
-              onChange={(e) => cambiar({ categoriaId: e.target.value })}
-              disabled={catalogos.isPending}
-              aria-invalid={errores.categoriaId ? 'true' : undefined}
-              className={`${estiloControl} ${errores.categoriaId ? 'border-redParish' : 'border-borderSoft'}`}
-            >
-              <option value="">Sin categoría</option>
-              {categorias.map((categoria) => (
-                <option key={categoria.id} value={categoria.id}>
-                  {categoria.nombre}
-                </option>
-              ))}
-            </select>
-            {catalogos.isError && <p className="text-xs text-redParish">No se pudieron cargar las categorías.</p>}
-            {errores.categoriaId && <p className="text-sm text-redParish">{errores.categoriaId}</p>}
-          </div>
-
-          <Grupo legend="Imagen de portada" error={errores.portada}>
-            {campos.portada ? (
-              <div className="flex flex-col gap-2 rounded-md border border-borderSoft bg-white p-2">
-                <img
-                  src={campos.portada.url}
-                  alt={campos.portada.textoAlternativo ?? ''}
-                  className="aspect-video w-full rounded object-cover"
-                />
-                <p className="text-xs text-muted">
-                  {campos.portada.textoAlternativo ? (
-                    <>Texto alternativo: {campos.portada.textoAlternativo}</>
-                  ) : (
-                    'Esta imagen no tiene texto alternativo: hace falta para publicar.'
-                  )}
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-muted">Sin imagen de portada.</p>
-            )}
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setEligiendoPortada(true)}
-                className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-              >
-                <ImagePlus className="size-4" aria-hidden="true" />
-                {campos.portada ? 'Cambiar imagen' : 'Elegir imagen'}
-              </button>
-              {campos.portada && (
-                <button
-                  type="button"
-                  onClick={() => cambiar({ portada: null })}
-                  className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-                >
-                  <Trash2 className="size-4" aria-hidden="true" /> Quitar imagen
-                </button>
-              )}
-            </div>
-          </Grupo>
-
-          <label htmlFor={idDestacada} className="flex items-center gap-2 text-sm font-medium">
-            <input
-              id={idDestacada}
-              type="checkbox"
-              checked={campos.destacada}
-              onChange={(e) => cambiar({ destacada: e.target.checked })}
-              className="size-4 accent-goldDark"
-            />
-            Destacada en el portal
-          </label>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={idFechaPublicacion} className="text-sm font-semibold text-ink">
-              Fecha de publicación
-            </label>
-            <input
-              id={idFechaPublicacion}
-              type="datetime-local"
-              value={campos.fechaPublicacion}
-              onChange={(e) => cambiar({ fechaPublicacion: e.target.value })}
-              aria-invalid={errores.fechaPublicacion ? 'true' : undefined}
-              className={`${estiloControl} ${errores.fechaPublicacion ? 'border-redParish' : 'border-borderSoft'}`}
-            />
-            <p className="text-xs text-muted">
-              Fecha deseada (hora de Bolivia): se aplica al publicar o aprobar. Si es futura, queda programada.
-            </p>
-            {errores.fechaPublicacion && <p className="text-sm text-redParish">{errores.fechaPublicacion}</p>}
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor={idFechaExpiracion} className="text-sm font-semibold text-ink">
-              Fecha de expiración (opcional)
-            </label>
-            <input
-              id={idFechaExpiracion}
-              type="datetime-local"
-              value={campos.fechaExpiracion}
-              onChange={(e) => cambiar({ fechaExpiracion: e.target.value })}
-              aria-invalid={errores.fechaExpiracion ? 'true' : undefined}
-              className={`${estiloControl} ${errores.fechaExpiracion ? 'border-redParish' : 'border-borderSoft'}`}
-            />
-            <p className="text-xs text-muted">Después de esta fecha deja de verse en el portal.</p>
-            {errores.fechaExpiracion && <p className="text-sm text-redParish">{errores.fechaExpiracion}</p>}
-          </div>
-        </div>
+        <CampoCasilla
+          etiqueta="Destacada en el portal"
+          checked={campos.destacada}
+          onChange={(e) => cambiar({ destacada: e.target.checked })}
+        />
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-borderSoft pt-5">
-        <button
+      <div className="flex flex-wrap items-center gap-3 border-t border-sand pt-5">
+        <Boton
           type="submit"
-          disabled={guardar.isPending || publicar.isPending}
-          className="flex items-center gap-2 rounded-md bg-gold px-5 py-2.5 font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
+          variante="primario"
+          icono={Save}
+          cargando={guardar.isPending}
+          disabled={publicar.isPending}
         >
-          {guardar.isPending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <Save className="size-4" aria-hidden="true" />
-          )}
           {editando ? 'Guardar cambios' : 'Guardar borrador'}
-        </button>
+        </Boton>
         {puedePublicar && (
-          <button
-            type="button"
+          <Boton
+            variante="secundario"
+            icono={Rocket}
             onClick={publicarAviso}
-            disabled={guardar.isPending || publicar.isPending}
-            className="flex items-center gap-2 rounded-md border border-goldDark bg-white px-4 py-2.5 text-sm font-semibold text-goldDark hover:bg-goldPale focus-visible:outline-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
+            cargando={publicar.isPending}
+            disabled={guardar.isPending}
           >
-            {publicar.isPending ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <Rocket className="size-4" aria-hidden="true" />
-            )}
             Publicar
-          </button>
+          </Boton>
         )}
         {puedeEnviar && (
-          <button
-            type="button"
+          <Boton
+            variante="secundario"
+            icono={Send}
             onClick={confirmarEnvio}
             disabled={guardar.isPending || enviarRevision.isPending || publicar.isPending}
-            className="flex items-center gap-2 rounded-md border border-goldDark bg-white px-4 py-2.5 text-sm font-semibold text-goldDark hover:bg-goldPale focus-visible:outline-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <Send className="size-4" aria-hidden="true" /> Enviar a revisión
-          </button>
+            Enviar a revisión
+          </Boton>
         )}
-        <button
-          type="button"
-          onClick={() => setVerPrevia(true)}
-          className="flex items-center gap-2 rounded-md border border-borderSoft bg-white px-4 py-2.5 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-        >
-          <Eye className="size-4" aria-hidden="true" /> Vista previa
-        </button>
-        <Link
-          to={listadoVolver}
-          className="rounded-md border border-borderSoft bg-white px-4 py-2.5 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-        >
+        <Boton variante="secundario" icono={Eye} onClick={() => setVerPrevia(true)}>
+          Vista previa
+        </Boton>
+        <Boton como={Link} to={listadoVolver} variante="fantasma">
           {esAviso ? 'Volver a avisos' : 'Volver a publicaciones'}
-        </Link>
+        </Boton>
         {hayCambios && <p className="text-sm text-muted">Hay cambios sin guardar.</p>}
       </div>
 
       {confirmandoEnvio && (
         <Dialogo titulo="Enviar a revisión" onCerrar={() => setConfirmandoEnvio(false)} ancho="max-w-md">
-          <p className="text-sm text-charcoal">
+          <p className="text-sm text-ink">
             El Párroco revisará la publicación y podrá aprobarla o rechazarla. Mientras esté en revisión no podrás editarla.
             {hayCambios && ' Se guardarán antes los cambios que tienes en pantalla.'}
           </p>
           <div className="mt-5 flex flex-wrap justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setConfirmandoEnvio(false)}
-              disabled={enviarRevision.isPending}
-              className="rounded-md border border-borderSoft bg-white px-4 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark disabled:opacity-60"
-            >
+            <Boton variante="secundario" onClick={() => setConfirmandoEnvio(false)} disabled={enviarRevision.isPending}>
               Cancelar
-            </button>
-            <button
-              type="button"
+            </Boton>
+            <Boton
+              variante="primario"
               onClick={() => enviarRevision.mutate(hayCambios ? construirCuerpo() : null)}
-              disabled={enviarRevision.isPending}
-              className="flex items-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
+              cargando={enviarRevision.isPending}
             >
-              {enviarRevision.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
               Enviar a revisión
-            </button>
+            </Boton>
           </div>
         </Dialogo>
       )}
@@ -638,22 +544,14 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
 
       {bloqueo.state === 'blocked' && (
         <Dialogo titulo="Hay cambios sin guardar" onCerrar={() => bloqueo.reset()} ancho="max-w-md">
-          <p className="text-sm text-charcoal">Si sales de esta pantalla ahora, perderás los cambios que no guardaste.</p>
+          <p className="text-sm text-ink">Si sales de esta pantalla ahora, perderás los cambios que no guardaste.</p>
           <div className="mt-5 flex flex-wrap justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => bloqueo.reset()}
-              className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-goldDark"
-            >
+            <Boton variante="primario" onClick={() => bloqueo.reset()}>
               Seguir editando
-            </button>
-            <button
-              type="button"
-              onClick={() => bloqueo.proceed()}
-              className="rounded-md border border-redParish/40 bg-white px-4 py-2 text-sm font-medium text-redParish hover:bg-redParish/5 focus-visible:outline-2 focus-visible:outline-redParish"
-            >
+            </Boton>
+            <Boton variante="peligro" onClick={() => bloqueo.proceed()}>
               Salir sin guardar
-            </button>
+            </Boton>
           </div>
         </Dialogo>
       )}

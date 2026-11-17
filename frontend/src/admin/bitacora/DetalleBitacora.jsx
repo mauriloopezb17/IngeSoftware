@@ -1,4 +1,5 @@
 import Dialogo from '../componentes/Dialogo.jsx';
+import { Boton } from '../ui/index.js';
 import {
   etiquetaAccion,
   formatearFechaHoraBitacora,
@@ -9,7 +10,7 @@ import {
 function ValorCelda({ valor }) {
   if (valor === '[oculto]') {
     return (
-      <span className="inline-block rounded bg-stone px-2 py-0.5 font-mono text-xs text-muted">
+      <span className="inline-block rounded bg-panel px-2 py-0.5 font-mono text-xs text-muted">
         [oculto]
       </span>
     );
@@ -34,7 +35,7 @@ export default function DetalleBitacora({ registro, onCerrar }) {
       onCerrar={onCerrar}
       ancho="max-w-3xl"
     >
-      <dl className="grid gap-3 rounded-lg border border-borderSoft bg-cream/40 p-4 text-sm sm:grid-cols-2">
+      <dl className="grid gap-3 rounded-lg border border-sand bg-panel p-4 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-xs font-semibold text-muted">Acción</dt>
           <dd className="mt-0.5 font-medium text-ink">
@@ -55,7 +56,7 @@ export default function DetalleBitacora({ registro, onCerrar }) {
         </div>
         <div>
           <dt className="text-xs font-semibold text-muted">Fecha y hora</dt>
-          <dd className="mt-0.5 text-ink">{formatearFechaHoraBitacora(registro.fecha)}</dd>
+          <dd className="mt-0.5 tabular-nums text-ink">{formatearFechaHoraBitacora(registro.fecha)}</dd>
         </div>
         <div>
           <dt className="text-xs font-semibold text-muted">Dirección IP</dt>
@@ -80,26 +81,26 @@ export default function DetalleBitacora({ registro, onCerrar }) {
             role="region"
             aria-label="Cambios registrados (se desplaza horizontalmente)"
             tabIndex={0}
-            className="relative mt-3 overflow-x-auto rounded-lg border border-borderSoft focus-visible:outline-2 focus-visible:outline-goldDark"
+            className="relative mt-3 overflow-x-auto rounded-lg border border-sand focus-visible:outline-2 focus-visible:outline-ink"
           >
             <table className="w-full border-collapse text-left text-sm">
-              <thead className="bg-cream/60 text-xs font-semibold text-muted">
+              <thead className="bg-panel text-xs font-semibold uppercase tracking-wide text-muted">
                 <tr>
-                  <th scope="col" className="border-b border-borderSoft px-3 py-2">
+                  <th scope="col" className="border-b border-sand px-3 py-2.5">
                     Campo
                   </th>
-                  <th scope="col" className="border-b border-borderSoft px-3 py-2">
+                  <th scope="col" className="border-b border-sand px-3 py-2.5">
                     Antes
                   </th>
-                  <th scope="col" className="border-b border-borderSoft px-3 py-2">
+                  <th scope="col" className="border-b border-sand px-3 py-2.5">
                     Después
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-sand bg-white">
                 {campos.map((campo) => (
-                  <tr key={campo} className="border-b border-borderSoft last:border-b-0">
-                    <th scope="row" className="px-3 py-2.5 align-top font-medium text-charcoal">
+                  <tr key={campo}>
+                    <th scope="row" className="px-3 py-2.5 align-top font-medium text-ink">
                       <span className="capitalize">{nombreCampoLegible(campo)}</span>
                     </th>
                     <td className="px-3 py-2.5 align-top">
@@ -120,16 +121,11 @@ export default function DetalleBitacora({ registro, onCerrar }) {
         )}
       </div>
 
-      <div className="mt-5 flex justify-end">
-        <button
-          type="button"
-          onClick={onCerrar}
-          className="rounded-md border border-borderSoft bg-white px-4 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-        >
+      <div className="mt-5 flex justify-end border-t border-sand pt-4">
+        <Boton variante="secundario" onClick={onCerrar}>
           Cerrar detalle
-        </button>
+        </Boton>
       </div>
     </Dialogo>
   );
 }
-

@@ -1,14 +1,12 @@
 import { useId, useRef, useState } from 'react';
 import { AlertCircle, Ban, CheckCircle2, RotateCcw, Trash2, UploadCloud, X } from 'lucide-react';
 
+import { Boton } from '../ui/index.js';
 import BarraProgreso from './BarraProgreso.jsx';
 import { formatearTamano } from './formato.js';
 import { claseDeTipo, nombreDeTipo } from './tipos.js';
-import { ACCEPT_ARCHIVOS, RESUMEN_DE_LIMITES, tipoDelArchivo } from './validacion.js';
 import { useColaSubida } from './useColaSubida.js';
-
-const botonSecundario =
-  'flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white';
+import { ACCEPT_ARCHIVOS, RESUMEN_DE_LIMITES, tipoDelArchivo } from './validacion.js';
 
 function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintentar, onCancelar }) {
   const idTexto = useId();
@@ -18,10 +16,10 @@ function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintent
   const esImagen = claseDeTipo(tipo) === 'IMAGEN';
 
   return (
-    <li className="flex flex-col gap-2 rounded-md border border-borderSoft bg-white p-3">
+    <li className="flex flex-col gap-2 rounded-md border border-sand bg-white p-3.5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="break-words text-sm font-semibold">{archivo.name}</p>
+          <p className="break-words text-sm font-semibold text-ink">{archivo.name}</p>
           <p className="text-xs text-muted">
             {nombreDeTipo(tipo)} · {formatearTamano(archivo.size)}
           </p>
@@ -29,14 +27,15 @@ function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintent
 
         <div className="flex shrink-0 items-center gap-2 text-sm">
           {estado === 'subiendo' && (
-            <button
-              type="button"
+            <Boton
+              variante="secundario"
+              tamano="sm"
+              icono={Ban}
               onClick={onCancelar}
               aria-label={`Cancelar la subida de ${archivo.name}`}
-              className={botonSecundario}
             >
-              <Ban className="size-4" aria-hidden="true" /> Cancelar
-            </button>
+              Cancelar
+            </Boton>
           )}
           {estado === 'cancelado' && (
             <span role="status" className="flex items-center gap-1.5 text-muted">
@@ -44,14 +43,14 @@ function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintent
             </span>
           )}
           {estado === 'subido' && (
-            <span className="flex items-center gap-1.5 font-medium text-green-700">
+            <span className="flex items-center gap-1.5 font-medium text-success">
               <CheckCircle2 className="size-4" aria-hidden="true" /> Subido
             </span>
           )}
           {(estado === 'error' || estado === 'cancelado') && (
-            <button type="button" onClick={onReintentar} disabled={deshabilitado} className={botonSecundario}>
-              <RotateCcw className="size-4" aria-hidden="true" /> Reintentar
-            </button>
+            <Boton variante="secundario" tamano="sm" icono={RotateCcw} onClick={onReintentar} disabled={deshabilitado}>
+              Reintentar
+            </Boton>
           )}
           {(estado === 'pendiente' || estado === 'error' || estado === 'cancelado') && (
             <button
@@ -59,7 +58,7 @@ function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintent
               onClick={onQuitar}
               disabled={deshabilitado}
               aria-label={`Quitar ${archivo.name}`}
-              className="rounded-md p-2 text-muted hover:bg-stone hover:text-ink focus-visible:outline-2 focus-visible:outline-goldDark disabled:opacity-50"
+              className="rounded-md p-2 text-muted transition-colors duration-150 ease-salida hover:bg-panel hover:text-ink focus-visible:outline-2 focus-visible:outline-ink disabled:opacity-50 motion-reduce:transition-none"
             >
               <Trash2 className="size-4" aria-hidden="true" />
             </button>
@@ -70,7 +69,7 @@ function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintent
       {estado === 'subiendo' && <BarraProgreso nombre={archivo.name} progreso={progreso} />}
 
       {estado === 'error' && (
-        <p role="alert" className="flex items-start gap-2 text-sm text-redParish">
+        <p role="alert" className="flex items-start gap-2 text-sm text-danger">
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           {mensaje}
         </p>
@@ -89,7 +88,7 @@ function ElementoDeCola({ elemento, deshabilitado, onTexto, onQuitar, onReintent
             disabled={estado !== 'pendiente' && estado !== 'error' && estado !== 'cancelado'}
             aria-describedby={idAyuda}
             onChange={(e) => onTexto(e.target.value)}
-            className="rounded-md border border-borderSoft px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-goldDark disabled:bg-stone"
+            className="min-h-10 rounded-md border border-sand bg-white px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink disabled:bg-panel"
           />
           <p id={idAyuda} className="text-xs text-muted">
             Recomendado: describe lo que se ve. Es necesario para publicar la imagen en el portal.
@@ -140,20 +139,15 @@ export default function SubidaArchivos() {
           if (!e.currentTarget.contains(e.relatedTarget)) setArrastrando(false);
         }}
         onDrop={alSoltar}
-        className={`flex flex-col items-center gap-3 rounded-lg border-2 border-dashed px-4 py-8 text-center ${
-          arrastrando ? 'border-gold bg-goldPale' : 'border-borderSoft bg-white'
+        className={`flex flex-col items-center gap-3 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors duration-150 ease-salida motion-reduce:transition-none ${
+          arrastrando ? 'border-gold bg-gold-soft' : 'border-sand bg-white'
         }`}
       >
-        <UploadCloud className="size-10 text-goldDark" aria-hidden="true" />
-        <p className="font-medium">Arrastra aquí imágenes, videos o PDF</p>
-        <button
-          type="button"
-          onClick={() => entrada.current.click()}
-          disabled={cola.subiendo}
-          className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
-        >
+        <UploadCloud className="size-10 text-ink" aria-hidden="true" />
+        <p className="font-medium text-ink">Arrastra aquí imágenes, videos o PDF</p>
+        <Boton variante="primario" tamano="sm" onClick={() => entrada.current.click()} disabled={cola.subiendo}>
           Seleccionar archivos
-        </button>
+        </Boton>
         <input
           ref={entrada}
           type="file"
@@ -168,7 +162,7 @@ export default function SubidaArchivos() {
       </div>
 
       {cola.rechazados.length > 0 && (
-        <div role="alert" className="mt-4 rounded-lg border border-redParish/30 bg-redParish/5 p-4 text-sm text-redParish">
+        <div role="alert" className="mt-4 rounded-lg border border-danger/30 bg-danger-soft p-4 text-sm text-danger">
           <div className="flex items-start justify-between gap-3">
             <p className="font-semibold">
               {cola.rechazados.length === 1 ? 'No se agregó 1 archivo:' : `No se agregaron ${cola.rechazados.length} archivos:`}
@@ -177,7 +171,7 @@ export default function SubidaArchivos() {
               type="button"
               onClick={cola.descartarRechazados}
               aria-label="Descartar los avisos de archivos rechazados"
-              className="rounded-md p-1 hover:bg-redParish/10 focus-visible:outline-2 focus-visible:outline-redParish"
+              className="rounded-md p-1 hover:bg-danger/10 focus-visible:outline-2 focus-visible:outline-ink"
             >
               <X className="size-4" aria-hidden="true" />
             </button>
@@ -209,11 +203,11 @@ export default function SubidaArchivos() {
           </ul>
 
           <div className="mt-3 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
+            <Boton
+              variante="primario"
               onClick={cola.subirPendientes}
-              disabled={cola.subiendo || pendientes === 0}
-              className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
+              cargando={cola.subiendo}
+              disabled={pendientes === 0}
             >
               {cola.subiendo
                 ? 'Subiendo archivos…'
@@ -222,11 +216,11 @@ export default function SubidaArchivos() {
                   : pendientes === 1
                     ? 'Subir 1 archivo'
                     : `Subir ${pendientes} archivos`}
-            </button>
+            </Boton>
             {subidos > 0 && (
-              <button type="button" onClick={cola.quitarSubidos} disabled={cola.subiendo} className={botonSecundario}>
+              <Boton variante="secundario" onClick={cola.quitarSubidos} disabled={cola.subiendo}>
                 Quitar los ya subidos
-              </button>
+              </Boton>
             )}
           </div>
         </div>

@@ -1,11 +1,19 @@
-import { useId, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, ExternalLink, Pencil, Plus, Star, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ExternalLink, Inbox, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 
+import ConfirmarAccion from '../../componentes/ConfirmarAccion.jsx';
 import { usePermisos } from '../../permisos/usePermisos.js';
-import BannerSoloLectura from '../componentes/BannerSoloLectura.jsx';
-import ConfirmarBorrado from '../componentes/ConfirmarBorrado.jsx';
-import EstadoLista from '../componentes/EstadoLista.jsx';
+import {
+  Aviso,
+  Boton,
+  CampoSelect,
+  EncabezadoPantalla,
+  EsqueletoTarjetas,
+  EstadoVacio,
+  Insignia,
+  useToast,
+} from '../../ui/index.js';
 import {
   CLAVE_VIDEOS,
   eliminarVideo,
@@ -18,9 +26,9 @@ import FormularioVideo from './FormularioVideo.jsx';
 export default function Videos() {
   const queryClient = useQueryClient();
   const { puede } = usePermisos();
+  const toast = useToast();
   const puedeGestionar = puede('videos.gestionar');
 
-  const idFiltro = useId();
   const tituloRef = useRef(null);
 
   const [filtroDestacado, setFiltroDestacado] = useState('');
@@ -39,6 +47,18 @@ export default function Videos() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CLAVE_VIDEOS }),
   });
 
+  const eliminarMut = useMutation({
+    mutationFn: (video) => eliminarVideo(video.id),
+    onSuccess: (_, video) => {
+      queryClient.invalidateQueries({ queryKey: CLAVE_VIDEOS });
+      const msg = `Se eliminó el video «${video.titulo}».`;
+      setAviso(msg);
+      toast.exito(msg);
+      setPorEliminar(null);
+      setTimeout(() => tituloRef.current?.focus(), 0);
+    },
+  });
+
   const videos = videosQuery.data ?? [];
 
   function mover(indice, direccion) {
@@ -49,81 +69,96 @@ export default function Videos() {
     reordenarMut.mutate(ids);
   }
 
-  async function confirmarEliminacion() {
-    await eliminarVideo(porEliminar.id);
-    await queryClient.invalidateQueries({ queryKey: CLAVE_VIDEOS });
-    setAviso(`Se eliminó el video «${porEliminar.titulo}».`);
-    setPorEliminar(null);
-    setTimeout(() => tituloRef.current?.focus(), 0);
-  }
-
   return (
     <section className="mx-auto max-w-5xl">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1
-            ref={tituloRef}
-            tabIndex={-1}
-            className="font-display text-4xl font-semibold text-ink outline-none"
-          >
-            Videos
-          </h1>
-          <p className="mt-2 text-muted">
-            Videos de YouTube mostrados en el portal parroquial.
+      <EncabezadoPantalla
+        titulo="Videos"
+        descripcion="Videos de YouTube mostrados en el portal parroquial."
+        headingRef={tituloRef}
+        acciones={
+          puedeGestionar && (
+            <Boton
+              variante="primario"
+              icono={Plus}
+              onClick={() => {
+                setAviso('');
+                setCreando(true);
+              }}
+            >
+              Nuevo video
+            </Boton>
+          )
+        }
+      />
+
+      {!puedeGestionar && (
+        <Aviso tipo="soloLectura" className="mt-4">
+          <p>
+            <strong className="font-semibold text-ink">Solo lectura:</strong> tu rol puede consultar los videos, pero no
+            realizar cambios.
           </p>
-        </div>
+        </Aviso>
+      )}
 
-        {puedeGestionar && (
-          <button
-            type="button"
-            onClick={() => {
-              setAviso('');
-              setCreando(true);
-            }}
-            className="flex items-center gap-2 rounded-md bg-gold px-4 py-2.5 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            Nuevo video
-          </button>
-        )}
-      </header>
+      {aviso ? (
+        <Aviso tipo="exito" className="mt-4">
+          {aviso}
+        </Aviso>
+      ) : (
+        <p role="status" className="sr-only" />
+      )}
 
-      {!puedeGestionar && <BannerSoloLectura recurso="los videos" />}
-
-      <p
-        role="status"
-        className={aviso ? 'mt-4 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark' : 'sr-only'}
-      >
-        {aviso}
-      </p>
-
-      <div className="mt-6 flex flex-wrap gap-4 rounded-lg border border-borderSoft bg-white p-4">
-        <div className="flex flex-col gap-1">
-          <label htmlFor={idFiltro} className="text-xs font-semibold text-muted">
-            Destacado
-          </label>
-          <select
-            id={idFiltro}
-            value={filtroDestacado}
-            onChange={(e) => setFiltroDestacado(e.target.value)}
-            className="rounded-md border border-borderSoft bg-white px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-goldDark"
-          >
-            <option value="">Todos</option>
-            <option value="true">Destacados</option>
-            <option value="false">No destacados</option>
-          </select>
-        </div>
+      <div className="mt-6 rounded-lg border border-sand bg-white p-4 sm:max-w-xs">
+        <CampoSelect
+          etiqueta="Destacado"
+          value={filtroDestacado}
+          onChange={(e) => setFiltroDestacado(e.target.value)}
+        >
+          <option value="">Todos</option>
+          <option value="true">Destacados</option>
+          <option value="false">No destacados</option>
+        </CampoSelect>
       </div>
 
       <div className="mt-6" aria-busy={videosQuery.isPending}>
-        <EstadoLista
-          cargando={videosQuery.isPending}
-          error={videosQuery.error}
-          vacio={!videosQuery.isPending && !videosQuery.error && videos.length === 0}
-          textoCargando="Cargando videos…"
-          textoVacio="Todavía no hay videos de YouTube registrados."
-          onReintentar={() => videosQuery.refetch()}
-        />
+        {videosQuery.isPending && (
+          <EsqueletoTarjetas cantidad={3} columnas="grid-cols-1" etiqueta="Cargando videos…" />
+        )}
+
+        {videosQuery.error && (
+          <Aviso
+            tipo="error"
+            accion={
+              <Boton variante="secundario" tamano="sm" onClick={() => videosQuery.refetch()}>
+                Reintentar
+              </Boton>
+            }
+          >
+            <p>{videosQuery.error.message || 'No se pudieron cargar los datos.'}</p>
+          </Aviso>
+        )}
+
+        {!videosQuery.isPending && !videosQuery.error && videos.length === 0 && (
+          <EstadoVacio
+            icono={Inbox}
+            titulo="Todavía no hay videos de YouTube registrados."
+            descripcion="Agrega videos de transmisiones, homilías o mensajes parroquiales."
+            accion={
+              puedeGestionar && (
+                <Boton
+                  variante="primario"
+                  icono={Plus}
+                  onClick={() => {
+                    setAviso('');
+                    setCreando(true);
+                  }}
+                >
+                  Agregar el primer video
+                </Boton>
+              )
+            }
+          />
+        )}
 
         {videos.length > 0 && (
           <ul className="flex flex-col gap-3" aria-label="Videos de YouTube">
@@ -132,38 +167,34 @@ export default function Videos() {
               return (
                 <li
                   key={video.id}
-                  className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-borderSoft bg-white p-4"
+                  className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-sand bg-white p-5"
                 >
                   <div className="flex min-w-0 flex-1 items-start gap-4">
                     <img
                       src={video.urlMiniatura}
                       alt={video.titulo}
-                      className="h-20 w-36 shrink-0 rounded-md bg-stone object-cover"
+                      className="aspect-video w-36 shrink-0 rounded-md border border-sand bg-panel object-cover"
                     />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-display text-2xl font-semibold text-ink">
-                          {video.titulo}
-                        </h2>
+                        <h2 className="font-body text-base font-semibold text-ink">{video.titulo}</h2>
                         {video.destacado && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-goldPale px-2.5 py-0.5 text-xs font-semibold text-goldDark">
-                            <Star className="size-3" aria-hidden="true" />
+                          <Insignia variante="programado">
+                            <Star className="mr-1 size-3" aria-hidden="true" />
                             Destacado
-                          </span>
+                          </Insignia>
                         )}
                       </div>
-                      {video.descripcion && (
-                        <p className="mt-1 text-sm text-charcoal">{video.descripcion}</p>
-                      )}
+                      {video.descripcion && <p className="mt-1 text-sm text-ink">{video.descripcion}</p>}
                       <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted">
                         <span>ID: {video.youtubeVideoId}</span>
-                        {duracion && <span>Duración: {duracion}</span>}
+                        {duracion && <span className="tabular-nums">Duración: {duracion}</span>}
                         {video.fechaPublicacion && <span>Fecha: {video.fechaPublicacion}</span>}
                         <a
                           href={video.urlVideo}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 font-medium text-goldDark hover:underline"
+                          className="inline-flex items-center gap-1 font-semibold text-ink underline-offset-2 hover:underline"
                         >
                           Ver en YouTube
                           <ExternalLink className="size-3" aria-hidden="true" />
@@ -176,50 +207,50 @@ export default function Videos() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       {!filtroDestacado && (
                         <>
-                          <button
-                            type="button"
+                          <Boton
+                            variante="secundario"
+                            tamano="sm"
                             onClick={() => mover(i, -1)}
                             disabled={i === 0 || reordenarMut.isPending}
                             aria-label={`Subir ${video.titulo}`}
-                            className="rounded-md border border-borderSoft bg-white p-1.5 text-muted hover:bg-stone hover:text-ink disabled:opacity-40"
                           >
                             <ArrowUp className="size-3.5" aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
+                          </Boton>
+                          <Boton
+                            variante="secundario"
+                            tamano="sm"
                             onClick={() => mover(i, 1)}
                             disabled={i === videos.length - 1 || reordenarMut.isPending}
                             aria-label={`Bajar ${video.titulo}`}
-                            className="rounded-md border border-borderSoft bg-white p-1.5 text-muted hover:bg-stone hover:text-ink disabled:opacity-40"
                           >
                             <ArrowDown className="size-3.5" aria-hidden="true" />
-                          </button>
+                          </Boton>
                         </>
                       )}
-                      <button
-                        type="button"
+                      <Boton
+                        variante="secundario"
+                        tamano="sm"
+                        icono={Pencil}
                         onClick={() => {
                           setAviso('');
                           setEditando(video);
                         }}
                         aria-label={`Editar ${video.titulo}`}
-                        className="flex items-center gap-1 rounded-md border border-borderSoft bg-white px-2.5 py-1.5 text-xs font-medium text-ink hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
                       >
-                        <Pencil className="size-3.5" aria-hidden="true" />
                         Editar
-                      </button>
-                      <button
-                        type="button"
+                      </Boton>
+                      <Boton
+                        variante="secundario"
+                        tamano="sm"
+                        icono={Trash2}
                         onClick={() => {
                           setAviso('');
                           setPorEliminar(video);
                         }}
                         aria-label={`Eliminar ${video.titulo}`}
-                        className="flex items-center gap-1 rounded-md border border-redParish/30 bg-white px-2.5 py-1.5 text-xs font-medium text-redParish hover:bg-redParish/5 focus-visible:outline-2 focus-visible:outline-redParish"
                       >
-                        <Trash2 className="size-3.5" aria-hidden="true" />
                         Eliminar
-                      </button>
+                      </Boton>
                     </div>
                   )}
                 </li>
@@ -237,26 +268,31 @@ export default function Videos() {
             setEditando(null);
           }}
           onGuardado={(guardado) => {
+            const msg = editando
+              ? `Se actualizó el video «${guardado.titulo}».`
+              : `Se agregó el video «${guardado.titulo}».`;
             setCreando(false);
             setEditando(null);
-            setAviso(
-              editando
-                ? `Se actualizó el video «${guardado.titulo}».`
-                : `Se agregó el video «${guardado.titulo}».`,
-            );
+            setAviso(msg);
+            toast.exito(msg);
           }}
         />
       )}
 
       {porEliminar && (
-        <ConfirmarBorrado
+        <ConfirmarAccion
           titulo={`¿Eliminar «${porEliminar.titulo}»?`}
-          descripcion="El video dejará de mostrarse en el portal. Esta acción no se puede deshacer."
-          onConfirmar={confirmarEliminacion}
-          onCancelar={() => setPorEliminar(null)}
-        />
+          pendiente={eliminarMut.isPending}
+          error={eliminarMut.error}
+          onConfirmar={() => eliminarMut.mutate(porEliminar)}
+          onCancelar={() => {
+            eliminarMut.reset();
+            setPorEliminar(null);
+          }}
+        >
+          El video dejará de mostrarse en el portal. Esta acción no se puede deshacer.
+        </ConfirmarAccion>
       )}
     </section>
   );
 }
-

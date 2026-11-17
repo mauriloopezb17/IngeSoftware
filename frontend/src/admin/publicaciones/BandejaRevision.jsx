@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Check, Inbox, Loader2, Pencil, X } from 'lucide-react';
+import { Check, Inbox, Pencil, X } from 'lucide-react';
 
 import Paginacion from '../componentes/Paginacion.jsx';
 import SinPermiso from '../componentes/SinPermiso.jsx';
 import { formatearFecha } from '../multimedia/formato.js';
 import { usePermisos } from '../permisos/usePermisos.js';
+import { Aviso, Boton, EncabezadoPantalla, EsqueletoTarjetas, EstadoVacio, useToast } from '../ui/index.js';
 import { CLAVE_PUBLICACIONES, listarPublicaciones, POR_PAGINA } from './api.js';
 import { DialogoAprobar, DialogoRechazar } from './DialogosRevision.jsx';
 
@@ -19,6 +20,7 @@ const claveBandeja = (pagina) => [...CLAVE_PUBLICACIONES, 'bandeja', pagina];
 export default function BandejaRevision() {
   const { puede } = usePermisos();
   const clienteConsultas = useQueryClient();
+  const toast = useToast();
   const [pagina, setPagina] = useState(1);
   const [aviso, setAviso] = useState('');
   // { publicacion, accion: 'aprobar' | 'rechazar' } mientras hay un diálogo abierto.
@@ -39,6 +41,7 @@ export default function BandejaRevision() {
   function terminar(mensaje) {
     setRevisando(null);
     setAviso(mensaje);
+    toast.exito(mensaje);
     // Listado y bandeja salen de la misma clave: se refrescan juntos.
     clienteConsultas.invalidateQueries({ queryKey: CLAVE_PUBLICACIONES });
     // Si era la última de una página posterior, se vuelve a la anterior.
@@ -46,99 +49,94 @@ export default function BandejaRevision() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-4xl font-semibold text-ink">Bandeja de revisión</h1>
-          <p className="mt-2 text-muted">Publicaciones que esperan tu aprobación.</p>
-        </div>
-        <Link
-          to="/admin/publicaciones"
-          className="rounded-md border border-borderSoft bg-white px-4 py-2.5 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-        >
-          Volver a publicaciones
-        </Link>
-      </header>
+    <section className="mx-auto max-w-5xl">
+      <EncabezadoPantalla
+        titulo="Bandeja de revisión"
+        descripcion="Publicaciones que esperan tu aprobación."
+        acciones={
+          <Boton como={Link} to="/admin/publicaciones" variante="secundario">
+            Volver a publicaciones
+          </Boton>
+        }
+      />
 
       {aviso && (
-        <p role="status" className="mt-4 rounded-md bg-goldPale px-3 py-2 text-sm text-goldDark">
-          {aviso}
-        </p>
+        <Aviso tipo="exito" className="mt-5">
+          <p>{aviso}</p>
+        </Aviso>
       )}
 
       <div className="mt-6" aria-busy={isPending || isPlaceholderData}>
-        {isPending && (
-          <p role="status" className="flex items-center gap-2 py-10 text-sm text-muted">
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" /> Cargando la bandeja…
-          </p>
-        )}
+        {isPending && <EsqueletoTarjetas cantidad={3} columnas="grid-cols-1" etiqueta="Cargando la bandeja…" />}
 
         {isError && !data && (
-          <div role="alert" className="flex flex-col items-start gap-3 rounded-lg border border-redParish/30 bg-redParish/5 p-4 text-sm text-redParish">
-            <p className="flex items-start gap-2">
-              <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              No se pudo cargar la bandeja: {error.message}
-            </p>
-            <button
-              type="button"
-              onClick={() => refetch()}
-              className="rounded-md border border-redParish/40 bg-white px-3 py-1.5 font-medium hover:bg-redParish/5 focus-visible:outline-2 focus-visible:outline-redParish"
-            >
-              Reintentar
-            </button>
-          </div>
+          <Aviso
+            tipo="error"
+            accion={
+              <Boton variante="secundario" tamano="sm" onClick={() => refetch()}>
+                Reintentar
+              </Boton>
+            }
+          >
+            <p>No se pudo cargar la bandeja: {error.message}</p>
+          </Aviso>
         )}
 
         {data && (
           <>
-            <p className="mb-3 text-sm text-muted" aria-live="polite">
+            <p className="mb-3 text-sm tabular-nums text-muted" aria-live="polite">
               {data.paginacion.total} {data.paginacion.total === 1 ? 'publicación en revisión' : 'publicaciones en revisión'}
             </p>
 
             {publicaciones.length ? (
               <ul aria-label="Publicaciones en revisión" className={`flex flex-col gap-3 ${isPlaceholderData ? 'opacity-60' : ''}`}>
                 {publicaciones.map((publicacion) => (
-                  <li key={publicacion.id} className="rounded-lg border border-borderSoft bg-white p-4">
+                  <li key={publicacion.id} className="rounded-lg border border-sand bg-white p-5">
                     <article aria-label={publicacion.titulo} className="flex flex-wrap items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
-                        <h2 className="font-semibold text-ink">{publicacion.titulo}</h2>
+                        <h2 className="text-base font-semibold text-ink">{publicacion.titulo}</h2>
                         <p className="mt-1 text-xs text-muted">
                           {publicacion.tipo.nombre}
                           {publicacion.categoria && ` · ${publicacion.categoria.nombre}`} · {publicacion.autor.nombreCompleto} ·
                           creada el {formatearFecha(publicacion.fechaCreacion)}
                         </p>
-                        {publicacion.resumen && <p className="mt-2 text-sm text-charcoal">{publicacion.resumen}</p>}
+                        {publicacion.resumen && <p className="mt-2 text-sm text-ink">{publicacion.resumen}</p>}
                       </div>
                       {/* Los botones salen de `acciones`: la API dice qué puede hacer esta sesión. */}
                       <div className="flex flex-wrap gap-2">
                         {publicacion.acciones.includes('EDITAR') && (
-                          <Link
+                          <Boton
+                            como={Link}
                             to={`/admin/publicaciones/${publicacion.id}/editar`}
+                            variante="secundario"
+                            tamano="sm"
+                            icono={Pencil}
                             aria-label={`Revisar el contenido de «${publicacion.titulo}»`}
-                            className="inline-flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-1.5 text-xs font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
                           >
-                            <Pencil className="size-3.5" aria-hidden="true" /> Revisar
-                          </Link>
+                            Revisar
+                          </Boton>
                         )}
                         {publicacion.acciones.includes('APROBAR') && (
-                          <button
-                            type="button"
+                          <Boton
+                            variante="primario"
+                            tamano="sm"
+                            icono={Check}
                             onClick={() => setRevisando({ publicacion, accion: 'aprobar' })}
                             aria-label={`Aprobar «${publicacion.titulo}»`}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-gold px-3 py-1.5 text-xs font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-goldDark"
                           >
-                            <Check className="size-3.5" aria-hidden="true" /> Aprobar
-                          </button>
+                            Aprobar
+                          </Boton>
                         )}
                         {publicacion.acciones.includes('RECHAZAR') && (
-                          <button
-                            type="button"
+                          <Boton
+                            variante="peligro"
+                            tamano="sm"
+                            icono={X}
                             onClick={() => setRevisando({ publicacion, accion: 'rechazar' })}
                             aria-label={`Rechazar «${publicacion.titulo}»`}
-                            className="inline-flex items-center gap-1.5 rounded-md border border-redParish/40 bg-white px-3 py-1.5 text-xs font-semibold text-redParish hover:bg-redParish/5 focus-visible:outline-2 focus-visible:outline-redParish"
                           >
-                            <X className="size-3.5" aria-hidden="true" /> Rechazar
-                          </button>
+                            Rechazar
+                          </Boton>
                         )}
                       </div>
                     </article>
@@ -146,10 +144,11 @@ export default function BandejaRevision() {
                 ))}
               </ul>
             ) : (
-              <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-borderSoft bg-white py-12 text-center text-muted">
-                <Inbox className="size-10" aria-hidden="true" />
-                <p>No hay publicaciones esperando revisión.</p>
-              </div>
+              <EstadoVacio
+                icono={Inbox}
+                titulo="No hay publicaciones esperando revisión."
+                descripcion="Cuando el equipo envíe noticias para aprobar, aparecerán aquí."
+              />
             )}
 
             <Paginacion paginacion={data.paginacion} nombre="Paginación de la bandeja" onCambiar={setPagina} />

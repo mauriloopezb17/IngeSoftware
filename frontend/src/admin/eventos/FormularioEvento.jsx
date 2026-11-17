@@ -1,19 +1,25 @@
 import { useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, ImagePlus, Loader2, Save, Trash2 } from 'lucide-react';
+import { AlertCircle, ImagePlus, Save, Trash2 } from 'lucide-react';
 
-import CampoArea from '../componentes/CampoArea.jsx';
-import CampoSelect from '../componentes/CampoSelect.jsx';
-import CampoTexto from '../componentes/CampoTexto.jsx';
 import { erroresDe } from '../componentes/erroresFormulario.js';
 import SelectorImagenes from '../multimedia/SelectorImagenes.jsx';
 import { CLAVE_CATALOGOS, obtenerCatalogos } from '../publicaciones/api.js';
+import {
+  Aviso,
+  Boton,
+  CampoArea,
+  CampoCasilla,
+  CampoSelect,
+  CampoTexto,
+  useToast,
+} from '../ui/index.js';
 import { actualizarEvento, CLAVE_EVENTOS, crearEvento, ESTADOS_EVENTO } from './api.js';
 import { CAMPO_DE_ERROR, camposDe, cuerpoDe, MAX_DESCRIPCION, MAX_LUGAR, validarLocal } from './campos.js';
 
 const estiloControl =
-  'w-full rounded-md border bg-white px-3 py-2.5 text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-goldDark';
+  'w-full min-h-11 rounded-md border bg-white px-3 py-2 text-sm text-ink transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink';
 
 // Día y hora de un extremo del evento. Con «todo el día» solo se pide el día.
 function DiaYHora({ legend, ayuda, error, dia, hora, conHora, onCambiar, obligatorio }) {
@@ -33,7 +39,7 @@ function DiaYHora({ legend, ayuda, error, dia, hora, conHora, onCambiar, obligat
             required={obligatorio}
             onChange={(e) => onCambiar({ dia: e.target.value })}
             aria-invalid={error ? 'true' : undefined}
-            className={`${estiloControl} ${error ? 'border-redParish' : 'border-borderSoft'}`}
+            className={`${estiloControl} ${error ? 'border-danger' : 'border-sand'}`}
           />
         </div>
         {conHora && (
@@ -48,7 +54,7 @@ function DiaYHora({ legend, ayuda, error, dia, hora, conHora, onCambiar, obligat
               required={obligatorio}
               onChange={(e) => onCambiar({ hora: e.target.value })}
               aria-invalid={error ? 'true' : undefined}
-              className={`${estiloControl} ${error ? 'border-redParish' : 'border-borderSoft'}`}
+              className={`${estiloControl} ${error ? 'border-danger' : 'border-sand'}`}
             />
           </div>
         )}
@@ -57,8 +63,9 @@ function DiaYHora({ legend, ayuda, error, dia, hora, conHora, onCambiar, obligat
         {ayuda}
       </p>
       {error && (
-        <p id={`${id}-error`} className="text-sm text-redParish">
-          {error}
+        <p id={`${id}-error`} className="flex items-start gap-1.5 text-sm text-danger">
+          <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+          <span>{error}</span>
         </p>
       )}
     </fieldset>
@@ -69,7 +76,7 @@ function DiaYHora({ legend, ayuda, error, dia, hora, conHora, onCambiar, obligat
 export default function FormularioEvento({ evento }) {
   const navegar = useNavigate();
   const clienteConsultas = useQueryClient();
-  const idTodoElDia = useId();
+  const toast = useToast();
   const avisos = useRef(null);
   const editando = Boolean(evento);
 
@@ -92,9 +99,11 @@ export default function FormularioEvento({ evento }) {
     mutationFn: (cuerpo) => (editando ? actualizarEvento(evento.id, cuerpo) : crearEvento(cuerpo)),
     onSuccess: (guardado) => {
       clienteConsultas.invalidateQueries({ queryKey: CLAVE_EVENTOS });
-      navegar('/admin/eventos', {
-        state: { aviso: editando ? `Se guardaron los cambios de «${guardado.titulo}».` : `Se creó el evento «${guardado.titulo}».` },
-      });
+      const mensaje = editando
+        ? `Se guardaron los cambios de «${guardado.titulo}».`
+        : `Se creó el evento «${guardado.titulo}».`;
+      toast.exito(mensaje);
+      navegar('/admin/eventos', { state: { aviso: mensaje } });
     },
     onError: (error) => {
       const { errores: porCampo, generales: avisosGenerales } = erroresDe(error, CAMPO_DE_ERROR);
@@ -115,94 +124,32 @@ export default function FormularioEvento({ evento }) {
   const mensajes = [...Object.values(errores), ...generales];
 
   return (
-    <form onSubmit={enviar} noValidate className="mt-6 flex flex-col gap-6">
+    <form onSubmit={enviar} noValidate className="mt-6 flex flex-col gap-6 rounded-lg border border-sand bg-white p-5 sm:p-6">
       <div ref={avisos} tabIndex={-1} className="outline-none">
         {mensajes.length > 0 && (
-          <div role="alert" className="flex items-start gap-2 rounded-lg border border-redParish/30 bg-redParish/5 p-4 text-sm text-redParish">
-            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            <div>
-              <p className="font-semibold">No se pudo guardar. Revisa lo siguiente:</p>
-              <ul className="mt-1 list-disc pl-5">
-                {mensajes.map((mensaje) => (
-                  <li key={mensaje}>{mensaje}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <Aviso tipo="error" titulo="No se pudo guardar. Revisa lo siguiente:">
+            <ul className="mt-1 list-disc pl-5">
+              {mensajes.map((mensaje, i) => (
+                <li key={`${i}-${mensaje}`}>{mensaje}</li>
+              ))}
+            </ul>
+          </Aviso>
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div className="flex flex-col gap-6">
-          <CampoTexto
-            etiqueta="Título"
-            value={campos.titulo}
-            onChange={(e) => cambiar({ titulo: e.target.value })}
-            error={errores.titulo}
-            maxLength={200}
-            required
-            autoComplete="off"
-          />
+      {/* Formulario en 1 columna cómoda dentro de max-w-3xl */}
+      <div className="flex flex-col gap-6">
+        <CampoTexto
+          etiqueta="Título"
+          value={campos.titulo}
+          onChange={(e) => cambiar({ titulo: e.target.value })}
+          error={errores.titulo}
+          maxLength={200}
+          required
+          autoComplete="off"
+        />
 
-          <label htmlFor={idTodoElDia} className="flex items-center gap-2 text-sm font-medium">
-            <input
-              id={idTodoElDia}
-              type="checkbox"
-              checked={campos.todoElDia}
-              onChange={(e) => cambiar({ todoElDia: e.target.checked })}
-              className="size-4 accent-goldDark"
-            />
-            Todo el día
-          </label>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <DiaYHora
-              legend="Inicio"
-              ayuda="Hora de Bolivia."
-              obligatorio
-              error={errores.fechaInicio}
-              dia={campos.diaInicio}
-              hora={campos.horaInicio}
-              conHora={!campos.todoElDia}
-              onCambiar={({ dia, hora }) =>
-                cambiar(dia !== undefined ? { diaInicio: dia } : { horaInicio: hora })
-              }
-            />
-            <DiaYHora
-              legend="Fin (opcional)"
-              ayuda={
-                campos.todoElDia
-                  ? 'Para un evento de varios días.'
-                  : 'Si solo indicas la hora, termina el mismo día.'
-              }
-              error={errores.fechaFin}
-              dia={campos.diaFin}
-              hora={campos.horaFin}
-              conHora={!campos.todoElDia}
-              onCambiar={({ dia, hora }) => cambiar(dia !== undefined ? { diaFin: dia } : { horaFin: hora })}
-            />
-          </div>
-
-          <CampoTexto
-            etiqueta="Lugar (opcional)"
-            value={campos.lugar}
-            onChange={(e) => cambiar({ lugar: e.target.value })}
-            error={errores.lugar}
-            maxLength={MAX_LUGAR}
-            autoComplete="off"
-          />
-
-          <CampoArea
-            etiqueta="Descripción (opcional)"
-            value={campos.descripcion}
-            onChange={(e) => cambiar({ descripcion: e.target.value })}
-            error={errores.descripcion}
-            maxLength={MAX_DESCRIPCION}
-            ayuda="Texto plano."
-          />
-        </div>
-
-        <div className="flex flex-col gap-6">
+        <div className="grid gap-5 sm:grid-cols-2">
           <CampoSelect
             etiqueta="Categoría"
             value={campos.categoriaId}
@@ -221,68 +168,105 @@ export default function FormularioEvento({ evento }) {
             ayuda="Los eventos se publican directamente, sin revisión. Un borrador no se ve en el portal."
             opciones={Object.entries(ESTADOS_EVENTO)}
           />
-
-          <fieldset className="flex flex-col gap-1.5">
-            <legend className="text-sm font-semibold text-ink">Imagen (opcional)</legend>
-            {campos.imagen ? (
-              <div className="flex flex-col gap-2 rounded-md border border-borderSoft bg-white p-2">
-                <img
-                  src={campos.imagen.url}
-                  alt={campos.imagen.textoAlternativo ?? ''}
-                  className="aspect-video w-full rounded object-cover"
-                />
-                <p className="text-xs text-muted">
-                  {campos.imagen.textoAlternativo
-                    ? `Texto alternativo: ${campos.imagen.textoAlternativo}`
-                    : 'Esta imagen no tiene texto alternativo.'}
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-muted">Sin imagen.</p>
-            )}
-            {errores.imagen && <p className="text-sm text-redParish">{errores.imagen}</p>}
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setEligiendoImagen(true)}
-                className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-              >
-                <ImagePlus className="size-4" aria-hidden="true" />
-                {campos.imagen ? 'Cambiar imagen' : 'Elegir imagen'}
-              </button>
-              {campos.imagen && (
-                <button
-                  type="button"
-                  onClick={() => cambiar({ imagen: null })}
-                  className="flex items-center gap-1.5 rounded-md border border-borderSoft bg-white px-3 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-                >
-                  <Trash2 className="size-4" aria-hidden="true" /> Quitar imagen
-                </button>
-              )}
-            </div>
-          </fieldset>
         </div>
+
+        <CampoCasilla
+          etiqueta="Todo el día"
+          checked={campos.todoElDia}
+          onChange={(e) => cambiar({ todoElDia: e.target.checked })}
+        />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <DiaYHora
+            legend="Inicio"
+            ayuda="Hora de Bolivia."
+            obligatorio
+            error={errores.fechaInicio}
+            dia={campos.diaInicio}
+            hora={campos.horaInicio}
+            conHora={!campos.todoElDia}
+            onCambiar={({ dia, hora }) =>
+              cambiar(dia !== undefined ? { diaInicio: dia } : { horaInicio: hora })
+            }
+          />
+          <DiaYHora
+            legend="Fin (opcional)"
+            ayuda={
+              campos.todoElDia
+                ? 'Para un evento de varios días.'
+                : 'Si solo indicas la hora, termina el mismo día.'
+            }
+            error={errores.fechaFin}
+            dia={campos.diaFin}
+            hora={campos.horaFin}
+            conHora={!campos.todoElDia}
+            onCambiar={({ dia, hora }) => cambiar(dia !== undefined ? { diaFin: dia } : { horaFin: hora })}
+          />
+        </div>
+
+        <CampoTexto
+          etiqueta="Lugar (opcional)"
+          value={campos.lugar}
+          onChange={(e) => cambiar({ lugar: e.target.value })}
+          error={errores.lugar}
+          maxLength={MAX_LUGAR}
+          autoComplete="off"
+        />
+
+        <CampoArea
+          etiqueta="Descripción (opcional)"
+          value={campos.descripcion}
+          onChange={(e) => cambiar({ descripcion: e.target.value })}
+          error={errores.descripcion}
+          maxLength={MAX_DESCRIPCION}
+          mostrarContador
+          ayuda="Texto plano."
+        />
+
+        <fieldset className="flex flex-col gap-2">
+          <legend className="text-sm font-semibold text-ink">Imagen (opcional)</legend>
+          {campos.imagen ? (
+            <div className="flex flex-col gap-2 rounded-md border border-sand bg-panel p-3 sm:flex-row sm:items-center sm:gap-4">
+              <img
+                src={campos.imagen.url}
+                alt={campos.imagen.textoAlternativo ?? ''}
+                className="aspect-video w-full rounded object-cover sm:w-48 sm:shrink-0"
+              />
+              <p className="text-xs text-muted">
+                {campos.imagen.textoAlternativo
+                  ? `Texto alternativo: ${campos.imagen.textoAlternativo}`
+                  : 'Esta imagen no tiene texto alternativo.'}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted">Sin imagen.</p>
+          )}
+          {errores.imagen && (
+            <p className="flex items-start gap-1.5 text-sm text-danger">
+              <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+              <span>{errores.imagen}</span>
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Boton variante="secundario" tamano="sm" icono={ImagePlus} onClick={() => setEligiendoImagen(true)}>
+              {campos.imagen ? 'Cambiar imagen' : 'Elegir imagen'}
+            </Boton>
+            {campos.imagen && (
+              <Boton variante="secundario" tamano="sm" icono={Trash2} onClick={() => cambiar({ imagen: null })}>
+                Quitar imagen
+              </Boton>
+            )}
+          </div>
+        </fieldset>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-borderSoft pt-5">
-        <button
-          type="submit"
-          disabled={guardar.isPending}
-          className="flex items-center gap-2 rounded-md bg-gold px-5 py-2.5 font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {guardar.isPending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <Save className="size-4" aria-hidden="true" />
-          )}
+      <div className="flex flex-wrap items-center gap-3 border-t border-sand pt-5">
+        <Boton type="submit" variante="primario" icono={Save} cargando={guardar.isPending}>
           {editando ? 'Guardar cambios' : 'Crear evento'}
-        </button>
-        <Link
-          to="/admin/eventos"
-          className="rounded-md border border-borderSoft bg-white px-4 py-2.5 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark"
-        >
+        </Boton>
+        <Boton como={Link} to="/admin/eventos" variante="secundario">
           Cancelar
-        </Link>
+        </Boton>
       </div>
 
       {eligiendoImagen && (

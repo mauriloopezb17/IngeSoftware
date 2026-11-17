@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router';
-import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
+import logoBlanco from '../../assets/parroquia/logos/logo-horizontal-blanco.svg';
+import logoColor from '../../assets/parroquia/logos/logo-horizontal-color.svg';
 import { ErrorApi } from '../../services/clienteHttp.js';
-import CampoTexto from '../componentes/CampoTexto.jsx';
 import { useSesion } from '../sesion/SesionContexto.js';
+import { Aviso, Boton, CampoTexto } from '../ui/index.js';
 
 const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RUTA_INICIAL = '/admin/inicio';
@@ -81,78 +83,106 @@ export default function InicioSesion() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-cream px-4 py-10 font-body">
-      <div className="w-full max-w-md rounded-lg border border-borderSoft bg-white p-6 shadow-sm sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-widest text-goldDark">
-          Parroquia Señor de la Exaltación
-        </p>
-        <h1 className="mt-2 font-display text-4xl font-semibold text-ink">Panel de administración</h1>
-        <p className="mt-2 text-sm text-muted">Inicia sesión con tu cuenta para gestionar el contenido del portal.</p>
-
-        {cargando ? (
-          <p role="status" className="mt-8 flex items-center gap-2 text-sm text-muted">
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" /> Comprobando la sesión…
+    <main className="grid min-h-screen bg-panel font-body text-ink lg:grid-cols-2">
+      <aside className="hidden flex-col justify-between bg-ink px-12 py-14 text-white lg:flex">
+        <div>
+          <img
+            src={logoBlanco}
+            alt="Parroquia Señor de la Exaltación"
+            className="h-14 w-auto"
+          />
+        </div>
+        <div className="max-w-md">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gold">
+            Misioneros Pasionistas · Obrajes, La Paz
           </p>
-        ) : (
-          <form onSubmit={enviar} noValidate className="mt-8 flex flex-col gap-5">
-            {errorGeneral && (
-              <div
-                role="alert"
-                className="flex items-start gap-2 rounded-md border border-redParish/30 bg-redParish/5 px-3 py-2.5 text-sm text-redParish"
-              >
-                <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                <span>{errorGeneral}</span>
-              </div>
-            )}
+          <p className="mt-4 font-display text-4xl font-semibold leading-tight text-white">
+            Gestión editorial y vida parroquial en un solo lugar.
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-muted-on-dark">
+            Publica noticias, horarios de celebración, eventos, proclamas y boletines mensuales del portal parroquial.
+          </p>
+        </div>
+        <p className="text-xs text-muted-on-dark">
+          Acceso restringido al equipo pastoral y administrativo autorizado.
+        </p>
+      </aside>
 
-            <CampoTexto
-              etiqueta="Correo electrónico"
-              type="email"
-              name="correo"
-              autoComplete="username"
-              inputMode="email"
-              value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
-              error={errores.correo}
-              ref={refCorreo}
+      <div className="flex items-center justify-center px-4 py-10 sm:px-8">
+        <div className="w-full max-w-md rounded-lg border border-sand bg-white p-6 shadow-sm sm:p-8">
+          <div className="mb-5 lg:hidden">
+            <img
+              src={logoColor}
+              alt="Parroquia Señor de la Exaltación"
+              className="h-11 w-auto"
             />
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted">
+            Parroquia Señor de la Exaltación
+          </p>
+          <h1 className="mt-1.5 font-body text-2xl font-semibold tracking-tight text-ink">
+            Panel de administración
+          </h1>
+          <p className="mt-2 text-sm text-muted">
+            Inicia sesión con tu cuenta para gestionar el contenido del portal.
+          </p>
 
-            <CampoTexto
-              etiqueta="Contraseña"
-              type={verContrasena ? 'text' : 'password'}
-              name="contrasena"
-              autoComplete="current-password"
-              value={contrasena}
-              onChange={(e) => setContrasena(e.target.value)}
-              error={errores.contrasena}
-              ref={refContrasena}
-              lado={
-                <button
-                  type="button"
-                  onClick={() => setVerContrasena((v) => !v)}
-                  aria-label={verContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                  aria-pressed={verContrasena}
-                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-muted hover:text-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-goldDark"
-                >
-                  {verContrasena ? (
-                    <EyeOff className="size-5" aria-hidden="true" />
-                  ) : (
-                    <Eye className="size-5" aria-hidden="true" />
-                  )}
-                </button>
-              }
-            />
+          {cargando ? (
+            <p role="status" className="mt-8 flex items-center gap-2 text-sm text-muted">
+              <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> Comprobando la sesión…
+            </p>
+          ) : (
+            <form onSubmit={enviar} noValidate className="mt-7 flex flex-col gap-5">
+              {errorGeneral && (
+                <Aviso tipo="error">
+                  <p>{errorGeneral}</p>
+                </Aviso>
+              )}
 
-            <button
-              type="submit"
-              disabled={enviando}
-              className="flex items-center justify-center gap-2 rounded-md bg-gold px-4 py-2.5 font-semibold text-ink transition-colors hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {enviando && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-              {enviando ? 'Entrando…' : 'Iniciar sesión'}
-            </button>
-          </form>
-        )}
+              <CampoTexto
+                etiqueta="Correo electrónico"
+                type="email"
+                name="correo"
+                autoComplete="username"
+                inputMode="email"
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
+                error={errores.correo}
+                ref={refCorreo}
+              />
+
+              <CampoTexto
+                etiqueta="Contraseña"
+                type={verContrasena ? 'text' : 'password'}
+                name="contrasena"
+                autoComplete="current-password"
+                value={contrasena}
+                onChange={(e) => setContrasena(e.target.value)}
+                error={errores.contrasena}
+                ref={refContrasena}
+                lado={
+                  <button
+                    type="button"
+                    onClick={() => setVerContrasena((v) => !v)}
+                    aria-label={verContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    aria-pressed={verContrasena}
+                    className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-muted transition-colors duration-150 ease-salida hover:text-ink focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink motion-reduce:transition-none"
+                  >
+                    {verContrasena ? (
+                      <EyeOff className="size-5" aria-hidden="true" />
+                    ) : (
+                      <Eye className="size-5" aria-hidden="true" />
+                    )}
+                  </button>
+                }
+              />
+
+              <Boton type="submit" variante="primario" cargando={enviando} className="w-full">
+                {enviando ? 'Entrando…' : 'Iniciar sesión'}
+              </Boton>
+            </form>
+          )}
+        </div>
       </div>
     </main>
   );

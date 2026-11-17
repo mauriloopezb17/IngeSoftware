@@ -1,10 +1,9 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
 
 import Dialogo from '../../componentes/Dialogo.jsx';
 import SelectorImagenes from '../../multimedia/SelectorImagenes.jsx';
-import CampoSelect from '../componentes/CampoSelect.jsx';
+import { Aviso, Boton, CampoCasilla, CampoSelect } from '../../ui/index.js';
 import { extraerErroresApi } from '../componentes/errores.js';
 import { CLAVE_CATALOGOS, obtenerCatalogos } from '../horarios/api.js';
 import {
@@ -221,7 +220,6 @@ function aplicarImagenAlContenido(prev, selectorMeta, imagen) {
 
 export default function FormularioBloque({ paginaId, bloque, onGuardado, onCerrar }) {
   const esEdicion = Boolean(bloque);
-  const idVisible = useId();
   const queryClient = useQueryClient();
 
   const catalogosQuery = useQuery({
@@ -289,19 +287,16 @@ export default function FormularioBloque({ paginaId, bloque, onGuardado, onCerra
       >
         <form onSubmit={enviar} noValidate className="flex flex-col gap-4">
           {errorGeneral && (
-            <p
-              role="alert"
-              className="rounded-md border border-redParish/30 bg-redParish/5 px-3 py-2 text-sm text-redParish"
-            >
-              {errorGeneral}
-            </p>
+            <Aviso tipo="error">
+              <p>{errorGeneral}</p>
+            </Aviso>
           )}
 
           <div className="grid items-end gap-4 sm:grid-cols-2">
             {esEdicion ? (
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1.5">
                 <span className="text-sm font-semibold text-ink">Tipo de bloque</span>
-                <p className="rounded-md border border-borderSoft bg-cream/40 px-3 py-2.5 text-sm font-medium text-ink">
+                <p className="rounded-md border border-sand bg-panel px-3 py-2.5 text-sm font-medium text-ink">
                   {NOMBRES_TIPO_BLOQUE[tipo] ?? tipo}
                 </p>
               </div>
@@ -321,20 +316,14 @@ export default function FormularioBloque({ paginaId, bloque, onGuardado, onCerra
               </CampoSelect>
             )}
 
-            <label
-              htmlFor={idVisible}
-              className="flex items-center gap-2.5 rounded-md border border-borderSoft bg-cream/40 px-3 py-2.5 text-sm font-medium text-ink"
-            >
-              <input
-                id={idVisible}
-                type="checkbox"
+            <div className="rounded-md border border-sand bg-panel px-3 py-2.5">
+              <CampoCasilla
+                etiqueta="Visible en el portal"
                 checked={visible}
                 onChange={(e) => setVisible(e.target.checked)}
                 disabled={isPending}
-                className="size-4 accent-goldDark"
               />
-              Visible en el portal
-            </label>
+            </div>
           </div>
 
           <CamposBloque
@@ -346,23 +335,13 @@ export default function FormularioBloque({ paginaId, bloque, onGuardado, onCerra
             deshabilitado={isPending}
           />
 
-          <div className="mt-2 flex flex-wrap justify-end gap-2">
-            <button
-              type="button"
-              onClick={onCerrar}
-              disabled={isPending}
-              className="rounded-md border border-borderSoft bg-white px-4 py-2 text-sm font-medium hover:bg-stone focus-visible:outline-2 focus-visible:outline-goldDark disabled:opacity-50"
-            >
+          <div className="mt-2 flex flex-wrap justify-end gap-2 border-t border-sand pt-4">
+            <Boton variante="secundario" onClick={onCerrar} disabled={isPending}>
               Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="flex items-center gap-2 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-goldDark hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-goldDark disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            </Boton>
+            <Boton type="submit" variante="primario" cargando={isPending}>
               {isPending ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Agregar bloque'}
-            </button>
+            </Boton>
           </div>
         </form>
       </Dialogo>
@@ -381,4 +360,3 @@ export default function FormularioBloque({ paginaId, bloque, onGuardado, onCerra
     </>
   );
 }
-
