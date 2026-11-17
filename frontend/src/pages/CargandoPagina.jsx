@@ -1,7 +1,11 @@
 // Se muestra mientras se descarga el código de una página con carga diferida.
 function CargandoPagina() {
   return (
-    <div role="status" className="grid min-h-screen place-items-center font-body text-muted">
+    <div
+      role="status"
+      aria-label="Cargando página"
+      className="grid min-h-screen place-items-center bg-white font-body text-body text-muted"
+    >
       Cargando…
     </div>
   );

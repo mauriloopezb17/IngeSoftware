@@ -1,16 +1,12 @@
-import {
-  ChevronRight,
-  Megaphone,
-  FileText,
-  ArrowRight,
-  CalendarDays,
-  Clock3,
-  MapPin,
-  Download,
-} from 'lucide-react';
+import { CalendarDays, Clock3, Download, FileText, MapPin, Megaphone } from 'lucide-react';
 
-import { anchoContenido } from './ElementosComunes.jsx';
-import EnlacePortal from './EnlacePortal.jsx';
+import {
+  BotonEnlace,
+  EncabezadoSeccion,
+  EnlaceFlecha,
+  Reveal,
+  Seccion,
+} from '../portal/index.js';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { useBoletines, useEventos, usePublicaciones } from '../../hooks/index.js';
 import {
@@ -19,8 +15,6 @@ import {
   formatearHoraEvento,
   formatearTamanoArchivo,
 } from '../../utils/formatoPortal.js';
-
-import '../../styles/Agenda.css';
 
 function Agenda() {
   const {
@@ -49,21 +43,16 @@ function Agenda() {
   const boletin = respuestaBoletines?.datos?.[0] ?? null;
 
   return (
-    <section id="agenda" className="agenda">
-      <div className={`${anchoContenido} agenda-contenedor`}>
-        <div className="agenda-principal">
-          <p className="eyebrow">Agenda parroquial</p>
+    <Seccion id="agenda" fondo="blanco">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <EncabezadoSeccion
+            eyebrow="Agenda parroquial"
+            titulo="Próximos eventos"
+            accion={<EnlaceFlecha to="/calendario">Ver calendario completo</EnlaceFlecha>}
+          />
 
-          <div className="agenda-encabezado">
-            <h2 className="serif-title agenda-titulo">Próximos eventos</h2>
-
-            <EnlacePortal to="/calendario" className="agenda-calendario">
-              Ver calendario completo
-              <ArrowRight size={15} />
-            </EnlacePortal>
-          </div>
-
-          <div id="agenda-eventos" className="agenda-eventos">
+          <div id="agenda-eventos">
             {cargandoEventos ? (
               <CargandoSeccion alturaMinima={320} etiqueta="Cargando próximos eventos" />
             ) : errorEventos ? (
@@ -74,73 +63,84 @@ function Agenda() {
             ) : eventos.length === 0 ? (
               <SinResultados mensaje="No hay próximos eventos programados." />
             ) : (
-              eventos.map((evento) => {
-                const { dia, mes } = formatearDiaMes(evento.fechaInicio);
-                const horaTexto = formatearHoraEvento(evento);
+              <div className="divide-y divide-sand border-y border-sand">
+                {eventos.map((evento, indice) => {
+                  const { dia, mes } = formatearDiaMes(evento.fechaInicio);
+                  const horaTexto = formatearHoraEvento(evento);
 
-                return (
-                  <article key={evento.id} className="agenda-evento">
-                    <div className="agenda-fecha">
-                      <span className="agenda-fecha-dia">{dia}</span>
+                  return (
+                    <Reveal
+                      key={evento.id}
+                      variante="tarjeta"
+                      retraso={indice * 90}
+                      as="article"
+                      className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:gap-6"
+                    >
+                      <div className="flex w-20 shrink-0 items-baseline gap-2 sm:flex-col sm:items-center sm:gap-0 sm:border-r sm:border-sand sm:pr-6">
+                        <span className="font-display text-h2 font-semibold tabular-nums text-ink">
+                          {dia}
+                        </span>
+                        <span className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-muted">
+                          {mes}
+                        </span>
+                      </div>
 
-                      <span className="agenda-fecha-mes">{mes}</span>
-                    </div>
-
-                    <div className="agenda-evento-informacion">
-                      {evento.categoria?.nombre && (
-                        <p className="agenda-evento-categoria">
-                          {evento.categoria.nombre}
-                        </p>
-                      )}
-
-                      <h3 className="agenda-evento-titulo">{evento.titulo}</h3>
-
-                      <p className="agenda-evento-detalle">
-                        <Clock3 size={13} />
-                        {horaTexto}
-
-                        {evento.lugar && (
-                          <>
-                            <span className="agenda-evento-separador">·</span>
-                            <MapPin size={13} />
-                            {evento.lugar}
-                          </>
+                      <div className="min-w-0 flex-1">
+                        {evento.categoria?.nombre && (
+                          <p className="mb-1 inline-flex items-center gap-2 font-body text-meta font-semibold text-ink">
+                            {evento.categoria.colorHex && (
+                              <span
+                                aria-hidden="true"
+                                className="inline-block size-2.5 rounded-full"
+                                style={{ backgroundColor: evento.categoria.colorHex }}
+                              />
+                            )}
+                            <span>{evento.categoria.nombre}</span>
+                          </p>
                         )}
-                      </p>
-                    </div>
 
-                    <ChevronRight
-                      className="agenda-evento-flecha"
-                      size={19}
-                      aria-hidden="true"
-                    />
-                  </article>
-                );
-              })
+                        <h3 className="font-display text-h3 font-semibold text-ink">
+                          {evento.titulo}
+                        </h3>
+
+                        <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-body text-meta tabular-nums text-muted">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Clock3 size={14} aria-hidden="true" />
+                            <span>{horaTexto}</span>
+                          </span>
+                          {evento.lugar && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <MapPin size={14} aria-hidden="true" />
+                              <span>{evento.lugar}</span>
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </Reveal>
+                  );
+                })}
+              </div>
             )}
           </div>
 
-          <p className="agenda-nota">
-            <CalendarDays size={14} />
-            Los eventos ya realizados se ocultan automáticamente. Sincronizado
-            con el calendario de la secretaría.
+          <p className="mt-6 flex items-center gap-2 font-body text-meta text-muted">
+            <CalendarDays size={15} aria-hidden="true" />
+            <span>
+              Los eventos ya realizados se ocultan automáticamente. Sincronizado con el calendario de
+              la secretaría.
+            </span>
           </p>
         </div>
 
-        <aside className="agenda-lateral">
-          <div className="agenda-avisos">
-            <div className="agenda-avisos-encabezado">
-              <Megaphone size={19} />
-
-              <h3>Avisos parroquiales</h3>
+        <aside className="space-y-6 lg:col-span-4">
+          <div className="rounded-md border border-sand bg-cream p-6">
+            <div className="mb-4 flex items-center gap-2.5 border-b border-sand pb-3">
+              <Megaphone size={18} aria-hidden="true" className="text-ink" />
+              <h3 className="font-display text-h3 font-semibold text-ink">Avisos parroquiales</h3>
             </div>
 
             {cargandoAvisos ? (
-              <CargandoSeccion
-                alturaMinima={190}
-                etiqueta="Cargando avisos parroquiales"
-                compacta
-              />
+              <CargandoSeccion alturaMinima={160} etiqueta="Cargando avisos parroquiales" />
             ) : errorAvisos ? (
               <ErrorSeccion
                 mensaje="No pudimos cargar los avisos."
@@ -150,24 +150,24 @@ function Agenda() {
             ) : avisos.length === 0 ? (
               <SinResultados mensaje="No hay avisos vigentes." compacta />
             ) : (
-              avisos.map((aviso) => (
-                <div key={aviso.id} className="agenda-aviso">
-                  <p className="agenda-aviso-fecha">
-                    {formatearFechaCorta(aviso.fechaPublicacion)}
-                  </p>
-
-                  <p className="agenda-aviso-texto">{aviso.titulo}</p>
-                </div>
-              ))
+              <ul className="divide-y divide-sand">
+                {avisos.map((aviso) => (
+                  <li key={aviso.id} className="py-3.5 first:pt-1 last:pb-1">
+                    <p className="font-body text-meta font-semibold tabular-nums text-muted">
+                      {formatearFechaCorta(aviso.fechaPublicacion)}
+                    </p>
+                    <p className="mt-1 font-body text-body text-ink">{aviso.titulo}</p>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
 
           {cargandoBoletin ? (
             <CargandoSeccion
-              alturaMinima={190}
+              alturaMinima={180}
               etiqueta="Cargando boletín parroquial"
               oscuro
-              compacta
             />
           ) : errorBoletin ? (
             <ErrorSeccion
@@ -178,47 +178,43 @@ function Agenda() {
             />
           ) : (
             boletin && (
-              <div className="agenda-boletin">
-                <FileText size={26} strokeWidth={1.7} />
+              <div className="rounded-md border border-white/10 bg-ink p-6 text-white">
+                <div className="flex items-center gap-2.5 text-gold">
+                  <FileText size={20} strokeWidth={1.8} aria-hidden="true" />
+                  <p className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em]">
+                    Boletín parroquial
+                  </p>
+                </div>
 
-                <p className="agenda-boletin-etiqueta">Boletín parroquial</p>
+                <h3 className="mt-3 font-display text-h3 font-semibold text-white">
+                  {boletin.titulo}
+                </h3>
 
-                <h3 className="agenda-boletin-titulo">{boletin.titulo}</h3>
-
-                <p className="agenda-boletin-descripcion">
+                <p className="mt-2 font-body text-meta text-muted-on-dark">
                   Reflexiones, agenda del mes y noticias de nuestros grupos.
                   {boletin.archivo?.tamanoBytes
                     ? ` PDF · ${formatearTamanoArchivo(boletin.archivo.tamanoBytes)}`
                     : ''}
                 </p>
 
-                {boletin.archivo?.url ? (
-                  <a
-                    href={boletin.archivo.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="agenda-boletin-boton"
-                  >
-                    Descargar PDF
-                    <Download size={15} />
-                  </a>
-                ) : (
-                  <span className="agenda-boletin-boton visual-control">
-                    Descargar PDF
-                    <Download size={15} />
-                  </span>
-                )}
+                <div className="mt-5 flex flex-col gap-3">
+                  {boletin.archivo?.url && (
+                    <BotonEnlace to={boletin.archivo.url} variante="primarioOscuro">
+                      <span>Descargar PDF</span>
+                      <Download size={15} aria-hidden="true" />
+                    </BotonEnlace>
+                  )}
 
-                <EnlacePortal to="/boletines" className="agenda-boletin-archivo">
-                  Ver archivo de boletines
-                  <ArrowRight size={14} />
-                </EnlacePortal>
+                  <EnlaceFlecha to="/boletines" oscuro>
+                    Ver archivo de boletines
+                  </EnlaceFlecha>
+                </div>
               </div>
             )
           )}
         </aside>
       </div>
-    </section>
+    </Seccion>
   );
 }
 

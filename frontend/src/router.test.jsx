@@ -87,4 +87,36 @@ describe('rutas del frontend', () => {
       await screen.findByRole('heading', { level: 1, name: 'Nuestra historia' }),
     ).toBeInTheDocument();
   });
+
+  it('renderiza las rutas multipágina nuevas: nosotros, horarios, sacramentos, detalle, comunidad y contacto', async () => {
+    renderizarRuta('/nosotros');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Quiénes somos' }),
+    ).toBeInTheDocument();
+
+    renderizarRuta('/horarios');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Horarios de misa y secretaría' }),
+    ).toBeInTheDocument();
+
+    renderizarRuta('/sacramentos');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Sacramentos y catequesis' }),
+    ).toBeInTheDocument();
+
+    renderizarRuta('/sacramentos/bautismo');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Bautismo' }),
+    ).toBeInTheDocument();
+
+    renderizarRuta('/comunidad');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Grupos y pastorales' }),
+    ).toBeInTheDocument();
+
+    renderizarRuta('/contacto');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Visítanos o escríbenos' }),
+    ).toBeInTheDocument();
+  });
 });

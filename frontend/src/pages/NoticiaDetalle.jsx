@@ -1,25 +1,23 @@
+import { useState } from 'react';
+import { ArrowLeft, Check, ExternalLink, Share2 } from 'lucide-react';
 import { Link, useParams } from 'react-router';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
 
-import '../styles/parroquia.css';
-import '../styles/Noticias.css';
-import '../styles/NoticiaDetalle.css';
-
-import Encabezado from '../components/parroquia/Encabezado.jsx';
-import PiePagina from '../components/parroquia/PiePagina.jsx';
+import { Boton, Contenedor, Eyebrow, Seccion } from '../components/portal/index.js';
 import ContenidoBlockNote from '../components/parroquia/ContenidoBlockNote.jsx';
-import { anchoContenido } from '../components/parroquia/ElementosComunes.jsx';
 import { CargandoSeccion, ErrorSeccion } from '../components/parroquia/EstadoSeccion.jsx';
+import { construirAtributosImagen } from '../components/parroquia/imagenSrcSet.js';
 import { usePublicacion } from '../hooks/index.js';
 import { formatearFechaLarga } from '../utils/formatoPortal.js';
 
 function NoticiaDetalle() {
   const { slug } = useParams();
   const { data: publicacion, isPending, isError, error, refetch } = usePublicacion(slug);
+  const [copiado, setCopiado] = useState(false);
 
   const esNoEncontrado = error?.estado === 404 || error?.codigo === 'NO_ENCONTRADO';
   const imagen = publicacion?.imagenPortada;
   const esAfiche = Boolean(imagen?.alto && imagen?.ancho && imagen.alto > imagen.ancho);
+
   const tituloSeo = publicacion?.titulo
     ? `${publicacion.titulo} | Parroquia Señor de la Exaltación`
     : esNoEncontrado
@@ -30,8 +28,26 @@ function NoticiaDetalle() {
     publicacion?.titulo ||
     'Publicaciones y vida parroquial de la Parroquia Señor de la Exaltación.';
 
+  const compartir = async () => {
+    if (typeof window === 'undefined') return;
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: publicacion?.titulo, url });
+        return;
+      } catch {
+        // Si el usuario cancela, continuamos sin error.
+      }
+    }
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 3000);
+    }
+  };
+
   return (
-    <div className="font-body">
+    <>
       <title>{tituloSeo}</title>
       <meta name="description" content={descripcionSeo} />
       {publicacion && (
@@ -41,127 +57,162 @@ function NoticiaDetalle() {
           {imagen?.url && <meta property="og:image" content={imagen.url} />}
         </>
       )}
-      <div className="subpagina-encabezado">
-        <Encabezado />
-      </div>
 
-      <main>
-        {isPending ? (
-          <section className="noticia-detalle-cuerpo">
-            <div className={anchoContenido}>
-              <CargandoSeccion alturaMinima={380} etiqueta="Cargando noticia" />
+      {isPending ? (
+        <Seccion fondo="blanco">
+          <div className="mx-auto max-w-prose">
+            <CargandoSeccion alturaMinima={360} etiqueta="Cargando noticia" />
+          </div>
+        </Seccion>
+      ) : isError && esNoEncontrado ? (
+        <Seccion fondo="blanco">
+          <div className="max-w-2xl">
+            <Eyebrow className="mb-4">Publicación no disponible</Eyebrow>
+            <h1 className="font-display text-h1 font-semibold text-ink">
+              No encontramos esta noticia
+            </h1>
+            <p className="mt-4 max-w-prose font-body text-lead text-muted">
+              Es posible que haya sido retirada o que el enlace no corresponda a una publicación
+              vigente.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-6">
+              <Link
+                to="/noticias"
+                className="inline-flex min-h-11 items-center gap-2 font-body text-button font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                <ArrowLeft size={16} aria-hidden="true" />
+                <span>Ver todas las noticias</span>
+              </Link>
+              <Link
+                to="/"
+                className="inline-flex min-h-11 items-center font-body text-button font-semibold text-muted underline-offset-4 hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Volver al inicio
+              </Link>
             </div>
-          </section>
-        ) : isError && esNoEncontrado ? (
-          <section className="noticia-detalle-cuerpo">
-            <div className={`${anchoContenido} noticia-detalle-no-encontrada`}>
-              <p className="eyebrow">Publicación no disponible</p>
-              <h1 className="serif-title">No encontramos esta noticia</h1>
-              <p>
-                Es posible que haya sido retirada o que el enlace no corresponda a una publicación
-                vigente.
-              </p>
-              <div className="noticia-detalle-pie">
-                <Link to="/noticias" className="noticia-detalle-volver">
-                  <ArrowLeft size={15} aria-hidden="true" />
-                  Ver todas las noticias
+          </div>
+        </Seccion>
+      ) : isError ? (
+        <Seccion fondo="blanco">
+          <div className="mx-auto max-w-prose">
+            <ErrorSeccion mensaje="No pudimos cargar esta noticia." onReintentar={refetch} />
+          </div>
+        </Seccion>
+      ) : (
+        <article>
+          <header className="border-b border-sand bg-cream py-12 md:py-20">
+            <Contenedor>
+              <div className="mx-auto max-w-prose">
+                <nav
+                  aria-label="Ruta de navegación"
+                  className="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 font-body text-meta text-muted"
+                >
+                  <Link
+                    to="/"
+                    className="inline-flex min-h-11 items-center text-ink/80 underline-offset-4 hover:text-ink hover:underline"
+                  >
+                    Inicio
+                  </Link>
+                  <span aria-hidden="true">/</span>
+                  <Link
+                    to="/noticias"
+                    className="inline-flex min-h-11 items-center text-ink/80 underline-offset-4 hover:text-ink hover:underline"
+                  >
+                    Noticias
+                  </Link>
+                </nav>
+
+                <div className="mb-4 flex flex-wrap items-center gap-2 font-body text-meta text-muted">
+                  <span className="rounded-sm bg-gold-soft px-2.5 py-0.5 font-semibold text-ink">
+                    {publicacion.categoria?.nombre || publicacion.tipo?.nombre}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <time dateTime={publicacion.fechaPublicacion}>
+                    {formatearFechaLarga(publicacion.fechaPublicacion)}
+                  </time>
+                </div>
+
+                <h1 className="font-display text-h1 font-semibold text-balance text-ink">
+                  {publicacion.titulo}
+                </h1>
+
+                {publicacion.resumen && (
+                  <p className="mt-4 font-body text-lead text-pretty text-muted">
+                    {publicacion.resumen}
+                  </p>
+                )}
+              </div>
+            </Contenedor>
+          </header>
+
+          <Seccion fondo="blanco">
+            <div className="mx-auto max-w-prose">
+              {imagen && (
+                <figure className="mb-10 overflow-hidden rounded-md border border-sand bg-cream">
+                  <img
+                    src={imagen.url}
+                    {...construirAtributosImagen(imagen, '(min-width: 768px) 720px, 100vw')}
+                    alt={imagen.textoAlternativo || publicacion.titulo}
+                    width={imagen.ancho ?? undefined}
+                    height={imagen.alto ?? undefined}
+                    className={`w-full ${
+                      esAfiche ? 'mx-auto max-h-[560px] object-contain' : 'aspect-[16/10] object-cover'
+                    }`}
+                  />
+                </figure>
+              )}
+
+              <ContenidoBlockNote contenido={publicacion.contenido} />
+
+              <div className="mt-10 flex flex-wrap items-center gap-4 border-t border-sand pt-8">
+                {publicacion.urlExterna && (
+                  <a
+                    href={publicacion.urlExterna}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-sm bg-gold px-5 py-2.5 font-body text-button font-semibold text-ink transition-colors duration-150 hover:bg-gold-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                  >
+                    <span>Ver publicación original</span>
+                    <ExternalLink size={16} aria-hidden="true" />
+                  </a>
+                )}
+
+                <Boton variante="secundario" onClick={compartir}>
+                  {copiado ? (
+                    <>
+                      <Check size={16} aria-hidden="true" />
+                      <span>Enlace copiado</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 size={16} aria-hidden="true" />
+                      <span>Compartir</span>
+                    </>
+                  )}
+                </Boton>
+              </div>
+
+              <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-sand pt-6">
+                <Link
+                  to="/noticias"
+                  className="inline-flex min-h-11 items-center gap-2 font-body text-button font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  <ArrowLeft size={16} aria-hidden="true" />
+                  <span>Ver todas las noticias</span>
                 </Link>
-                <Link to="/" className="noticia-detalle-volver">
+
+                <Link
+                  to="/"
+                  className="inline-flex min-h-11 items-center font-body text-button font-semibold text-muted underline-offset-4 hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
                   Volver al inicio
                 </Link>
               </div>
             </div>
-          </section>
-        ) : isError ? (
-          <section className="noticia-detalle-cuerpo">
-            <div className={anchoContenido}>
-              <ErrorSeccion mensaje="No pudimos cargar esta noticia." onReintentar={refetch} />
-            </div>
-          </section>
-        ) : (
-          <article>
-            <header className="noticia-detalle-cabecera">
-              <div className={anchoContenido}>
-                <div className="noticia-detalle-articulo">
-                  <nav className="noticias-miga" aria-label="Ruta de navegación">
-                    <Link to="/">Inicio</Link>
-                    <span aria-hidden="true">/</span>
-                    <Link to="/noticias">Noticias</Link>
-                  </nav>
-
-                  <div className="noticia-detalle-metadatos">
-                    <span className="noticia-detalle-categoria">
-                      {publicacion.categoria?.nombre || publicacion.tipo?.nombre}
-                    </span>
-
-                    <span className="noticia-detalle-separador" />
-
-                    <time dateTime={publicacion.fechaPublicacion}>
-                      {formatearFechaLarga(publicacion.fechaPublicacion)}
-                    </time>
-                  </div>
-
-                  <h1 className="serif-title noticia-detalle-titulo">{publicacion.titulo}</h1>
-
-                  {publicacion.resumen && (
-                    <p className="noticia-detalle-resumen">{publicacion.resumen}</p>
-                  )}
-                </div>
-              </div>
-            </header>
-
-            <section className="noticia-detalle-cuerpo">
-              <div className={anchoContenido}>
-                <div className="noticia-detalle-articulo">
-                  {imagen && (
-                    <figure className="noticia-detalle-portada">
-                      <img
-                        src={imagen.url}
-                        alt={imagen.textoAlternativo || publicacion.titulo}
-                        width={imagen.ancho ?? undefined}
-                        height={imagen.alto ?? undefined}
-                        className={`noticia-detalle-portada-imagen ${
-                          esAfiche ? 'noticia-detalle-portada-afiche' : ''
-                        }`}
-                      />
-                    </figure>
-                  )}
-
-                  <ContenidoBlockNote contenido={publicacion.contenido} />
-
-                  {publicacion.urlExterna && (
-                    <div className="noticia-detalle-externa">
-                      <a
-                        href={publicacion.urlExterna}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="noticia-detalle-externa-enlace"
-                      >
-                        Ver publicación original
-                        <ExternalLink size={15} aria-hidden="true" />
-                      </a>
-                    </div>
-                  )}
-
-                  <div className="noticia-detalle-pie">
-                    <Link to="/noticias" className="noticia-detalle-volver">
-                      <ArrowLeft size={15} aria-hidden="true" />
-                      Ver todas las noticias
-                    </Link>
-
-                    <Link to="/" className="noticia-detalle-volver">
-                      Volver al inicio
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </article>
-        )}
-      </main>
-
-      <PiePagina />
-    </div>
+          </Seccion>
+        </article>
+      )}
+    </>
   );
 }
 

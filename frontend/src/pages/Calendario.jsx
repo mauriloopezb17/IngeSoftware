@@ -1,15 +1,12 @@
-import { Link, useSearchParams } from 'react-router';
-import { ArrowLeft, CalendarDays, Clock3, MapPin } from 'lucide-react';
+import { CalendarDays, Clock3, MapPin } from 'lucide-react';
+import { useSearchParams } from 'react-router';
 
-import '../styles/parroquia.css';
-import '../styles/Agenda.css';
-import '../styles/Noticias.css';
-import '../styles/SubpaginasPortal.css';
-
-import Encabezado from '../components/parroquia/Encabezado.jsx';
-import PiePagina from '../components/parroquia/PiePagina.jsx';
+import {
+  EncabezadoPagina,
+  Reveal,
+  Seccion,
+} from '../components/portal/index.js';
 import PaginacionPortal from '../components/parroquia/PaginacionPortal.jsx';
-import { anchoContenido } from '../components/parroquia/ElementosComunes.jsx';
 import {
   CargandoSeccion,
   ErrorSeccion,
@@ -144,207 +141,219 @@ function Calendario() {
   const hayFiltrosActivos = Boolean(mesActivo || categoriaActiva);
 
   return (
-    <div className="font-body">
+    <>
       <title>Calendario de eventos | Parroquia Señor de la Exaltación</title>
       <meta
         name="description"
         content="Calendario completo de próximos eventos, celebraciones y actividades de la Parroquia Señor de la Exaltación en Obrajes, La Paz."
       />
-      <div className="subpagina-encabezado">
-        <Encabezado />
-      </div>
 
-      <main>
-        <section className="noticias-cabecera">
-          <div className={anchoContenido}>
-            <nav className="noticias-miga" aria-label="Ruta de navegación">
-              <Link to="/" className="inline-flex items-center gap-1.5">
-                <ArrowLeft size={14} aria-hidden="true" />
-                Inicio
-              </Link>
-              <span aria-hidden="true">/</span>
-              <span>Calendario</span>
-            </nav>
+      <EncabezadoPagina
+        migas={[{ texto: 'Inicio', enlace: '/' }, { texto: 'Calendario' }]}
+        eyebrow="Agenda parroquial"
+        titulo="Calendario de eventos"
+        bajada="Próximas celebraciones, catequesis, retiros y encuentros comunitarios de nuestra parroquia."
+      />
 
-            <p className="eyebrow">Agenda parroquial</p>
-            <h1 className="serif-title noticias-titulo">Calendario de eventos</h1>
-            <p className="noticias-subtitulo">
-              Próximas celebraciones, catequesis, retiros y encuentros comunitarios de nuestra
-              parroquia.
-            </p>
-          </div>
-        </section>
+      <Seccion fondo="blanco">
+        <div className="mb-10 flex flex-col gap-4 border-b border-sand pb-6 lg:flex-row lg:items-center lg:justify-between">
+          <div
+            className="flex flex-wrap items-center gap-2"
+            role="group"
+            aria-label="Filtrar por categoría"
+          >
+            <button
+              type="button"
+              onClick={() => actualizarFiltros({ categoria: '' })}
+              aria-pressed={!categoriaActiva}
+              className={`min-h-11 cursor-pointer rounded-sm border px-4 py-2 font-body text-meta font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+                !categoriaActiva
+                  ? 'border-ink bg-ink text-white'
+                  : 'border-sand bg-white text-ink hover:border-ink'
+              }`}
+            >
+              Todas
+            </button>
 
-        <section className="noticias-cuerpo">
-          <div className={anchoContenido}>
-            <div className="noticias-filtros">
-              <div className="noticias-tipos" role="group" aria-label="Filtrar por categoría">
+            {categorias.map((cat) => {
+              const idTexto = String(cat.id);
+              const activo = categoriaActiva === idTexto;
+              return (
                 <button
+                  key={cat.id}
                   type="button"
-                  onClick={() => actualizarFiltros({ categoria: '' })}
-                  className={`noticias-filtro-boton ${
-                    !categoriaActiva ? 'noticias-filtro-boton-activo' : ''
+                  onClick={() => actualizarFiltros({ categoria: idTexto })}
+                  aria-pressed={activo}
+                  className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-sm border px-4 py-2 font-body text-meta font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+                    activo
+                      ? 'border-ink bg-ink text-white'
+                      : 'border-sand bg-white text-ink hover:border-ink'
                   }`}
-                  aria-pressed={!categoriaActiva}
                 >
-                  Todas
+                  {cat.colorHex && (
+                    <span
+                      aria-hidden="true"
+                      className="inline-block size-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: cat.colorHex }}
+                    />
+                  )}
+                  <span>{cat.nombre}</span>
                 </button>
+              );
+            })}
+          </div>
 
-                {categorias.map((cat) => {
-                  const idTexto = String(cat.id);
-                  const activo = categoriaActiva === idTexto;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => actualizarFiltros({ categoria: idTexto })}
-                      className={`noticias-filtro-boton ${
-                        activo ? 'noticias-filtro-boton-activo' : ''
-                      }`}
-                      aria-pressed={activo}
-                    >
-                      {cat.nombre}
-                    </button>
-                  );
-                })}
-              </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <label
+              htmlFor="filtro-mes-calendario"
+              className="font-body text-meta font-semibold text-muted"
+            >
+              Mes
+            </label>
+            <select
+              id="filtro-mes-calendario"
+              className="min-h-11 rounded-sm border border-sand bg-white px-3 py-2 font-body text-meta font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              value={mesActivo}
+              onChange={(evento) => actualizarFiltros({ mes: evento.target.value })}
+            >
+              <option value="">Todos los próximos meses</option>
+              {opcionesMeses.map((opcion) => (
+                <option key={opcion.valor} value={opcion.valor}>
+                  {opcion.etiqueta}
+                </option>
+              ))}
+            </select>
 
-              <div className="noticias-categoria-grupo">
-                <label htmlFor="filtro-mes-calendario" className="noticias-categoria-etiqueta">
-                  Mes
-                </label>
-                <select
-                  id="filtro-mes-calendario"
-                  className="noticias-categoria-select"
-                  value={mesActivo}
-                  onChange={(evento) => actualizarFiltros({ mes: evento.target.value })}
-                >
-                  <option value="">Todos los próximos meses</option>
-                  {opcionesMeses.map((opcion) => (
-                    <option key={opcion.valor} value={opcion.valor}>
-                      {opcion.etiqueta}
-                    </option>
-                  ))}
-                </select>
+            {hayFiltrosActivos && (
+              <button
+                type="button"
+                className="min-h-11 cursor-pointer px-3 py-2 font-body text-meta font-semibold text-ink underline underline-offset-4 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                onClick={() => setSearchParams({})}
+              >
+                Limpiar filtros
+              </button>
+            )}
+          </div>
+        </div>
 
-                {hayFiltrosActivos && (
-                  <button
-                    type="button"
-                    className="noticias-limpiar"
-                    onClick={() => setSearchParams({})}
+        {isPending && !esMesPasado ? (
+          <CargandoSeccion alturaMinima={340} etiqueta="Cargando calendario de eventos" />
+        ) : isError && !esMesPasado ? (
+          <ErrorSeccion
+            mensaje="No pudimos cargar los próximos eventos."
+            onReintentar={refetch}
+          />
+        ) : eventos.length === 0 ? (
+          <SinResultados
+            mensaje={
+              hayFiltrosActivos
+                ? 'No hay próximos eventos que coincidan con los filtros seleccionados.'
+                : 'No hay próximos eventos programados por el momento.'
+            }
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {eventos.map((evento, indice) => {
+                const { dia, mes } = formatearDiaMes(evento.fechaInicio);
+                const horaTexto = formatearHoraEvento(evento);
+                const mostrarDescripcion =
+                  evento.descripcion && !/^Horarios:/i.test(evento.descripcion);
+                const atributosImagen = evento.imagen
+                  ? construirAtributosImagen(evento.imagen, '96px')
+                  : {};
+
+                return (
+                  <Reveal
+                    key={evento.id}
+                    variante="tarjeta"
+                    retraso={indice * 60}
+                    as="article"
+                    className="flex flex-col gap-4 rounded-md border border-sand bg-white p-6 sm:flex-row sm:items-start"
                   >
-                    Limpiar filtros
-                  </button>
-                )}
-              </div>
+                    <div className="flex w-20 shrink-0 items-baseline gap-2 border-sand sm:flex-col sm:items-center sm:gap-0 sm:border-r sm:pr-4">
+                      <span className="font-display text-h2 font-semibold tabular-nums text-ink">
+                        {dia}
+                      </span>
+                      <span className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-muted">
+                        {mes}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      {evento.categoria?.nombre && (
+                        <p className="mb-1.5 inline-flex items-center gap-2 font-body text-meta font-semibold text-ink">
+                          {evento.categoria.colorHex && (
+                            <span
+                              aria-hidden="true"
+                              className="inline-block size-2.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: evento.categoria.colorHex }}
+                            />
+                          )}
+                          <span>{evento.categoria.nombre}</span>
+                        </p>
+                      )}
+
+                      <h2 className="font-display text-h3 font-semibold text-ink">
+                        {evento.titulo}
+                      </h2>
+
+                      <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-body text-meta tabular-nums text-muted">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Clock3 size={14} aria-hidden="true" />
+                          <span>{horaTexto}</span>
+                        </span>
+
+                        {evento.lugar && (
+                          <span className="inline-flex items-center gap-1.5">
+                            <MapPin size={14} aria-hidden="true" />
+                            <span>{evento.lugar}</span>
+                          </span>
+                        )}
+                      </p>
+
+                      {mostrarDescripcion && (
+                        <p className="mt-3 max-w-prose font-body text-body text-muted">
+                          {evento.descripcion}
+                        </p>
+                      )}
+                    </div>
+
+                    {evento.imagen?.url && (
+                      <img
+                        src={evento.imagen.url}
+                        alt={evento.imagen.textoAlternativo || evento.titulo}
+                        width={evento.imagen.ancho ?? undefined}
+                        height={evento.imagen.alto ?? undefined}
+                        className="size-24 shrink-0 rounded-sm border border-sand object-cover"
+                        loading="lazy"
+                        {...atributosImagen}
+                      />
+                    )}
+                  </Reveal>
+                );
+              })}
             </div>
 
-            {isPending && !esMesPasado ? (
-              <CargandoSeccion alturaMinima={340} etiqueta="Cargando calendario de eventos" />
-            ) : isError && !esMesPasado ? (
-              <ErrorSeccion
-                mensaje="No pudimos cargar los próximos eventos."
-                onReintentar={refetch}
-              />
-            ) : eventos.length === 0 ? (
-              <SinResultados
-                mensaje={
-                  hayFiltrosActivos
-                    ? 'No hay próximos eventos que coincidan con los filtros seleccionados.'
-                    : 'No hay próximos eventos programados por el momento.'
-                }
-              />
-            ) : (
-              <>
-                <div className="calendario-lista">
-                  {eventos.map((evento) => {
-                    const { dia, mes } = formatearDiaMes(evento.fechaInicio);
-                    const horaTexto = formatearHoraEvento(evento);
-                    const mostrarDescripcion =
-                      evento.descripcion && !/^Horarios:/i.test(evento.descripcion);
-                    const atributosImagen = evento.imagen
-                      ? construirAtributosImagen(evento.imagen, '84px')
-                      : {};
+            <PaginacionPortal
+              paginaActual={paginacion.pagina}
+              totalPaginas={paginacion.totalPaginas}
+              etiqueta="Paginación del calendario"
+              alCambiarPagina={(siguiente) => actualizarFiltros({ pagina: siguiente })}
+            />
+          </>
+        )}
 
-                    return (
-                      <article key={evento.id} className="calendario-evento">
-                        <div className="agenda-fecha">
-                          <span className="agenda-fecha-dia">{dia}</span>
-                          <span className="agenda-fecha-mes">{mes}</span>
-                        </div>
-
-                        <div className="agenda-evento-informacion">
-                          {evento.categoria?.nombre && (
-                            <p className="calendario-evento-categoria">
-                              {evento.categoria.colorHex && (
-                                <span
-                                  className="calendario-evento-punto"
-                                  style={{ backgroundColor: evento.categoria.colorHex }}
-                                  aria-hidden="true"
-                                />
-                              )}
-                              {evento.categoria.nombre}
-                            </p>
-                          )}
-
-                          <h2 className="agenda-evento-titulo">{evento.titulo}</h2>
-
-                          <p className="agenda-evento-detalle">
-                            <Clock3 size={13} aria-hidden="true" />
-                            {horaTexto}
-
-                            {evento.lugar && (
-                              <>
-                                <span className="agenda-evento-separador">·</span>
-                                <MapPin size={13} aria-hidden="true" />
-                                {evento.lugar}
-                              </>
-                            )}
-                          </p>
-
-                          {mostrarDescripcion && (
-                            <p className="calendario-evento-descripcion">{evento.descripcion}</p>
-                          )}
-                        </div>
-
-                        {evento.imagen?.url && (
-                          <img
-                            src={evento.imagen.url}
-                            alt={evento.imagen.textoAlternativo || evento.titulo}
-                            width={evento.imagen.ancho ?? undefined}
-                            height={evento.imagen.alto ?? undefined}
-                            className="calendario-evento-imagen"
-                            loading="lazy"
-                            {...atributosImagen}
-                          />
-                        )}
-                      </article>
-                    );
-                  })}
-                </div>
-
-                <PaginacionPortal
-                  paginaActual={paginacion.pagina}
-                  totalPaginas={paginacion.totalPaginas}
-                  etiqueta="Paginación del calendario"
-                  alCambiarPagina={(siguiente) => actualizarFiltros({ pagina: siguiente })}
-                />
-              </>
-            )}
-
-            <p className="agenda-nota">
-              <CalendarDays size={14} aria-hidden="true" />
-              Los eventos ya realizados se ocultan automáticamente. Sincronizado con el calendario
-              de la secretaría.
-            </p>
-          </div>
-        </section>
-      </main>
-
-      <PiePagina />
-    </div>
+        <p className="mt-8 flex items-center gap-2 font-body text-meta text-muted">
+          <CalendarDays size={15} aria-hidden="true" />
+          <span>
+            Los eventos ya realizados se ocultan automáticamente. Sincronizado con el calendario de
+            la secretaría.
+          </span>
+        </p>
+      </Seccion>
+    </>
   );
 }
 
 export default Calendario;
-

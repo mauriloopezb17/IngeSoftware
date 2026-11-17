@@ -1,14 +1,13 @@
-import { Link, useSearchParams } from 'react-router';
-import { ArrowLeft, Download, FileText } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
+import { useSearchParams } from 'react-router';
 
-import '../styles/parroquia.css';
-import '../styles/Noticias.css';
-import '../styles/SubpaginasPortal.css';
-
-import Encabezado from '../components/parroquia/Encabezado.jsx';
-import PiePagina from '../components/parroquia/PiePagina.jsx';
+import {
+  BotonEnlace,
+  EncabezadoPagina,
+  Reveal,
+  Seccion,
+} from '../components/portal/index.js';
 import PaginacionPortal from '../components/parroquia/PaginacionPortal.jsx';
-import { anchoContenido } from '../components/parroquia/ElementosComunes.jsx';
 import {
   CargandoSeccion,
   ErrorSeccion,
@@ -73,149 +72,137 @@ function Boletines() {
   const anios = obtenerAniosDisponibles();
 
   return (
-    <div className="font-body">
+    <>
       <title>Boletines parroquiales | Parroquia Señor de la Exaltación</title>
       <meta
         name="description"
         content="Archivo de boletines parroquiales en PDF de la Parroquia Señor de la Exaltación en Obrajes, La Paz."
       />
-      <div className="subpagina-encabezado">
-        <Encabezado />
-      </div>
 
-      <main>
-        <section className="noticias-cabecera">
-          <div className={anchoContenido}>
-            <nav className="noticias-miga" aria-label="Ruta de navegación">
-              <Link to="/" className="inline-flex items-center gap-1.5">
-                <ArrowLeft size={14} aria-hidden="true" />
-                Inicio
-              </Link>
-              <span aria-hidden="true">/</span>
-              <span>Boletines</span>
-            </nav>
+      <EncabezadoPagina
+        migas={[{ texto: 'Inicio', enlace: '/' }, { texto: 'Boletines' }]}
+        eyebrow="Archivo parroquial"
+        titulo="Boletines parroquiales"
+        bajada="Ediciones mensuales con reflexiones, agenda y noticias de nuestra comunidad, disponibles para leer o descargar en PDF."
+      />
 
-            <p className="eyebrow">Archivo parroquial</p>
-            <h1 className="serif-title noticias-titulo">Boletines parroquiales</h1>
-            <p className="noticias-subtitulo">
-              Ediciones mensuales con reflexiones, agenda y noticias de nuestra comunidad,
-              disponibles para leer o descargar en PDF.
-            </p>
-          </div>
-        </section>
+      <Seccion fondo="blanco">
+        <div className="mb-10 flex flex-col gap-4 border-b border-sand pb-6 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-body text-meta text-muted">
+            Ordenados del más reciente al más antiguo por periodo mensual.
+          </p>
 
-        <section className="noticias-cuerpo">
-          <div className={anchoContenido}>
-            <div className="noticias-filtros">
-              <p className="subpagina-nota" style={{ margin: 0 }}>
-                Ordenados del más reciente al más antiguo por periodo mensual.
-              </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <label
+              htmlFor="filtro-anio-boletines"
+              className="font-body text-meta font-semibold text-muted"
+            >
+              Año
+            </label>
+            <select
+              id="filtro-anio-boletines"
+              className="min-h-11 rounded-sm border border-sand bg-white px-3 py-2 font-body text-meta font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              value={anioActivo}
+              onChange={(evento) => actualizarFiltros({ anio: evento.target.value })}
+            >
+              <option value="">Todos los años</option>
+              {anios.map((anio) => (
+                <option key={anio} value={anio}>
+                  {anio}
+                </option>
+              ))}
+            </select>
 
-              <div className="noticias-categoria-grupo">
-                <label htmlFor="filtro-anio-boletines" className="noticias-categoria-etiqueta">
-                  Año
-                </label>
-                <select
-                  id="filtro-anio-boletines"
-                  className="noticias-categoria-select"
-                  value={anioActivo}
-                  onChange={(evento) => actualizarFiltros({ anio: evento.target.value })}
-                >
-                  <option value="">Todos los años</option>
-                  {anios.map((anio) => (
-                    <option key={anio} value={anio}>
-                      {anio}
-                    </option>
-                  ))}
-                </select>
-
-                {anioActivo && (
-                  <button
-                    type="button"
-                    className="noticias-limpiar"
-                    onClick={() => setSearchParams({})}
-                  >
-                    Limpiar filtros
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {isPending ? (
-              <CargandoSeccion alturaMinima={320} etiqueta="Cargando boletines parroquiales" />
-            ) : isError ? (
-              <ErrorSeccion
-                mensaje="No pudimos cargar los boletines parroquiales."
-                onReintentar={refetch}
-              />
-            ) : boletines.length === 0 ? (
-              <SinResultados
-                mensaje={
-                  anioActivo
-                    ? `No hay boletines publicados para el año ${anioActivo}.`
-                    : 'No hay boletines publicados por el momento.'
-                }
-              />
-            ) : (
-              <>
-                <div className="boletines-grilla">
-                  {boletines.map((boletin) => {
-                    const tamano = boletin.archivo?.tamanoBytes
-                      ? formatearTamanoArchivo(boletin.archivo.tamanoBytes)
-                      : '';
-
-                    return (
-                      <article key={boletin.id} className="boletin-tarjeta">
-                        <div>
-                          <div className="boletin-tarjeta-icono">
-                            <FileText size={21} aria-hidden="true" />
-                          </div>
-
-                          <p className="boletin-tarjeta-periodo">
-                            {formatearPeriodoMes(boletin.periodo)}
-                          </p>
-
-                          <h2 className="boletin-tarjeta-titulo">{boletin.titulo}</h2>
-
-                          <p className="boletin-tarjeta-meta">
-                            Publicado el {formatearFechaLarga(boletin.fechaPublicacion)}
-                            {tamano ? ` · PDF (${tamano})` : ''}
-                          </p>
-                        </div>
-
-                        {boletin.archivo?.url && (
-                          <a
-                            href={boletin.archivo.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="boletin-tarjeta-boton"
-                            aria-label={`Descargar PDF: ${boletin.titulo}`}
-                          >
-                            Descargar PDF
-                            <Download size={15} aria-hidden="true" />
-                          </a>
-                        )}
-                      </article>
-                    );
-                  })}
-                </div>
-
-                <PaginacionPortal
-                  paginaActual={paginacion.pagina}
-                  totalPaginas={paginacion.totalPaginas}
-                  etiqueta="Paginación de boletines"
-                  alCambiarPagina={(siguiente) => actualizarFiltros({ pagina: siguiente })}
-                />
-              </>
+            {anioActivo && (
+              <button
+                type="button"
+                className="min-h-11 cursor-pointer px-3 py-2 font-body text-meta font-semibold text-ink underline underline-offset-4 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                onClick={() => setSearchParams({})}
+              >
+                Limpiar filtros
+              </button>
             )}
           </div>
-        </section>
-      </main>
+        </div>
 
-      <PiePagina />
-    </div>
+        {isPending ? (
+          <CargandoSeccion alturaMinima={320} etiqueta="Cargando boletines parroquiales" />
+        ) : isError ? (
+          <ErrorSeccion
+            mensaje="No pudimos cargar los boletines parroquiales."
+            onReintentar={refetch}
+          />
+        ) : boletines.length === 0 ? (
+          <SinResultados
+            mensaje={
+              anioActivo
+                ? `No hay boletines publicados para el año ${anioActivo}.`
+                : 'No hay boletines publicados por el momento.'
+            }
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {boletines.map((boletin, indice) => {
+                const tamano = boletin.archivo?.tamanoBytes
+                  ? formatearTamanoArchivo(boletin.archivo.tamanoBytes)
+                  : '';
+
+                return (
+                  <Reveal
+                    key={boletin.id}
+                    variante="tarjeta"
+                    retraso={indice * 90}
+                    as="article"
+                    className="flex flex-col justify-between rounded-md border border-sand bg-cream p-6 transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold"
+                  >
+                    <div>
+                      <span className="inline-flex size-11 items-center justify-center rounded-sm bg-ink text-gold">
+                        <FileText size={20} aria-hidden="true" />
+                      </span>
+
+                      <p className="mt-4 font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-muted">
+                        {formatearPeriodoMes(boletin.periodo)}
+                      </p>
+
+                      <h2 className="mt-2 font-display text-h3 font-semibold text-ink">
+                        {boletin.titulo}
+                      </h2>
+
+                      <p className="mt-2 font-body text-meta text-muted">
+                        Publicado el {formatearFechaLarga(boletin.fechaPublicacion)}
+                        {tamano ? ` · PDF (${tamano})` : ''}
+                      </p>
+                    </div>
+
+                    {boletin.archivo?.url && (
+                      <div className="mt-6">
+                        <BotonEnlace
+                          to={boletin.archivo.url}
+                          variante="primario"
+                          aria-label={`Descargar PDF: ${boletin.titulo}`}
+                        >
+                          <span>Descargar PDF</span>
+                          <Download size={15} aria-hidden="true" />
+                        </BotonEnlace>
+                      </div>
+                    )}
+                  </Reveal>
+                );
+              })}
+            </div>
+
+            <PaginacionPortal
+              paginaActual={paginacion.pagina}
+              totalPaginas={paginacion.totalPaginas}
+              etiqueta="Paginación de boletines"
+              alCambiarPagina={(siguiente) => actualizarFiltros({ pagina: siguiente })}
+            />
+          </>
+        )}
+      </Seccion>
+    </>
   );
 }
 
 export default Boletines;
-

@@ -1,15 +1,20 @@
 import { ArrowRight } from 'lucide-react';
 
-import { EtiquetaSeccion, TituloSeccion } from './ElementosComunes.jsx';
-import { IconoDinamico } from './IconoDinamico.jsx';
+import {
+  BotonEnlace,
+  EncabezadoSeccion,
+  Eyebrow,
+  Reveal,
+} from '../portal/index.js';
 import EnlacePortal from './EnlacePortal.jsx';
+import { IconoDinamico } from './IconoDinamico.jsx';
 
 export function BloqueHeroVideo({ contenido }) {
   if (!contenido?.titulo) return null;
 
   return (
-    <section className="bloque-hero-subpagina">
-      <div className="bloque-hero-medio">
+    <section className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12">
+      <div className="lg:col-span-7">
         {contenido.url_video && (
           <video
             controls
@@ -17,29 +22,31 @@ export function BloqueHeroVideo({ contenido }) {
             loop
             playsInline
             poster={contenido.url_poster || undefined}
-            className="bloque-hero-video"
+            className="aspect-video w-full rounded-md border border-sand bg-ink"
           >
             <source src={contenido.url_video} type="video/mp4" />
           </video>
         )}
       </div>
 
-      <div className="bloque-hero-texto">
-        {contenido.etiqueta && <EtiquetaSeccion>{contenido.etiqueta}</EtiquetaSeccion>}
-        <h2 className="serif-title subpagina-bloque-titulo">{contenido.titulo}</h2>
-        {contenido.subtitulo && <p className="nosotros-descripcion">{contenido.subtitulo}</p>}
+      <div className="lg:col-span-5">
+        {contenido.etiqueta && <Eyebrow className="mb-4">{contenido.etiqueta}</Eyebrow>}
+        <h2 className="font-display text-h2 font-semibold text-ink">{contenido.titulo}</h2>
+        {contenido.subtitulo && (
+          <p className="mt-4 max-w-prose font-body text-body text-muted">{contenido.subtitulo}</p>
+        )}
 
         {contenido.botones?.length > 0 && (
-          <div className="bloque-hero-botones">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             {contenido.botones.map((boton, indice) => (
-              <EnlacePortal
+              <BotonEnlace
                 key={boton.texto}
                 to={boton.enlace}
-                className={indice === 0 ? 'static-cta' : 'noticias-filtro-boton'}
+                variante={indice === 0 ? 'primario' : 'secundario'}
               >
-                {boton.texto}
+                <span>{boton.texto}</span>
                 {indice === 0 && <ArrowRight size={16} aria-hidden="true" />}
-              </EnlacePortal>
+              </BotonEnlace>
             ))}
           </div>
         )}
@@ -48,58 +55,64 @@ export function BloqueHeroVideo({ contenido }) {
   );
 }
 
-export function BloqueTextoImagen({ contenido, nivelTitulo = 'h2' }) {
+export function BloqueTextoImagen({ contenido }) {
   if (!contenido) return null;
   const parrafos = contenido.texto ? contenido.texto.split('\n\n') : [];
   const imagenALaDerecha = contenido.posicion_imagen === 'derecha';
 
   return (
-    <div
-      className={`nosotros-contenedor ${
-        imagenALaDerecha ? 'bloque-texto-imagen-derecha' : ''
-      }`}
-    >
-      <div className="nosotros-imagen-contenedor">
-        <div className="nosotros-marco" />
-
-        {contenido.url_imagen && (
-          <img
-            src={contenido.url_imagen}
-            alt={contenido.texto_alternativo || contenido.titulo}
-            className="nosotros-imagen"
-            loading="lazy"
-          />
-        )}
-
-        {contenido.tarjeta && (
-          <div className="nosotros-tarjeta">
-            {contenido.tarjeta.etiqueta && (
-              <p className="nosotros-tarjeta-etiqueta">{contenido.tarjeta.etiqueta}</p>
-            )}
-
-            <p className="nosotros-tarjeta-titulo">{contenido.tarjeta.titulo}</p>
-
-            {contenido.tarjeta.descripcion && (
-              <p className="nosotros-tarjeta-descripcion">
-                {contenido.tarjeta.descripcion}
-              </p>
+    <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
+      {contenido.url_imagen && (
+        <Reveal
+          variante={imagenALaDerecha ? 'derecha' : 'izquierda'}
+          className={`lg:col-span-6 ${imagenALaDerecha ? 'lg:order-2' : ''}`}
+        >
+          <div className="overflow-hidden rounded-md border border-sand bg-cream">
+            <img
+              src={contenido.url_imagen}
+              alt={contenido.texto_alternativo || contenido.titulo}
+              className="aspect-[4/3] w-full object-cover"
+              loading="lazy"
+            />
+            {contenido.tarjeta && (
+              <div className="border-t border-sand px-6 py-4">
+                {contenido.tarjeta.etiqueta && (
+                  <p className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-muted">
+                    {contenido.tarjeta.etiqueta}
+                  </p>
+                )}
+                <p className="mt-1 font-display text-h3 font-semibold text-ink">
+                  {contenido.tarjeta.titulo}
+                </p>
+                {contenido.tarjeta.descripcion && (
+                  <p className="mt-1 font-body text-meta text-muted">
+                    {contenido.tarjeta.descripcion}
+                  </p>
+                )}
+              </div>
             )}
           </div>
-        )}
-      </div>
+        </Reveal>
+      )}
 
-      <div className="nosotros-informacion">
-        <TituloSeccion
-          overline={contenido.etiqueta || 'Quiénes somos'}
-          title={contenido.titulo}
-          as={nivelTitulo}
+      <div
+        className={`${contenido.url_imagen ? 'lg:col-span-6' : 'lg:col-span-10'} ${
+          imagenALaDerecha ? 'lg:order-1' : ''
+        }`}
+      >
+        <EncabezadoSeccion
+          eyebrow={contenido.etiqueta || 'Quiénes somos'}
+          titulo={contenido.titulo}
+          className="mb-6"
         />
 
-        {parrafos.map((parrafo, indice) => (
-          <p key={indice} className="nosotros-descripcion">
-            {parrafo}
-          </p>
-        ))}
+        <div className="space-y-4">
+          {parrafos.map((parrafo, indice) => (
+            <p key={indice} className="max-w-prose font-body text-body text-muted">
+              {parrafo}
+            </p>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -109,10 +122,12 @@ export function BloqueCita({ contenido }) {
   if (!contenido?.texto) return null;
 
   return (
-    <blockquote className="nosotros-cita">
-      <p className="nosotros-cita-texto">“{contenido.texto}”</p>
+    <blockquote className="max-w-prose border-l-2 border-gold pl-6">
+      <p className="font-display text-h2 italic text-ink">“{contenido.texto}”</p>
 
-      {contenido.autor && <cite className="nosotros-cita-autor">— {contenido.autor}</cite>}
+      {contenido.autor && (
+        <footer className="mt-3 font-body text-meta text-muted">— {contenido.autor}</footer>
+      )}
     </blockquote>
   );
 }
@@ -122,12 +137,12 @@ export function BloqueTarjetas({ contenido }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="bloque-pagina">
+    <section>
       {contenido.titulo && (
-        <h2 className="serif-title subpagina-bloque-titulo">{contenido.titulo}</h2>
+        <h2 className="mb-8 font-display text-h2 font-semibold text-ink">{contenido.titulo}</h2>
       )}
 
-      <div className="bloque-tarjetas-grilla">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {items.map((item, indice) => {
           const cuerpo = (
             <>
@@ -135,21 +150,21 @@ export function BloqueTarjetas({ contenido }) {
                 <img
                   src={item.url_imagen}
                   alt={item.texto_alternativo || item.titulo}
-                  className="bloque-tarjeta-imagen"
+                  className="aspect-[16/10] w-full rounded-sm object-cover"
                   loading="lazy"
                 />
               )}
 
               {!item.url_imagen && item.icono && (
-                <div className="bloque-tarjeta-icono">
+                <span className="inline-flex size-11 items-center justify-center rounded-sm bg-gold-soft text-ink">
                   <IconoDinamico nombre={item.icono} size={20} />
-                </div>
+                </span>
               )}
 
-              <div className="bloque-tarjeta-cuerpo">
-                <h3 className="bloque-tarjeta-titulo">{item.titulo}</h3>
+              <div>
+                <h3 className="font-display text-h3 font-semibold text-ink">{item.titulo}</h3>
                 {item.subtitulo && (
-                  <p className="bloque-tarjeta-subtitulo">{item.subtitulo}</p>
+                  <p className="mt-2 font-body text-body text-muted">{item.subtitulo}</p>
                 )}
               </div>
             </>
@@ -160,7 +175,7 @@ export function BloqueTarjetas({ contenido }) {
               <EnlacePortal
                 key={`${item.titulo}-${indice}`}
                 to={item.enlace}
-                className="bloque-tarjeta bloque-tarjeta-enlace"
+                className="flex flex-col gap-4 rounded-md border border-sand bg-cream p-6 transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 {cuerpo}
               </EnlacePortal>
@@ -168,7 +183,10 @@ export function BloqueTarjetas({ contenido }) {
           }
 
           return (
-            <article key={`${item.titulo}-${indice}`} className="bloque-tarjeta">
+            <article
+              key={`${item.titulo}-${indice}`}
+              className="flex flex-col gap-4 rounded-md border border-sand bg-cream p-6"
+            >
               {cuerpo}
             </article>
           );
@@ -183,22 +201,26 @@ export function BloqueGaleria({ contenido }) {
   if (imagenes.length === 0) return null;
 
   return (
-    <section className="bloque-pagina">
+    <section>
       {contenido.titulo && (
-        <h2 className="serif-title subpagina-bloque-titulo">{contenido.titulo}</h2>
+        <h2 className="mb-8 font-display text-h2 font-semibold text-ink">{contenido.titulo}</h2>
       )}
 
-      <div className="bloque-galeria-grilla">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {imagenes.map((imagen, indice) => (
-          <figure key={`${imagen.url}-${indice}`} className="bloque-galeria-item">
-            <img
-              src={imagen.url}
-              alt={imagen.texto_alternativo}
-              className="bloque-galeria-imagen"
-              loading="lazy"
-            />
+          <figure key={`${imagen.url}-${indice}`} className="group">
+            <div className="overflow-hidden rounded-md border border-sand bg-cream">
+              <img
+                src={imagen.url}
+                alt={imagen.texto_alternativo}
+                className="aspect-[4/3] w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                loading="lazy"
+              />
+            </div>
             {imagen.leyenda && (
-              <figcaption className="bloque-galeria-leyenda">{imagen.leyenda}</figcaption>
+              <figcaption className="mt-2 font-body text-meta text-muted">
+                {imagen.leyenda}
+              </figcaption>
             )}
           </figure>
         ))}
@@ -211,19 +233,19 @@ export function BloqueVideoYoutube({ contenido }) {
   if (!contenido?.youtube_video_id) return null;
 
   return (
-    <section className="bloque-pagina">
+    <section>
       {contenido.titulo && (
-        <h2 className="serif-title subpagina-bloque-titulo">{contenido.titulo}</h2>
+        <h2 className="mb-8 font-display text-h2 font-semibold text-ink">{contenido.titulo}</h2>
       )}
 
-      <div className="bloque-youtube-marco">
+      <div className="overflow-hidden rounded-md border border-sand bg-ink">
         <iframe
           src={`https://www.youtube-nocookie.com/embed/${contenido.youtube_video_id}`}
           title={contenido.titulo || 'Video de YouTube'}
           loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
-          className="bloque-youtube-iframe"
+          className="aspect-video w-full border-0"
         />
       </div>
     </section>
@@ -234,23 +256,15 @@ export function RenderizadorBloquesPagina({ bloques = [] }) {
   const ordenados = [...bloques].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0));
 
   return (
-    <div className="bloques-pagina-lista">
+    <div className="flex flex-col gap-16">
       {ordenados.map((bloque) => {
         switch (bloque.tipo) {
           case 'hero_video':
             return <BloqueHeroVideo key={bloque.id} contenido={bloque.contenido} />;
           case 'texto_imagen':
-            return (
-              <div key={bloque.id} className="bloque-pagina">
-                <BloqueTextoImagen contenido={bloque.contenido} />
-              </div>
-            );
+            return <BloqueTextoImagen key={bloque.id} contenido={bloque.contenido} />;
           case 'cita':
-            return (
-              <div key={bloque.id} className="bloque-pagina">
-                <BloqueCita contenido={bloque.contenido} />
-              </div>
-            );
+            return <BloqueCita key={bloque.id} contenido={bloque.contenido} />;
           case 'tarjetas':
             return <BloqueTarjetas key={bloque.id} contenido={bloque.contenido} />;
           case 'galeria':
@@ -265,4 +279,3 @@ export function RenderizadorBloquesPagina({ bloques = [] }) {
     </div>
   );
 }
-

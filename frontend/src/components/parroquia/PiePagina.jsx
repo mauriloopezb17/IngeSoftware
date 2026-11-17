@@ -1,4 +1,4 @@
-import { anchoContenido } from './ElementosComunes.jsx';
+import Contenedor from '../portal/Contenedor.jsx';
 import EnlacePortal from './EnlacePortal.jsx';
 import { IconoRedSocial } from './IconoDinamico.jsx';
 import { ErrorSeccion } from './EstadoSeccion.jsx';
@@ -10,24 +10,26 @@ import {
   armarHrefTelefono,
   formatearRangoHorario,
 } from '../../utils/formatoPortal.js';
-
 import logoBlanco from '../../assets/parroquia/logos/logo-horizontal-blanco.svg';
 
-import '../../styles/PiePagina.css';
-
-const enlacesParroquia = [
-  // Solo páginas que existen siempre: las demás llegan al encabezado desde el menú del CMS.
-  { texto: 'Quiénes somos', href: '/paginas/nosotros' },
-  { texto: 'El párroco', href: '/#nosotros' },
-  { texto: 'Nuestras sedes', href: '/#comunidades' },
-  { texto: 'Noticias', href: '/noticias' },
+const ENLACES_PARROQUIA = [
+  { texto: 'Quiénes somos', href: '/nosotros' },
+  { texto: 'Nuestra historia', href: '/paginas/historia' },
+  { texto: 'Comunidad y pastorales', href: '/comunidad' },
+  { texto: 'Contacto y ubicación', href: '/contacto' },
 ];
 
-const enlacesServicios = [
-  { texto: 'Horarios de misa', href: '/#horarios' },
-  { texto: 'Sacramentos', href: '/#sacramentos' },
-  { texto: 'Proclamas matrimoniales', href: '/proclamas' },
+const ENLACES_CELEBRACIONES = [
+  { texto: 'Horarios de misa', href: '/horarios' },
+  { texto: 'Sacramentos', href: '/sacramentos' },
+  { texto: 'Bautismo', href: '/sacramentos/bautismo' },
+  { texto: 'Matrimonio', href: '/sacramentos/matrimonio' },
+];
+
+const ENLACES_ACTUALIDAD = [
+  { texto: 'Noticias', href: '/noticias' },
   { texto: 'Calendario', href: '/calendario' },
+  { texto: 'Proclamas matrimoniales', href: '/proclamas' },
   { texto: 'Boletín parroquial', href: '/boletines' },
 ];
 
@@ -74,64 +76,78 @@ function PiePagina() {
   const configuracion = sede?.configuracion ?? {};
   const redesSociales = sede?.redesSociales ?? [];
   const datosSecretaria = construirLineasSecretaria(horarios, sede);
+  const anioActual = new Date().getFullYear();
+  const textoCopyright =
+    configuracion.textoCopyright ||
+    `© ${anioActual} Parroquia Señor de la Exaltación · Pasionistas Bolivia`;
 
   return (
-    <footer className="pie-pagina">
-      <div className={anchoContenido}>
-        <div className="pie-pagina-superior">
-          <div className="pie-pagina-marca">
+    <footer className="border-t border-white/10 bg-ink text-white">
+      <Contenedor className="py-16 md:py-20">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
+          <div className="lg:col-span-4">
             <EnlacePortal
               to="/"
-              className="pie-pagina-logo-enlace"
               aria-label="Ir al inicio de la página"
+              className="inline-flex items-center py-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
             >
               <img
                 src={logoBlanco}
                 alt={sede?.nombre || 'Parroquia Señor de la Exaltación'}
-                className="pie-pagina-logo"
+                width={239}
+                height={134}
+                className="h-12 w-auto"
               />
             </EnlacePortal>
 
             {isError ? (
-              <ErrorSeccion
-                mensaje="No pudimos cargar los datos institucionales."
-                onReintentar={refetch}
-                oscuro
-                compacta
-              />
+              <div className="mt-6">
+                <ErrorSeccion
+                  mensaje="No pudimos cargar los datos institucionales."
+                  onReintentar={refetch}
+                  oscuro
+                  compacta
+                />
+              </div>
             ) : (
               configuracion.descripcionPie && (
-                <p className="pie-pagina-descripcion">{configuracion.descripcionPie}</p>
+                <p className="mt-5 max-w-sm font-body text-meta leading-relaxed text-muted-on-dark">
+                  {configuracion.descripcionPie}
+                </p>
               )
             )}
 
             {redesSociales.length > 0 && (
-              <div className="pie-pagina-redes" aria-label="Redes sociales">
+              <div className="mt-6 flex items-center gap-2" aria-label="Redes sociales">
                 {redesSociales.map(({ nombre, url, icono }) => (
                   <a
                     key={nombre}
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="pie-pagina-red-social"
                     aria-label={`Abrir ${nombre}`}
                     title={nombre}
+                    className="inline-flex size-11 items-center justify-center rounded-sm border border-white/15 text-white/85 transition-colors duration-150 hover:border-gold hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
                   >
-                    <IconoRedSocial nombre={icono} size={18} />
+                    <IconoRedSocial nombre={icono} size={17} />
                   </a>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="pie-pagina-columnas">
-            <div className="pie-pagina-columna">
-              <h3 className="pie-pagina-columna-titulo">La parroquia</h3>
-
-              <ul className="pie-pagina-lista">
-                {enlacesParroquia.map(({ texto, href }) => (
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 lg:col-span-8">
+            <div>
+              <h3 className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-gold">
+                Parroquia
+              </h3>
+              <ul className="mt-4 space-y-2.5">
+                {ENLACES_PARROQUIA.map(({ texto, href }) => (
                   <li key={texto}>
-                    <EnlacePortal to={href} className="pie-pagina-enlace">
+                    <EnlacePortal
+                      to={href}
+                      className="inline-flex min-h-9 items-center font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                    >
                       {texto}
                     </EnlacePortal>
                   </li>
@@ -139,13 +155,17 @@ function PiePagina() {
               </ul>
             </div>
 
-            <div className="pie-pagina-columna">
-              <h3 className="pie-pagina-columna-titulo">Servicios</h3>
-
-              <ul className="pie-pagina-lista">
-                {enlacesServicios.map(({ texto, href }) => (
+            <div>
+              <h3 className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-gold">
+                Celebraciones
+              </h3>
+              <ul className="mt-4 space-y-2.5">
+                {ENLACES_CELEBRACIONES.map(({ texto, href }) => (
                   <li key={texto}>
-                    <EnlacePortal to={href} className="pie-pagina-enlace">
+                    <EnlacePortal
+                      to={href}
+                      className="inline-flex min-h-9 items-center font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                    >
                       {texto}
                     </EnlacePortal>
                   </li>
@@ -153,10 +173,29 @@ function PiePagina() {
               </ul>
             </div>
 
-            <div className="pie-pagina-columna">
-              <h3 className="pie-pagina-columna-titulo">Secretaría</h3>
+            <div>
+              <h3 className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-gold">
+                Actualidad
+              </h3>
+              <ul className="mt-4 space-y-2.5">
+                {ENLACES_ACTUALIDAD.map(({ texto, href }) => (
+                  <li key={texto}>
+                    <EnlacePortal
+                      to={href}
+                      className="inline-flex min-h-9 items-center font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                    >
+                      {texto}
+                    </EnlacePortal>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-              <ul className="pie-pagina-lista">
+            <div>
+              <h3 className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-gold">
+                Secretaría
+              </h3>
+              <ul className="mt-4 space-y-2.5">
                 {datosSecretaria.map(({ contenido, href }) => (
                   <li key={contenido}>
                     {href ? (
@@ -164,12 +203,14 @@ function PiePagina() {
                         href={href}
                         target={href.startsWith('https') ? '_blank' : undefined}
                         rel={href.startsWith('https') ? 'noopener noreferrer' : undefined}
-                        className="pie-pagina-enlace"
+                        className="inline-flex min-h-9 items-center break-all font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
                       >
                         {contenido}
                       </a>
                     ) : (
-                      <span className="pie-pagina-texto">{contenido}</span>
+                      <span className="block font-body text-meta tabular-nums text-muted-on-dark">
+                        {contenido}
+                      </span>
                     )}
                   </li>
                 ))}
@@ -178,16 +219,11 @@ function PiePagina() {
           </div>
         </div>
 
-        <div className="pie-pagina-inferior">
-          {configuracion.textoCopyright && (
-            <p className="pie-pagina-copy">{configuracion.textoCopyright}</p>
-          )}
-
-          {configuracion.textoCreditos && (
-            <p className="pie-pagina-creditos">{configuracion.textoCreditos}</p>
-          )}
+        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-8 font-body text-meta text-muted-on-dark sm:flex-row sm:items-center sm:justify-between">
+          <p>{textoCopyright}</p>
+          {configuracion.textoCreditos && <p>{configuracion.textoCreditos}</p>}
         </div>
-      </div>
+      </Contenedor>
     </footer>
   );
 }
