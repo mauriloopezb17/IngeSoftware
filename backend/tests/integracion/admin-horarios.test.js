@@ -84,7 +84,7 @@ describe('GET /api/admin/horarios', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.paginacion).toBeUndefined();
-    expect(res.body.datos.length).toBeGreaterThanOrEqual(34);
+    expect(res.body.datos.length).toBeGreaterThanOrEqual(33);
     expect(res.body.datos[0]).toEqual({
       id: expect.any(Number),
       sede: {

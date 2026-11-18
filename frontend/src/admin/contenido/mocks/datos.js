@@ -271,9 +271,8 @@ export function crearHorariosIniciales() {
 
   for (let dia = 1; dia <= 5; dia += 1) {
     lista.push(fila(4, dia, '09:00', '12:00'));
-    lista.push(fila(4, dia, '15:00', '19:30'));
+    lista.push(fila(4, dia, '15:00', '19:00'));
   }
-  lista.push(fila(4, 6, '09:00', '12:00'));
 
   return lista;
 }

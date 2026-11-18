@@ -108,7 +108,7 @@ herramientas de diseño; los tokens viven en `frontend/src/index.css` como utili
 ## Overview
 
 Dos interfaces con la misma marca y distinto tono. **Portal**: sereno, cálido y solemne; mucho aire, fotos reales grandes, títulos en
-Cormorant y una sola animación de revelado. **Panel**: herramienta clara y compacta para la secretaría, solo Montserrat, feedback inmediato.
+Cormorant y animaciones de revelado notorias pero solemnes (skill §6). **Panel**: herramienta clara y compacta para la secretaría, solo Montserrat, feedback inmediato.
 
 ## Colors
 
@@ -165,9 +165,9 @@ Panel: ítem activo con barra `gold` a la izquierda.
 ### Do:
 - Usar fotos reales de la parroquia y textos reales del CMS.
 - Alternar fondos (blanco → `ink` → `cream`) y formatos (tarjetas, foto+texto, tabla, lista).
-- Revelado al hacer scroll una sola vez (fade + 24 px, 600–800 ms, `ease-suave`), nada con `prefers-reduced-motion`.
+- Revelados al hacer scroll una sola vez según la tabla de la skill §6 (tarjetas: fade + 64 px, 1000 ms; fotos con cortina; títulos por líneas; `ease-suave`), nada con `prefers-reduced-motion`.
 
 ### Don't:
 - Bloques idénticos repetidos, texto gris pequeño, espaciados irregulares.
-- Parallax fuerte, rebotes, contadores animados, carruseles automáticos, cursores personalizados.
+- Parallax fuerte (más de ±10 %), rebotes, contadores animados, carruseles automáticos, cursores personalizados, scroll suavizado por JS.
 - Botón de donaciones, emojis, una tercera fuente.
