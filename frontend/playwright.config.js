@@ -1,5 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Puertos de las e2e. En el CI son siempre 3000 (API) y 5173 (portal). En local se pueden cambiar con
+// E2E_PUERTO_API y E2E_PUERTO_WEB para correrlas sin detener otro backend o Vite de la misma máquina.
+const PUERTO_API = process.env.E2E_PUERTO_API || '3000';
+const PUERTO_WEB = process.env.E2E_PUERTO_WEB || '5173';
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
@@ -13,7 +18,7 @@ export default defineConfig({
     ? [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
     : 'list',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: `http://localhost:${PUERTO_WEB}`,
     locale: 'es-BO',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -28,18 +33,21 @@ export default defineConfig({
     {
       command: 'npm start',
       cwd: '../backend',
-      url: 'http://localhost:3000/api/salud',
+      url: `http://localhost:${PUERTO_API}/api/salud`,
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
       env: {
         ...process.env,
         NODE_ENV: process.env.NODE_ENV || 'development',
+        PORT: PUERTO_API,
+        // La API solo acepta peticiones del origen del portal de las pruebas (CORS y CSRF).
+        CORS_ORIGEN: `http://localhost:${PUERTO_WEB}`,
       },
     },
     {
-      command: 'npx vite --port 5173 --strictPort',
+      command: `npx vite --port ${PUERTO_WEB} --strictPort`,
       cwd: '.',
-      url: 'http://localhost:5173',
+      url: `http://localhost:${PUERTO_WEB}`,
       reuseExistingServer: !process.env.CI,
       timeout: 30_000,
       env: {
