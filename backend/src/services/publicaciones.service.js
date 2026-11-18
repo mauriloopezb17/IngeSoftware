@@ -23,6 +23,7 @@ function aResumen(fila) {
       alto: fila.imagen_alto,
     }),
     urlExterna: fila.url_externa,
+    abrirEnlaceDirecto: fila.abrir_enlace_directo,
     destacada: fila.destacada,
     fechaPublicacion: formatearFechaHora(fila.fecha_publicacion),
     fechaExpiracion: formatearFechaHora(fila.fecha_expiracion),

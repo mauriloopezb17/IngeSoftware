@@ -74,6 +74,9 @@ export default function PreviaPublicacion({ campos, categoria, tipoNombre, bloqu
         {campos.urlExterna && (
           <p className="text-sm text-muted">
             Enlace externo: <span className="break-all text-ink">{campos.urlExterna}</span>
+            {campos.abrirEnlaceDirecto
+              ? ' · «Leer nota» abrirá este enlace directamente.'
+              : ' · Se mostrará como botón dentro de la noticia.'}
           </p>
         )}
       </article>

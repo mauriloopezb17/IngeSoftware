@@ -663,6 +663,7 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
         "variantes": []
       },
       "urlExterna": "https://www.facebook.com/photo.php?fbid=1568791201958754&set=pb.100064836665037.-2207520000&type=3",
+      "abrirEnlaceDirecto": false,
       "destacada": false,
       "fechaPublicacion": "2026-10-30T12:00:00-04:00",
       "fechaExpiracion": null
@@ -683,6 +684,7 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
         "variantes": []
       },
       "urlExterna": null,
+      "abrirEnlaceDirecto": false,
       "destacada": false,
       "fechaPublicacion": "2026-10-18T12:00:00-04:00",
       "fechaExpiracion": null
@@ -703,6 +705,7 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
         "variantes": []
       },
       "urlExterna": null,
+      "abrirEnlaceDirecto": false,
       "destacada": false,
       "fechaPublicacion": "2026-10-11T12:00:00-04:00",
       "fechaExpiracion": null
@@ -731,6 +734,7 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
       "categoria": null,
       "imagenPortada": null,
       "urlExterna": null,
+      "abrirEnlaceDirecto": false,
       "destacada": false,
       "fechaPublicacion": "2026-11-11T09:00:00-04:00",
       "fechaExpiracion": null
@@ -744,6 +748,7 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
       "categoria": null,
       "imagenPortada": null,
       "urlExterna": null,
+      "abrirEnlaceDirecto": false,
       "destacada": false,
       "fechaPublicacion": "2026-11-09T09:00:00-04:00",
       "fechaExpiracion": null
@@ -757,6 +762,7 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
       "categoria": null,
       "imagenPortada": null,
       "urlExterna": null,
+      "abrirEnlaceDirecto": false,
       "destacada": false,
       "fechaPublicacion": "2026-11-07T09:00:00-04:00",
       "fechaExpiracion": null
@@ -773,7 +779,7 @@ El ciclo de estados completo está en [estados-publicacion.md](estados-publicaci
 
 - **Avisos**: el texto del aviso es el `titulo` (y también el único párrafo de su `contenido`). No tienen `resumen` ni imagen.
 - **Noticias**: la tarjeta muestra el `resumen`.
-- **«Leer nota»**: si `urlExterna` tiene valor, el portal abre ese enlace en otra pestaña (ej. la publicación de Facebook). Si no, navega al detalle por `slug`.
+- **«Leer nota»**: por defecto abre el detalle de la publicación por `slug` (y si tiene `urlExterna`, dentro del detalle se muestra el botón «Ver publicación original»). Solo si `abrirEnlaceDirecto` es `true` y `urlExterna` tiene valor, «Leer nota» abre el enlace externo en otra pestaña (ej. una publicación que es solo un post de Facebook).
 
 ## `GET /api/sedes/:sede/publicaciones/:slug`
 
@@ -799,6 +805,7 @@ Detalle de una publicación publicada y vigente, con su `contenido` en formato B
       "variantes": []
     },
     "urlExterna": null,
+    "abrirEnlaceDirecto": false,
     "destacada": false,
     "fechaPublicacion": "2026-10-18T12:00:00-04:00",
     "fechaExpiracion": null,

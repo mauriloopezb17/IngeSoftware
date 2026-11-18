@@ -37,14 +37,21 @@ const VIGENTES = ['vigente', 'vigente-con-expiracion'];
 beforeAll(async () => {
   for (const [caso, [estado, publicacion, expiracion, destacada]] of Object.entries(CASOS)) {
     await consultar(
-      `INSERT INTO publicacion (sede_id, tipo_publicacion_id, estado_publicacion_id, autor_id, titulo, slug, contenido, destacada, fecha_publicacion, fecha_expiracion)
+      `INSERT INTO publicacion (sede_id, tipo_publicacion_id, estado_publicacion_id, autor_id, titulo, slug, contenido, url_externa, abrir_enlace_directo, destacada, fecha_publicacion, fecha_expiracion)
        VALUES ((SELECT id FROM sede WHERE slug = 'resurreccion'),
                (SELECT id FROM tipo_publicacion WHERE nombre = 'Noticia'),
                (SELECT id FROM estado_publicacion WHERE nombre = $1),
                (SELECT id FROM usuario WHERE correo = 'admin@parroquia.test'),
-               $2, $3, '{"formato":"blocknote","version":1,"bloques":[]}', $4,
+               $2, $3, '{"formato":"blocknote","version":1,"bloques":[]}', $4, $5, $6,
                ${publicacion}, ${expiracion})`,
-      [estado, `Prueba ${sufijo} ${caso}`, slugDe(caso), destacada],
+      [
+        estado,
+        `Prueba ${sufijo} ${caso}`,
+        slugDe(caso),
+        caso === 'vigente' ? 'https://ejemplo.test/externa' : null,
+        caso === 'vigente',
+        destacada,
+      ],
     );
   }
 });
@@ -174,6 +181,12 @@ describe('GET /api/sedes/:sede/publicaciones', () => {
     expect(respuesta.status).toBe(200);
     expect(respuesta.body.datos.map((p) => p.slug).sort()).toEqual(VIGENTES.map(slugDe).sort());
     expect(respuesta.body.paginacion.total).toBe(VIGENTES.length);
+    const conDirecto = respuesta.body.datos.find((p) => p.slug === slugDe('vigente'));
+    const sinDirecto = respuesta.body.datos.find(
+      (p) => p.slug === slugDe('vigente-con-expiracion'),
+    );
+    expect(conDirecto.abrirEnlaceDirecto).toBe(true);
+    expect(sinDirecto.abrirEnlaceDirecto).toBe(false);
   });
 
   it('responde la lista de una sede sin publicaciones con datos vacíos', async () => {
@@ -204,6 +217,7 @@ describe('GET /api/sedes/:sede/publicaciones/:slug', () => {
 
     expect(respuesta.status).toBe(200);
     expect(respuesta.body.datos.slug).toBe(slugDe(caso));
+    expect(respuesta.body.datos.abrirEnlaceDirecto).toBe(caso === 'vigente');
     expect(respuesta.body.datos.contenido).toEqual({
       formato: 'blocknote',
       version: 1,

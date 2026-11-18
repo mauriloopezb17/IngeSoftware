@@ -236,6 +236,8 @@ function validarCampos(cuerpo, { parcial, sede }) {
   if (enviado('contenido')) validarContenido(cuerpo.contenido, detalles);
   if (opcional('urlExterna') && (typeof cuerpo.urlExterna !== 'string' || !/^https:\/\/\S+$/.test(cuerpo.urlExterna) || cuerpo.urlExterna.length > 500))
     mal('urlExterna', 'Debe ser una URL https:// de hasta 500 caracteres.');
+  if ('abrirEnlaceDirecto' in cuerpo && typeof cuerpo.abrirEnlaceDirecto !== 'boolean')
+    mal('abrirEnlaceDirecto', 'Debe ser true o false.');
   if ('destacada' in cuerpo && typeof cuerpo.destacada !== 'boolean') mal('destacada', 'Debe ser verdadero o falso.');
   for (const campo of ['fechaPublicacion', 'fechaExpiracion'])
     if (opcional(campo) && !esFechaValida(cuerpo[campo])) mal(campo, 'Debe ser una fecha y hora válidas.');
@@ -349,6 +351,7 @@ function aplicarCampos(pub, cuerpo) {
   if ('imagenPortadaId' in cuerpo) pub.imagenPortadaId = cuerpo.imagenPortadaId;
   if ('contenido' in cuerpo) pub.contenido = cuerpo.contenido;
   if ('urlExterna' in cuerpo) pub.urlExterna = cuerpo.urlExterna;
+  if ('abrirEnlaceDirecto' in cuerpo) pub.abrirEnlaceDirecto = cuerpo.abrirEnlaceDirecto;
   if ('destacada' in cuerpo) pub.destacada = cuerpo.destacada;
   if ('fechaPublicacion' in cuerpo)
     pub.fechaPublicacion = cuerpo.fechaPublicacion ? iso(new Date(cuerpo.fechaPublicacion)) : null;
@@ -361,6 +364,11 @@ const expiraAntesDePublicar = (pub) =>
   pub.fechaExpiracion &&
   new Date(pub.fechaExpiracion) <= new Date(pub.fechaPublicacion)
     ? [{ campo: 'fechaExpiracion', mensaje: 'La expiración debe ser posterior a la fecha de publicación.' }]
+    : [];
+
+const enlaceDirectoSinUrl = (pub) =>
+  pub.abrirEnlaceDirecto && !pub.urlExterna
+    ? [{ campo: 'abrirEnlaceDirecto', mensaje: 'Para abrir el enlace directamente, agrega el enlace externo.' }]
     : [];
 
 // Devuelve { publicacion } o { error }.
@@ -386,6 +394,7 @@ export function crearPublicacion(cuerpo, usuario) {
     categoria: null,
     imagenPortadaId: null,
     urlExterna: null,
+    abrirEnlaceDirecto: false,
     destacada: false,
     fechaPublicacion: null,
     fechaExpiracion: null,
@@ -395,7 +404,7 @@ export function crearPublicacion(cuerpo, usuario) {
   };
   if (!detalles.length) {
     aplicarCampos(nueva, cuerpo);
-    detalles.push(...expiraAntesDePublicar(nueva));
+    detalles.push(...expiraAntesDePublicar(nueva), ...enlaceDirectoSinUrl(nueva));
   }
   if (detalles.length) return errorValidacion(detalles);
 
@@ -438,8 +447,11 @@ export function editarPublicacion(pub, cuerpo, usuario) {
 
   const copia = { ...pub };
   aplicarCampos(copia, cuerpo);
-  const fechas = expiraAntesDePublicar(copia);
-  if (fechas.length) return errorValidacion(fechas);
+  if (cuerpo.urlExterna === null && !('abrirEnlaceDirecto' in cuerpo) && copia.abrirEnlaceDirecto) {
+    copia.abrirEnlaceDirecto = false;
+  }
+  const consistencia = [...expiraAntesDePublicar(copia), ...enlaceDirectoSinUrl(copia)];
+  if (consistencia.length) return errorValidacion(consistencia);
 
   Object.assign(pub, copia);
   if ('slug' in cuerpo && cuerpo.slug !== null) pub.slug = cuerpo.slug;

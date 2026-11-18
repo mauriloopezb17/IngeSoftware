@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, ImagePlus, Save, Trash2 } from 'lucide-react';
 
-import { erroresDe } from '../componentes/erroresFormulario.js';
+import { erroresDe, resumenDeErrores } from '../componentes/erroresFormulario.js';
 import SelectorImagenes from '../multimedia/SelectorImagenes.jsx';
 import { CLAVE_CATALOGOS, obtenerCatalogos } from '../publicaciones/api.js';
 import {
@@ -121,7 +121,7 @@ export default function FormularioEvento({ evento }) {
     guardar.mutate(cuerpoDe(campos));
   }
 
-  const mensajes = [...Object.values(errores), ...generales];
+  const mensajes = resumenDeErrores(errores, generales);
 
   return (
     <form onSubmit={enviar} noValidate className="mt-6 flex flex-col gap-6 rounded-lg border border-sand bg-white p-5 sm:p-6">

@@ -141,6 +141,21 @@ function NoticiaDetalle() {
                     {publicacion.resumen}
                   </p>
                 )}
+
+                {publicacion.urlExterna && (
+                  <div className="mt-6">
+                    <a
+                      href={publicacion.urlExterna}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-11 items-center gap-2.5 rounded-sm border border-ink/25 bg-white px-5 py-2.5 font-body text-button font-semibold text-ink touch-manipulation transition-[background-color,border-color,color,transform] duration-150 ease-salida hover:border-ink hover:bg-ink/5 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    >
+                      <span>Ver publicación original</span>{' '}
+                      <span className="sr-only">(se abre en otra pestaña)</span>
+                      <ExternalLink size={16} aria-hidden="true" />
+                    </a>
+                  </div>
+                )}
               </div>
             </Contenedor>
           </header>
@@ -165,18 +180,6 @@ function NoticiaDetalle() {
               <ContenidoBlockNote contenido={publicacion.contenido} />
 
               <div className="mt-10 flex flex-wrap items-center gap-4 border-t border-sand pt-8">
-                {publicacion.urlExterna && (
-                  <a
-                    href={publicacion.urlExterna}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex min-h-11 items-center gap-2 rounded-sm bg-gold px-5 py-2.5 font-body text-button font-semibold text-ink transition-colors duration-150 hover:bg-gold-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                  >
-                    <span>Ver publicación original</span>
-                    <ExternalLink size={16} aria-hidden="true" />
-                  </a>
-                )}
-
                 <Boton variante="secundario" onClick={compartir}>
                   {copiado ? (
                     <>

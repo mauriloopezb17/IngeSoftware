@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Eye, ImagePlus, Loader2, Rocket, Save, Send, Trash2 } from 'lucide-react';
 
 import Dialogo from '../componentes/Dialogo.jsx';
+import { erroresDe, resumenDeErrores } from '../componentes/erroresFormulario.js';
 import SelectorImagenes from '../multimedia/SelectorImagenes.jsx';
 import { Aviso, Boton, CampoArea, CampoCasilla, CampoSelect, CampoTexto, useToast } from '../ui/index.js';
 import {
@@ -38,6 +39,7 @@ function camposDe(publicacion, tipoInicial = 'NOTICIA') {
     fechaPublicacion: aCampoFecha(publicacion?.fechaPublicacion),
     fechaExpiracion: aCampoFecha(publicacion?.fechaExpiracion),
     urlExterna: publicacion?.urlExterna ?? '',
+    abrirEnlaceDirecto: Boolean(publicacion?.urlExterna && publicacion?.abrirEnlaceDirecto),
   };
 }
 
@@ -51,24 +53,12 @@ const CAMPO_DE_ERROR = {
   categoriaId: 'categoriaId',
   imagenPortadaId: 'portada',
   urlExterna: 'urlExterna',
+  abrirEnlaceDirecto: 'abrirEnlaceDirecto',
   fechaPublicacion: 'fechaPublicacion',
   fechaExpiracion: 'fechaExpiracion',
   contenido: 'contenido',
   'contenido.bloques': 'contenido',
 };
-
-function erroresDe(error) {
-  const errores = {};
-  const generales = [];
-  for (const { campo, mensaje } of error.detalles ?? []) {
-    const destino = CAMPO_DE_ERROR[campo];
-    if (destino && !errores[destino]) errores[destino] = mensaje;
-    else generales.push(mensaje);
-  }
-  // Un error sin detalle por campo (403, 409...) se muestra como aviso general.
-  if (!Object.keys(errores).length && !generales.length) generales.push(error.message);
-  return { errores, generales };
-}
 
 function validarLocal(campos) {
   const errores = {};
@@ -172,7 +162,7 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
       toast.exito('Cambios guardados.');
     },
     onError: (error) => {
-      const { errores: porCampo, generales: avisosGenerales } = erroresDe(error);
+      const { errores: porCampo, generales: avisosGenerales } = erroresDe(error, CAMPO_DE_ERROR);
       setErrores(porCampo);
       setGenerales(avisosGenerales);
       requestAnimationFrame(() => avisos.current?.focus());
@@ -186,6 +176,7 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
     imagenPortadaId: campos.portada?.id ?? null,
     contenido: aContenido(bloques ?? JSON.parse(bloquesBase ?? '[]')),
     urlExterna: campos.urlExterna.trim() || null,
+    abrirEnlaceDirecto: Boolean(campos.urlExterna.trim()) && campos.abrirEnlaceDirecto,
     destacada: campos.destacada,
     fechaPublicacion: deCampoFecha(campos.fechaPublicacion),
     fechaExpiracion: deCampoFecha(campos.fechaExpiracion),
@@ -233,7 +224,7 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
         });
         return;
       }
-      const { errores: porCampo, generales: avisosGenerales } = erroresDe(error);
+      const { errores: porCampo, generales: avisosGenerales } = erroresDe(error, CAMPO_DE_ERROR);
       setErrores(porCampo);
       setGenerales(avisosGenerales);
       requestAnimationFrame(() => avisos.current?.focus());
@@ -266,7 +257,7 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
     },
     onError: (error) => {
       setConfirmandoEnvio(false);
-      const { errores: porCampo, generales: avisosGenerales } = erroresDe(error);
+      const { errores: porCampo, generales: avisosGenerales } = erroresDe(error, CAMPO_DE_ERROR);
       setErrores(porCampo);
       setGenerales(avisosGenerales);
       requestAnimationFrame(() => avisos.current?.focus());
@@ -301,7 +292,7 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
 
   const puedeEnviar = editando && publicacion.acciones.includes('ENVIAR_REVISION');
   const puedePublicar = esAviso && (!editando || publicacion.acciones.includes('PUBLICAR'));
-  const mensajesDeError = [...Object.values(errores), ...generales];
+  const mensajesDeError = resumenDeErrores(errores, generales);
 
   return (
     <form onSubmit={enviar} noValidate className="mt-6 flex flex-col gap-6 rounded-lg border border-sand bg-white p-5 sm:p-6">
@@ -414,11 +405,26 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
           etiqueta="Enlace externo (opcional)"
           type="url"
           value={campos.urlExterna}
-          onChange={(e) => cambiar({ urlExterna: e.target.value })}
+          onChange={(e) => {
+            const urlExterna = e.target.value;
+            cambiar({
+              urlExterna,
+              ...(urlExterna.trim() ? {} : { abrirEnlaceDirecto: false }),
+            });
+          }}
           error={errores.urlExterna}
           ayuda="Para una nota publicada en otro medio. Debe empezar con https://"
           maxLength={500}
           autoComplete="off"
+        />
+
+        <CampoCasilla
+          etiqueta="«Leer nota» abre directamente el enlace externo"
+          ayuda="Si no la marcas, «Leer nota» abre la noticia en el portal y el enlace aparece como botón dentro de ella."
+          checked={Boolean(campos.urlExterna.trim()) && campos.abrirEnlaceDirecto}
+          disabled={!campos.urlExterna.trim()}
+          error={errores.abrirEnlaceDirecto}
+          onChange={(e) => cambiar({ abrirEnlaceDirecto: e.target.checked })}
         />
 
         <div className="grid gap-5 sm:grid-cols-2">

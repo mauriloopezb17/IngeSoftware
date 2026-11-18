@@ -55,6 +55,7 @@ const base = (datos) => ({
   categoria: null,
   imagenPortadaId: null,
   urlExterna: null,
+  abrirEnlaceDirecto: false,
   destacada: false,
   fechaPublicacion: null,
   fechaExpiracion: null,

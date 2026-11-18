@@ -199,6 +199,34 @@ describe('formulario de publicación', () => {
       expect(screen.getByRole('group', { name: 'Contenido' })).toHaveAccessibleDescription('Agrega contenido o un enlace externo.');
     });
 
+    it('agrupa los errores repetidos de bloques de contenido en un único mensaje legible', async () => {
+      await entrar('marketing');
+      const detalles = Array.from({ length: 9 }, (_, i) => ({
+        campo: `contenido.bloques.${i}.props.textColor`,
+        mensaje: 'Debe ser uno de: default, gray, brown, red, orange, yellow, green, blue, purple, pink.',
+      }));
+      server.use(
+        http.post(api('/admin/publicaciones'), () =>
+          HttpResponse.json(
+            { error: { codigo: 'VALIDACION', mensaje: 'Los datos enviados no son válidos.', detalles } },
+            { status: 400 },
+          ),
+        ),
+      );
+      montar('/admin/publicaciones/nueva');
+      await esperarEditor();
+
+      await userEvent.type(screen.getByRole('textbox', { name: /Título/ }), 'Noticia pegada');
+      await userEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+
+      const alerta = await screen.findByRole('alert');
+      const items = within(alerta).getAllByRole('listitem');
+      expect(items).toHaveLength(1);
+      expect(items[0]).toHaveTextContent(/en 9 párrafos/);
+      expect(alerta).not.toHaveTextContent('Debe ser uno de:');
+      expect(screen.getByRole('group', { name: 'Contenido' })).toHaveAccessibleDescription(items[0].textContent);
+    });
+
     it('elige la imagen de portada de la biblioteca y permite quitarla', async () => {
       await entrar('marketing');
       montar('/admin/publicaciones/nueva');
@@ -223,6 +251,50 @@ describe('formulario de publicación', () => {
       await userEvent.click(await screen.findByRole('button', { name: 'Quitar imagen' }));
       expect(screen.queryByRole('img')).not.toBeInTheDocument();
       expect(screen.getByText('Sin imagen de portada.')).toBeInTheDocument();
+    });
+
+    it('la casilla «Leer nota» abre directamente el enlace externo se deshabilita sin URL y se guarda al marcarla', async () => {
+      await entrar('marketing');
+      montar('/admin/publicaciones/nueva');
+      await esperarEditor();
+
+      const casilla = screen.getByRole('checkbox', {
+        name: '«Leer nota» abre directamente el enlace externo',
+      });
+      expect(casilla).toBeDisabled();
+      expect(casilla).not.toBeChecked();
+
+      const campoUrl = screen.getByLabelText('Enlace externo (opcional)');
+      await userEvent.type(campoUrl, 'https://www.facebook.com/post/999');
+      expect(casilla).toBeEnabled();
+
+      await userEvent.click(casilla);
+      expect(casilla).toBeChecked();
+
+      // Si se borra el enlace externo, la casilla vuelve a desmarcarse y deshabilitarse.
+      await userEvent.clear(campoUrl);
+      expect(casilla).toBeDisabled();
+      expect(casilla).not.toBeChecked();
+
+      // Al volver a escribir una URL y marcarla, se guarda y se refleja en la vista previa.
+      await userEvent.type(campoUrl, 'https://www.facebook.com/post/999');
+      await userEvent.click(casilla);
+      await userEvent.type(screen.getByRole('textbox', { name: /Título/ }), 'Post directo en Facebook');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Vista previa' }));
+      const previa = await screen.findByRole('dialog', { name: 'Vista previa' });
+      expect(within(previa).getByText(/«Leer nota» abrirá este enlace directamente/)).toBeInTheDocument();
+      await userEvent.click(within(previa).getByRole('button', { name: 'Cerrar vista previa' }));
+
+      await userEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+      await screen.findByRole('heading', { level: 1, name: 'Editar publicación' }, esperar);
+
+      const guardada = await leer(12);
+      expect(guardada.urlExterna).toBe('https://www.facebook.com/post/999');
+      expect(guardada.abrirEnlaceDirecto).toBe(true);
+      expect(
+        screen.getByRole('checkbox', { name: '«Leer nota» abre directamente el enlace externo' }),
+      ).toBeChecked();
     });
 
     it('Secretaría no puede crear noticias: ve «sin permiso»', async () => {

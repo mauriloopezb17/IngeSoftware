@@ -1,4 +1,4 @@
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ExternalLink } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 
 import {
@@ -14,7 +14,7 @@ import {
 } from '../components/parroquia/EstadoSeccion.jsx';
 import { construirAtributosImagen } from '../components/parroquia/imagenSrcSet.js';
 import { useCategorias, usePublicaciones } from '../hooks/index.js';
-import { formatearFechaLarga } from '../utils/formatoPortal.js';
+import { destinoLeerNota, formatearFechaLarga } from '../utils/formatoPortal.js';
 
 const POR_PAGINA = 6;
 const TIPOS_VALIDOS = new Set(['NOTICIA', 'NOTA_DE_PRENSA']);
@@ -170,6 +170,7 @@ function Noticias() {
           <>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {publicaciones.map((noticia, indice) => {
+                const destino = destinoLeerNota(noticia);
                 const imagen = noticia.imagenPortada;
                 const esAfiche = Boolean(
                   imagen?.alto && imagen?.ancho && imagen.alto > imagen.ancho,
@@ -202,19 +203,19 @@ function Noticias() {
                   >
                     {contenidoImagen && (
                       <div className="overflow-hidden bg-cream">
-                        {noticia.urlExterna ? (
+                        {destino.esExterno ? (
                           <a
-                            href={noticia.urlExterna}
+                            href={destino.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            aria-label={`Abrir ${noticia.titulo} en enlace externo`}
+                            aria-label={`Abrir ${noticia.titulo} en enlace externo (se abre en otra pestaña)`}
                             className="block"
                           >
                             {contenidoImagen}
                           </a>
                         ) : (
                           <Link
-                            to={`/noticias/${noticia.slug}`}
+                            to={destino.url}
                             aria-label={`Leer ${noticia.titulo}`}
                             className="block"
                           >
@@ -248,24 +249,20 @@ function Noticias() {
                       </div>
 
                       <div className="mt-5 pt-3">
-                        {noticia.urlExterna ? (
+                        {destino.esExterno ? (
                           <a
-                            href={noticia.urlExterna}
+                            href={destino.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            aria-label={`Leer publicación: ${noticia.titulo}`}
+                            aria-label={`Leer publicación: ${noticia.titulo} (se abre en otra pestaña)`}
                             className="inline-flex min-h-11 items-center gap-2 font-body text-button font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                           >
                             <span>Leer nota</span>
-                            <ArrowRight
-                              size={15}
-                              aria-hidden="true"
-                              className="transition-transform duration-200 ease-salida group-hover:translate-x-1"
-                            />
+                            <ExternalLink size={15} aria-hidden="true" />
                           </a>
                         ) : (
                           <Link
-                            to={`/noticias/${noticia.slug}`}
+                            to={destino.url}
                             aria-label={`Leer publicación: ${noticia.titulo}`}
                             className="inline-flex min-h-11 items-center gap-2 font-body text-button font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                           >

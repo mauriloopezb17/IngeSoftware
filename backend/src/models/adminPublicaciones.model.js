@@ -23,6 +23,7 @@ const COLUMNAS = `
   am.ancho_px AS imagen_ancho,
   am.alto_px AS imagen_alto,
   p.url_externa,
+  p.abrir_enlace_directo,
   p.destacada,
   p.fecha_publicacion,
   p.fecha_expiracion,
@@ -132,11 +133,11 @@ export async function insertar(datos, db) {
   const { rows } = await db.consultar(
     `INSERT INTO publicacion
        (sede_id, tipo_publicacion_id, estado_publicacion_id, autor_id, categoria_id,
-        imagen_portada_id, titulo, slug, resumen, contenido, url_externa, destacada,
-        fecha_publicacion, fecha_expiracion)
+        imagen_portada_id, titulo, slug, resumen, contenido, url_externa, abrir_enlace_directo,
+        destacada, fecha_publicacion, fecha_expiracion)
      VALUES ($1, (SELECT id FROM tipo_publicacion WHERE nombre = $2),
              (SELECT id FROM estado_publicacion WHERE nombre = $3),
-             $4, $5, $6, $7, $8, $9, $10::jsonb, $11, $12, $13, $14)
+             $4, $5, $6, $7, $8, $9, $10::jsonb, $11, $12, $13, $14, $15)
      RETURNING *`,
     [
       datos.sedeId,
@@ -150,6 +151,7 @@ export async function insertar(datos, db) {
       datos.resumen,
       JSON.stringify(datos.contenido),
       datos.urlExterna,
+      datos.abrirEnlaceDirecto,
       datos.destacada,
       datos.fechaPublicacion,
       datos.fechaExpiracion,
