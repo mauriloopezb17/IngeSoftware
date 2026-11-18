@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
 
-import { erroresDe } from '../componentes/erroresFormulario.js';
+import { erroresDe, resumenDeErrores } from '../componentes/erroresFormulario.js';
 import { aCampoFecha, deCampoFecha } from '../publicaciones/fechas.js';
 import { Aviso, Boton, CampoTexto, useToast } from '../ui/index.js';
 import { actualizarProclama, CLAVE_PROCLAMAS, crearProclama } from './api.js';
@@ -89,7 +89,7 @@ export default function FormularioProclama({ proclama }) {
     guardar.mutate(cuerpo);
   }
 
-  const mensajes = [...Object.values(errores), ...generales];
+  const mensajes = resumenDeErrores(errores, generales);
 
   return (
     <form onSubmit={enviar} noValidate className="mt-6 flex flex-col gap-5 rounded-lg border border-sand bg-white p-5 sm:p-6">

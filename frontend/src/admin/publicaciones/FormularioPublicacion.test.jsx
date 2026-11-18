@@ -199,6 +199,34 @@ describe('formulario de publicación', () => {
       expect(screen.getByRole('group', { name: 'Contenido' })).toHaveAccessibleDescription('Agrega contenido o un enlace externo.');
     });
 
+    it('agrupa los errores repetidos de bloques de contenido en un único mensaje legible', async () => {
+      await entrar('marketing');
+      const detalles = Array.from({ length: 9 }, (_, i) => ({
+        campo: `contenido.bloques.${i}.props.textColor`,
+        mensaje: 'Debe ser uno de: default, gray, brown, red, orange, yellow, green, blue, purple, pink.',
+      }));
+      server.use(
+        http.post(api('/admin/publicaciones'), () =>
+          HttpResponse.json(
+            { error: { codigo: 'VALIDACION', mensaje: 'Los datos enviados no son válidos.', detalles } },
+            { status: 400 },
+          ),
+        ),
+      );
+      montar('/admin/publicaciones/nueva');
+      await esperarEditor();
+
+      await userEvent.type(screen.getByRole('textbox', { name: /Título/ }), 'Noticia pegada');
+      await userEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+
+      const alerta = await screen.findByRole('alert');
+      const items = within(alerta).getAllByRole('listitem');
+      expect(items).toHaveLength(1);
+      expect(items[0]).toHaveTextContent(/en 9 párrafos/);
+      expect(alerta).not.toHaveTextContent('Debe ser uno de:');
+      expect(screen.getByRole('group', { name: 'Contenido' })).toHaveAccessibleDescription(items[0].textContent);
+    });
+
     it('elige la imagen de portada de la biblioteca y permite quitarla', async () => {
       await entrar('marketing');
       montar('/admin/publicaciones/nueva');
