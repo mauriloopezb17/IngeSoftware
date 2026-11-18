@@ -105,6 +105,23 @@ test('noticias muestra listado, detalle por slug y pantalla de slug inexistente'
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.locator('article')).toBeVisible();
 
+  // «Leer nota» en una publicación con urlExterna (sin enlace directo) abre el detalle
+  // y muestra el botón secundario «Ver publicación original».
+  await page.goto('/noticias');
+  const leerNotaConExterno = page.getByRole('link', {
+    name: /Leer publicación: Encuentro de Pastoral Familiar: Cuando la muerte llega a la familia/,
+  });
+  await expect(leerNotaConExterno).toHaveAttribute(
+    'href',
+    '/noticias/encuentro-pastoral-familiar-duelo',
+  );
+  await leerNotaConExterno.click();
+  await expect(page).toHaveURL(/\/noticias\/encuentro-pastoral-familiar-duelo$/);
+  const verOriginal = page.getByRole('link', { name: /Ver publicación original/ });
+  await expect(verOriginal).toBeVisible();
+  await expect(verOriginal).toHaveAttribute('target', '_blank');
+  await expect(verOriginal).toHaveAttribute('rel', 'noopener noreferrer');
+
   expect(erroresPagina).toEqual([]);
   expect(erroresConsola).toEqual([]);
 

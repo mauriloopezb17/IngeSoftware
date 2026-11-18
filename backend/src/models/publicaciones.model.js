@@ -19,6 +19,7 @@ const COLUMNAS = `
   am.ancho_px AS imagen_ancho,
   am.alto_px AS imagen_alto,
   p.url_externa,
+  p.abrir_enlace_directo,
   p.destacada,
   p.fecha_publicacion,
   p.fecha_expiracion`;

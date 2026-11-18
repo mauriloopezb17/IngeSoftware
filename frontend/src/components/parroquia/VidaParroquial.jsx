@@ -1,4 +1,4 @@
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router';
 
 import {
@@ -10,26 +10,42 @@ import {
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { construirAtributosImagen } from './imagenSrcSet.js';
 import { usePublicaciones } from '../../hooks/index.js';
-import { formatearFechaLarga } from '../../utils/formatoPortal.js';
+import { destinoLeerNota, formatearFechaLarga } from '../../utils/formatoPortal.js';
 
-function EnlaceNoticia({ noticia, children, className, ariaLabel }) {
-  if (noticia.urlExterna) {
+function EnlaceNoticia({ noticia, className, ariaLabel }) {
+  const destino = destinoLeerNota(noticia);
+  const contenido = (
+    <>
+      <span>Leer nota</span>
+      {destino.esExterno ? (
+        <ExternalLink size={15} aria-hidden="true" />
+      ) : (
+        <ArrowRight
+          size={15}
+          aria-hidden="true"
+          className="transition-transform duration-200 ease-salida group-hover:translate-x-1"
+        />
+      )}
+    </>
+  );
+
+  if (destino.esExterno) {
     return (
       <a
-        href={noticia.urlExterna}
+        href={destino.url}
         target="_blank"
         rel="noopener noreferrer"
         className={className}
-        aria-label={ariaLabel}
+        aria-label={`${ariaLabel} (se abre en otra pestaña)`}
       >
-        {children}
+        {contenido}
       </a>
     );
   }
 
   return (
-    <Link to={`/noticias/${noticia.slug}`} className={className} aria-label={ariaLabel}>
-      {children}
+    <Link to={destino.url} className={className} aria-label={ariaLabel}>
+      {contenido}
     </Link>
   );
 }
@@ -120,14 +136,7 @@ function VidaParroquial() {
                     noticia={destacada}
                     ariaLabel={`Leer publicación: ${destacada.titulo}`}
                     className="inline-flex min-h-11 items-center gap-2 font-body text-button font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                  >
-                    <span>Leer nota</span>
-                    <ArrowRight
-                      size={15}
-                      aria-hidden="true"
-                      className="transition-transform duration-200 ease-salida group-hover:translate-x-1"
-                    />
-                  </EnlaceNoticia>
+                  />
                 </div>
               </div>
             </Reveal>
@@ -192,14 +201,7 @@ function VidaParroquial() {
                         noticia={noticia}
                         ariaLabel={`Leer publicación: ${noticia.titulo}`}
                         className="inline-flex min-h-11 items-center gap-2 font-body text-button font-semibold text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                      >
-                        <span>Leer nota</span>
-                        <ArrowRight
-                          size={15}
-                          aria-hidden="true"
-                          className="transition-transform duration-200 ease-salida group-hover:translate-x-1"
-                        />
-                      </EnlaceNoticia>
+                      />
                     </div>
                   </Reveal>
                 );

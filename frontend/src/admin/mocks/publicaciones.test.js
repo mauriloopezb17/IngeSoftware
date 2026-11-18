@@ -435,6 +435,29 @@ describe('mocks de publicaciones del panel', () => {
       expect(editada).toMatchObject({ titulo: 'Título corregido', resumen: null, estado: { codigo: 'EN_REVISION' } });
     });
 
+    it('valida abrirEnlaceDirecto igual que la API y lo desmarca al borrar urlExterna', async () => {
+      await entrar('marketing');
+
+      const sinUrl = await capturar(crear({ abrirEnlaceDirecto: true }));
+      expect(sinUrl.estado).toBe(400);
+      expect(sinUrl.detalles).toEqual([
+        { campo: 'abrirEnlaceDirecto', mensaje: 'Para abrir el enlace directamente, agrega el enlace externo.' },
+      ]);
+
+      const creada = await crear({ urlExterna: 'https://ejemplo.test/nota', abrirEnlaceDirecto: true });
+      expect(creada.abrirEnlaceDirecto).toBe(true);
+
+      const borrada = (await clienteHttp.patch(`/admin/publicaciones/${creada.id}`, { urlExterna: null })).datos;
+      expect(borrada.urlExterna).toBeNull();
+      expect(borrada.abrirEnlaceDirecto).toBe(false);
+
+      const invalida = await capturar(
+        clienteHttp.patch(`/admin/publicaciones/${creada.id}`, { abrirEnlaceDirecto: true }),
+      );
+      expect(invalida.estado).toBe(400);
+      expect(invalida.detalles[0].campo).toBe('abrirEnlaceDirecto');
+    });
+
     it('elimina borradores propios y archivadas; en revisión y publicadas son 409 aun para el Administrador', async () => {
       await entrar('marketing');
       const propia = await crear();

@@ -55,6 +55,7 @@ const campos = {
   imagenPortadaId: idDelCuerpo.nullable().optional(),
   contenido: contenidoBlockNote,
   urlExterna: urlHttps(500).nullable().optional(),
+  abrirEnlaceDirecto: z.boolean({ error: 'Debe ser true o false.' }),
   destacada: z.boolean({ error: 'Debe ser true o false.' }),
   fechaPublicacion: fechaHoraConZona.nullable().optional(),
   fechaExpiracion: fechaHoraConZona.nullable().optional(),
@@ -65,6 +66,10 @@ const fechasEnOrden = ({ fechaPublicacion, fechaExpiracion }) =>
   !fechaPublicacion || !fechaExpiracion || new Date(fechaExpiracion) > new Date(fechaPublicacion);
 const MENSAJE_EXPIRACION = 'Debe ser posterior a la fecha de publicación.';
 
+const enlaceDirectoConUrl = ({ abrirEnlaceDirecto, urlExterna }) =>
+  !abrirEnlaceDirecto || Boolean(urlExterna);
+const MENSAJE_ENLACE_DIRECTO = 'Para abrir el enlace directamente, agrega el enlace externo.';
+
 export const cuerpoCrearPublicacion = z
   .strictObject({
     tipo: z.enum([...TIPOS_PUBLICACION.codigos], {
@@ -72,9 +77,14 @@ export const cuerpoCrearPublicacion = z
     }),
     sedeId: idDelCuerpo.optional(),
     ...campos,
+    abrirEnlaceDirecto: campos.abrirEnlaceDirecto.default(false),
     destacada: campos.destacada.default(false),
   })
-  .refine(fechasEnOrden, { path: ['fechaExpiracion'], message: MENSAJE_EXPIRACION });
+  .refine(fechasEnOrden, { path: ['fechaExpiracion'], message: MENSAJE_EXPIRACION })
+  .refine(enlaceDirectoConUrl, {
+    path: ['abrirEnlaceDirecto'],
+    message: MENSAJE_ENLACE_DIRECTO,
+  });
 
 export const cuerpoEditarPublicacion = z
   .strictObject({
@@ -86,6 +96,7 @@ export const cuerpoEditarPublicacion = z
     imagenPortadaId: campos.imagenPortadaId,
     contenido: campos.contenido.optional(),
     urlExterna: campos.urlExterna,
+    abrirEnlaceDirecto: campos.abrirEnlaceDirecto.optional(),
     destacada: campos.destacada.optional(),
     fechaPublicacion: campos.fechaPublicacion,
     fechaExpiracion: campos.fechaExpiracion,

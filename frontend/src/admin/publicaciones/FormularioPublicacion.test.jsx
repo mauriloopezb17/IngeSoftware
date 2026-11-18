@@ -253,6 +253,50 @@ describe('formulario de publicación', () => {
       expect(screen.getByText('Sin imagen de portada.')).toBeInTheDocument();
     });
 
+    it('la casilla «Leer nota» abre directamente el enlace externo se deshabilita sin URL y se guarda al marcarla', async () => {
+      await entrar('marketing');
+      montar('/admin/publicaciones/nueva');
+      await esperarEditor();
+
+      const casilla = screen.getByRole('checkbox', {
+        name: '«Leer nota» abre directamente el enlace externo',
+      });
+      expect(casilla).toBeDisabled();
+      expect(casilla).not.toBeChecked();
+
+      const campoUrl = screen.getByLabelText('Enlace externo (opcional)');
+      await userEvent.type(campoUrl, 'https://www.facebook.com/post/999');
+      expect(casilla).toBeEnabled();
+
+      await userEvent.click(casilla);
+      expect(casilla).toBeChecked();
+
+      // Si se borra el enlace externo, la casilla vuelve a desmarcarse y deshabilitarse.
+      await userEvent.clear(campoUrl);
+      expect(casilla).toBeDisabled();
+      expect(casilla).not.toBeChecked();
+
+      // Al volver a escribir una URL y marcarla, se guarda y se refleja en la vista previa.
+      await userEvent.type(campoUrl, 'https://www.facebook.com/post/999');
+      await userEvent.click(casilla);
+      await userEvent.type(screen.getByRole('textbox', { name: /Título/ }), 'Post directo en Facebook');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Vista previa' }));
+      const previa = await screen.findByRole('dialog', { name: 'Vista previa' });
+      expect(within(previa).getByText(/«Leer nota» abrirá este enlace directamente/)).toBeInTheDocument();
+      await userEvent.click(within(previa).getByRole('button', { name: 'Cerrar vista previa' }));
+
+      await userEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+      await screen.findByRole('heading', { level: 1, name: 'Editar publicación' }, esperar);
+
+      const guardada = await leer(12);
+      expect(guardada.urlExterna).toBe('https://www.facebook.com/post/999');
+      expect(guardada.abrirEnlaceDirecto).toBe(true);
+      expect(
+        screen.getByRole('checkbox', { name: '«Leer nota» abre directamente el enlace externo' }),
+      ).toBeChecked();
+    });
+
     it('Secretaría no puede crear noticias: ve «sin permiso»', async () => {
       await entrar('secretaria');
       montar('/admin/publicaciones/nueva');

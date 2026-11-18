@@ -70,11 +70,13 @@ describe('NoticiaDetalle', () => {
     expect(enlacesInicio.some((enlace) => enlace.getAttribute('href') === '/')).toBe(true);
   });
 
-  it('muestra el enlace externo cuando la publicación tiene urlExterna', async () => {
+  it('muestra el botón secundario «Ver publicación original» visible en la cabecera cuando tiene urlExterna', async () => {
     renderDetalle('/noticias/encuentro-pastoral-familiar-duelo');
 
-    const enlaceExterno = await screen.findByRole('link', {
-      name: /Ver publicación original/,
+    const articulo = await screen.findByRole('article');
+    const cabecera = articulo.querySelector('header');
+    const enlaceExterno = within(cabecera).getByRole('link', {
+      name: 'Ver publicación original (se abre en otra pestaña)',
     });
     expect(enlaceExterno).toHaveAttribute(
       'href',

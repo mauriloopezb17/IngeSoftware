@@ -139,3 +139,15 @@ export function formatearTamanoArchivo(bytes) {
   const mb = bytes / (1024 * 1024);
   return `${mb.toFixed(1).replace('.', ',')} MB`;
 }
+
+/**
+ * Resuelve el destino del enlace «Leer nota» de una publicación:
+ * por defecto abre el detalle en el portal (`/noticias/:slug`); solo abre
+ * `urlExterna` en otra pestaña cuando `abrirEnlaceDirecto` es `true`.
+ */
+export function destinoLeerNota(noticia) {
+  if (noticia?.abrirEnlaceDirecto && noticia?.urlExterna) {
+    return { esExterno: true, url: noticia.urlExterna };
+  }
+  return { esExterno: false, url: `/noticias/${noticia?.slug ?? ''}` };
+}

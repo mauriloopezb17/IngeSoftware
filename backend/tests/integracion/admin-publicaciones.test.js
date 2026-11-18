@@ -137,6 +137,7 @@ describe('POST /api/admin/publicaciones', () => {
       categoria: { id: 2, nombre: expect.any(String), slug: expect.any(String) },
       imagenPortada: { id: altar.id, url: '/media/seed/altar.webp', variantes: [] },
       urlExterna: null,
+      abrirEnlaceDirecto: false,
       destacada: true,
       fechaPublicacion: '2026-11-15T08:00:00-04:00',
       fechaExpiracion: '2026-11-23T00:00:00-04:00',
@@ -251,6 +252,24 @@ describe('POST /api/admin/publicaciones', () => {
     expect(fechas.body.error.detalles).toEqual([
       { campo: 'fechaExpiracion', mensaje: 'Debe ser posterior a la fecha de publicación.' },
     ]);
+  });
+
+  it('abrirEnlaceDirecto solo se acepta cuando hay urlExterna y por defecto es false', async () => {
+    const sinUrl = await como('marketing').post(RUTA, noticia({ abrirEnlaceDirecto: true }));
+    expect(sinUrl.status).toBe(400);
+    expect(sinUrl.body.error.detalles).toEqual([
+      {
+        campo: 'abrirEnlaceDirecto',
+        mensaje: 'Para abrir el enlace directamente, agrega el enlace externo.',
+      },
+    ]);
+
+    const conUrl = await crear(
+      'marketing',
+      noticia({ urlExterna: 'https://ejemplo.test/nota', abrirEnlaceDirecto: true }),
+    );
+    expect(conUrl.urlExterna).toBe('https://ejemplo.test/nota');
+    expect(conUrl.abrirEnlaceDirecto).toBe(true);
   });
 
   it('referencias inexistentes, de otra sede o de otra clase son 400 en su campo', async () => {
@@ -487,6 +506,48 @@ describe('PATCH /api/admin/publicaciones/:id', () => {
     });
     expect(respuesta.status).toBe(400);
     expect(respuesta.body.error.detalles[0].campo).toBe('fechaExpiracion');
+  });
+
+  it('abrirEnlaceDirecto en edición valida el valor final y se desmarca si se borra urlExterna', async () => {
+    const creada = await crear('marketing', noticia());
+
+    // Sin urlExterna guardada ni enviada -> 400.
+    const sinUrl = await como('marketing').patch(`${RUTA}/${creada.id}`, {
+      abrirEnlaceDirecto: true,
+    });
+    expect(sinUrl.status).toBe(400);
+    expect(sinUrl.body.error.detalles).toEqual([
+      {
+        campo: 'abrirEnlaceDirecto',
+        mensaje: 'Para abrir el enlace directamente, agrega el enlace externo.',
+      },
+    ]);
+
+    // Con urlExterna guardada, se puede activar abrirEnlaceDirecto por separado.
+    await como('marketing').patch(`${RUTA}/${creada.id}`, {
+      urlExterna: 'https://ejemplo.test/post',
+    });
+    const activada = await como('marketing').patch(`${RUTA}/${creada.id}`, {
+      abrirEnlaceDirecto: true,
+    });
+    expect(activada.status).toBe(200);
+    expect(activada.body.datos.abrirEnlaceDirecto).toBe(true);
+
+    // Si se borra urlExterna y a la vez se pide abrirEnlaceDirecto: true -> 400.
+    const incompatible = await como('marketing').patch(`${RUTA}/${creada.id}`, {
+      urlExterna: null,
+      abrirEnlaceDirecto: true,
+    });
+    expect(incompatible.status).toBe(400);
+    expect(incompatible.body.error.detalles[0].campo).toBe('abrirEnlaceDirecto');
+
+    // Si se borra urlExterna sin pedir abrirEnlaceDirecto: true -> vuelve a false.
+    const borrada = await como('marketing').patch(`${RUTA}/${creada.id}`, {
+      urlExterna: null,
+    });
+    expect(borrada.status).toBe(200);
+    expect(borrada.body.datos.urlExterna).toBeNull();
+    expect(borrada.body.datos.abrirEnlaceDirecto).toBe(false);
   });
 
   it('quién edita según el estado (estados-publicacion.md §5)', async () => {

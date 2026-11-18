@@ -39,6 +39,7 @@ function camposDe(publicacion, tipoInicial = 'NOTICIA') {
     fechaPublicacion: aCampoFecha(publicacion?.fechaPublicacion),
     fechaExpiracion: aCampoFecha(publicacion?.fechaExpiracion),
     urlExterna: publicacion?.urlExterna ?? '',
+    abrirEnlaceDirecto: Boolean(publicacion?.urlExterna && publicacion?.abrirEnlaceDirecto),
   };
 }
 
@@ -52,6 +53,7 @@ const CAMPO_DE_ERROR = {
   categoriaId: 'categoriaId',
   imagenPortadaId: 'portada',
   urlExterna: 'urlExterna',
+  abrirEnlaceDirecto: 'abrirEnlaceDirecto',
   fechaPublicacion: 'fechaPublicacion',
   fechaExpiracion: 'fechaExpiracion',
   contenido: 'contenido',
@@ -174,6 +176,7 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
     imagenPortadaId: campos.portada?.id ?? null,
     contenido: aContenido(bloques ?? JSON.parse(bloquesBase ?? '[]')),
     urlExterna: campos.urlExterna.trim() || null,
+    abrirEnlaceDirecto: Boolean(campos.urlExterna.trim()) && campos.abrirEnlaceDirecto,
     destacada: campos.destacada,
     fechaPublicacion: deCampoFecha(campos.fechaPublicacion),
     fechaExpiracion: deCampoFecha(campos.fechaExpiracion),
@@ -402,11 +405,26 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
           etiqueta="Enlace externo (opcional)"
           type="url"
           value={campos.urlExterna}
-          onChange={(e) => cambiar({ urlExterna: e.target.value })}
+          onChange={(e) => {
+            const urlExterna = e.target.value;
+            cambiar({
+              urlExterna,
+              ...(urlExterna.trim() ? {} : { abrirEnlaceDirecto: false }),
+            });
+          }}
           error={errores.urlExterna}
           ayuda="Para una nota publicada en otro medio. Debe empezar con https://"
           maxLength={500}
           autoComplete="off"
+        />
+
+        <CampoCasilla
+          etiqueta="«Leer nota» abre directamente el enlace externo"
+          ayuda="Si no la marcas, «Leer nota» abre la noticia en el portal y el enlace aparece como botón dentro de ella."
+          checked={Boolean(campos.urlExterna.trim()) && campos.abrirEnlaceDirecto}
+          disabled={!campos.urlExterna.trim()}
+          error={errores.abrirEnlaceDirecto}
+          onChange={(e) => cambiar({ abrirEnlaceDirecto: e.target.checked })}
         />
 
         <div className="grid gap-5 sm:grid-cols-2">

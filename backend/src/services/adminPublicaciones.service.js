@@ -61,6 +61,7 @@ function aPublicacion(fila, usuario, { conContenido = false } = {}) {
       alto: fila.imagen_alto,
     }),
     urlExterna: fila.url_externa,
+    abrirEnlaceDirecto: fila.abrir_enlace_directo,
     destacada: fila.destacada,
     fechaPublicacion: formatearFechaHora(fila.fecha_publicacion),
     fechaExpiracion: formatearFechaHora(fila.fecha_expiracion),
@@ -209,6 +210,7 @@ export async function crearPublicacion(usuario, cuerpo, contexto) {
           resumen: cuerpo.resumen ?? null,
           contenido: cuerpo.contenido,
           urlExterna: cuerpo.urlExterna ?? null,
+          abrirEnlaceDirecto: cuerpo.abrirEnlaceDirecto,
           destacada: cuerpo.destacada,
           fechaPublicacion: cuerpo.fechaPublicacion ?? null,
           fechaExpiracion: cuerpo.fechaExpiracion ?? null,
@@ -237,6 +239,7 @@ const COLUMNAS = {
   imagenPortadaId: 'imagen_portada_id',
   contenido: 'contenido',
   urlExterna: 'url_externa',
+  abrirEnlaceDirecto: 'abrir_enlace_directo',
   destacada: 'destacada',
   fechaPublicacion: 'fecha_publicacion',
   fechaExpiracion: 'fecha_expiracion',
@@ -256,6 +259,33 @@ function exigirFechasEnOrden(fila, cambios) {
   ) {
     throw ErrorApp.validacion(undefined, [
       { campo: 'fechaExpiracion', mensaje: 'Debe ser posterior a la fecha de publicación.' },
+    ]);
+  }
+}
+
+// Con los valores finales, abrirEnlaceDirecto en true exige una urlExterna.
+// Si se borra urlExterna sin pedir abrirEnlaceDirecto: true, la opción vuelve a false.
+function resolverEnlaceDirecto(fila, cambios, columnas) {
+  if (
+    cambios.urlExterna === null &&
+    cambios.abrirEnlaceDirecto === undefined &&
+    fila.abrir_enlace_directo
+  ) {
+    columnas.abrir_enlace_directo = false;
+  }
+
+  const urlFinal = cambios.urlExterna !== undefined ? cambios.urlExterna : fila.url_externa;
+  const abrirFinal =
+    columnas.abrir_enlace_directo !== undefined
+      ? columnas.abrir_enlace_directo
+      : fila.abrir_enlace_directo;
+
+  if (abrirFinal && !urlFinal) {
+    throw ErrorApp.validacion(undefined, [
+      {
+        campo: 'abrirEnlaceDirecto',
+        mensaje: 'Para abrir el enlace directamente, agrega el enlace externo.',
+      },
     ]);
   }
 }
@@ -293,6 +323,7 @@ export async function editarPublicacion(usuario, id, cambios, contexto) {
 
     await verificarReferencias(db, fila.sede_id, cambios);
     exigirFechasEnOrden(fila, cambios);
+    resolverEnlaceDirecto(fila, cambios, columnas);
 
     const nuevo = await conSlugUnico(columnas.slug, () =>
       actualizarFila(db, ENTIDAD, id, columnas, { jsonb: ['contenido'] }),

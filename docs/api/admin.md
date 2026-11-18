@@ -368,6 +368,7 @@ Todos los campos del [detalle público](publico.md#get-apisedessedepublicaciones
     "variantes": []
   },
   "urlExterna": null,
+  "abrirEnlaceDirecto": false,
   "destacada": true,
   "fechaPublicacion": "2026-11-15T08:00:00-04:00",
   "fechaExpiracion": "2026-11-23T00:00:00-04:00",
@@ -457,6 +458,7 @@ Crea una publicación, **siempre en `BORRADOR`**. Permiso: `avisos.gestionar` pa
     "bloques": []
   },
   "urlExterna": null,
+  "abrirEnlaceDirecto": false,
   "destacada": true,
   "fechaPublicacion": "2026-11-15T08:00:00-04:00",
   "fechaExpiracion": "2026-11-23T00:00:00-04:00"
@@ -472,6 +474,7 @@ Crea una publicación, **siempre en `BORRADOR`**. Permiso: `avisos.gestionar` pa
 | `categoriaId`, `imagenPortadaId` | Opcionales. `imagenPortadaId` debe ser una imagen de la misma sede.                                                                                               |
 | `contenido`                      | Obligatorio. Documento BlockNote válido ([contenido.md](contenido.md)). Puede tener `bloques: []` si hay `urlExterna`.                                            |
 | `urlExterna`                     | URL `https://` de hasta 500 caracteres.                                                                                                                           |
+| `abrirEnlaceDirecto`             | Booleano, por defecto `false`. Si es `true`, exige que la publicación tenga `urlExterna` y hace que «Leer nota» en el portal abra directamente ese enlace.        |
 | `destacada`                      | Booleano, por defecto `false`.                                                                                                                                    |
 | `fechaPublicacion`               | Opcional. Fecha **deseada**: se aplica al publicar o aprobar (ver [estados-publicacion.md](estados-publicacion.md)).                                              |
 | `fechaExpiracion`                | Opcional. Si viene junto con `fechaPublicacion`, debe ser posterior.                                                                                              |
@@ -501,6 +504,7 @@ Edita campos (los mismos de la creación, salvo `tipo`). Solo se permite en los 
 - `"slug": null` lo vuelve a generar desde el título (el nuevo, si también cambia). Cambiar el título no cambia el slug.
 - En `PUBLICADO` el slug no se puede cambiar: `409 CONFLICTO` con un detalle en `slug`.
 - `fechaExpiracion` se compara con la `fechaPublicacion` que quedaría guardada (la enviada o la actual).
+- `abrirEnlaceDirecto` en `true` requiere que la publicación tenga `urlExterna` (enviada o ya guardada); si se borra `urlExterna` (`null`) sin enviar `abrirEnlaceDirecto: true`, queda en `false`.
 
 ### `DELETE /api/admin/publicaciones/:id`
 

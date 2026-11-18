@@ -29,10 +29,47 @@ describe('VidaParroquial desde la API', () => {
     });
     expect(enlaceInterno).toHaveAttribute('href', '/noticias/primeras-comuniones-42-ninos');
 
-    const enlaceExterno = screen.getByRole('link', {
+    // Con urlExterna pero abrirEnlaceDirecto en false, «Leer nota» abre el detalle en el portal.
+    const enlaceConUrlSinDirecto = screen.getByRole('link', {
       name: 'Leer publicación: Encuentro de Pastoral Familiar: Cuando la muerte llega a la familia',
     });
-    expect(enlaceExterno).toHaveAttribute('target', '_blank');
+    expect(enlaceConUrlSinDirecto).toHaveAttribute('href', '/noticias/encuentro-pastoral-familiar-duelo');
+    expect(enlaceConUrlSinDirecto).not.toHaveAttribute('target', '_blank');
+  });
+
+  it('abre el enlace externo en otra pestaña solo cuando abrirEnlaceDirecto es true', async () => {
+    server.use(
+      http.get(api('/sedes/:sede/publicaciones'), () =>
+        HttpResponse.json({
+          datos: [
+            {
+              id: 301,
+              tipo: { codigo: 'NOTICIA', nombre: 'Noticia' },
+              titulo: 'Nota solo en Facebook',
+              slug: 'nota-solo-facebook',
+              resumen: 'Publicación directa al enlace externo.',
+              categoria: null,
+              imagenPortada: null,
+              urlExterna: 'https://www.facebook.com/post/123',
+              abrirEnlaceDirecto: true,
+              destacada: false,
+              fechaPublicacion: '2026-11-12T12:00:00-04:00',
+              fechaExpiracion: null,
+            },
+          ],
+          paginacion: { pagina: 1, porPagina: 3, total: 1, totalPaginas: 1 },
+        }),
+      ),
+    );
+
+    renderConRouterYQuery(<VidaParroquial />);
+
+    const enlace = await screen.findByRole('link', {
+      name: 'Leer publicación: Nota solo en Facebook (se abre en otra pestaña)',
+    });
+    expect(enlace).toHaveAttribute('href', 'https://www.facebook.com/post/123');
+    expect(enlace).toHaveAttribute('target', '_blank');
+    expect(enlace).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('usa el título como alt cuando textoAlternativo es null', async () => {

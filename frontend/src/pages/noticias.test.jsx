@@ -25,6 +25,7 @@ function crearPublicacionPrueba(id, overrides = {}) {
       alto: 1059,
     },
     urlExterna: null,
+    abrirEnlaceDirecto: false,
     destacada: false,
     fechaPublicacion: '2026-10-18T12:00:00-04:00',
     fechaExpiracion: null,
@@ -159,5 +160,53 @@ describe('Noticias (listado con filtros y paginación)', () => {
     await usuario.click(screen.getByRole('button', { name: 'Reintentar' }));
 
     expect(await screen.findByText('Noticia de prueba 10')).toBeInTheDocument();
+  });
+
+  it('por defecto «Leer nota» y la imagen van al detalle incluso con urlExterna; con abrirEnlaceDirecto abren el enlace', async () => {
+    server.use(
+      http.get(api('/sedes/:sede/publicaciones'), () =>
+        HttpResponse.json({
+          datos: [
+            crearPublicacionPrueba(1, {
+              titulo: 'Nota con enlace en detalle',
+              slug: 'nota-con-enlace-en-detalle',
+              urlExterna: 'https://ejemplo.test/detalle',
+              abrirEnlaceDirecto: false,
+            }),
+            crearPublicacionPrueba(2, {
+              titulo: 'Nota directa al externo',
+              slug: 'nota-directa-al-externo',
+              urlExterna: 'https://ejemplo.test/directo',
+              abrirEnlaceDirecto: true,
+            }),
+          ],
+          paginacion: { pagina: 1, porPagina: 6, total: 2, totalPaginas: 1 },
+        }),
+      ),
+    );
+
+    renderNoticias('/noticias');
+
+    const notaDetalle = await screen.findByRole('link', {
+      name: 'Leer publicación: Nota con enlace en detalle',
+    });
+    expect(notaDetalle).toHaveAttribute('href', '/noticias/nota-con-enlace-en-detalle');
+    expect(notaDetalle).not.toHaveAttribute('target', '_blank');
+    expect(screen.getByRole('link', { name: 'Leer Nota con enlace en detalle' })).toHaveAttribute(
+      'href',
+      '/noticias/nota-con-enlace-en-detalle',
+    );
+
+    const notaDirecta = screen.getByRole('link', {
+      name: 'Leer publicación: Nota directa al externo (se abre en otra pestaña)',
+    });
+    expect(notaDirecta).toHaveAttribute('href', 'https://ejemplo.test/directo');
+    expect(notaDirecta).toHaveAttribute('target', '_blank');
+    expect(notaDirecta).toHaveAttribute('rel', 'noopener noreferrer');
+    const imgDirecta = screen.getByRole('link', {
+      name: 'Abrir Nota directa al externo en enlace externo (se abre en otra pestaña)',
+    });
+    expect(imgDirecta).toHaveAttribute('href', 'https://ejemplo.test/directo');
+    expect(imgDirecta).toHaveAttribute('target', '_blank');
   });
 });
