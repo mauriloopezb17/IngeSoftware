@@ -304,14 +304,7 @@ Horarios activos, agrupados por tipo (RF-01). La API ya agrupa los días con el 
           "etiqueta": "Lunes a viernes",
           "horarios": [
             { "horaInicio": "09:00", "horaFin": "12:00", "descripcion": null },
-            { "horaInicio": "15:00", "horaFin": "19:30", "descripcion": null }
-          ]
-        },
-        {
-          "dias": [6],
-          "etiqueta": "Sábado",
-          "horarios": [
-            { "horaInicio": "09:00", "horaFin": "12:00", "descripcion": null }
+            { "horaInicio": "15:00", "horaFin": "19:00", "descripcion": null }
           ]
         }
       ]

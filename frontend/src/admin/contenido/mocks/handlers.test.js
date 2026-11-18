@@ -61,10 +61,10 @@ describe('mocks de contenido de la parroquia', () => {
   });
 
   describe('horarios', () => {
-    it('lista los 34 horarios del seed y permite crear, editar y eliminar', async () => {
+    it('lista los 33 horarios del seed y permite crear, editar y eliminar', async () => {
       await entrar('secretaria');
       const inicial = await clienteHttp.get('/admin/horarios');
-      expect(inicial.datos).toHaveLength(34);
+      expect(inicial.datos).toHaveLength(33);
 
       const creado = await clienteHttp.post('/admin/horarios', {
         tipoHorarioId: 1,
@@ -74,7 +74,7 @@ describe('mocks de contenido de la parroquia', () => {
         descripcion: 'Misa del mediodía',
         activo: true,
       });
-      expect(creado.datos.id).toBe(35);
+      expect(creado.datos.id).toBe(34);
       expect(creado.datos.tipo.nombre).toBe('Santa Misa');
 
       const editado = await clienteHttp.patch(`/admin/horarios/${creado.datos.id}`, {
@@ -84,13 +84,13 @@ describe('mocks de contenido de la parroquia', () => {
 
       await clienteHttp.delete(`/admin/horarios/${creado.datos.id}`);
       const final = await clienteHttp.get('/admin/horarios');
-      expect(final.datos).toHaveLength(34);
+      expect(final.datos).toHaveLength(33);
     });
 
     it('Marketing puede consultar horarios pero recibe 403 al modificar', async () => {
       await entrar('marketing');
       const { datos } = await clienteHttp.get('/admin/horarios');
-      expect(datos).toHaveLength(34);
+      expect(datos).toHaveLength(33);
 
       const e = await capturarError(
         clienteHttp.post('/admin/horarios', {

@@ -225,18 +225,12 @@ VALUES ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
         (SELECT id FROM tipo_horario WHERE nombre = 'Adoración'),
         4, '19:30', '20:30', NULL);
 
--- Secretaría parroquial, lunes a viernes: 9:00-12:00 y 15:00-19:30.
+-- Secretaría parroquial, lunes a viernes: 9:00-12:00 y 15:00-19:00. Los sábados no atiende.
 INSERT INTO horario (sede_id, tipo_horario_id, dia_semana, hora_inicio, hora_fin, descripcion)
 SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
        (SELECT id FROM tipo_horario WHERE nombre = 'Secretaría'),
        d.dia, h.inicio::time, h.fin::time, NULL
-FROM generate_series(1, 5) AS d(dia), (VALUES ('09:00', '12:00'), ('15:00', '19:30')) AS h(inicio, fin);
-
--- Secretaría parroquial, sábado: 9:00-12:00.
-INSERT INTO horario (sede_id, tipo_horario_id, dia_semana, hora_inicio, hora_fin, descripcion)
-VALUES ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
-        (SELECT id FROM tipo_horario WHERE nombre = 'Secretaría'),
-        6, '09:00', '12:00', NULL);
+FROM generate_series(1, 5) AS d(dia), (VALUES ('09:00', '12:00'), ('15:00', '19:00')) AS h(inicio, fin);
 
 -- Textos de la sección de horarios que no tienen columna propia: se guardan en sede.configuracion.
 --   horarios_introduccion ........ párrafo de introducción de la sección
