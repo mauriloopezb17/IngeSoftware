@@ -43,6 +43,7 @@ export const rutas = [
           { path: '/proclamas', Component: Proclamas },
           { path: '/calendario', Component: Calendario },
           { path: '/boletines', Component: Boletines },
+          { path: '/boletines/:periodo', Component: Boletines },
           { path: '/paginas/:slug', Component: PaginaPublica },
           { path: '*', Component: NoEncontrado },
         ],

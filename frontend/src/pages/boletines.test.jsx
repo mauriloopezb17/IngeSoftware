@@ -13,6 +13,7 @@ function renderBoletines(rutaInicial = '/boletines') {
   return renderConRouterYQuery(
     <Routes>
       <Route path="/boletines" element={<Boletines />} />
+      <Route path="/boletines/:periodo" element={<Boletines />} />
     </Routes>,
     [rutaInicial],
   );
@@ -29,14 +30,16 @@ describe('Boletines (archivo mensual en PDF)', () => {
       'Parroquia Señor de la Exaltación',
     );
     expect(screen.getByText(/PDF \(2,4 MB\)/)).toBeInTheDocument();
-    const enlaceReciente = screen.getByRole('link', { name: 'Descargar PDF: Edición de octubre 2026' });
-    expect(enlaceReciente).toHaveAttribute(
-      'href',
-      'https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/10/8f3c2a1d-5b7e-4c90-a1f4-6d2e9b0c7a35.pdf',
-    );
-    expect(enlaceReciente.className).toContain('bg-gold');
+    const botonLeer = screen.getByRole('link', { name: /Leer boletín/i });
+    expect(botonLeer).toHaveAttribute('href', '/boletines/2026-10');
+    expect(botonLeer.className).toContain('bg-gold');
+
+    const botonDescargarReciente = screen.getByRole('button', {
+      name: 'Descargar: Edición de octubre 2026',
+    });
+    expect(botonDescargarReciente.className).not.toContain('bg-gold');
     expect(
-      screen.getByRole('link', { name: 'Descargar PDF: Edición de septiembre 2026' }).className,
+      screen.getByRole('button', { name: 'Descargar: Edición de septiembre 2026' }).className,
     ).not.toContain('bg-gold');
     expect(screen.getByText('Página 1 de 2')).toBeInTheDocument();
 
