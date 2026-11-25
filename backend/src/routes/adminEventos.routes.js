@@ -8,17 +8,25 @@ import { validar } from '../middlewares/validar.js';
 import {
   consultaEventos,
   cuerpoCrearEvento,
+  cuerpoDetalleEvento,
   cuerpoEditarEvento,
   paramsEvento as params,
 } from '../validacion/eventos.js';
 
 const router = Router();
 const gestionar = requerirPermiso(PERMISOS.EVENTOS_GESTIONAR);
+const editarDetalle = requerirPermiso(PERMISOS.EVENTOS_DETALLE);
 
 router.get('/', validar({ query: consultaEventos }), filtrarPorSede, controlador.listar);
 router.get('/:id', validar({ params }), controlador.detalle);
 router.post('/', gestionar, validar({ body: cuerpoCrearEvento }), controlador.crear);
 router.patch('/:id', gestionar, validar({ params, body: cuerpoEditarEvento }), controlador.editar);
+router.patch(
+  '/:id/detalle',
+  editarDetalle,
+  validar({ params, body: cuerpoDetalleEvento }),
+  controlador.editarDetalle,
+);
 router.delete('/:id', gestionar, validar({ params }), controlador.eliminar);
 
 export default router;

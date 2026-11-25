@@ -39,6 +39,10 @@ export async function obtenerEventos(sede, parametros, senal) {
   return clienteHttp.get(`/sedes/${sede}/eventos`, { parametros, senal });
 }
 
+export async function obtenerEvento(sede, id, senal) {
+  return clienteHttp.get(`/sedes/${sede}/eventos/${id}`, { senal });
+}
+
 export async function obtenerPublicaciones(sede, parametros, senal) {
   return clienteHttp.get(`/sedes/${sede}/publicaciones`, { parametros, senal });
 }

@@ -3,7 +3,7 @@ export { useSede, useComunidades } from './useSede.js';
 export { useMenuPaginas, usePagina } from './usePaginas.js';
 export { useHorarios } from './useHorarios.js';
 export { useServicios, useServicio } from './useServicios.js';
-export { useEventos } from './useEventos.js';
+export { useEvento, useEventos } from './useEventos.js';
 export { usePublicaciones, usePublicacion } from './usePublicaciones.js';
 export { useBoletines } from './useBoletines.js';
 export { useProclamas, useHistorialProclamas, useProclama } from './useProclamas.js';

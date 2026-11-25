@@ -16,6 +16,7 @@ const MATRIZ = [
   ['noticias.redactar', [ADMINISTRADOR, PARROCO, MARKETING]],
   ['noticias.publicar', [ADMINISTRADOR, PARROCO]],
   ['eventos.gestionar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
+  ['eventos.detalle', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING]],
   ['horarios.gestionar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
   ['servicios.gestionar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
   ['grupos.gestionar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
