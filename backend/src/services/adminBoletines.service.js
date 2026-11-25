@@ -5,7 +5,7 @@ import { ErrorApp } from '../errores/ErrorApp.js';
 import * as modelo from '../models/adminBoletines.model.js';
 import { actualizarFila, eliminarFila, filaParaModificar } from '../models/comunes.model.js';
 import { exigirSedeDelRecurso } from '../utils/alcanceSede.js';
-import { archivo, formatearFecha, formatearFechaHora } from '../utils/formato.js';
+import { archivo, formatearFecha, formatearFechaHora, imagen } from '../utils/formato.js';
 import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 import { registrarCambio } from './bitacora.service.js';
 import { sedeDelRecursoNuevo, verificarArchivos } from './referencias.service.js';
@@ -25,6 +25,15 @@ function aBoletin(fila) {
       tipoMime: fila.archivo_tipo_mime,
       tamanoBytes: fila.archivo_tamano_bytes,
     }),
+    portada: fila.portada_id
+      ? imagen({
+          id: fila.portada_id,
+          url: fila.portada_url,
+          textoAlternativo: fila.portada_texto_alternativo,
+          ancho: fila.portada_ancho,
+          alto: fila.portada_alto,
+        })
+      : null,
     sede: { id: fila.sede_id, nombre: fila.sede_nombre, slug: fila.sede_slug },
     publicadoPor: { id: fila.publicado_por, nombreCompleto: fila.publicado_por_nombre },
   };
@@ -58,6 +67,17 @@ async function verificarPdf(db, sedeId, archivoId) {
   if (detalles.length > 0) throw ErrorApp.validacion(undefined, detalles);
 }
 
+// La portada (si se indica) debe ser una imagen de la biblioteca de la sede.
+async function verificarPortada(db, sedeId, portadaId) {
+  if (portadaId === null || portadaId === undefined) return;
+  const { detalles } = await verificarArchivos(
+    sedeId,
+    [{ campo: 'portadaId', clase: 'IMAGEN', id: portadaId }],
+    db,
+  );
+  if (detalles.length > 0) throw ErrorApp.validacion(undefined, detalles);
+}
+
 // Un segundo boletín del mismo mes en la sede (boletin_ak_1) es 409.
 async function conPeriodoUnico(operacion) {
   try {
@@ -76,12 +96,14 @@ export async function crearBoletin(usuario, cuerpo, contexto) {
   const id = await transaccion(async (db) => {
     const sedeId = await sedeDelRecursoNuevo(usuario, cuerpo.sedeId, db);
     await verificarPdf(db, sedeId, cuerpo.archivoId);
+    await verificarPortada(db, sedeId, cuerpo.portadaId);
 
     const fila = await conPeriodoUnico(() =>
       modelo.insertar(
         {
           sedeId,
           archivoId: cuerpo.archivoId,
+          portadaId: cuerpo.portadaId ?? null,
           publicadoPor: usuario.id,
           titulo: cuerpo.titulo,
           periodo: primerDia(cuerpo.periodo),
@@ -107,11 +129,14 @@ export async function editarBoletin(usuario, id, cambios, contexto) {
     exigirSedeDelRecurso(usuario, fila.sede_id);
 
     if (cambios.archivoId !== undefined) await verificarPdf(db, fila.sede_id, cambios.archivoId);
+    if (cambios.portadaId !== undefined)
+      await verificarPortada(db, fila.sede_id, cambios.portadaId);
 
     const columnas = {};
     if (cambios.titulo !== undefined) columnas.titulo = cambios.titulo;
     if (cambios.periodo !== undefined) columnas.periodo = primerDia(cambios.periodo);
     if (cambios.archivoId !== undefined) columnas.archivo_id = cambios.archivoId;
+    if (cambios.portadaId !== undefined) columnas.portada_id = cambios.portadaId;
 
     const nuevo = await conPeriodoUnico(() => actualizarFila(db, ENTIDAD, id, columnas));
     await registrarCambio(db, contexto, {

@@ -274,6 +274,16 @@ export const boletinesExaltacion = [
       tipoMime: 'application/pdf',
       tamanoBytes: 2516582,
     },
+    portada: {
+      id: 21,
+      url: '/media/seed/exterior-parroquia.webp',
+      textoAlternativo: 'Portada del Edición de octubre 2026',
+      ancho: 800,
+      alto: 1131,
+      variantes: [
+        { ancho: 480, url: '/media/seed/exterior-parroquia.webp' },
+      ],
+    },
   },
   {
     id: 2,

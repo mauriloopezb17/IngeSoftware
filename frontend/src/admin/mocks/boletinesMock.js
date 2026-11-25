@@ -27,8 +27,8 @@ import { SEDE_PRINCIPAL } from './usuarios.js';
 const SECRETARIA = { id: 3, nombreCompleto: 'Secretaría (desarrollo)' };
 const REGEX_PERIODO = /^(19|20|21)\d{2}-(0[1-9]|1[0-2])$/;
 const MAX_TITULO = 150;
-const CAMPOS_CREAR = ['sedeId', 'titulo', 'periodo', 'archivoId'];
-const CAMPOS_EDITAR = ['titulo', 'periodo', 'archivoId'];
+const CAMPOS_CREAR = ['sedeId', 'titulo', 'periodo', 'archivoId', 'portadaId'];
+const CAMPOS_EDITAR = ['titulo', 'periodo', 'archivoId', 'portadaId'];
 const SIN_PERMISO = 'Tu rol no tiene permiso para gestionar los boletines.';
 const NO_EXISTE = 'El boletín no existe.';
 
@@ -41,6 +41,7 @@ function crearBoletinesIniciales() {
       periodo: '2026-10-01',
       fechaPublicacion: '2026-10-30T16:25:00-04:00',
       archivoId: 7, // boletin-octubre-2026.pdf (multimediaDatos.js)
+      portadaId: null,
       publicadoPor: SECRETARIA,
     },
   ];
@@ -56,8 +57,9 @@ export function reiniciarBoletines() {
 
 // Objeto boletín del panel: el del endpoint público, más `sede` y `publicadoPor`.
 export function serializarBoletin(b) {
-  const { archivoId, ...resto } = b;
+  const { archivoId, portadaId, ...resto } = b;
   const archivo = buscarArchivo(archivoId);
+  const portada = portadaId ? buscarArchivo(portadaId) : null;
   return {
     ...resto,
     archivo: archivo && {
@@ -67,6 +69,16 @@ export function serializarBoletin(b) {
       tipoMime: archivo.tipoMime,
       tamanoBytes: archivo.tamanoBytes,
     },
+    portada: portada
+      ? {
+          id: portada.id,
+          url: portada.url,
+          textoAlternativo: portada.textoAlternativo ?? null,
+          ancho: portada.ancho ?? null,
+          alto: portada.alto ?? null,
+          variantes: portada.variantes ?? [],
+        }
+      : null,
   };
 }
 
@@ -76,6 +88,18 @@ function validarArchivo(archivoId, sede) {
   if (!archivo || archivo.sede.id !== sede.id)
     return [{ campo: 'archivoId', mensaje: 'Debe ser un documento PDF de la biblioteca multimedia de esta sede.' }];
   if (archivo.tipoMime !== 'application/pdf') return [{ campo: 'archivoId', mensaje: 'El archivo no es un documento PDF.' }];
+  return [];
+}
+
+function validarPortada(portadaId, sede) {
+  if (portadaId === null || portadaId === undefined) return [];
+  const portada = Number.isInteger(portadaId) ? buscarArchivo(portadaId) : null;
+  if (!portada || portada.sede.id !== sede.id) {
+    return [{ campo: 'portadaId', mensaje: 'Debe ser una imagen de la biblioteca multimedia de esta sede.' }];
+  }
+  if (!portada.tipoMime?.startsWith('image/')) {
+    return [{ campo: 'portadaId', mensaje: 'La portada debe ser una imagen.' }];
+  }
   return [];
 }
 
@@ -92,6 +116,7 @@ function validar(cuerpo, { parcial, sede }) {
   if (enviado('periodo') && !REGEX_PERIODO.test(cuerpo.periodo ?? ''))
     mal('periodo', 'Debe tener formato AAAA-MM (ej. 2026-11).');
   if (enviado('archivoId')) detalles.push(...validarArchivo(cuerpo.archivoId, sede));
+  if ('portadaId' in cuerpo) detalles.push(...validarPortada(cuerpo.portadaId, sede));
   return detalles;
 }
 
@@ -149,6 +174,7 @@ export const handlersBoletines = [
       periodo: `${cuerpo.periodo}-01`,
       fechaPublicacion: ahoraIso(),
       archivoId: cuerpo.archivoId,
+      portadaId: cuerpo.portadaId ?? null,
       publicadoPor: autorDe(usuario),
     };
     siguienteId += 1;
@@ -176,6 +202,7 @@ export const handlersBoletines = [
     if ('titulo' in cuerpo) b.titulo = cuerpo.titulo.trim();
     if ('periodo' in cuerpo) b.periodo = `${cuerpo.periodo}-01`;
     if ('archivoId' in cuerpo) b.archivoId = cuerpo.archivoId;
+    if ('portadaId' in cuerpo) b.portadaId = cuerpo.portadaId ?? null;
     return HttpResponse.json({ datos: serializarBoletin(b) });
   }),
 

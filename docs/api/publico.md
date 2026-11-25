@@ -976,7 +976,8 @@ Boletines parroquiales en PDF, del más reciente al más antiguo (por `periodo`)
         "nombreOriginal": "Boletín octubre 2026.pdf",
         "tipoMime": "application/pdf",
         "tamanoBytes": 2516582
-      }
+      },
+      "portada": null
     }
   ],
   "paginacion": {
@@ -990,6 +991,7 @@ Boletines parroquiales en PDF, del más reciente al más antiguo (por `periodo`)
 
 - `periodo` es siempre el primer día del mes del boletín. Hay como máximo un boletín por sede y mes.
 - `archivo` es el **objeto archivo** (para lo que no es imagen): `{ id, url, nombreOriginal, tipoMime, tamanoBytes }`. El portal formatea el tamaño («PDF · 2,4 MB»).
+- `portada` es el **objeto imagen estándar** (`{ id, url, textoAlternativo, ancho, alto, variantes }`) de la miniatura de la primera página, o `null` si no tiene portada.
 - La URL del CDN de los ejemplos es ilustrativa: la real sale de `CDN_PUBLIC_URL`.
 - El seed **no** tiene boletines, porque no hay un PDF real en el repositorio. Con el seed, este endpoint responde `"datos": []` y el portal oculta la tarjeta del boletín.
 

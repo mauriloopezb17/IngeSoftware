@@ -15,13 +15,19 @@ const COLUMNAS = `
   am.url AS archivo_url,
   am.nombre_original AS archivo_nombre_original,
   am.tipo_mime AS archivo_tipo_mime,
-  am.tamano_bytes AS archivo_tamano_bytes`;
+  am.tamano_bytes AS archivo_tamano_bytes,
+  pt.id AS portada_id,
+  pt.url AS portada_url,
+  pt.texto_alternativo AS portada_texto_alternativo,
+  pt.ancho_px AS portada_ancho,
+  pt.alto_px AS portada_alto`;
 
 const UNIONES = `
   FROM boletin b
   JOIN sede s ON s.id = b.sede_id
   JOIN usuario u ON u.id = b.publicado_por
-  JOIN archivo_multimedia am ON am.id = b.archivo_id`;
+  JOIN archivo_multimedia am ON am.id = b.archivo_id
+  LEFT JOIN archivo_multimedia pt ON pt.id = b.portada_id`;
 
 // filtros: { sedeSlug?, anio? }. Del periodo más reciente al más antiguo.
 export async function listar(filtros, { limite, desplazamiento }) {
@@ -55,10 +61,17 @@ export async function buscarPorId(id, db = { consultar }) {
 
 export async function insertar(datos, db) {
   const { rows } = await db.consultar(
-    `INSERT INTO boletin (sede_id, archivo_id, publicado_por, titulo, periodo)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO boletin (sede_id, archivo_id, portada_id, publicado_por, titulo, periodo)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
-    [datos.sedeId, datos.archivoId, datos.publicadoPor, datos.titulo, datos.periodo],
+    [
+      datos.sedeId,
+      datos.archivoId,
+      datos.portadaId ?? null,
+      datos.publicadoPor,
+      datos.titulo,
+      datos.periodo,
+    ],
   );
   return rows[0];
 }

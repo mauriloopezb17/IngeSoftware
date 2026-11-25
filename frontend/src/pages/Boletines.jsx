@@ -1,5 +1,5 @@
 import { Suspense, lazy, useState } from 'react';
-import { BookOpen, Download, FileText } from 'lucide-react';
+import { BookOpen, Download } from 'lucide-react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 
 import {
@@ -14,6 +14,7 @@ import {
   ErrorSeccion,
   SinResultados,
 } from '../components/parroquia/EstadoSeccion.jsx';
+import { construirAtributosImagen } from '../components/parroquia/imagenSrcSet.js';
 import NoEncontrado from './NoEncontrado.jsx';
 import { useBoletines } from '../hooks/index.js';
 import {
@@ -31,6 +32,43 @@ import {
 const BoletinLector = lazy(() => import('../components/parroquia/BoletinLector.jsx'));
 
 const POR_PAGINA = 6;
+
+function PortadaBoletin({ boletin, sizes, claseTamano = 'w-full' }) {
+  const portada = boletin?.portada;
+
+  return (
+    <div
+      className={`aspect-[210/297] overflow-hidden rounded-sm border border-sand bg-white shadow-sm ${claseTamano}`}
+    >
+      {portada?.url ? (
+        <img
+          src={portada.url}
+          {...construirAtributosImagen(portada, sizes)}
+          alt={portada.textoAlternativo || `Portada de ${boletin.titulo}`}
+          width={portada.ancho ?? undefined}
+          height={portada.alto ?? undefined}
+          loading="lazy"
+          className="h-full w-full object-cover object-top"
+        />
+      ) : (
+        <div className="flex h-full flex-col justify-between bg-white p-5">
+          <div>
+            <span className="block h-0.5 w-8 bg-gold" aria-hidden="true" />
+            <p className="mt-3 font-body text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">
+              Parroquia Señor de la Exaltación
+            </p>
+          </div>
+          <div>
+            <p className="font-display text-h3 font-semibold leading-snug text-ink">
+              {formatearPeriodoMes(boletin.periodo)}
+            </p>
+            <p className="mt-1 font-body text-meta text-muted">Boletín parroquial</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function obtenerAniosDisponibles() {
   const anioActual = Math.max(2026, new Date().getFullYear());
@@ -226,20 +264,27 @@ function Boletines() {
           <>
             {boletinDestacado && (
               <article className="mb-12 rounded-md border border-sand bg-cream p-6 md:p-8">
-                <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
-                  <div>
-                    <p className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-muted">
-                      Edición más reciente · {formatearPeriodoMes(boletinDestacado.periodo)}
-                    </p>
-                    <h2 className="mt-2 font-display text-h2 font-semibold lining-nums text-ink">
-                      {boletinDestacado.titulo}
-                    </h2>
-                    <p className="mt-2 font-body text-meta text-muted">
-                      Publicado el {formatearFechaLarga(boletinDestacado.fechaPublicacion)}
-                      {boletinDestacado.archivo?.tamanoBytes
-                        ? ` · PDF (${formatearTamanoArchivo(boletinDestacado.archivo.tamanoBytes)})`
-                        : ''}
-                    </p>
+                <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                  <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+                    <PortadaBoletin
+                      boletin={boletinDestacado}
+                      sizes="(min-width: 768px) 160px, 128px"
+                      claseTamano="w-32 shrink-0 md:w-40"
+                    />
+                    <div>
+                      <p className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-muted">
+                        Edición más reciente · {formatearPeriodoMes(boletinDestacado.periodo)}
+                      </p>
+                      <h2 className="mt-2 font-display text-h2 font-semibold lining-nums text-ink">
+                        {boletinDestacado.titulo}
+                      </h2>
+                      <p className="mt-2 font-body text-meta text-muted">
+                        Publicado el {formatearFechaLarga(boletinDestacado.fechaPublicacion)}
+                        {boletinDestacado.archivo?.tamanoBytes
+                          ? ` · PDF (${formatearTamanoArchivo(boletinDestacado.archivo.tamanoBytes)})`
+                          : ''}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
@@ -273,11 +318,13 @@ function Boletines() {
                       className="relative flex flex-col justify-between rounded-md border border-sand bg-cream p-6 transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold"
                     >
                       <div>
-                        <span className="inline-flex size-11 items-center justify-center rounded-sm bg-ink text-gold">
-                          <FileText size={20} aria-hidden="true" />
-                        </span>
+                        <PortadaBoletin
+                          boletin={boletin}
+                          sizes="(min-width: 1024px) 280px, (min-width: 768px) 42vw, 85vw"
+                          claseTamano="mx-auto w-44"
+                        />
 
-                        <p className="mt-4 font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-muted">
+                        <p className="mt-5 font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-muted">
                           {formatearPeriodoMes(boletin.periodo)}
                         </p>
 

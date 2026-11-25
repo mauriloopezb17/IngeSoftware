@@ -1,6 +1,6 @@
 // Boletines parroquiales en PDF (contrato: docs/api/publico.md, RF-06).
 import * as modelo from '../models/boletines.model.js';
-import { archivo, formatearFecha, formatearFechaHora } from '../utils/formato.js';
+import { archivo, formatearFecha, formatearFechaHora, imagen } from '../utils/formato.js';
 import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 
 function aBoletin(fila) {
@@ -16,6 +16,15 @@ function aBoletin(fila) {
       tipoMime: fila.archivo_tipo_mime,
       tamanoBytes: fila.archivo_tamano_bytes,
     }),
+    portada: fila.portada_id
+      ? imagen({
+          id: fila.portada_id,
+          url: fila.portada_url,
+          textoAlternativo: fila.portada_texto_alternativo,
+          ancho: fila.portada_ancho,
+          alto: fila.portada_alto,
+        })
+      : null,
   };
 }
 

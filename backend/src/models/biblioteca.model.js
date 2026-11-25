@@ -36,7 +36,9 @@ const USOS = `
   SELECT 8, 'BLOQUE_PAGINA', pg.titulo
     FROM bloque bl
     JOIN pagina pg ON pg.id = bl.pagina_id
-   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND bl.contenido::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'`;
+   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND bl.contenido::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'
+  UNION ALL
+  SELECT 9, 'PORTADA_BOLETIN', b.titulo FROM boletin b WHERE b.portada_id = m.id`;
 
 const SELECCION = `
   SELECT ${COLUMNAS_ARCHIVO},
