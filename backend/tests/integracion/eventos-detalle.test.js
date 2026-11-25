@@ -5,6 +5,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import request from 'supertest';
 import { archivoDelSeed, crearPanel, registrosDe, sedePrincipal } from '../apoyo/panel.js';
 
+vi.stubEnv('OCI_S3_ENDPOINT', 'https://espacio.compat.objectstorage.sa-santiago-1.oraclecloud.com');
+vi.stubEnv('OCI_S3_REGION', 'sa-santiago-1');
+vi.stubEnv('OCI_S3_BUCKET_NAME', 'bucket-de-prueba');
+vi.stubEnv('OCI_S3_ACCESS_KEY_ID', 'clave-de-acceso-de-prueba');
+vi.stubEnv('OCI_S3_SECRET_ACCESS_KEY', 'secreto-oci-de-prueba');
 vi.stubEnv('CDN_PUBLIC_URL', 'https://cdn.ejemplo.test');
 vi.stubEnv('CACHE_HABILITADA', 'true');
 
