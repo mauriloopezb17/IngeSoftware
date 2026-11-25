@@ -46,7 +46,9 @@ describe('FormularioObservacionProclama', () => {
 
     const confirmacion = await screen.findByText('Gracias. Tu mensaje llegó al párroco.');
     expect(confirmacion).toBeInTheDocument();
-    expect(confirmacion.closest('[tabindex="-1"]')).toHaveFocus();
+    await waitFor(() => {
+      expect(confirmacion.closest('[tabindex="-1"]')).toHaveFocus();
+    });
     // No vuelve a mostrar los datos enviados
     expect(screen.queryByText('María Elena Quispe')).not.toBeInTheDocument();
     expect(screen.queryByText('71234567')).not.toBeInTheDocument();

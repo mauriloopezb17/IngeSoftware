@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { CheckCircle2, Send } from 'lucide-react';
 
@@ -73,6 +73,10 @@ export default function FormularioObservacionProclama({ proclamaId, sede = SEDE_
   const [errorGeneral, setErrorGeneral] = useState('');
   const [enviado, setEnviado] = useState(false);
 
+  useEffect(() => {
+    if (enviado) confirmacionRef.current?.focus();
+  }, [enviado]);
+
   const mutacion = useMutation({
     mutationFn: (cuerpo) => enviarObservacionProclama(sede, proclamaId, cuerpo),
     onSuccess: () => {
@@ -80,7 +84,6 @@ export default function FormularioObservacionProclama({ proclamaId, sede = SEDE_
       setValores({ nombreCompleto: '', correo: '', telefono: '', mensaje: '', sitioWeb: '' });
       setErrores({});
       setErrorGeneral('');
-      requestAnimationFrame(() => confirmacionRef.current?.focus());
     },
     onError: (err) => {
       if (err?.estado === 429) {
