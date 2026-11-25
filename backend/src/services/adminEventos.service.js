@@ -10,6 +10,7 @@ import { formatearFechaHora, imagen } from '../utils/formato.js';
 import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 import { registrarCambio } from './bitacora.service.js';
 import { sedeDelRecursoNuevo, verificarArchivos } from './referencias.service.js';
+import { archivosDelContenido } from '../validacion/blocknote.js';
 
 const ENTIDAD = 'evento';
 
@@ -32,6 +33,7 @@ function aEvento(fila) {
       ancho: fila.imagen_ancho,
       alto: fila.imagen_alto,
     }),
+    detalle: fila.detalle ?? null,
     idExternoM365: fila.id_externo_m365,
     creadoPor: { id: fila.creado_por, nombreCompleto: fila.creado_por_nombre },
     finalizado: fila.finalizado,
@@ -65,8 +67,8 @@ export async function obtenerEvento(usuario, id) {
   return aEvento(fila);
 }
 
-// Referencias del cuerpo que vienen con valor: la categoría y la imagen (de la sede).
-async function verificarReferencias(db, sedeId, { categoriaEventoId, imagenId }) {
+// Referencias del cuerpo que vienen con valor: la categoría, la imagen y los archivos de detalle.contenido.
+async function verificarReferencias(db, sedeId, { categoriaEventoId, imagenId, detalle }) {
   const detalles = [];
   if (
     categoriaEventoId !== undefined &&
@@ -76,7 +78,10 @@ async function verificarReferencias(db, sedeId, { categoriaEventoId, imagenId })
   }
   const archivos = await verificarArchivos(
     sedeId,
-    [{ campo: 'imagenId', clase: 'IMAGEN', id: imagenId }],
+    [
+      { campo: 'imagenId', clase: 'IMAGEN', id: imagenId },
+      ...(detalle?.contenido ? archivosDelContenido(detalle.contenido, 'detalle.contenido') : []),
+    ],
     db,
   );
   detalles.push(...archivos.detalles);
@@ -101,6 +106,7 @@ export async function crearEvento(usuario, cuerpo, contexto) {
         fechaInicio: cuerpo.fechaInicio,
         fechaFin: cuerpo.fechaFin ?? null,
         todoElDia: cuerpo.todoElDia,
+        detalle: cuerpo.detalle ?? null,
       },
       db,
     );
@@ -124,6 +130,7 @@ const COLUMNAS = {
   todoElDia: 'todo_el_dia',
   categoriaEventoId: 'categoria_evento_id',
   imagenId: 'imagen_id',
+  detalle: 'detalle',
 };
 
 export async function editarEvento(usuario, id, cambios, contexto) {
@@ -154,7 +161,27 @@ export async function editarEvento(usuario, id, cambios, contexto) {
       );
     }
 
-    const nuevo = await actualizarFila(db, ENTIDAD, id, columnas);
+    const nuevo = await actualizarFila(db, ENTIDAD, id, columnas, { jsonb: ['detalle'] });
+    await registrarCambio(db, contexto, {
+      entidad: ENTIDAD,
+      entidadId: id,
+      accion: 'UPDATE',
+      anterior: fila,
+      nuevo,
+    });
+  });
+  return obtenerEvento(usuario, id);
+}
+
+export async function editarDetalleEvento(usuario, id, { detalle }, contexto) {
+  await transaccion(async (db) => {
+    const fila = await filaParaModificar(db, ENTIDAD, id);
+    if (!fila) throw ErrorApp.noEncontrado('El evento no existe.');
+    exigirSedeDelRecurso(usuario, fila.sede_id);
+
+    await verificarReferencias(db, fila.sede_id, { detalle });
+
+    const nuevo = await actualizarFila(db, ENTIDAD, id, { detalle }, { jsonb: ['detalle'] });
     await registrarCambio(db, contexto, {
       entidad: ENTIDAD,
       entidadId: id,

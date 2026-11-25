@@ -36,7 +36,11 @@ const USOS = `
   SELECT 8, 'BLOQUE_PAGINA', pg.titulo
     FROM bloque bl
     JOIN pagina pg ON pg.id = bl.pagina_id
-   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND bl.contenido::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'`;
+   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND bl.contenido::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'
+  UNION ALL
+  SELECT 9, 'DETALLE_EVENTO', e.titulo
+    FROM evento e
+   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND e.detalle IS NOT NULL AND e.detalle::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'`;
 
 const SELECCION = `
   SELECT ${COLUMNAS_ARCHIVO},

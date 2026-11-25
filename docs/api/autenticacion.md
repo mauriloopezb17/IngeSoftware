@@ -82,6 +82,7 @@ Abre la sesión. Tiene límite de intentos (ver [sección 4](#4-límite-de-inten
       "multimedia.eliminar",
       "avisos.gestionar",
       "eventos.gestionar",
+      "eventos.detalle",
       "horarios.gestionar",
       "servicios.gestionar",
       "grupos.gestionar",
@@ -233,6 +234,7 @@ Todos los roles pueden **consultar** (`GET`) todos los recursos de su sede en `/
 | `noticias.redactar`   | Crear noticias y notas de prensa, editar los borradores propios y enviarlos a revisión.                                                                       |       ✓       |    ✓    |     —      |     ✓     |
 | `noticias.publicar`   | Publicar directamente noticias y notas de prensa, **aprobar o rechazar** las que están en revisión, editar las de cualquier autor, archivarlas y eliminarlas. |       ✓       |    ✓    |     —      |     —     |
 | `eventos.gestionar`   | CRUD del calendario parroquial.                                                                                                                               |       ✓       |    ✓    |     ✓      |     —     |
+| `eventos.detalle`     | Completar y editar la página de detalle de cada evento.                                                                                                       |       ✓       |    ✓    |     ✓      |     ✓     |
 | `horarios.gestionar`  | CRUD de horarios.                                                                                                                                             |       ✓       |    ✓    |     ✓      |     —     |
 | `servicios.gestionar` | CRUD de servicios y sacramentos, y de sus preguntas frecuentes.                                                                                               |       ✓       |    ✓    |     ✓      |     —     |
 | `grupos.gestionar`    | CRUD de grupos pastorales.                                                                                                                                    |       ✓       |    ✓    |     ✓      |     —     |
