@@ -382,7 +382,7 @@ describe('tipo real y tamaño', () => {
       `INSERT INTO archivo_multimedia (sede_id, subido_por, nombre_original, url, tipo_mime, tamano_bytes)
        VALUES (1, $1, 'prueba-capacidad', 'sedes/prueba/capacidad.mp4', 'video/mp4', $2)
        RETURNING id`,
-      [marketing.id, 46 * 1024 ** 3],
+      [marketing.id, 19 * 1024 ** 3],
     );
 
     try {
