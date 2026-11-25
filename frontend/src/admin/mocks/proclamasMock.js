@@ -60,9 +60,72 @@ function crearProclamasIniciales() {
 let proclamas = crearProclamasIniciales();
 let siguienteId = 6;
 
+function crearObservacionesIniciales() {
+  return [
+    {
+      id: 1,
+      proclamaId: 1,
+      sedeSlug: SEDE_PRINCIPAL.slug,
+      nombreCompleto: 'María Elena Quispe (ejemplo)',
+      correo: 'maria.quispe@ejemplo.test',
+      telefono: '71234567',
+      mensaje: 'Quisiera conversar con usted en reserva sobre esta proclama.\nTengo disponibilidad por la tarde.',
+      fechaEnvio: matrimonio(-1, '09:15'),
+      leida: false,
+      leidoEn: null,
+    },
+    {
+      id: 2,
+      proclamaId: 2,
+      sedeSlug: SEDE_PRINCIPAL.slug,
+      nombreCompleto: 'Carlos Mamani (ejemplo)',
+      correo: 'carlos.mamani@ejemplo.test',
+      telefono: null,
+      mensaje: 'Por favor comuníquese conmigo por correo electrónico cuando le sea posible.',
+      fechaEnvio: matrimonio(-2, '16:40'),
+      leida: false,
+      leidoEn: null,
+    },
+    {
+      id: 3,
+      proclamaId: 1,
+      sedeSlug: SEDE_PRINCIPAL.slug,
+      nombreCompleto: 'Rosaura Flores (ejemplo)',
+      correo: null,
+      telefono: '+591 6543-2100',
+      mensaje: 'Dejo mi número para aclarar un dato familiar antes de la celebración.',
+      fechaEnvio: matrimonio(-5, '11:00'),
+      leida: true,
+      leidoEn: matrimonio(-4, '10:00'),
+    },
+  ];
+}
+
+let observaciones = crearObservacionesIniciales();
+
 export function reiniciarProclamas() {
   proclamas = crearProclamasIniciales();
   siguienteId = 6;
+  observaciones = crearObservacionesIniciales();
+}
+
+function serializarObservacion(o) {
+  const p = proclamas.find((item) => item.id === o.proclamaId);
+  return {
+    id: o.id,
+    proclama: {
+      id: o.proclamaId,
+      contrayente1: p?.contrayente1 ?? 'Contrayente 1',
+      contrayente2: p?.contrayente2 ?? 'Contrayente 2',
+    },
+    nombreCompleto: o.nombreCompleto,
+    correo: o.correo,
+    telefono: o.telefono,
+    mensaje: o.mensaje,
+    fechaEnvio: o.fechaEnvio,
+    leida: o.leida,
+    leidoEn: o.leidoEn,
+  };
 }
 
 const alcanzada = (pub, hoy) => pub.fecha <= hoy;
@@ -235,6 +298,66 @@ function proclamaEscribible(params) {
 }
 
 export const handlersProclamas = [
+  http.get(api('/admin/proclamas/observaciones/resumen'), () => {
+    const auth = autorizar('proclamas.observaciones', 'Solo el párroco puede consultar las observaciones.');
+    if (auth.respuesta) return auth.respuesta;
+    const slug = auth.usuario.sede?.slug ?? SEDE_PRINCIPAL.slug;
+    const noLeidas = observaciones.filter((o) => o.sedeSlug === slug && !o.leida).length;
+    return HttpResponse.json({ datos: { noLeidas } });
+  }),
+
+  http.get(api('/admin/proclamas/observaciones'), ({ request }) => {
+    const auth = autorizar('proclamas.observaciones', 'Solo el párroco puede consultar las observaciones.');
+    if (auth.respuesta) return auth.respuesta;
+    const parametros = new URL(request.url).searchParams;
+    const paginacion = leerPaginacion(parametros);
+    if (paginacion.detalles) return consultaInvalida(paginacion.detalles);
+
+    const estado = parametros.get('estado') ?? 'no-leidas';
+    const proclamaIdParam = parametros.get('proclamaId');
+    const proclamaId = proclamaIdParam ? Number(proclamaIdParam) : null;
+    const slug = auth.usuario.sede?.slug ?? SEDE_PRINCIPAL.slug;
+
+    const filtradas = observaciones
+      .filter(
+        (o) =>
+          o.sedeSlug === slug &&
+          (estado === 'todas' || !o.leida) &&
+          (!proclamaId || o.proclamaId === proclamaId),
+      )
+      .sort((a, b) => new Date(b.fechaEnvio) - new Date(a.fechaEnvio));
+
+    const pagina = paginar(filtradas, paginacion);
+    return HttpResponse.json({ ...pagina, datos: pagina.datos.map(serializarObservacion) });
+  }),
+
+  http.patch(api('/admin/proclamas/observaciones/:id'), async ({ request, params }) => {
+    const auth = autorizar('proclamas.observaciones', 'Solo el párroco puede gestionar las observaciones.');
+    if (auth.respuesta) return auth.respuesta;
+    const slug = auth.usuario.sede?.slug ?? SEDE_PRINCIPAL.slug;
+    const obs = observaciones.find((o) => o.id === Number(params.id) && o.sedeSlug === slug);
+    if (!obs) return respuestaError({ estado: 404, codigo: 'NO_ENCONTRADO', mensaje: 'La observación no existe.' });
+    const cuerpo = await leerCuerpo(request);
+    if (!cuerpo || typeof cuerpo.leida !== 'boolean') {
+      return fallo(errorValidacion([{ campo: 'leida', mensaje: 'Debe ser un booleano.' }]));
+    }
+    obs.leida = cuerpo.leida;
+    obs.leidoEn = cuerpo.leida ? obs.leidoEn ?? fechaBolivia(new Date()) : null;
+    return HttpResponse.json({ datos: serializarObservacion(obs) });
+  }),
+
+  http.delete(api('/admin/proclamas/observaciones/:id'), ({ params }) => {
+    const auth = autorizar('proclamas.observaciones', 'Solo el párroco puede gestionar las observaciones.');
+    if (auth.respuesta) return auth.respuesta;
+    const slug = auth.usuario.sede?.slug ?? SEDE_PRINCIPAL.slug;
+    const indice = observaciones.findIndex((o) => o.id === Number(params.id) && o.sedeSlug === slug);
+    if (indice === -1) {
+      return respuestaError({ estado: 404, codigo: 'NO_ENCONTRADO', mensaje: 'La observación no existe.' });
+    }
+    observaciones.splice(indice, 1);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.get(api('/admin/proclamas'), ({ request }) => {
     const { usuario, respuesta: sinSesion } = autenticar();
     if (sinSesion) return sinSesion;

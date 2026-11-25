@@ -19,6 +19,7 @@ import {
 } from '../ui/index.js';
 import { CLAVE_PROCLAMAS, eliminarProclama, listarProclamas, VISTAS } from './api.js';
 import { estaPublicada, formatearDia, ordinal } from './fechas.js';
+import PestanasProclamas from './PestanasProclamas.jsx';
 
 function leerFiltros(parametros) {
   const vista = parametros.get('vista');
@@ -182,6 +183,8 @@ export default function ListadoProclamas() {
           )
         }
       />
+
+      <PestanasProclamas />
 
       {!editable && (
         <Aviso tipo="soloLectura" className="mt-4">

@@ -1,10 +1,13 @@
 import { NavLink } from 'react-router';
 
+import { useResumenObservaciones } from '../proclamas/useResumenObservaciones.js';
 import { GRUPOS_MENU } from '../rutas.js';
 
 // Lista de enlaces del panel agrupada por dominio. NavLink marca la sección activa con aria-current="page".
 export default function MenuLateral({ secciones, alNavegar }) {
   const porClave = new Map(secciones.map((s) => [s.clave, s]));
+  const { data: resumenObservaciones } = useResumenObservaciones();
+  const noLeidas = resumenObservaciones?.noLeidas ?? 0;
 
   return (
     <nav aria-label="Menú principal" className="flex-1 overflow-y-auto px-3 py-4">
@@ -41,7 +44,15 @@ export default function MenuLateral({ secciones, alNavegar }) {
                             />
                           )}
                           <Icono className={`size-4 shrink-0 ${isActive ? 'text-gold' : ''}`} aria-hidden="true" />
-                          {titulo}
+                          <span>{titulo}</span>
+                          {clave === 'proclamas' && noLeidas > 0 && (
+                            <span
+                              aria-label={`${noLeidas} observaciones sin leer`}
+                              className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-gold px-1.5 py-0.5 text-xs font-semibold tabular-nums text-ink"
+                            >
+                              {noLeidas}
+                            </span>
+                          )}
                         </>
                       )}
                     </NavLink>
