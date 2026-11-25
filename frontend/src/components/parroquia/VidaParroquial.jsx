@@ -5,6 +5,7 @@ import {
   EncabezadoSeccion,
   EnlaceFlecha,
   Reveal,
+  RevealImagen,
   Seccion,
 } from '../portal/index.js';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
@@ -83,12 +84,12 @@ function VidaParroquial() {
             <Reveal
               variante="tarjeta"
               as="article"
-              className={`group flex flex-col overflow-hidden rounded-md border border-sand bg-white transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold ${
+              className={`tarjeta-portal group flex flex-col overflow-hidden rounded-md border border-sand bg-white ${
                 secundarias.length > 0 ? 'lg:col-span-7' : 'lg:col-span-12'
               }`}
             >
               {destacada.imagenPortada && (
-                <div className="overflow-hidden bg-cream">
+                <RevealImagen lado="izquierda" className="bg-cream">
                   <img
                     src={destacada.imagenPortada.url}
                     {...construirAtributosImagen(
@@ -98,14 +99,14 @@ function VidaParroquial() {
                     alt={destacada.imagenPortada.textoAlternativo || destacada.titulo}
                     width={destacada.imagenPortada.ancho ?? undefined}
                     height={destacada.imagenPortada.alto ?? undefined}
-                    className={`aspect-[16/10] w-full transition-transform duration-500 ease-out group-hover:scale-[1.04] ${
+                    className={`foto-hover aspect-[16/10] w-full ${
                       destacada.imagenPortada.alto > destacada.imagenPortada.ancho
                         ? 'object-contain'
                         : 'object-cover'
                     }`}
                     loading="lazy"
                   />
-                </div>
+                </RevealImagen>
               )}
 
               <div className="flex flex-1 flex-col justify-between p-6 md:p-8">
@@ -151,9 +152,9 @@ function VidaParroquial() {
                   <Reveal
                     key={noticia.id}
                     variante="tarjeta"
-                    retraso={(indice + 1) * 90}
+                    retraso={(indice + 1) * 120}
                     as="article"
-                    className="group flex flex-col justify-between rounded-md border border-sand bg-white p-6 transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold"
+                    className="tarjeta-portal group flex flex-col justify-between rounded-md border border-sand bg-white p-6"
                   >
                     <div className="flex flex-col gap-4 sm:flex-row">
                       {imagen && (
@@ -167,7 +168,7 @@ function VidaParroquial() {
                             alt={imagen.textoAlternativo || noticia.titulo}
                             width={imagen.ancho ?? undefined}
                             height={imagen.alto ?? undefined}
-                            className="aspect-[4/3] h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                            className="foto-hover aspect-[4/3] h-full w-full object-cover"
                             loading="lazy"
                           />
                         </div>

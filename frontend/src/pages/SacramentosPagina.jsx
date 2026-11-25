@@ -47,7 +47,7 @@ function SacramentosPagina() {
                 <li key={servicio.id}>
                   <Reveal
                     variante="tarjeta"
-                    retraso={indice * 60}
+                    retraso={indice * 120}
                     className="group py-6 md:py-8"
                   >
                     <Link

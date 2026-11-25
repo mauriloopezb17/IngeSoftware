@@ -186,7 +186,7 @@ function Noticias() {
                     alt={imagen.textoAlternativo || noticia.titulo}
                     width={imagen.ancho ?? undefined}
                     height={imagen.alto ?? undefined}
-                    className={`aspect-[16/10] w-full transition-transform duration-500 ease-out group-hover:scale-[1.04] ${
+                    className={`foto-hover aspect-[16/10] w-full ${
                       esAfiche ? 'object-contain bg-cream' : 'object-cover'
                     }`}
                     loading="lazy"
@@ -197,9 +197,9 @@ function Noticias() {
                   <Reveal
                     key={noticia.id}
                     variante="tarjeta"
-                    retraso={indice * 90}
+                    retraso={indice * 120}
                     as="article"
-                    className="group flex flex-col overflow-hidden rounded-md border border-sand bg-white transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold"
+                    className="tarjeta-portal group flex flex-col overflow-hidden rounded-md border border-sand bg-white"
                   >
                     {contenidoImagen && (
                       <div className="overflow-hidden bg-cream">

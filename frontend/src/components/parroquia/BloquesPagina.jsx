@@ -5,6 +5,7 @@ import {
   EncabezadoSeccion,
   Eyebrow,
   Reveal,
+  RevealImagen,
 } from '../portal/index.js';
 import EnlacePortal from './EnlacePortal.jsx';
 import { IconoDinamico } from './IconoDinamico.jsx';
@@ -63,17 +64,18 @@ export function BloqueTextoImagen({ contenido }) {
   return (
     <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
       {contenido.url_imagen && (
-        <Reveal
-          variante={imagenALaDerecha ? 'derecha' : 'izquierda'}
+        <div
           className={`lg:col-span-6 ${imagenALaDerecha ? 'lg:order-2' : ''}`}
         >
-          <div className="overflow-hidden rounded-md border border-sand bg-cream">
-            <img
-              src={contenido.url_imagen}
-              alt={contenido.texto_alternativo || contenido.titulo}
-              className="aspect-[4/3] w-full object-cover"
-              loading="lazy"
-            />
+          <div className="group overflow-hidden rounded-md border border-sand bg-cream">
+            <RevealImagen lado={imagenALaDerecha ? 'derecha' : 'izquierda'}>
+              <img
+                src={contenido.url_imagen}
+                alt={contenido.texto_alternativo || contenido.titulo}
+                className="foto-hover aspect-[4/3] w-full object-cover"
+                loading="lazy"
+              />
+            </RevealImagen>
             {contenido.tarjeta && (
               <div className="border-t border-sand px-6 py-4">
                 {contenido.tarjeta.etiqueta && (
@@ -92,10 +94,13 @@ export function BloqueTextoImagen({ contenido }) {
               </div>
             )}
           </div>
-        </Reveal>
+        </div>
       )}
 
-      <div
+      <Reveal
+        variante={
+          contenido.url_imagen ? (imagenALaDerecha ? 'izquierda' : 'derecha') : 'arriba'
+        }
         className={`${contenido.url_imagen ? 'lg:col-span-6' : 'lg:col-span-10'} ${
           imagenALaDerecha ? 'lg:order-1' : ''
         }`}
@@ -113,7 +118,7 @@ export function BloqueTextoImagen({ contenido }) {
             </p>
           ))}
         </div>
-      </div>
+      </Reveal>
     </div>
   );
 }
@@ -122,13 +127,15 @@ export function BloqueCita({ contenido }) {
   if (!contenido?.texto) return null;
 
   return (
-    <blockquote className="max-w-prose border-l-2 border-gold pl-6">
-      <p className="font-display text-h2 italic text-ink">“{contenido.texto}”</p>
+    <Reveal variante="arriba">
+      <blockquote className="max-w-prose border-l-2 border-gold pl-6">
+        <p className="font-display text-h2 italic text-ink">“{contenido.texto}”</p>
 
-      {contenido.autor && (
-        <cite className="mt-3 block font-body text-meta not-italic text-muted">— {contenido.autor}</cite>
-      )}
-    </blockquote>
+        {contenido.autor && (
+          <cite className="mt-3 block font-body text-meta not-italic text-muted">— {contenido.autor}</cite>
+        )}
+      </blockquote>
+    </Reveal>
   );
 }
 
@@ -172,23 +179,27 @@ export function BloqueTarjetas({ contenido }) {
 
           if (item.enlace) {
             return (
-              <EnlacePortal
-                key={`${item.titulo}-${indice}`}
-                to={item.enlace}
-                className="flex flex-col gap-4 rounded-md border border-sand bg-cream p-6 transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              >
-                {cuerpo}
-              </EnlacePortal>
+              <Reveal key={`${item.titulo}-${indice}`} variante="tarjeta" retraso={indice * 120}>
+                <EnlacePortal
+                  to={item.enlace}
+                  className="tarjeta-portal flex h-full flex-col gap-4 rounded-md border border-sand bg-cream p-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  {cuerpo}
+                </EnlacePortal>
+              </Reveal>
             );
           }
 
           return (
-            <article
+            <Reveal
               key={`${item.titulo}-${indice}`}
+              variante="tarjeta"
+              retraso={indice * 120}
+              as="article"
               className="flex flex-col gap-4 rounded-md border border-sand bg-cream p-6"
             >
               {cuerpo}
-            </article>
+            </Reveal>
           );
         })}
       </div>
@@ -208,12 +219,18 @@ export function BloqueGaleria({ contenido }) {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {imagenes.map((imagen, indice) => (
-          <figure key={`${imagen.url}-${indice}`} className="group">
+          <Reveal
+            key={`${imagen.url}-${indice}`}
+            variante="tarjeta"
+            retraso={indice * 120}
+            as="figure"
+            className="group"
+          >
             <div className="overflow-hidden rounded-md border border-sand bg-cream">
               <img
                 src={imagen.url}
                 alt={imagen.texto_alternativo}
-                className="aspect-[4/3] w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                className="foto-hover aspect-[4/3] w-full object-cover"
                 loading="lazy"
               />
             </div>
@@ -222,7 +239,7 @@ export function BloqueGaleria({ contenido }) {
                 {imagen.leyenda}
               </figcaption>
             )}
-          </figure>
+          </Reveal>
         ))}
       </div>
     </section>

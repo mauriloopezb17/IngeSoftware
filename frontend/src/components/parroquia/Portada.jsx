@@ -2,7 +2,7 @@ import { ArrowRight } from 'lucide-react';
 
 import '../../styles/portal.css';
 
-import { BotonEnlace, Contenedor, Eyebrow } from '../portal/index.js';
+import { BotonEnlace, Contenedor, Eyebrow, Reveal, RevealTitulo } from '../portal/index.js';
 import EnlacePortal from './EnlacePortal.jsx';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { IconoDinamico } from './IconoDinamico.jsx';
@@ -75,14 +75,20 @@ function Portada() {
             ) : (
               <>
                 {hero.etiqueta && (
-                  <Eyebrow oscuro className="hero-entrada mb-4">
+                  <Eyebrow oscuro alCargar className="mb-4">
                     {hero.etiqueta}
                   </Eyebrow>
                 )}
 
-                <h1 className="hero-entrada font-display text-display font-semibold text-balance text-white">
+                <RevealTitulo
+                  as="h1"
+                  alCargar
+                  duracion={1000}
+                  retraso={140}
+                  className="font-display text-display font-semibold text-balance text-white"
+                >
                   {hero.titulo}
-                </h1>
+                </RevealTitulo>
 
                 {hero.subtitulo && (
                   <p className="hero-entrada hero-entrada-retraso-1 mt-6 max-w-prose font-body text-lead text-pretty text-white/90">
@@ -114,32 +120,33 @@ function Portada() {
       {tarjetas.length > 0 && (
         <Contenedor className="relative z-20 -mt-10 pb-8 md:-mt-12 md:pb-12">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {tarjetas.map(({ titulo, subtitulo, icono, enlace }) => (
-              <EnlacePortal
-                key={titulo}
-                to={enlace || '/'}
-                aria-label={`Ir a ${titulo}`}
-                className="group flex items-start gap-4 rounded-md border border-sand bg-white p-5 shadow-soft transition-[border-color,transform] duration-200 ease-out hover:-translate-y-1 hover:border-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              >
-                <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-sm bg-gold-soft text-ink">
-                  <IconoDinamico nombre={icono} size={20} strokeWidth={1.8} />
-                </span>
-
-                <span className="min-w-0 flex-1">
-                  <span className="block font-display text-h3 font-semibold text-ink">
-                    {titulo}
+            {tarjetas.map(({ titulo, subtitulo, icono, enlace }, indice) => (
+              <Reveal key={titulo} variante="tarjeta" retraso={indice * 120}>
+                <EnlacePortal
+                  to={enlace || '/'}
+                  aria-label={`Ir a ${titulo}`}
+                  className="tarjeta-portal group flex h-full items-start gap-4 rounded-md border border-sand bg-white p-5 shadow-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-sm bg-gold-soft text-ink">
+                    <IconoDinamico nombre={icono} size={20} strokeWidth={1.8} />
                   </span>
-                  {subtitulo && (
-                    <span className="mt-1 block font-body text-meta text-muted">{subtitulo}</span>
-                  )}
-                </span>
 
-                <ArrowRight
-                  size={16}
-                  aria-hidden="true"
-                  className="mt-1 shrink-0 text-muted transition-transform duration-200 ease-salida group-hover:translate-x-1 group-hover:text-ink"
-                />
-              </EnlacePortal>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-display text-h3 font-semibold text-ink">
+                      {titulo}
+                    </span>
+                    {subtitulo && (
+                      <span className="mt-1 block font-body text-meta text-muted">{subtitulo}</span>
+                    )}
+                  </span>
+
+                  <ArrowRight
+                    size={16}
+                    aria-hidden="true"
+                    className="mt-1 shrink-0 text-muted transition-transform duration-200 ease-salida group-hover:translate-x-1 group-hover:text-ink"
+                  />
+                </EnlacePortal>
+              </Reveal>
             ))}
           </div>
         </Contenedor>

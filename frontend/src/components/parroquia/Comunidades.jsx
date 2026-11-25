@@ -1,6 +1,6 @@
 import { ArrowRight, MapPin } from 'lucide-react';
 
-import { EncabezadoSeccion, Seccion } from '../portal/index.js';
+import { EncabezadoSeccion, Reveal, Seccion } from '../portal/index.js';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { SEDE_ACTUAL } from '../../config/sede.js';
 import { useComunidades } from '../../hooks/index.js';
@@ -37,14 +37,17 @@ function Comunidades() {
         <SinResultados mensaje="No hay comunidades disponibles por el momento." />
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {comunidades.map((comunidad) => {
+          {comunidades.map((comunidad, indice) => {
             const principal = comunidad.slug === SEDE_ACTUAL;
             const imagen = comunidad.imagenPortada;
 
             return (
-              <article
+              <Reveal
                 key={comunidad.id}
-                className={`flex flex-col overflow-hidden rounded-md border bg-white ${
+                variante="tarjeta"
+                retraso={indice * 120}
+                as="article"
+                className={`tarjeta-portal group flex flex-col overflow-hidden rounded-md border bg-white ${
                   principal ? 'border-gold' : 'border-sand'
                 }`}
               >
@@ -59,7 +62,7 @@ function Comunidades() {
                       alt={imagen.textoAlternativo || comunidad.nombre}
                       width={imagen.ancho ?? undefined}
                       height={imagen.alto ?? undefined}
-                      className="aspect-[16/10] w-full object-cover"
+                      className="foto-hover aspect-[16/10] w-full object-cover"
                       loading="lazy"
                     />
                   </div>
@@ -100,7 +103,7 @@ function Comunidades() {
                     </div>
                   )}
                 </div>
-              </article>
+              </Reveal>
             );
           })}
         </div>

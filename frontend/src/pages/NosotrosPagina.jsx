@@ -8,6 +8,7 @@ import {
   EncabezadoSeccion,
   EnlaceFlecha,
   Reveal,
+  RevealImagen,
   Seccion,
 } from '../components/portal/index.js';
 import ModalVideo from '../components/portal/ModalVideo.jsx';
@@ -69,14 +70,16 @@ function NosotrosPagina() {
         ) : (
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
             {textoImagen?.url_imagen && (
-              <Reveal variante="izquierda" className="lg:col-span-6">
-                <div className="relative overflow-hidden rounded-md border border-sand">
-                  <img
-                    src={textoImagen.url_imagen}
-                    alt={textoImagen.texto_alternativo || textoImagen.titulo}
-                    className="aspect-[4/3] w-full object-cover"
-                    loading="lazy"
-                  />
+              <div className="lg:col-span-6">
+                <div className="group relative overflow-hidden rounded-md border border-sand">
+                  <RevealImagen lado="izquierda">
+                    <img
+                      src={textoImagen.url_imagen}
+                      alt={textoImagen.texto_alternativo || textoImagen.titulo}
+                      className="foto-hover aspect-[4/3] w-full object-cover"
+                      loading="lazy"
+                    />
+                  </RevealImagen>
                   {textoImagen.tarjeta && (
                     <div className="border-t border-sand bg-cream p-5">
                       {textoImagen.tarjeta.etiqueta && (
@@ -95,10 +98,13 @@ function NosotrosPagina() {
                     </div>
                   )}
                 </div>
-              </Reveal>
+              </div>
             )}
 
-            <div className={textoImagen?.url_imagen ? 'lg:col-span-6' : 'lg:col-span-10'}>
+            <Reveal
+              variante={textoImagen?.url_imagen ? 'derecha' : 'arriba'}
+              className={textoImagen?.url_imagen ? 'lg:col-span-6' : 'lg:col-span-10'}
+            >
               {textoImagen && (
                 <>
                   <EncabezadoSeccion
@@ -154,7 +160,7 @@ function NosotrosPagina() {
                   <EnlaceFlecha to="/paginas/historia">Leer nuestra historia</EnlaceFlecha>
                 )}
               </div>
-            </div>
+            </Reveal>
           </div>
         )}
       </Seccion>
@@ -252,9 +258,9 @@ function NosotrosPagina() {
                 <Reveal
                   key={comunidad.id}
                   variante="tarjeta"
-                  retraso={indice * 90}
+                  retraso={indice * 120}
                   as="article"
-                  className="flex flex-col overflow-hidden rounded-md border border-sand bg-white"
+                  className="tarjeta-portal group flex flex-col overflow-hidden rounded-md border border-sand bg-white"
                 >
                   {imagen?.url && (
                     <div className="overflow-hidden">
@@ -264,7 +270,7 @@ function NosotrosPagina() {
                         alt={imagen.textoAlternativo || comunidad.nombre}
                         width={imagen.ancho ?? undefined}
                         height={imagen.alto ?? undefined}
-                        className="aspect-[16/10] w-full object-cover transition-transform duration-500 ease-out hover:scale-[1.04]"
+                        className="foto-hover aspect-[16/10] w-full object-cover"
                         loading="lazy"
                       />
                     </div>

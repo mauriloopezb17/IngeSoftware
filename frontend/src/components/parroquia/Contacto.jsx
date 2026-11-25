@@ -1,6 +1,6 @@
 import { ArrowRight, Mail, MapPin, MessageCircle, Navigation, Phone } from 'lucide-react';
 
-import { BotonEnlace, EncabezadoSeccion, Seccion } from '../portal/index.js';
+import { BotonEnlace, EncabezadoSeccion, Reveal, Seccion } from '../portal/index.js';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { useSede } from '../../hooks/index.js';
 import { armarHrefGmail, armarHrefTelefono } from '../../utils/formatoPortal.js';
@@ -78,7 +78,7 @@ function Contacto() {
             </div>
           </div>
 
-          <div className="lg:col-span-6">
+          <Reveal variante="derecha" className="lg:col-span-6">
             <EncabezadoSeccion eyebrow="Contacto" titulo="Visítanos o escríbenos" className="mb-6" />
 
             <dl className="divide-y divide-sand border-y border-sand">
@@ -110,7 +110,7 @@ function Contacto() {
                 );
               })}
             </dl>
-          </div>
+          </Reveal>
         </div>
       )}
     </Seccion>

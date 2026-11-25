@@ -6,6 +6,7 @@ import {
   Contenedor,
   EncabezadoPagina,
   EnlaceFlecha,
+  Reveal,
   Seccion,
 } from '../components/portal/index.js';
 import { CargandoSeccion, ErrorSeccion } from '../components/parroquia/EstadoSeccion.jsx';
@@ -225,24 +226,25 @@ function SacramentoDetalle() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {otrosServicios.map((item) => (
-                    <Link
-                      key={item.id}
-                      to={`/sacramentos/${item.slug}`}
-                      className="flex flex-col justify-between rounded-md border border-sand bg-white p-6 transition-[border-color,transform] duration-200 ease-salida hover:-translate-y-1 hover:border-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                    >
-                      <div>
-                        <h3 className="font-display text-h3 font-semibold text-ink">
-                          {item.nombre}
-                        </h3>
-                        <p className="mt-2 font-body text-meta text-muted">
-                          {item.descripcionCorta}
-                        </p>
-                      </div>
-                      <span className="mt-4 font-body text-meta font-semibold text-ink">
-                        Ver requisitos →
-                      </span>
-                    </Link>
+                  {otrosServicios.map((item, indice) => (
+                    <Reveal key={item.id} variante="tarjeta" retraso={indice * 120}>
+                      <Link
+                        to={`/sacramentos/${item.slug}`}
+                        className="tarjeta-portal flex h-full flex-col justify-between rounded-md border border-sand bg-white p-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                      >
+                        <div>
+                          <h3 className="font-display text-h3 font-semibold text-ink">
+                            {item.nombre}
+                          </h3>
+                          <p className="mt-2 font-body text-meta text-muted">
+                            {item.descripcionCorta}
+                          </p>
+                        </div>
+                        <span className="mt-4 font-body text-meta font-semibold text-ink">
+                          Ver requisitos →
+                        </span>
+                      </Link>
+                    </Reveal>
                   ))}
                 </div>
               </Contenedor>

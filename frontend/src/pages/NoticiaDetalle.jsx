@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowLeft, Check, ExternalLink, Share2 } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 
-import { Boton, Contenedor, Eyebrow, Seccion } from '../components/portal/index.js';
+import { Boton, Contenedor, Eyebrow, RevealImagen, Seccion } from '../components/portal/index.js';
 import ContenidoBlockNote from '../components/parroquia/ContenidoBlockNote.jsx';
 import { CargandoSeccion, ErrorSeccion } from '../components/parroquia/EstadoSeccion.jsx';
 import { construirAtributosImagen } from '../components/parroquia/imagenSrcSet.js';
@@ -164,16 +164,18 @@ function NoticiaDetalle() {
             <div className="mx-auto max-w-prose">
               {imagen && (
                 <figure className="mb-10 overflow-hidden rounded-md border border-sand bg-cream">
-                  <img
-                    src={imagen.url}
-                    {...construirAtributosImagen(imagen, '(min-width: 768px) 720px, 100vw')}
-                    alt={imagen.textoAlternativo || publicacion.titulo}
-                    width={imagen.ancho ?? undefined}
-                    height={imagen.alto ?? undefined}
-                    className={`w-full ${
-                      esAfiche ? 'mx-auto max-h-[560px] object-contain' : 'aspect-[16/10] object-cover'
-                    }`}
-                  />
+                  <RevealImagen lado="izquierda">
+                    <img
+                      src={imagen.url}
+                      {...construirAtributosImagen(imagen, '(min-width: 768px) 720px, 100vw')}
+                      alt={imagen.textoAlternativo || publicacion.titulo}
+                      width={imagen.ancho ?? undefined}
+                      height={imagen.alto ?? undefined}
+                      className={`w-full ${
+                        esAfiche ? 'mx-auto max-h-[560px] object-contain' : 'aspect-[16/10] object-cover'
+                      }`}
+                    />
+                  </RevealImagen>
                 </figure>
               )}
 

@@ -44,9 +44,9 @@ function Sacramentos() {
                 <Reveal
                   key={id}
                   variante="tarjeta"
-                  retraso={indice * 90}
+                  retraso={indice * 120}
                   as="article"
-                  className="group relative flex items-center justify-between gap-3 py-2 transition-[border-color,transform] duration-200 ease-out md:flex-col md:items-stretch md:rounded-md md:border md:border-sand md:bg-white md:p-6 md:hover:-translate-y-1 md:hover:border-gold"
+                  className="tarjeta-portal group relative flex items-center justify-between gap-3 py-2 md:flex-col md:items-stretch md:rounded-md md:border md:border-sand md:bg-white md:p-6"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">

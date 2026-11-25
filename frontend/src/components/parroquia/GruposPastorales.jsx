@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 
-import { BotonEnlace, EncabezadoSeccion, Seccion } from '../portal/index.js';
+import { BotonEnlace, EncabezadoSeccion, Reveal, Seccion } from '../portal/index.js';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { IconoDinamico } from './IconoDinamico.jsx';
 import { useGruposPastorales } from '../../hooks/index.js';
@@ -36,22 +36,24 @@ function GruposPastorales() {
           ) : grupos.length === 0 ? (
             <SinResultados mensaje="No hay grupos pastorales publicados por el momento." />
           ) : (
-            <ul className="divide-y divide-sand rounded-md border border-sand bg-white px-6">
-              {grupos.map(({ id, nombre, horarioReunion, icono }) => (
-                <li key={id} className="flex items-center justify-between gap-4 py-4">
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-sm bg-gold-soft text-ink">
-                      <IconoDinamico nombre={icono} size={18} strokeWidth={1.8} />
-                    </span>
-                    <h3 className="font-display text-h3 font-semibold text-ink">{nombre}</h3>
-                  </div>
+            <Reveal variante="tarjeta">
+              <ul className="divide-y divide-sand rounded-md border border-sand bg-white px-6">
+                {grupos.map(({ id, nombre, horarioReunion, icono }) => (
+                  <li key={id} className="flex items-center justify-between gap-4 py-4">
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-sm bg-gold-soft text-ink">
+                        <IconoDinamico nombre={icono} size={18} strokeWidth={1.8} />
+                      </span>
+                      <h3 className="font-display text-h3 font-semibold text-ink">{nombre}</h3>
+                    </div>
 
-                  {horarioReunion && (
-                    <p className="font-body text-meta text-muted">{horarioReunion}</p>
-                  )}
-                </li>
-              ))}
-            </ul>
+                    {horarioReunion && (
+                      <p className="font-body text-meta text-muted">{horarioReunion}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
           )}
         </div>
       </div>

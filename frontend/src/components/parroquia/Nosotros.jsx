@@ -2,6 +2,7 @@ import {
   EncabezadoSeccion,
   EnlaceFlecha,
   Reveal,
+  RevealImagen,
   Seccion,
 } from '../portal/index.js';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
@@ -30,16 +31,16 @@ function Nosotros() {
       ) : (
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
           {textoImagen?.url_imagen && (
-            <Reveal variante="izquierda" className="lg:col-span-6">
+            <div className="lg:col-span-6">
               <div className="group overflow-hidden rounded-md border border-sand bg-cream">
-                <div className="overflow-hidden">
+                <RevealImagen lado="izquierda">
                   <img
                     src={textoImagen.url_imagen}
                     alt={textoImagen.texto_alternativo || textoImagen.titulo}
-                    className="aspect-[4/3] w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                    className="foto-hover aspect-[4/3] w-full object-cover"
                     loading="lazy"
                   />
-                </div>
+                </RevealImagen>
 
                 {textoImagen.tarjeta && (
                   <div className="border-t border-sand px-6 py-4">
@@ -59,10 +60,13 @@ function Nosotros() {
                   </div>
                 )}
               </div>
-            </Reveal>
+            </div>
           )}
 
-          <div className={textoImagen?.url_imagen ? 'lg:col-span-6' : 'lg:col-span-10'}>
+          <Reveal
+            variante={textoImagen?.url_imagen ? 'derecha' : 'arriba'}
+            className={textoImagen?.url_imagen ? 'lg:col-span-6' : 'lg:col-span-10'}
+          >
             {textoImagen && (
               <>
                 <EncabezadoSeccion
@@ -114,7 +118,7 @@ function Nosotros() {
 
               <EnlaceFlecha to="/nosotros">Conoce nuestra historia</EnlaceFlecha>
             </div>
-          </div>
+          </Reveal>
         </div>
       )}
     </Seccion>
