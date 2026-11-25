@@ -59,6 +59,7 @@ export const usuariosSeed = [
       'sede.editar',
       'proclamas.gestionar',
       'proclamas.detalle',
+      'proclamas.observaciones',
       'boletines.gestionar',
       'paginas.gestionar',
       'bitacora.ver',

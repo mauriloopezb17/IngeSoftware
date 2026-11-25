@@ -974,6 +974,17 @@ Reglas adicionales:
 - Los cambios de las publicaciones se registran en la bitácora como cambios de la entidad `proclama`: sus `datosAnteriores` y `datosNuevos` incluyen la clave `publicaciones` (`[{ numero, fecha }]`).
 - Lectura: todos los roles de la sede; `POST`, `PATCH /:id` y `DELETE` piden `proclamas.gestionar` (Marketing recibe `403 SIN_PERMISO`); `PATCH /:id/detalle` pide `proclamas.detalle` (incluye a Marketing).
 
+### Observaciones confidenciales (solo Párroco)
+
+Permiso: `proclamas.observaciones` (solo `PARROCO`, limitado a su sede; otro rol recibe `403 SIN_PERMISO`).
+
+| Método y ruta                                         | Descripción                                                                                                     |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `GET /api/admin/proclamas/observaciones`              | Lista paginada (`estado=no-leidas\|todas`, `proclamaId`, `pagina`, `porPagina`), más reciente primero.          |
+| `GET /api/admin/proclamas/observaciones/resumen`      | Devuelve `{ "datos": { "noLeidas": N } }` para la insignia del menú.                                            |
+| `PATCH /api/admin/proclamas/observaciones/:id`        | `{ "leida": true \| false }`. Guarda o borra `leidoEn` y `leidoPor`.                                            |
+| `DELETE /api/admin/proclamas/observaciones/:id`       | Elimina la observación (`204`). En la bitácora solo se registra la acción y el id, nunca los datos personales. |
+
 ---
 
 ## 11. Boletines

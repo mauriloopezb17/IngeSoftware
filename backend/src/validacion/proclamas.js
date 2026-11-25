@@ -93,3 +93,71 @@ export const cuerpoEditarDetalleProclama = z.strictObject({
 });
 
 export const cuerpoPublicacionProclama = z.strictObject({ fecha });
+
+const vacioANull = (valor) => {
+  if (typeof valor !== 'string') return valor;
+  const limpio = valor.trim();
+  return limpio === '' ? null : limpio;
+};
+
+export const cuerpoCrearObservacion = z
+  .strictObject({
+    nombreCompleto: z
+      .string({ error: 'Debe ser un texto.' })
+      .trim()
+      .transform((valor) => valor.replace(/\s+/g, ' '))
+      .pipe(
+        z
+          .string()
+          .min(3, 'Debe tener al menos 3 caracteres.')
+          .max(120, 'Puede tener hasta 120 caracteres.'),
+      ),
+    correo: z.preprocess(
+      vacioANull,
+      z
+        .string({ error: 'Debe ser un texto.' })
+        .email('Escribe un correo electrónico válido.')
+        .max(120, 'Puede tener hasta 120 caracteres.')
+        .nullable()
+        .optional(),
+    ),
+    telefono: z.preprocess(
+      vacioANull,
+      z
+        .string({ error: 'Debe ser un texto.' })
+        .max(30, 'Puede tener hasta 30 caracteres.')
+        .regex(/^\+?[\d\s-]+$/, 'Solo puede contener +, dígitos, espacios y guiones.')
+        .refine((valor) => {
+          const digitos = valor.replace(/\D/g, '').length;
+          return digitos >= 7 && digitos <= 15;
+        }, 'Debe tener entre 7 y 15 dígitos.')
+        .nullable()
+        .optional(),
+    ),
+    mensaje: z
+      .string({ error: 'Debe ser un texto.' })
+      .trim()
+      .min(10, 'Debe tener al menos 10 caracteres.')
+      .max(2000, 'Puede tener hasta 2000 caracteres.'),
+    sitioWeb: z.string({ error: 'Debe ser un texto.' }).max(200, 'Es demasiado largo.').optional(),
+  })
+  .superRefine((datos, ctx) => {
+    if (!datos.correo && !datos.telefono) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['contacto'],
+        message: 'Escribe tu correo o tu teléfono para que el párroco pueda responderte.',
+      });
+    }
+  });
+
+export const consultaObservaciones = paginacion.extend({
+  estado: z
+    .enum(['no-leidas', 'todas'], { error: 'Debe ser no-leidas o todas.' })
+    .default('no-leidas'),
+  proclamaId: id.optional(),
+});
+
+export const cuerpoMarcarObservacion = z.strictObject({
+  leida: z.boolean({ error: 'Debe ser un booleano.' }),
+});

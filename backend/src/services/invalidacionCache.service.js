@@ -40,6 +40,7 @@ export const RECURSOS_POR_ENTIDAD = Object.freeze({
   pagina: { sede: [PAGINAS] },
   bloque: { sede: [PAGINAS] },
   proclama: { sede: [PROCLAMAS] },
+  observacion_proclama: { sede: [] },
   boletin: { sede: [BOLETINES] },
   // Datos, contacto, portada y redes de la sede, y la lista y resolución del slug de las sedes
   // (crear, renombrar, cambiar el slug o desactivar una sede afecta a todas sus rutas).
