@@ -27,7 +27,7 @@ function LayoutPortal() {
 
       <Encabezado transparente={esInicio} />
 
-      <main id="contenido" tabIndex={-1} className="flex-1 outline-none">
+      <main id="contenido" tabIndex={-1} className="flex-1 overflow-x-clip outline-none">
         <div key={pathname} className="pagina-entrada">
           <Outlet />
         </div>

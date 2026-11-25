@@ -89,11 +89,17 @@ function RevealTitulo({
     if (visible) return undefined;
 
     if (alCargar) {
-      const rafId = window.requestAnimationFrame(() => {
-        setAnimando(true);
-        setVisible(true);
+      let raf2 = null;
+      const raf1 = window.requestAnimationFrame(() => {
+        raf2 = window.requestAnimationFrame(() => {
+          setAnimando(true);
+          setVisible(true);
+        });
       });
-      return () => window.cancelAnimationFrame(rafId);
+      return () => {
+        window.cancelAnimationFrame(raf1);
+        if (raf2 !== null) window.cancelAnimationFrame(raf2);
+      };
     }
 
     return observarElemento(contenedorRef.current, () => {
