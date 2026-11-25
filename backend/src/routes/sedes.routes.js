@@ -10,7 +10,7 @@ import * as proclamasBoletines from '../controllers/proclamasBoletines.controlle
 import * as sedes from '../controllers/sedes.controller.js';
 import { resolverSede } from '../middlewares/resolverSede.js';
 import { validar } from '../middlewares/validar.js';
-import { anio, listaIds, paginacion } from '../validacion/comunes.js';
+import { anio, id, listaIds, paginacion } from '../validacion/comunes.js';
 import eventosRoutes from './eventos.routes.js';
 import publicacionesRoutes from './publicaciones.routes.js';
 
@@ -40,6 +40,11 @@ deSede.get(
   '/proclamas/historial',
   validar({ query: consultaPorAnio }),
   proclamasBoletines.listarHistorialProclamas,
+);
+deSede.get(
+  '/proclamas/:id',
+  validar({ params: z.object({ id }) }),
+  proclamasBoletines.detalleProclama,
 );
 deSede.get('/boletines', validar({ query: consultaPorAnio }), proclamasBoletines.listarBoletines);
 deSede.get('/paginas', paginas.listar);

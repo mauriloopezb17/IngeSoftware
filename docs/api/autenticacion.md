@@ -88,6 +88,7 @@ Abre la sesión. Tiene límite de intentos (ver [sección 4](#4-límite-de-inten
       "videos.gestionar",
       "sede.editar",
       "proclamas.gestionar",
+      "proclamas.detalle",
       "boletines.gestionar",
       "paginas.gestionar"
     ],
@@ -240,6 +241,7 @@ Todos los roles pueden **consultar** (`GET`) todos los recursos de su sede en `/
 | `sede.editar`         | Editar datos, contacto, configuración y redes sociales de la propia sede.                                                                                     |       ✓       |    ✓    |     ✓      |     —     |
 | `sedes.gestionar`     | Crear sedes, activarlas y desactivarlas.                                                                                                                      |       ✓       |    —    |     —      |     —     |
 | `proclamas.gestionar` | CRUD de proclamas matrimoniales y de sus publicaciones.                                                                                                       |       ✓       |    ✓    |     ✓      |     —     |
+| `proclamas.detalle`   | Editar la foto principal, galería, descripción y lugar de cada proclama (`PATCH /api/admin/proclamas/:id/detalle`).                                          |       ✓       |    ✓    |     ✓      |     ✓     |
 | `boletines.gestionar` | Publicar, reemplazar y eliminar boletines.                                                                                                                    |       ✓       |    ✓    |     ✓      |     ✓     |
 | `paginas.gestionar`   | CRUD de páginas y de sus bloques (RF-04).                                                                                                                     |       ✓       |    ✓    |     ✓      |     —     |
 | `usuarios.gestionar`  | CRUD de usuarios y restablecer contraseñas.                                                                                                                   |       ✓       |    —    |     —      |     —     |

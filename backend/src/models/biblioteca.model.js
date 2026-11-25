@@ -36,7 +36,18 @@ const USOS = `
   SELECT 8, 'BLOQUE_PAGINA', pg.titulo
     FROM bloque bl
     JOIN pagina pg ON pg.id = bl.pagina_id
-   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND bl.contenido::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'`;
+   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND bl.contenido::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'
+  UNION ALL
+  SELECT 9, 'IMAGEN_PROCLAMA', pr.nombre_contrayente_1 || ' y ' || pr.nombre_contrayente_2
+    FROM proclama pr WHERE pr.imagen_id = m.id
+  UNION ALL
+  SELECT 10, 'GALERIA_PROCLAMA', pr.nombre_contrayente_1 || ' y ' || pr.nombre_contrayente_2
+    FROM proclama pr
+   WHERE pr.detalle -> 'galeria' @> to_jsonb(m.id)
+  UNION ALL
+  SELECT 11, 'CONTENIDO_PROCLAMA', pr.nombre_contrayente_1 || ' y ' || pr.nombre_contrayente_2
+    FROM proclama pr
+   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND (pr.detalle -> 'contenido')::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'`;
 
 const SELECCION = `
   SELECT ${COLUMNAS_ARCHIVO},

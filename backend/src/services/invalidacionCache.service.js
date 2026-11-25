@@ -47,7 +47,7 @@ export const RECURSOS_POR_ENTIDAD = Object.freeze({
   sede_red_social: { sede: [SEDE] },
   // El texto alternativo de un archivo se muestra en todo lo que lo usa como imagen o archivo.
   archivo_multimedia: {
-    sede: [PUBLICACIONES, EVENTOS, GRUPOS, BOLETINES, SEDE],
+    sede: [PUBLICACIONES, EVENTOS, GRUPOS, PROCLAMAS, BOLETINES, SEDE],
     global: [SEDES],
   },
   // Los usuarios no aparecen en ninguna lectura pública.

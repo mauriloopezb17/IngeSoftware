@@ -71,14 +71,17 @@ export async function verificarArchivos(sedeId, referencias, db) {
       referencia.url !== undefined
         ? porClave.get(claveDeLaUrl(referencia.url))
         : porId.get(referencia.id);
-    const descripcion = DESCRIPCION_CLASE[referencia.clase];
+    const clasesPermitidas = Array.isArray(referencia.clase)
+      ? referencia.clase
+      : [referencia.clase];
+    const descripcion = clasesPermitidas.map((clase) => DESCRIPCION_CLASE[clase]).join(' o ');
 
     if (!archivo) {
       detalles.push({
         campo: referencia.campo,
         mensaje: `Debe ser ${descripcion} de la biblioteca multimedia de esta sede.`,
       });
-    } else if (claseDelTipo(archivo.tipo_mime)?.codigo !== referencia.clase) {
+    } else if (!clasesPermitidas.includes(claseDelTipo(archivo.tipo_mime)?.codigo)) {
       detalles.push({ campo: referencia.campo, mensaje: `El archivo no es ${descripcion}.` });
     }
   }

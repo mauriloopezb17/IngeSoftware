@@ -17,6 +17,8 @@ const COLUMNAS = `
   p.fecha_matrimonio,
   p.tramite_origen_id,
   p.fecha_registro,
+  p.imagen_id,
+  p.detalle,
   (SELECT max(pp.numero_proclama) FROM proclama_publicacion pp
     WHERE pp.proclama_id = p.id AND ${ALCANZADA}) AS numero_proclama,
   COALESCE((SELECT json_agg(json_build_object('numero', pp.numero_proclama,
@@ -76,8 +78,9 @@ export async function buscarPorId(id, db = { consultar }) {
 export async function insertar(datos, db) {
   const { rows } = await db.consultar(
     `INSERT INTO proclama
-       (sede_id, tramite_origen_id, nombre_contrayente_1, nombre_contrayente_2, fecha_matrimonio)
-     VALUES ($1, $2, $3, $4, $5)
+       (sede_id, tramite_origen_id, nombre_contrayente_1, nombre_contrayente_2, fecha_matrimonio,
+        imagen_id, detalle)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING *`,
     [
       datos.sedeId,
@@ -85,6 +88,8 @@ export async function insertar(datos, db) {
       datos.contrayente1,
       datos.contrayente2,
       datos.fechaMatrimonio,
+      datos.imagenId ?? null,
+      datos.detalle ? JSON.stringify(datos.detalle) : null,
     ],
   );
   return rows[0];
@@ -142,9 +147,31 @@ export async function bloquear(id, db) {
 export async function actualizar(id, cambios, db) {
   const { rows } = await db.consultar(
     `UPDATE proclama
-        SET nombre_contrayente_1 = $2, nombre_contrayente_2 = $3, fecha_matrimonio = $4
+        SET nombre_contrayente_1 = $2,
+            nombre_contrayente_2 = $3,
+            fecha_matrimonio = $4,
+            imagen_id = $5,
+            detalle = $6
       WHERE id = $1 RETURNING *`,
-    [id, cambios.contrayente1, cambios.contrayente2, cambios.fechaMatrimonio],
+    [
+      id,
+      cambios.contrayente1,
+      cambios.contrayente2,
+      cambios.fechaMatrimonio,
+      cambios.imagenId ?? null,
+      cambios.detalle ? JSON.stringify(cambios.detalle) : null,
+    ],
+  );
+  return rows[0];
+}
+
+export async function actualizarDetalle(id, cambios, db) {
+  const { rows } = await db.consultar(
+    `UPDATE proclama
+        SET imagen_id = $2,
+            detalle = $3
+      WHERE id = $1 RETURNING *`,
+    [id, cambios.imagenId ?? null, cambios.detalle ? JSON.stringify(cambios.detalle) : null],
   );
   return rows[0];
 }
