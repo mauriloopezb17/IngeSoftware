@@ -154,7 +154,7 @@ function Proclamas() {
         migas={[{ texto: 'Inicio', enlace: '/' }, { texto: 'Proclamas matrimoniales' }]}
         eyebrow="Sacramentos · Matrimonio"
         titulo="Proclamas matrimoniales"
-        bajada="Publicación canónica de próximos matrimonios e historial público de proclamas. Si alguien conoce algún impedimento, debe comunicarlo al párroco o en secretaría."
+        bajada="Publicación canónica de próximos matrimonios e historial público de proclamas. Si alguien conoce algún impedimento, puede escribir de forma confidencial al párroco desde cada proclama o acudir a secretaría."
       />
 
       <Seccion fondo="blanco">
