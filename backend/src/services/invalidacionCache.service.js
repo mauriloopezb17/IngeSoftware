@@ -40,6 +40,7 @@ export const RECURSOS_POR_ENTIDAD = Object.freeze({
   pagina: { sede: [PAGINAS] },
   bloque: { sede: [PAGINAS] },
   proclama: { sede: [PROCLAMAS] },
+  observacion_proclama: { sede: [] },
   boletin: { sede: [BOLETINES] },
   // Datos, contacto, portada y redes de la sede, y la lista y resolución del slug de las sedes
   // (crear, renombrar, cambiar el slug o desactivar una sede afecta a todas sus rutas).
@@ -47,7 +48,7 @@ export const RECURSOS_POR_ENTIDAD = Object.freeze({
   sede_red_social: { sede: [SEDE] },
   // El texto alternativo de un archivo se muestra en todo lo que lo usa como imagen o archivo.
   archivo_multimedia: {
-    sede: [PUBLICACIONES, EVENTOS, GRUPOS, BOLETINES, SEDE],
+    sede: [PUBLICACIONES, EVENTOS, GRUPOS, PROCLAMAS, BOLETINES, SEDE],
     global: [SEDES],
   },
   // Los usuarios no aparecen en ninguna lectura pública.

@@ -24,14 +24,15 @@ function EditarEvento() {
   const { id } = useParams();
   const { puede } = usePermisos();
   const esId = /^\d+$/.test(id);
+  const puedeEditar = puede('eventos.gestionar') || puede('eventos.detalle');
   const { data: evento, isPending, isError, error, refetch } = useQuery({
     queryKey: [...CLAVE_EVENTOS, 'detalle', id],
     queryFn: ({ signal }) => obtenerEvento(id, signal),
-    enabled: esId && puede('eventos.gestionar'),
+    enabled: esId && puedeEditar,
     staleTime: 0,
   });
 
-  if (!puede('eventos.gestionar')) return <SinPermiso />;
+  if (!puedeEditar) return <SinPermiso />;
   if (!esId || (isError && error.estado === 404)) return <NoEncontrada />;
   if (isPending)
     return (
@@ -60,9 +61,11 @@ function EditarEvento() {
       </section>
     );
 
+  const tituloPantalla = puede('eventos.gestionar') ? 'Editar evento' : 'Página del evento';
+
   return (
     <section className="mx-auto max-w-3xl">
-      <EncabezadoPantalla titulo="Editar evento" descripcion={evento.titulo} />
+      <EncabezadoPantalla titulo={tituloPantalla} descripcion={evento.titulo} />
       <FormularioEvento key={evento.id} evento={evento} />
     </section>
   );

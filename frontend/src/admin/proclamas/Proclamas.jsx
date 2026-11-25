@@ -7,9 +7,17 @@ import NoEncontrada from '../paginas/NoEncontrada.jsx';
 import { usePermisos } from '../permisos/usePermisos.js';
 import { Aviso, Boton, EncabezadoPantalla, EsqueletoFormulario } from '../ui/index.js';
 import { CLAVE_PROCLAMAS, obtenerProclama } from './api.js';
+import BandejaObservaciones from './BandejaObservaciones.jsx';
 import FormularioProclama from './FormularioProclama.jsx';
 import ListadoProclamas from './ListadoProclamas.jsx';
 import PublicacionesProclama from './PublicacionesProclama.jsx';
+import SeccionDetalleProclama from './SeccionDetalleProclama.jsx';
+
+function RutaObservaciones() {
+  const { puede } = usePermisos();
+  if (!puede('proclamas.observaciones')) return <SinPermiso />;
+  return <BandejaObservaciones />;
+}
 
 function NuevaProclama() {
   const { puede } = usePermisos();
@@ -28,6 +36,7 @@ function DetalleProclama() {
   const { id } = useParams();
   const { puede } = usePermisos();
   const editable = puede('proclamas.gestionar');
+  const editableDetalle = puede('proclamas.detalle');
   const esId = /^\d+$/.test(id);
 
   const { data: proclama, isPending, isError, error, refetch } = useQuery({
@@ -73,8 +82,10 @@ function DetalleProclama() {
         <>
           <Aviso tipo="soloLectura" className="mt-4">
             <p>
-              <strong className="font-semibold text-ink">Solo lectura.</strong> Tu rol puede consultar las proclamas, pero
-              no modificarlas.
+              <strong className="font-semibold text-ink">Solo lectura.</strong>{' '}
+              {editableDetalle
+                ? 'Tu rol no puede modificar los datos ni las fechas de la proclama, pero sí su página pública más abajo.'
+                : 'Tu rol puede consultar las proclamas, pero no modificarlas.'}
             </p>
           </Aviso>
           <dl className="mt-4 grid gap-2 rounded-lg border border-sand bg-white p-5 text-sm sm:grid-cols-[auto_1fr]">
@@ -90,6 +101,7 @@ function DetalleProclama() {
       )}
 
       <PublicacionesProclama proclama={proclama} editable={editable} />
+      <SeccionDetalleProclama key={`detalle-${proclama.id}`} proclama={proclama} editable={editableDetalle} />
     </section>
   );
 }
@@ -99,6 +111,7 @@ export default function Proclamas() {
   return (
     <Routes>
       <Route index element={<ListadoProclamas />} />
+      <Route path="observaciones" element={<RutaObservaciones />} />
       <Route path="nueva" element={<NuevaProclama />} />
       <Route path=":id/editar" element={<DetalleProclama />} />
       <Route path="*" element={<NoEncontrada />} />

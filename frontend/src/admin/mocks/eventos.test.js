@@ -143,3 +143,36 @@ describe('regla de «finalizado» (publico.md, RF-09)', () => {
     ).toBe(false);
   });
 });
+
+describe('detalle de eventos en mocks del panel', () => {
+  beforeEach(reiniciarMocksAdmin);
+  afterEach(reiniciarMocksAdmin);
+
+  it('Marketing edita solo detalle via PATCH y Secretaría conserva acceso completo', async () => {
+    await entrar('marketing');
+    const { datos: actualizado } = await clienteHttp.patch('/admin/eventos/2/detalle', {
+      detalle: {
+        direccion: 'Calle Obrajes N.º 10',
+        enlaceMapa: 'https://maps.app.goo.gl/ejemplo',
+        programa: [
+          { hora: '18:00', actividad: 'Vísperas' },
+          { hora: '09:00', actividad: 'Acogida' },
+        ],
+        responsable: { nombre: 'María López', rol: 'Coordinadora' },
+        enlaces: [{ texto: 'Programa PDF', url: 'https://parroquia.example.org/programa.pdf' }],
+      },
+    });
+
+    expect(actualizado.detalle.direccion).toBe('Calle Obrajes N.º 10');
+    expect(actualizado.detalle.programa.map((p) => p.hora)).toEqual(['09:00', '18:00']);
+
+    const prohibido = await capturar(
+      clienteHttp.patch('/admin/eventos/2', { titulo: 'Intento sin permiso' }),
+    );
+    expect(prohibido.estado).toBe(403);
+
+    await clienteHttp.post('/auth/logout');
+    const noAutorizado = await capturar(clienteHttp.patch('/admin/eventos/2/detalle', { detalle: null }));
+    expect(noAutorizado.estado).toBe(401);
+  });
+});

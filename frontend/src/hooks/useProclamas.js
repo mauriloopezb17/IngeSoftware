@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { SEDE_ACTUAL } from '../config/sede.js';
-import { obtenerHistorialProclamas, obtenerProclamas } from '../services/portal.js';
+import { obtenerHistorialProclamas, obtenerProclama, obtenerProclamas } from '../services/portal.js';
 import { clavesPortal } from './clavesPortal.js';
 
 export function useProclamas(sede = SEDE_ACTUAL) {
@@ -9,6 +9,14 @@ export function useProclamas(sede = SEDE_ACTUAL) {
     queryKey: clavesPortal.proclamas(sede),
     queryFn: ({ signal }) => obtenerProclamas(sede, signal),
     enabled: Boolean(sede),
+  });
+}
+
+export function useProclama(id, sede = SEDE_ACTUAL) {
+  return useQuery({
+    queryKey: clavesPortal.proclama(sede, id),
+    queryFn: ({ signal }) => obtenerProclama(sede, id, signal),
+    enabled: Boolean(sede && id),
   });
 }
 

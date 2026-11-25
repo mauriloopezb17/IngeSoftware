@@ -39,6 +39,10 @@ export async function obtenerEventos(sede, parametros, senal) {
   return clienteHttp.get(`/sedes/${sede}/eventos`, { parametros, senal });
 }
 
+export async function obtenerEvento(sede, id, senal) {
+  return clienteHttp.get(`/sedes/${sede}/eventos/${id}`, { senal });
+}
+
 export async function obtenerPublicaciones(sede, parametros, senal) {
   return clienteHttp.get(`/sedes/${sede}/publicaciones`, { parametros, senal });
 }
@@ -54,6 +58,16 @@ export async function obtenerBoletines(sede, parametros, senal) {
 
 export async function obtenerProclamas(sede, senal) {
   const { datos } = await clienteHttp.get(`/sedes/${sede}/proclamas`, { senal });
+  return datos;
+}
+
+export async function obtenerProclama(sede, id, senal) {
+  const { datos } = await clienteHttp.get(`/sedes/${sede}/proclamas/${id}`, { senal });
+  return datos;
+}
+
+export async function enviarObservacionProclama(sede, id, cuerpo) {
+  const { datos } = await clienteHttp.post(`/sedes/${sede}/proclamas/${id}/observaciones`, cuerpo);
   return datos;
 }
 

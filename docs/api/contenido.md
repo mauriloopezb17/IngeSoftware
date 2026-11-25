@@ -4,7 +4,8 @@ Formato de los tres documentos JSONB que la API guarda y devuelve **sin traducir
 
 | Documento                                                                   | Columna                 | Dónde se edita                     |
 | --------------------------------------------------------------------------- | ----------------------- | ---------------------------------- |
-| [Contenido de las publicaciones](#contenido-de-las-publicaciones-blocknote) | `publicacion.contenido` | Editor BlockNote del panel         |
+| [Contenido de las publicaciones y eventos](#contenido-de-las-publicaciones-blocknote) | `publicacion.contenido`, `evento.detalle.contenido` | Editor BlockNote del panel |
+| [Detalle de las proclamas](#contenido-de-las-publicaciones-blocknote)       | `proclama.detalle`      | Editor BlockNote + galería + lugar |
 | [Contenido de los servicios](#contenido-de-los-servicios)                   | `servicio.contenido`    | Formulario de etiqueta y valor     |
 | [Bloques de página](#bloques-de-página)                                     | `bloque.contenido`      | Formulario según el tipo de bloque |
 

@@ -11,8 +11,11 @@ import ContactoPagina from './pages/ContactoPagina.jsx';
 import Noticias from './pages/Noticias.jsx';
 import NoticiaDetalle from './pages/NoticiaDetalle.jsx';
 import Proclamas from './pages/Proclamas.jsx';
+import ProclamaDetalle from './pages/ProclamaDetalle.jsx';
 import Calendario from './pages/Calendario.jsx';
+import CalendarioDia from './pages/CalendarioDia.jsx';
 import Boletines from './pages/Boletines.jsx';
+import EventoDetalle from './pages/EventoDetalle.jsx';
 import PaginaPublica from './pages/PaginaPublica.jsx';
 import NoEncontrado from './pages/NoEncontrado.jsx';
 import CargandoPagina from './pages/CargandoPagina.jsx';
@@ -41,7 +44,10 @@ export const rutas = [
           { path: '/noticias', Component: Noticias },
           { path: '/noticias/:slug', Component: NoticiaDetalle },
           { path: '/proclamas', Component: Proclamas },
+          { path: '/proclamas/:id', Component: ProclamaDetalle },
           { path: '/calendario', Component: Calendario },
+          { path: '/calendario/dia/:fecha', Component: CalendarioDia },
+          { path: '/calendario/:id', Component: EventoDetalle },
           { path: '/boletines', Component: Boletines },
           { path: '/boletines/:periodo', Component: Boletines },
           { path: '/paginas/:slug', Component: PaginaPublica },

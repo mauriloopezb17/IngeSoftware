@@ -1,4 +1,4 @@
-import { CalendarDays, Clock3, Download, FileText, MapPin, Megaphone } from 'lucide-react';
+import { ArrowRight, CalendarDays, Clock3, Download, FileText, MapPin, Megaphone } from 'lucide-react';
 
 import {
   BotonEnlace,
@@ -7,6 +7,7 @@ import {
   Reveal,
   Seccion,
 } from '../portal/index.js';
+import EnlacePortal from './EnlacePortal.jsx';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { useBoletines, useEventos, usePublicaciones } from '../../hooks/index.js';
 import {
@@ -74,7 +75,7 @@ function Agenda() {
                       variante="tarjeta"
                       retraso={indice * 90}
                       as="article"
-                      className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:gap-6"
+                      className="group relative -mx-3 flex flex-col gap-4 rounded-sm px-3 py-6 transition-colors duration-150 hover:bg-cream focus-within:bg-cream focus-within:ring-2 focus-within:ring-ink/25 sm:flex-row sm:items-center sm:gap-6"
                     >
                       <div className="flex w-20 shrink-0 items-baseline gap-2 sm:flex-col sm:items-center sm:gap-0 sm:border-r sm:border-sand sm:pr-6">
                         <span className="font-display text-h2 font-semibold lining-nums tabular-nums text-ink">
@@ -100,7 +101,12 @@ function Agenda() {
                         )}
 
                         <h3 className="font-display text-h3 font-semibold text-ink">
-                          {evento.titulo}
+                          <EnlacePortal
+                            to={`/calendario/${evento.id}`}
+                            className="after:absolute after:inset-0 focus-visible:outline-none"
+                          >
+                            {evento.titulo}
+                          </EnlacePortal>
                         </h3>
 
                         <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-body text-meta tabular-nums text-muted">
@@ -116,6 +122,14 @@ function Agenda() {
                           )}
                         </p>
                       </div>
+
+                      <span
+                        aria-hidden="true"
+                        className="inline-flex shrink-0 items-center gap-1.5 font-body text-meta font-semibold text-ink transition-transform duration-150 group-hover:translate-x-0.5"
+                      >
+                        <span>Ver detalles</span>
+                        <ArrowRight size={15} />
+                      </span>
                     </Reveal>
                   );
                 })}

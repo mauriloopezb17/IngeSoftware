@@ -79,6 +79,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 1, nombre: 'Liturgia', colorHex: '#E2AD11' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 1,
@@ -90,6 +92,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 1, nombre: 'Liturgia', colorHex: '#E2AD11' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 2,
@@ -101,6 +105,27 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 2, nombre: 'Solemnidad', colorHex: '#9E1B22' },
       imagen: null,
+      tieneDetalle: true,
+      detalle: {
+        contenido: crearContenidoBlockNote(
+          'misa-sanacion',
+          'Celebración comunitaria y oración por los enfermos (texto de ejemplo).',
+        ),
+        direccion: 'Av. Héctor Ormachea N.º 167, Obrajes, La Paz',
+        enlaceMapa: 'https://www.google.com/maps/search/?api=1&query=-16.5267952%2C-68.1082157',
+        programa: [
+          { hora: '08:00', actividad: 'Primera misa de sanación (ejemplo)' },
+          { hora: '10:00', actividad: 'Misa central (ejemplo)' },
+          { hora: '12:00', actividad: 'Tercera misa (ejemplo)' },
+        ],
+        responsable: {
+          nombre: 'Equipo de Liturgia (ejemplo)',
+          rol: 'Coordinación pastoral',
+          telefono: '(2) 278 4937',
+          correo: null,
+        },
+        enlaces: [],
+      },
     },
     {
       id: 3,
@@ -112,6 +137,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 1, nombre: 'Liturgia', colorHex: '#E2AD11' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 4,
@@ -123,6 +150,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 3, nombre: 'Catequesis', colorHex: '#B5532F' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 5,
@@ -134,6 +163,28 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 4, nombre: 'Comunidad', colorHex: '#3E9C97' },
       imagen: null,
+      tieneDetalle: true,
+      detalle: {
+        contenido: crearContenidoBlockNote(
+          'encuentro-jovenes',
+          'Espacio fraterno de formación y música para jóvenes de la parroquia (texto de ejemplo).',
+        ),
+        direccion: 'Av. Héctor Ormachea N.º 167, Obrajes',
+        enlaceMapa: 'https://maps.app.goo.gl/ejemploParroquia',
+        programa: [
+          { hora: '17:00', actividad: 'Acogida y oración inicial (ejemplo)' },
+          { hora: '18:00', actividad: 'Tema central y grupos (ejemplo)' },
+        ],
+        responsable: {
+          nombre: 'Pastoral Juvenil (ejemplo)',
+          rol: 'Coordinación',
+          telefono: null,
+          correo: 'jovenes@ejemplo.test',
+        },
+        enlaces: [
+          { texto: 'Ficha de inscripción (ejemplo)', url: 'https://ejemplo.test/jovenes' },
+        ],
+      },
     },
     {
       id: 6,
@@ -145,6 +196,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: true,
       categoria: { id: 2, nombre: 'Solemnidad', colorHex: '#9E1B22' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 7,
@@ -156,6 +209,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 3, nombre: 'Catequesis', colorHex: '#B5532F' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 8,
@@ -167,6 +222,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 1, nombre: 'Liturgia', colorHex: '#E2AD11' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 9,
@@ -178,6 +235,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: true,
       categoria: { id: 4, nombre: 'Comunidad', colorHex: '#3E9C97' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
   ];
 }
@@ -345,6 +404,15 @@ export function obtenerProclamasExaltacion() {
         { numero: 2, fecha: soloFechaRelativa(-7) },
         { numero: 3, fecha: soloFechaRelativa(0) },
       ],
+      tieneDetalle: true,
+      imagen: {
+        id: 101,
+        url: '/media/seed/templo-exterior.webp',
+        textoAlternativo: 'Templo de la Parroquia Señor de la Exaltación (imagen de ejemplo)',
+        ancho: 1200,
+        alto: 800,
+        variantes: [],
+      },
     },
     {
       id: 2,
@@ -356,6 +424,8 @@ export function obtenerProclamasExaltacion() {
         { numero: 1, fecha: soloFechaRelativa(-7) },
         { numero: 2, fecha: soloFechaRelativa(0) },
       ],
+      tieneDetalle: true,
+      imagen: null,
     },
     {
       id: 3,
@@ -364,6 +434,8 @@ export function obtenerProclamasExaltacion() {
       fechaMatrimonio: fechaRelativaBolivia(baseSabado + 21, '12:00:00'),
       numeroProclama: 1,
       publicaciones: [{ numero: 1, fecha: soloFechaRelativa(0) }],
+      tieneDetalle: false,
+      imagen: null,
     },
   ];
 }
@@ -382,6 +454,8 @@ export function obtenerHistorialProclamasExaltacion() {
         { numero: 2, fecha: '2026-08-09' },
         { numero: 3, fecha: '2026-08-16' },
       ],
+      tieneDetalle: false,
+      imagen: null,
     },
     {
       id: 5,
@@ -394,6 +468,8 @@ export function obtenerHistorialProclamasExaltacion() {
         { numero: 2, fecha: '2026-05-31' },
         { numero: 3, fecha: '2026-06-07' },
       ],
+      tieneDetalle: false,
+      imagen: null,
     },
     {
       id: 6,
@@ -406,6 +482,8 @@ export function obtenerHistorialProclamasExaltacion() {
         { numero: 2, fecha: '2025-11-02' },
         { numero: 3, fecha: '2025-11-09' },
       ],
+      tieneDetalle: false,
+      imagen: null,
     },
     {
       id: 7,
@@ -418,8 +496,91 @@ export function obtenerHistorialProclamasExaltacion() {
         { numero: 2, fecha: '2025-09-07' },
         { numero: 3, fecha: '2025-09-14' },
       ],
+      tieneDetalle: false,
+      imagen: null,
     },
   ];
 
   return [...vigentes, ...pasadas];
+}
+
+export function obtenerDetalleProclamaExaltacion(id) {
+  const numId = Number(id);
+  const item = obtenerHistorialProclamasExaltacion().find((p) => p.id === numId);
+  if (!item) return null;
+
+  if (numId === 1) {
+    const galeria = [
+      {
+        id: 101,
+        url: '/media/seed/templo-exterior.webp',
+        textoAlternativo: 'Templo de la Parroquia Señor de la Exaltación (imagen de ejemplo)',
+        ancho: 1200,
+        alto: 800,
+        variantes: [],
+        tipoMime: 'image/webp',
+      },
+      {
+        id: 102,
+        url: '/media/seed/altar-mayor.webp',
+        textoAlternativo: 'Altar mayor del templo (imagen de ejemplo)',
+        ancho: 1200,
+        alto: 800,
+        variantes: [],
+        tipoMime: 'image/webp',
+      },
+    ];
+    return {
+      ...item,
+      aceptaObservaciones: new Date(item.fechaMatrimonio).getTime() > Date.now(),
+      galeria,
+      detalle: {
+        contenido: {
+          formato: 'blocknote',
+          version: 1,
+          bloques: [
+            {
+              id: 'proclama-1-p1',
+              type: 'paragraph',
+              props: {},
+              content: [
+                {
+                  type: 'text',
+                  text: 'Con alegría compartimos el anuncio de nuestro matrimonio religioso (texto de ejemplo).',
+                  styles: {},
+                },
+              ],
+              children: [],
+            },
+          ],
+        },
+        galeria: galeria.map((g) => g.id),
+        lugar: null,
+      },
+    };
+  }
+
+  if (numId === 2) {
+    return {
+      ...item,
+      aceptaObservaciones: new Date(item.fechaMatrimonio).getTime() > Date.now(),
+      galeria: [],
+      detalle: {
+        contenido: null,
+        galeria: [],
+        lugar: {
+          templo: 'Capilla San Pablo de la Cruz (ejemplo)',
+          direccion: 'Av. Costanera 123, Obrajes',
+          enlaceMapa: 'https://maps.app.goo.gl/ejemplo',
+        },
+      },
+    };
+  }
+
+  return {
+    ...item,
+    aceptaObservaciones: new Date(item.fechaMatrimonio).getTime() > Date.now(),
+    galeria: [],
+    detalle: null,
+  };
 }

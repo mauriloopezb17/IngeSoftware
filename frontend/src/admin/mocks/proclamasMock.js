@@ -31,7 +31,7 @@ const diaDe = (iso) => fechaBolivia(new Date(iso)).slice(0, 10);
 
 const MAX_PUBLICACIONES = 3;
 
-const proclama = (id, contrayente1, contrayente2, fechaMatrimonio, fechas) => ({
+const proclama = (id, contrayente1, contrayente2, fechaMatrimonio, fechas, extra = {}) => ({
   id,
   sede: SEDE_PRINCIPAL,
   contrayente1,
@@ -40,6 +40,9 @@ const proclama = (id, contrayente1, contrayente2, fechaMatrimonio, fechas) => ({
   tramiteOrigenId: null,
   fechaRegistro: matrimonio(-40, '11:20'),
   publicaciones: fechas.map((fecha, i) => ({ numero: i + 1, fecha })),
+  imagenId: null,
+  detalle: null,
+  ...extra,
 });
 
 // Los nombres son los ficticios de la landing (publico.md). Las fechas son relativas a hoy para que
@@ -57,9 +60,72 @@ function crearProclamasIniciales() {
 let proclamas = crearProclamasIniciales();
 let siguienteId = 6;
 
+function crearObservacionesIniciales() {
+  return [
+    {
+      id: 1,
+      proclamaId: 1,
+      sedeSlug: SEDE_PRINCIPAL.slug,
+      nombreCompleto: 'María Elena Quispe (ejemplo)',
+      correo: 'maria.quispe@ejemplo.test',
+      telefono: '71234567',
+      mensaje: 'Quisiera conversar con usted en reserva sobre esta proclama.\nTengo disponibilidad por la tarde.',
+      fechaEnvio: matrimonio(-1, '09:15'),
+      leida: false,
+      leidoEn: null,
+    },
+    {
+      id: 2,
+      proclamaId: 2,
+      sedeSlug: SEDE_PRINCIPAL.slug,
+      nombreCompleto: 'Carlos Mamani (ejemplo)',
+      correo: 'carlos.mamani@ejemplo.test',
+      telefono: null,
+      mensaje: 'Por favor comuníquese conmigo por correo electrónico cuando le sea posible.',
+      fechaEnvio: matrimonio(-2, '16:40'),
+      leida: false,
+      leidoEn: null,
+    },
+    {
+      id: 3,
+      proclamaId: 1,
+      sedeSlug: SEDE_PRINCIPAL.slug,
+      nombreCompleto: 'Rosaura Flores (ejemplo)',
+      correo: null,
+      telefono: '+591 6543-2100',
+      mensaje: 'Dejo mi número para aclarar un dato familiar antes de la celebración.',
+      fechaEnvio: matrimonio(-5, '11:00'),
+      leida: true,
+      leidoEn: matrimonio(-4, '10:00'),
+    },
+  ];
+}
+
+let observaciones = crearObservacionesIniciales();
+
 export function reiniciarProclamas() {
   proclamas = crearProclamasIniciales();
   siguienteId = 6;
+  observaciones = crearObservacionesIniciales();
+}
+
+function serializarObservacion(o) {
+  const p = proclamas.find((item) => item.id === o.proclamaId);
+  return {
+    id: o.id,
+    proclama: {
+      id: o.proclamaId,
+      contrayente1: p?.contrayente1 ?? 'Contrayente 1',
+      contrayente2: p?.contrayente2 ?? 'Contrayente 2',
+    },
+    nombreCompleto: o.nombreCompleto,
+    correo: o.correo,
+    telefono: o.telefono,
+    mensaje: o.mensaje,
+    fechaEnvio: o.fechaEnvio,
+    leida: o.leida,
+    leidoEn: o.leidoEn,
+  };
 }
 
 const alcanzada = (pub, hoy) => pub.fecha <= hoy;
@@ -116,11 +182,74 @@ function validarFechas(fechas, fechaMatrimonio, campoDe) {
   return detalles;
 }
 
-const CAMPOS_CREAR = ['sedeId', 'contrayente1', 'contrayente2', 'fechaMatrimonio', 'tramiteOrigenId', 'publicaciones'];
-const CAMPOS_EDITAR = ['contrayente1', 'contrayente2', 'fechaMatrimonio'];
+const CAMPOS_CREAR = [
+  'sedeId',
+  'contrayente1',
+  'contrayente2',
+  'fechaMatrimonio',
+  'tramiteOrigenId',
+  'publicaciones',
+  'imagenId',
+  'detalle',
+];
+const CAMPOS_EDITAR = ['contrayente1', 'contrayente2', 'fechaMatrimonio', 'imagenId', 'detalle'];
+const CAMPOS_DETALLE = ['imagenId', 'detalle'];
 
 const SIN_PERMISO = 'Tu rol no tiene permiso para gestionar las proclamas.';
+const SIN_PERMISO_DETALLE = 'Tu rol no tiene permiso para editar la página de la proclama.';
 const NO_EXISTE = 'La proclama no existe.';
+
+function esUrlGoogleMaps(valor) {
+  try {
+    const { protocol, hostname, pathname } = new URL(valor);
+    if (protocol !== 'https:') return false;
+    const host = hostname.toLowerCase();
+    return (
+      host === 'maps.app.goo.gl' ||
+      host.startsWith('maps.google.') ||
+      ((host === 'google.com' || host.endsWith('.google.com')) && pathname.startsWith('/maps')) ||
+      (host === 'goo.gl' && pathname.startsWith('/maps'))
+    );
+  } catch {
+    return false;
+  }
+}
+
+function validarDetalleCuerpo(cuerpo) {
+  const detalles = [];
+  if ('imagenId' in cuerpo && cuerpo.imagenId !== null && (!Number.isInteger(cuerpo.imagenId) || cuerpo.imagenId <= 0)) {
+    detalles.push({ campo: 'imagenId', mensaje: 'Debe ser un identificador válido.' });
+  }
+  if ('detalle' in cuerpo && cuerpo.detalle !== null) {
+    const d = cuerpo.detalle;
+    if (!d || typeof d !== 'object' || Array.isArray(d)) {
+      detalles.push({ campo: 'detalle', mensaje: 'Debe ser un objeto.' });
+      return detalles;
+    }
+    const permitidos = ['contenido', 'galeria', 'lugar'];
+    for (const k of Object.keys(d)) {
+      if (!permitidos.includes(k)) detalles.push({ campo: `detalle.${k}`, mensaje: 'Campo no permitido.' });
+    }
+    if ('galeria' in d && d.galeria !== undefined) {
+      if (!Array.isArray(d.galeria)) detalles.push({ campo: 'detalle.galeria', mensaje: 'Debe ser una lista.' });
+      else if (d.galeria.length > 12)
+        detalles.push({ campo: 'detalle.galeria', mensaje: 'La galería puede tener hasta 12 archivos.' });
+    }
+    if ('lugar' in d && d.lugar !== null && d.lugar !== undefined) {
+      if (typeof d.lugar !== 'object' || Array.isArray(d.lugar)) {
+        detalles.push({ campo: 'detalle.lugar', mensaje: 'Debe ser un objeto.' });
+      } else {
+        if (typeof d.lugar.templo !== 'string' || !d.lugar.templo.trim() || d.lugar.templo.trim().length > 150) {
+          detalles.push({ campo: 'detalle.lugar.templo', mensaje: 'El templo es obligatorio, hasta 150 caracteres.' });
+        }
+        if (d.lugar.enlaceMapa && !esUrlGoogleMaps(d.lugar.enlaceMapa)) {
+          detalles.push({ campo: 'detalle.lugar.enlaceMapa', mensaje: 'Debe ser un enlace https:// de Google Maps.' });
+        }
+      }
+    }
+  }
+  return detalles;
+}
 
 function listar(parametros, slugSede) {
   const detalles = [];
@@ -169,6 +298,66 @@ function proclamaEscribible(params) {
 }
 
 export const handlersProclamas = [
+  http.get(api('/admin/proclamas/observaciones/resumen'), () => {
+    const auth = autorizar('proclamas.observaciones', 'Solo el párroco puede consultar las observaciones.');
+    if (auth.respuesta) return auth.respuesta;
+    const slug = auth.usuario.sede?.slug ?? SEDE_PRINCIPAL.slug;
+    const noLeidas = observaciones.filter((o) => o.sedeSlug === slug && !o.leida).length;
+    return HttpResponse.json({ datos: { noLeidas } });
+  }),
+
+  http.get(api('/admin/proclamas/observaciones'), ({ request }) => {
+    const auth = autorizar('proclamas.observaciones', 'Solo el párroco puede consultar las observaciones.');
+    if (auth.respuesta) return auth.respuesta;
+    const parametros = new URL(request.url).searchParams;
+    const paginacion = leerPaginacion(parametros);
+    if (paginacion.detalles) return consultaInvalida(paginacion.detalles);
+
+    const estado = parametros.get('estado') ?? 'no-leidas';
+    const proclamaIdParam = parametros.get('proclamaId');
+    const proclamaId = proclamaIdParam ? Number(proclamaIdParam) : null;
+    const slug = auth.usuario.sede?.slug ?? SEDE_PRINCIPAL.slug;
+
+    const filtradas = observaciones
+      .filter(
+        (o) =>
+          o.sedeSlug === slug &&
+          (estado === 'todas' || !o.leida) &&
+          (!proclamaId || o.proclamaId === proclamaId),
+      )
+      .sort((a, b) => new Date(b.fechaEnvio) - new Date(a.fechaEnvio));
+
+    const pagina = paginar(filtradas, paginacion);
+    return HttpResponse.json({ ...pagina, datos: pagina.datos.map(serializarObservacion) });
+  }),
+
+  http.patch(api('/admin/proclamas/observaciones/:id'), async ({ request, params }) => {
+    const auth = autorizar('proclamas.observaciones', 'Solo el párroco puede gestionar las observaciones.');
+    if (auth.respuesta) return auth.respuesta;
+    const slug = auth.usuario.sede?.slug ?? SEDE_PRINCIPAL.slug;
+    const obs = observaciones.find((o) => o.id === Number(params.id) && o.sedeSlug === slug);
+    if (!obs) return respuestaError({ estado: 404, codigo: 'NO_ENCONTRADO', mensaje: 'La observación no existe.' });
+    const cuerpo = await leerCuerpo(request);
+    if (!cuerpo || typeof cuerpo.leida !== 'boolean') {
+      return fallo(errorValidacion([{ campo: 'leida', mensaje: 'Debe ser un booleano.' }]));
+    }
+    obs.leida = cuerpo.leida;
+    obs.leidoEn = cuerpo.leida ? obs.leidoEn ?? fechaBolivia(new Date()) : null;
+    return HttpResponse.json({ datos: serializarObservacion(obs) });
+  }),
+
+  http.delete(api('/admin/proclamas/observaciones/:id'), ({ params }) => {
+    const auth = autorizar('proclamas.observaciones', 'Solo el párroco puede gestionar las observaciones.');
+    if (auth.respuesta) return auth.respuesta;
+    const slug = auth.usuario.sede?.slug ?? SEDE_PRINCIPAL.slug;
+    const indice = observaciones.findIndex((o) => o.id === Number(params.id) && o.sedeSlug === slug);
+    if (indice === -1) {
+      return respuestaError({ estado: 404, codigo: 'NO_ENCONTRADO', mensaje: 'La observación no existe.' });
+    }
+    observaciones.splice(indice, 1);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.get(api('/admin/proclamas'), ({ request }) => {
     const { usuario, respuesta: sinSesion } = autenticar();
     if (sinSesion) return sinSesion;
@@ -202,6 +391,7 @@ export const handlersProclamas = [
     if (fechas.length > MAX_PUBLICACIONES)
       detalles.push({ campo: 'publicaciones', mensaje: `Una proclama tiene hasta ${MAX_PUBLICACIONES} publicaciones.` });
     if (!detalles.length) detalles.push(...validarFechas(fechas, cuerpo.fechaMatrimonio, (i) => `publicaciones.${i}.fecha`));
+    detalles.push(...validarDetalleCuerpo(cuerpo));
     if (detalles.length) return fallo(errorValidacion(detalles));
 
     const nueva = proclama(
@@ -210,6 +400,10 @@ export const handlersProclamas = [
       cuerpo.contrayente2.trim(),
       fechaBolivia(new Date(cuerpo.fechaMatrimonio)),
       fechas,
+      {
+        imagenId: cuerpo.imagenId ?? null,
+        detalle: cuerpo.detalle ?? null,
+      },
     );
     nueva.sede = usuario.sede ?? SEDE_PRINCIPAL;
     nueva.fechaRegistro = fechaBolivia(new Date());
@@ -228,7 +422,11 @@ export const handlersProclamas = [
     const cuerpo = await leerCuerpo(request);
     if (!cuerpo) return cuerpoInvalido();
 
-    const detalles = [...camposNoPermitidos(cuerpo, CAMPOS_EDITAR), ...validarNombres(cuerpo, { parcial: true })];
+    const detalles = [
+      ...camposNoPermitidos(cuerpo, CAMPOS_EDITAR),
+      ...validarNombres(cuerpo, { parcial: true }),
+      ...validarDetalleCuerpo(cuerpo),
+    ];
     if ('fechaMatrimonio' in cuerpo) {
       if (!esFechaHoraConZona(cuerpo.fechaMatrimonio))
         detalles.push({ campo: 'fechaMatrimonio', mensaje: 'Debe ser una fecha y hora con zona.' });
@@ -244,6 +442,25 @@ export const handlersProclamas = [
     if ('contrayente1' in cuerpo) p.contrayente1 = cuerpo.contrayente1.trim();
     if ('contrayente2' in cuerpo) p.contrayente2 = cuerpo.contrayente2.trim();
     if ('fechaMatrimonio' in cuerpo) p.fechaMatrimonio = fechaBolivia(new Date(cuerpo.fechaMatrimonio));
+    if ('imagenId' in cuerpo) p.imagenId = cuerpo.imagenId ?? null;
+    if ('detalle' in cuerpo) p.detalle = cuerpo.detalle ?? null;
+    return respuesta(p);
+  }),
+
+  http.patch(api('/admin/proclamas/:id/detalle'), async ({ request, params }) => {
+    const auth = autorizar('proclamas.detalle', SIN_PERMISO_DETALLE);
+    if (auth.respuesta) return auth.respuesta;
+    const leido = leerDeLaSede(proclamas, params.id, auth.usuario, NO_EXISTE);
+    if (leido.respuesta) return leido.respuesta;
+    const p = leido.recurso;
+    const cuerpo = await leerCuerpo(request);
+    if (!cuerpo) return cuerpoInvalido();
+
+    const detalles = [...camposNoPermitidos(cuerpo, CAMPOS_DETALLE), ...validarDetalleCuerpo(cuerpo)];
+    if (detalles.length) return fallo(errorValidacion(detalles));
+
+    if ('imagenId' in cuerpo) p.imagenId = cuerpo.imagenId ?? null;
+    if ('detalle' in cuerpo) p.detalle = cuerpo.detalle ?? null;
     return respuesta(p);
   }),
 

@@ -1,6 +1,6 @@
 // Integración: la sesión vence mientras se llena un formulario. Guardar da 401, pero la pantalla sigue ahí con lo
 // escrito; se vuelve a entrar desde el aviso y se guarda lo mismo sin tener que escribirlo de nuevo.
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
@@ -14,10 +14,12 @@ import { crearQueryClient } from '../../services/queryClient.js';
 import FormularioEvento from '../eventos/FormularioEvento.jsx';
 import { reiniciarMocksAdmin } from '../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from '../mocks/usuarios.js';
+import { prepararEditorEnJsdom } from '../publicaciones/apoyoPruebas.js';
 import { SesionProvider } from '../sesion/SesionProvider.jsx';
 import AvisoSesion from './AvisoSesion.jsx';
 
 describe('sesión que vence con trabajo sin guardar', () => {
+  beforeAll(prepararEditorEnJsdom);
   beforeEach(reiniciarMocksAdmin);
   afterEach(reiniciarMocksAdmin);
 
@@ -71,5 +73,5 @@ describe('sesión que vence con trabajo sin guardar', () => {
     expect(await screen.findByRole('heading', { name: 'Listado de eventos' })).toBeInTheDocument();
     const { datos } = await clienteHttp.get('/admin/eventos', { parametros: { estado: 'PUBLICADO', finalizados: 'false' } });
     expect(datos.map((e) => e.titulo)).toContain('Vigilia de oración por la paz');
-  });
+  }, 15000);
 });

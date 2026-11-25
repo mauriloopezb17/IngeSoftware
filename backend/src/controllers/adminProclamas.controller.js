@@ -1,6 +1,7 @@
 // Controladores HTTP de /api/admin/proclamas.
 import * as servicio from '../services/adminProclamas.service.js';
 import { contextoDe } from '../services/bitacora.service.js';
+import * as observaciones from '../services/observacionesProclama.service.js';
 
 export async function listar(req, res) {
   res.json(await servicio.listarProclamas(req.sedeFiltro, req.validado.query));
@@ -19,6 +20,18 @@ export async function editar(req, res) {
   const { id } = req.validado.params;
   res.json({
     datos: await servicio.editarProclama(req.usuario, id, req.validado.body, contextoDe(req)),
+  });
+}
+
+export async function editarDetalle(req, res) {
+  const { id } = req.validado.params;
+  res.json({
+    datos: await servicio.editarDetalleProclama(
+      req.usuario,
+      id,
+      req.validado.body,
+      contextoDe(req),
+    ),
   });
 }
 
@@ -56,4 +69,24 @@ export async function quitarPublicacion(req, res) {
   res.json({
     datos: await servicio.quitarPublicacion(req.usuario, id, numero, contextoDe(req)),
   });
+}
+
+export async function listarObservaciones(req, res) {
+  res.json(await observaciones.listarObservaciones(req.usuario.sedeId, req.validado.query));
+}
+
+export async function resumenObservaciones(req, res) {
+  res.json({ datos: await observaciones.resumenObservaciones(req.usuario.sedeId) });
+}
+
+export async function marcarObservacion(req, res) {
+  const { id } = req.validado.params;
+  res.json({
+    datos: await observaciones.marcarObservacion(req.usuario, id, req.validado.body),
+  });
+}
+
+export async function eliminarObservacion(req, res) {
+  await observaciones.eliminarObservacion(req.usuario, req.validado.params.id, contextoDe(req));
+  res.status(204).end();
 }
