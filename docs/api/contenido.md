@@ -383,7 +383,7 @@ Reglas comunes a todos los tipos:
 | `etiqueta`      | texto |             | Línea pequeña sobre el título. Hasta 80.                                 |
 | `url_video`     | URL   |      ✓      | Video MP4 o WebM de la biblioteca. Se reproduce sin sonido y en bucle.   |
 | `url_poster`    | URL   |             | Imagen que se muestra mientras carga el video.                           |
-| `texto_video`   | texto |             | Título del botón de reproducción (ej. «Video institucional»). Hasta 60.  |
+| `texto_video`   | texto |             | Obsoleto: la portada ya no muestra botón de video; se conserva por compatibilidad. Hasta 60. |
 | `detalle_video` | texto |             | Línea secundaria del botón (ej. «Recorrido aéreo · 0:30»). Hasta 60.     |
 | `botones`       | lista |             | De 0 a 3 elementos `{ "texto", "enlace" }`; `texto` hasta 40 caracteres. |
 
