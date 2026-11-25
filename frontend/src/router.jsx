@@ -11,6 +11,7 @@ import ContactoPagina from './pages/ContactoPagina.jsx';
 import Noticias from './pages/Noticias.jsx';
 import NoticiaDetalle from './pages/NoticiaDetalle.jsx';
 import Proclamas from './pages/Proclamas.jsx';
+import ProclamaDetalle from './pages/ProclamaDetalle.jsx';
 import Calendario from './pages/Calendario.jsx';
 import Boletines from './pages/Boletines.jsx';
 import PaginaPublica from './pages/PaginaPublica.jsx';
@@ -41,6 +42,7 @@ export const rutas = [
           { path: '/noticias', Component: Noticias },
           { path: '/noticias/:slug', Component: NoticiaDetalle },
           { path: '/proclamas', Component: Proclamas },
+          { path: '/proclamas/:id', Component: ProclamaDetalle },
           { path: '/calendario', Component: Calendario },
           { path: '/boletines', Component: Boletines },
           { path: '/paginas/:slug', Component: PaginaPublica },
