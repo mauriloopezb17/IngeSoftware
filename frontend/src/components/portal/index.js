@@ -6,4 +6,7 @@ export { default as EncabezadoPagina } from './EncabezadoPagina.jsx';
 export { Boton, BotonEnlace } from './Boton.jsx';
 export { default as EnlaceFlecha } from './EnlaceFlecha.jsx';
 export { default as Reveal } from './Reveal.jsx';
+export { default as RevealTitulo } from './RevealTitulo.jsx';
+export { default as RevealImagen } from './RevealImagen.jsx';
+export { default as Parallax } from './Parallax.jsx';
 export { default as LayoutPortal } from './LayoutPortal.jsx';

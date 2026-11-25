@@ -2,6 +2,8 @@ import { Link } from 'react-router';
 
 import Contenedor from './Contenedor.jsx';
 import Eyebrow from './Eyebrow.jsx';
+import Parallax from './Parallax.jsx';
+import RevealTitulo from './RevealTitulo.jsx';
 
 // Encabezado para páginas internas: migas de pan, eyebrow, único h1 (text-h1) y bajada.
 function EncabezadoPagina({
@@ -25,14 +27,16 @@ function EncabezadoPagina({
     >
       {esFoto && (
         <>
-          <img
-            src={imagen.url}
-            alt=""
-            aria-hidden="true"
-            width={imagen.ancho ?? undefined}
-            height={imagen.alto ?? undefined}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+          <Parallax className="absolute inset-0">
+            <img
+              src={imagen.url}
+              alt=""
+              aria-hidden="true"
+              width={imagen.ancho ?? undefined}
+              height={imagen.alto ?? undefined}
+              className="h-full w-full object-cover"
+            />
+          </Parallax>
           <div aria-hidden="true" className="absolute inset-0 bg-ink/70" />
         </>
       )}
@@ -41,7 +45,7 @@ function EncabezadoPagina({
         {migas.length > 0 && (
           <nav
             aria-label="Ruta de navegación"
-            className={`mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 font-body text-meta ${
+            className={`encabezado-migas mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 font-body text-meta ${
               esFoto ? 'text-muted-on-dark' : 'text-muted'
             }`}
           >
@@ -80,22 +84,26 @@ function EncabezadoPagina({
         )}
 
         {eyebrow && (
-          <Eyebrow oscuro={esFoto} className="mb-4">
+          <Eyebrow oscuro={esFoto} alCargar className="mb-4">
             {eyebrow}
           </Eyebrow>
         )}
 
-        <h1
+        <RevealTitulo
+          as="h1"
+          alCargar
+          retraso={120}
+          duracion={950}
           className={`max-w-3xl font-display text-h1 font-semibold text-balance ${
             esFoto ? 'text-white' : 'text-ink'
           }`}
         >
           {titulo}
-        </h1>
+        </RevealTitulo>
 
         {bajada && (
           <p
-            className={`mt-4 max-w-prose font-body text-lead text-pretty ${
+            className={`hero-entrada hero-entrada-retraso-2 mt-4 max-w-prose font-body text-lead text-pretty ${
               esFoto ? 'text-muted-on-dark' : 'text-muted'
             }`}
           >

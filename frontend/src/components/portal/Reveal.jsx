@@ -1,30 +1,30 @@
 import { useEffect, useRef, useState } from 'react';
 
+import {
+  observarElemento,
+  prefiereMovimientoReducido,
+  sinIntersectionObserver,
+} from './observadorCompartido.js';
+
+// Valores según parroquia-design §6; en móvil (< md) los recorridos bajan al ~60 %.
 const CONFIG_VARIANTES = {
   arriba: {
-    duracion: 700,
-    inicial: 'opacity-0 translate-y-6',
+    duracion: 900,
+    inicial: 'opacity-0 translate-y-6 md:translate-y-10',
   },
   tarjeta: {
-    duracion: 600,
-    inicial: 'opacity-0 translate-y-6',
+    duracion: 1000,
+    inicial: 'opacity-0 translate-y-10 md:translate-y-16',
   },
   izquierda: {
-    duracion: 800,
-    inicial: 'opacity-0 -translate-x-8',
+    duracion: 1000,
+    inicial: 'opacity-0 -translate-x-7 md:-translate-x-12',
   },
   derecha: {
-    duracion: 800,
-    inicial: 'opacity-0 translate-x-8',
+    duracion: 1000,
+    inicial: 'opacity-0 translate-x-7 md:translate-x-12',
   },
 };
-
-function prefiereMovimientoReducido() {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return false;
-  }
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 // Revela el bloque una única vez al entrar en pantalla siguiendo la tabla de parroquia-design §6.
 function Reveal({
@@ -36,66 +36,39 @@ function Reveal({
   ...resto
 }) {
   const referencia = useRef(null);
-  const sinObservador = typeof IntersectionObserver === 'undefined';
-  const [visible, setVisible] = useState(() => sinObservador || prefiereMovimientoReducido());
+  const desactivado = sinIntersectionObserver() || prefiereMovimientoReducido();
+  const [visible, setVisible] = useState(() => desactivado);
+  const [animando, setAnimando] = useState(false);
 
   useEffect(() => {
     if (visible) return undefined;
 
-    const nodo = referencia.current;
-    if (!nodo) return undefined;
-
-    const revelarSiVisible = () => {
-      const rect = nodo.getBoundingClientRect();
-      if (rect.top <= window.innerHeight * 0.92) {
-        setVisible(true);
-        return true;
-      }
-      return false;
-    };
-
-    const observador = new IntersectionObserver(
-      (entradas) => {
-        if (
-          entradas.some(
-            (entrada) =>
-              entrada.isIntersecting ||
-              entrada.boundingClientRect.top <= window.innerHeight * 0.92,
-          )
-        ) {
-          setVisible(true);
-          observador.disconnect();
-        }
-      },
-      { threshold: 0.15 },
-    );
-
-    observador.observe(nodo);
-
-    const alScroll = () => {
-      if (revelarSiVisible()) {
-        window.removeEventListener('scroll', alScroll);
-        observador.disconnect();
-      }
-    };
-
-    window.addEventListener('scroll', alScroll, { passive: true });
-    return () => {
-      observador.disconnect();
-      window.removeEventListener('scroll', alScroll);
-    };
+    return observarElemento(referencia.current, () => {
+      setAnimando(true);
+      setVisible(true);
+    });
   }, [visible]);
 
   const Etiqueta = as;
   const config = CONFIG_VARIANTES[variante] ?? CONFIG_VARIANTES.arriba;
-  const retrasoAplicado = retraso > 0 ? Math.min(retraso, 450) : 0;
+  const retrasoAplicado = retraso > 0 ? Math.min(retraso, 600) : 0;
+
+  useEffect(() => {
+    if (!animando) return undefined;
+    const timer = window.setTimeout(
+      () => setAnimando(false),
+      config.duracion + retrasoAplicado + 60,
+    );
+    return () => window.clearTimeout(timer);
+  }, [animando, config.duracion, retrasoAplicado]);
 
   return (
     <Etiqueta
       ref={referencia}
       style={{
-        transitionDuration: `${config.duracion}ms`,
+        transitionDuration: desactivado ? '0ms' : `${config.duracion}ms`,
         transitionDelay: visible && retrasoAplicado ? `${retrasoAplicado}ms` : '0ms',
+        willChange: animando ? 'opacity, transform' : undefined,
       }}
       className={`transition-[opacity,transform] ease-suave motion-reduce:translate-x-0 motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${
         visible ? 'translate-x-0 translate-y-0 opacity-100' : config.inicial

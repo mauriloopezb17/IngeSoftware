@@ -1,6 +1,8 @@
 import Eyebrow from './Eyebrow.jsx';
+import Reveal from './Reveal.jsx';
+import RevealTitulo from './RevealTitulo.jsx';
 
-// Cabecera de sección: eyebrow (mb-4), título (text-h2), bajada (max-w-prose) y acción opcional.
+// Cabecera de sección: eyebrow (mb-4), título con máscara por líneas (text-h2), bajada (max-w-prose) y acción opcional.
 function EncabezadoSeccion({
   eyebrow,
   titulo,
@@ -23,20 +25,25 @@ function EncabezadoSeccion({
         </Eyebrow>
       )}
 
-      <Etiqueta
+      <RevealTitulo
+        as={Etiqueta}
+        retraso={eyebrow ? 100 : 0}
+        duracion={900}
         className={`font-display text-h2 font-semibold text-balance ${colorTitulo}`}
       >
         {titulo}
-      </Etiqueta>
+      </RevealTitulo>
 
       {bajada && (
-        <p
-          className={`mt-4 max-w-prose font-body text-lead text-pretty ${colorBajada} ${
-            centrado ? 'mx-auto' : ''
-          }`.trim()}
-        >
-          {bajada}
-        </p>
+        <Reveal variante="arriba" retraso={150}>
+          <p
+            className={`mt-4 max-w-prose font-body text-lead text-pretty ${colorBajada} ${
+              centrado ? 'mx-auto' : ''
+            }`.trim()}
+          >
+            {bajada}
+          </p>
+        </Reveal>
       )}
     </div>
   );

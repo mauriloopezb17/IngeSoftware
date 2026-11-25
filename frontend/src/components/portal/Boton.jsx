@@ -1,7 +1,7 @@
 import EnlacePortal from '../parroquia/EnlacePortal.jsx';
 
 const BASE =
-  'inline-flex min-h-11 items-center justify-center gap-2.5 rounded-sm px-6 py-3 font-body text-button font-semibold touch-manipulation transition-[background-color,border-color,color,transform] duration-150 ease-salida active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50';
+  'inline-flex min-h-11 items-center justify-center gap-2.5 rounded-sm px-6 py-3 font-body text-button font-semibold touch-manipulation transition-[background-color,border-color,color,transform] duration-200 ease-salida active:scale-[0.97] active:duration-120 disabled:pointer-events-none disabled:opacity-50';
 
 const VARIANTES = {
   primario:
