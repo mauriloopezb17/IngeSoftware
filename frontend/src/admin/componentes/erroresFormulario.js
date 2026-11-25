@@ -10,14 +10,16 @@ export function erroresDe(error, mapa) {
   let erroresDeBloques = 0;
 
   for (const { campo, mensaje } of error?.detalles ?? []) {
-    if (campo?.startsWith('contenido.bloques.')) {
+    const coincidenciaBloque = /^(?:detalle\.)?contenido\.bloques\.(\d+)(?:\.|$)/.exec(campo ?? '');
+    if (coincidenciaBloque) {
       erroresDeBloques += 1;
-      const coincidencia = /^contenido\.bloques\.(\d+)(?:\.|$)/.exec(campo);
-      if (coincidencia) bloquesConError.add(coincidencia[1]);
+      bloquesConError.add(coincidenciaBloque[1]);
       continue;
     }
 
-    const destino = mapa[campo];
+    const destino =
+      mapa[campo] ??
+      Object.entries(mapa).find(([prefijo]) => campo?.startsWith(`${prefijo}.`))?.[1];
     if (destino) {
       if (!errores[destino]) {
         errores[destino] = mensaje;
@@ -36,7 +38,7 @@ export function erroresDe(error, mapa) {
     const cantidad = bloquesConError.size || erroresDeBloques;
     const parrafos = cantidad === 1 ? '1 párrafo' : `${cantidad} párrafos`;
     const mensaje = `El contenido tiene formato que no se puede guardar en ${parrafos} (por ejemplo, colores copiados de otra página). Quita el formato y vuelve a intentarlo.`;
-    const destino = mapa.contenido ?? mapa['contenido.bloques'];
+    const destino = mapa.contenido ?? mapa['detalle.contenido'] ?? mapa['contenido.bloques'];
     if (destino && !errores[destino]) {
       errores[destino] = mensaje;
       vistos.add(mensaje);

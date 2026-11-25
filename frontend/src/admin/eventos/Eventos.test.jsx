@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -8,6 +8,7 @@ import { clienteHttp } from '../../services/clienteHttp.js';
 import { crearQueryClient } from '../../services/queryClient.js';
 import { reiniciarMocksAdmin } from '../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from '../mocks/usuarios.js';
+import { prepararEditorEnJsdom } from '../publicaciones/apoyoPruebas.js';
 import { SesionProvider } from '../sesion/SesionProvider.jsx';
 import { ProveedorToasts } from '../ui/index.js';
 import Eventos from './Eventos.jsx';
@@ -41,6 +42,7 @@ const tarjeta = (titulo) => screen.getByRole('article', { name: new RegExp(titul
 const lista = () => screen.findByRole('list', { name: 'Eventos' });
 
 describe('eventos del panel', () => {
+  beforeAll(prepararEditorEnJsdom);
   beforeEach(reiniciarMocksAdmin);
   afterEach(reiniciarMocksAdmin);
 
@@ -90,14 +92,14 @@ describe('eventos del panel', () => {
     expect(screen.getByRole('heading', { name: 'Charla pre-bautismal para padres y padrinos' })).toBeInTheDocument();
   });
 
-  it('Marketing solo consulta: ve el aviso de solo lectura y ningún botón para modificar', async () => {
+  it('Marketing solo edita la página del evento: no puede crear, eliminar ni editar la tarjeta', async () => {
     await entrar('marketing');
     montar();
     await lista();
 
-    expect(screen.getByRole('note')).toHaveTextContent('Solo lectura');
+    expect(screen.getByRole('status')).toHaveTextContent('Edición de página del evento');
     expect(screen.queryByRole('link', { name: /Nuevo evento/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Editar/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Editar página de/ }).length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: /Eliminar/ })).not.toBeInTheDocument();
   });
 
