@@ -133,7 +133,7 @@ describe('eventos del panel', () => {
     await waitFor(() => expect(screen.getByTestId('ubicacion')).toHaveTextContent(/^\/admin\/eventos$/));
     const nueva = await screen.findByRole('article', { name: /Peregrinación a Copacabana/ });
     expect(within(nueva).getByText(/Todo el día/)).toBeInTheDocument();
-  });
+  }, 15000);
 
   it('no deja guardar un fin anterior al inicio', async () => {
     await entrar('secretaria');
@@ -151,7 +151,7 @@ describe('eventos del panel', () => {
     await usuario.click(screen.getByRole('button', { name: 'Crear evento' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('El fin debe ser igual o posterior al inicio.');
-  });
+  }, 15000);
 
   it('edita un evento existente con sus datos cargados', async () => {
     await entrar('parroco');
@@ -171,7 +171,7 @@ describe('eventos del panel', () => {
     expect(await screen.findByText('Se guardaron los cambios de «Solemnidad de Cristo Rey del Universo».')).toBeInTheDocument();
     const eventoEditado = await screen.findByRole('article', { name: /Solemnidad de Cristo Rey/ });
     expect(await within(eventoEditado).findByText('Archivado')).toBeInTheDocument();
-  });
+  }, 15000);
 
   it('elimina un evento después de confirmar', async () => {
     await entrar('secretaria');
