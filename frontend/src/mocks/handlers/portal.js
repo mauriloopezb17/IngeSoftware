@@ -21,6 +21,7 @@ import {
   obtenerPublicacionesExaltacion,
   obtenerProclamasExaltacion,
   obtenerHistorialProclamasExaltacion,
+  obtenerDetalleProclamaExaltacion,
 } from '../datos/comunidad.js';
 
 const SEDE_PRINCIPAL = 'senor-de-la-exaltacion';
@@ -283,6 +284,21 @@ export const handlersPortal = [
     return HttpResponse.json({
       datos: esSedePrincipal(params.sede) ? obtenerProclamasExaltacion() : [],
     });
+  }),
+
+  http.get(api('/sedes/:sede/proclamas/:id'), ({ params }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const detalle = esSedePrincipal(params.sede) ? obtenerDetalleProclamaExaltacion(params.id) : null;
+    if (!detalle) {
+      return HttpResponse.json(
+        { error: { codigo: 'NO_ENCONTRADO', mensaje: 'La proclama no existe.', detalles: [] } },
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json({ datos: detalle });
   }),
 
   http.get(api('/sedes/:sede/boletines'), ({ params, request }) => {

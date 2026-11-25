@@ -104,11 +104,29 @@ describe('mock de proclamas (admin.md §10)', () => {
     expect((await capturar(clienteHttp.get('/admin/proclamas/4'))).estado).toBe(404);
   });
 
-  it('Marketing consulta pero no escribe (403)', async () => {
+  it('Marketing consulta, no edita datos base (403), pero sí edita el detalle (200)', async () => {
     await entrar('marketing');
     expect((await clienteHttp.get('/admin/proclamas')).datos.length).toBeGreaterThan(0);
     const error = await capturar(clienteHttp.patch('/admin/proclamas/1', { contrayente1: 'X' }));
     expect(error.estado).toBe(403);
+
+    const { datos } = await clienteHttp.patch('/admin/proclamas/1/detalle', {
+      imagenId: 8,
+      detalle: {
+        contenido: null,
+        galeria: [8],
+        lugar: { templo: 'Capilla San Pablo', direccion: 'Av. 1', enlaceMapa: 'https://maps.app.goo.gl/abc' },
+      },
+    });
+    expect(datos.imagenId).toBe(8);
+    expect(datos.detalle.lugar.templo).toBe('Capilla San Pablo');
+
+    const mapaMalo = await capturar(
+      clienteHttp.patch('/admin/proclamas/1/detalle', {
+        detalle: { lugar: { templo: 'Capilla', direccion: null, enlaceMapa: 'https://ejemplo.com' } },
+      }),
+    );
+    expect(mapaMalo.detalles[0].campo).toBe('detalle.lugar.enlaceMapa');
   });
 
   it('el matrimonio no puede quedar antes de una publicación', async () => {

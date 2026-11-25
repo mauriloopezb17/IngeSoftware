@@ -12,6 +12,7 @@ export const clavesPortal = {
   publicacion: (sede, slug) => ['portal', 'sede', sede, 'publicaciones', slug],
   boletines: (sede, filtros = {}) => ['portal', 'sede', sede, 'boletines', filtros],
   proclamas: (sede) => ['portal', 'sede', sede, 'proclamas'],
+  proclama: (sede, id) => ['portal', 'sede', sede, 'proclamas', 'detalle', String(id)],
   historialProclamas: (sede, filtros = {}) => [
     'portal',
     'sede',
