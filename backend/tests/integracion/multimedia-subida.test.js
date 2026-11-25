@@ -1,6 +1,6 @@
 // POST /api/admin/multimedia contra la aplicación real y PostgreSQL, con el almacenamiento
 // simulado (aws-sdk-client-mock): estas pruebas nunca llaman al OCI real.
-import { readdirSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { DeleteObjectsCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -181,6 +181,39 @@ describe('subida de una imagen', () => {
     expect(respuesta.status).toBe(415);
     expect(respuesta.body.error.mensaje).toBe('El archivo no es una imagen válida.');
     expect(subidas()).toHaveLength(0);
+  });
+
+  it('recrea la carpeta temporal si fue borrada mientras el servidor corre', async () => {
+    rmSync(DIRECTORIO_TEMPORAL, { recursive: true, force: true });
+    try {
+      const respuesta = await subir(cookieMarketing, await jpeg());
+
+      expect(respuesta.status).toBe(201);
+      expect(temporales()).toHaveLength(0);
+    } finally {
+      mkdirSync(DIRECTORIO_TEMPORAL, { recursive: true });
+    }
+  });
+
+  it('si no se puede escribir en el directorio temporal responde 503 con el formato del contrato', async () => {
+    rmSync(DIRECTORIO_TEMPORAL, { recursive: true, force: true });
+    writeFileSync(DIRECTORIO_TEMPORAL, 'bloqueo-para-probar-error-de-disco');
+    try {
+      const respuesta = await subir(cookieMarketing, await jpeg());
+
+      expect(respuesta.status).toBe(503);
+      expect(respuesta.body).toEqual({
+        error: {
+          codigo: 'SERVICIO_NO_DISPONIBLE',
+          mensaje: 'No pudimos recibir el archivo. Intenta de nuevo.',
+          detalles: [],
+        },
+      });
+      expect(subidas()).toHaveLength(0);
+    } finally {
+      rmSync(DIRECTORIO_TEMPORAL, { recursive: true, force: true });
+      mkdirSync(DIRECTORIO_TEMPORAL, { recursive: true });
+    }
   });
 });
 

@@ -253,7 +253,7 @@ Mensajes:
 | 415   | «El archivo no es una imagen válida.»                                                                                         | `[]`               |
 | 415   | «La petición debe ser multipart/form-data.»                                                                                   | `[]`               |
 | 409   | «El almacenamiento está casi lleno.»                                                                                          | `[]`               |
-| 503   | «El almacenamiento de archivos no está configurado.» / «No se pudo guardar el archivo. Intenta de nuevo más tarde.»           | `[]`               |
+| 503   | «El almacenamiento de archivos no está configurado.» / «No se pudo guardar el archivo. Intenta de nuevo más tarde.» / «No pudimos recibir el archivo. Intenta de nuevo.» | `[]`               |
 
 > Un video de hasta 2 GB tarda en subir. `fetch` no informa el avance de la subida; para mostrar una barra de progreso, el panel puede usar `XMLHttpRequest` con `upload.onprogress` solo en este endpoint.
 
