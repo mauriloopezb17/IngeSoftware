@@ -27,6 +27,7 @@ const COLUMNAS = `
   am.texto_alternativo AS imagen_texto_alternativo,
   am.ancho_px AS imagen_ancho,
   am.alto_px AS imagen_alto,
+  e.detalle,
   e.id_externo_m365,
   e.creado_por,
   u.nombre_completo AS creado_por_nombre,
@@ -91,9 +92,9 @@ export async function insertar(datos, db) {
   const { rows } = await db.consultar(
     `INSERT INTO evento
        (sede_id, categoria_evento_id, estado_publicacion_id, creado_por, imagen_id, titulo,
-        descripcion, lugar, fecha_inicio, fecha_fin, todo_el_dia)
+        descripcion, lugar, fecha_inicio, fecha_fin, todo_el_dia, detalle)
      VALUES ($1, $2, (SELECT id FROM estado_publicacion WHERE nombre = $3), $4, $5, $6, $7, $8,
-             $9, $10, $11)
+             $9, $10, $11, $12::jsonb)
      RETURNING *`,
     [
       datos.sedeId,
@@ -107,6 +108,7 @@ export async function insertar(datos, db) {
       datos.fechaInicio,
       datos.fechaFin,
       datos.todoElDia,
+      datos.detalle ? JSON.stringify(datos.detalle) : null,
     ],
   );
   return rows[0];

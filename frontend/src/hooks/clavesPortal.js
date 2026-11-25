@@ -8,6 +8,7 @@ export const clavesPortal = {
   servicios: (sede) => ['portal', 'sede', sede, 'servicios'],
   servicio: (sede, slug) => ['portal', 'sede', sede, 'servicios', slug],
   eventos: (sede, filtros = {}) => ['portal', 'sede', sede, 'eventos', filtros],
+  evento: (sede, id) => ['portal', 'sede', sede, 'eventos', String(id)],
   publicaciones: (sede, filtros = {}) => ['portal', 'sede', sede, 'publicaciones', filtros],
   publicacion: (sede, slug) => ['portal', 'sede', sede, 'publicaciones', slug],
   boletines: (sede, filtros = {}) => ['portal', 'sede', sede, 'boletines', filtros],

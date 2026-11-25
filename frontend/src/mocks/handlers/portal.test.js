@@ -50,5 +50,15 @@ describe('handlersPortal (MSW)', () => {
     expect(boletines.paginacion.porPagina).toBe(1);
     expect(eventos.datos).toHaveLength(4);
     expect(new Date(eventos.datos[0].fechaInicio).getTime()).toBeGreaterThan(Date.now());
+    expect(eventos.datos.every((ev) => typeof ev.tieneDetalle === 'boolean' && !('detalle' in ev))).toBe(true);
+  });
+
+  it('devuelve detalle completo en GET /sedes/:sede/eventos/:id y 404 si no existe', async () => {
+    const { datos: detalle } = await clienteHttp.get('/sedes/senor-de-la-exaltacion/eventos/2');
+    expect(detalle.id).toBe(2);
+    expect(detalle.detalle).toBeTruthy();
+    expect(detalle.detalle.direccion).toContain('Ormachea');
+
+    await expect(clienteHttp.get('/sedes/senor-de-la-exaltacion/eventos/9999')).rejects.toMatchObject({ estado: 404 });
   });
 });

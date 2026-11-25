@@ -546,7 +546,8 @@ Orden fijo: `fechaInicio` ascendente.
         "nombre": "Liturgia",
         "colorHex": "#E2AD11"
       },
-      "imagen": null
+      "imagen": null,
+      "tieneDetalle": false
     },
     {
       "id": 2,
@@ -561,7 +562,8 @@ Orden fijo: `fechaInicio` ascendente.
         "nombre": "Solemnidad",
         "colorHex": "#9E1B22"
       },
-      "imagen": null
+      "imagen": null,
+      "tieneDetalle": true
     },
     {
       "id": 3,
@@ -576,7 +578,8 @@ Orden fijo: `fechaInicio` ascendente.
         "nombre": "Liturgia",
         "colorHex": "#E2AD11"
       },
-      "imagen": null
+      "imagen": null,
+      "tieneDetalle": false
     },
     {
       "id": 4,
@@ -591,7 +594,8 @@ Orden fijo: `fechaInicio` ascendente.
         "nombre": "Catequesis",
         "colorHex": "#B5532F"
       },
-      "imagen": null
+      "imagen": null,
+      "tieneDetalle": false
     }
   ],
   "paginacion": {
@@ -604,7 +608,55 @@ Orden fijo: `fechaInicio` ascendente.
 ```
 
 - `todoElDia: true`: el portal muestra solo la fecha, sin hora.
+- `tieneDetalle`: indica si el evento tiene información adicional cargada en su página de detalle (la lista no envía `detalle` para mantenerse liviana).
 - La tarjeta de la landing muestra día y mes (`18 NOV`), la hora y el lugar. El portal los arma con `fechaInicio`. Cuando hay varias horas (ej. «8:00 – 10:00 – 12:00»), van en `descripcion`.
+- **Vista de un solo día**: enviando `desde=YYYY-MM-DD&hasta=YYYY-MM-DD` con la misma fecha se obtienen todos los eventos publicados que ocurren o se cruzan con ese día (siempre desde hoy en adelante).
+
+## `GET /api/sedes/:sede/eventos/:id`
+
+Detalle completo de un evento publicado de la sede (RF-09). Si el evento ya pasó pero sigue en estado `PUBLICADO`, responde `200` para que los enlaces compartidos sigan funcionando. Un evento en `BORRADOR`, `ARCHIVADO`, inexistente o de otra sede responde `404 NO_ENCONTRADO`.
+
+**Respuesta `200`:**
+
+```json
+{
+  "datos": {
+    "id": 2,
+    "titulo": "Misa de sanación",
+    "descripcion": "Horarios: 8:00 – 10:00 – 12:00",
+    "lugar": "Templo parroquial",
+    "fechaInicio": "2026-11-19T08:00:00-04:00",
+    "fechaFin": null,
+    "todoElDia": false,
+    "categoria": {
+      "id": 2,
+      "nombre": "Solemnidad",
+      "colorHex": "#9E1B22"
+    },
+    "imagen": null,
+    "tieneDetalle": true,
+    "detalle": {
+      "contenido": {
+        "formato": "blocknote",
+        "version": 1,
+        "bloques": []
+      },
+      "direccion": "Av. Héctor Ormachea N.º 167, Obrajes, La Paz",
+      "enlaceMapa": "https://www.google.com/maps/search/?api=1&query=-16.5267952%2C-68.1082157",
+      "programa": [
+        { "hora": "08:00", "actividad": "Primera misa de sanación (ejemplo)" }
+      ],
+      "responsable": {
+        "nombre": "Equipo de Liturgia (ejemplo)",
+        "rol": "Coordinación pastoral",
+        "telefono": "(2) 278 4937",
+        "correo": null
+      },
+      "enlaces": []
+    }
+  }
+}
+```
 
 ---
 

@@ -202,7 +202,7 @@ Las imágenes subidas desde el CMS tienen versiones más pequeñas para que el n
 - como imagen de un evento o de un grupo pastoral;
 - como archivo de un boletín;
 - como portada de una sede (la `url` de la portada es la del archivo);
-- dentro del contenido de una publicación o de un servicio;
+- dentro del contenido de una publicación, de un servicio o del detalle de un evento;
 - dentro de un bloque de una página.
 
 > El contenido de las publicaciones, los servicios y los bloques es JSON: en él el archivo se busca por su **identificador único** (el `<uuid>` de la clave del objeto), no por la URL completa. Así también se detecta cuando el contenido usa una de sus variantes.
@@ -331,6 +331,7 @@ Si el archivo está en uso, el `mensaje` es «El archivo está en uso y no se pu
 | Portada de una sede          | Usado como portada de la sede «nombre».                |
 | Contenido de una publicación | Usado dentro del contenido de la publicación «título». |
 | Contenido de un servicio     | Usado dentro del contenido del servicio «nombre».      |
+| Detalle de un evento         | Usado dentro del detalle del evento «título».          |
 | Bloque de una página         | Usado en un bloque de la página «título».              |
 
 Se listan hasta 5 usos. Si hay más, el último elemento dice «Y N usos más.».
@@ -564,6 +565,7 @@ Calendario parroquial. Permiso de escritura: `eventos.gestionar`. Los eventos se
   "todoElDia": false,
   "categoria": { "id": 2, "nombre": "Solemnidad", "colorHex": "#9E1B22" },
   "imagen": null,
+  "detalle": null,
   "idExternoM365": null,
   "creadoPor": { "id": 3, "nombreCompleto": "Secretaría (desarrollo)" },
   "finalizado": false
@@ -572,16 +574,18 @@ Calendario parroquial. Permiso de escritura: `eventos.gestionar`. Los eventos se
 
 - `finalizado`: `true` cuando el evento ya no se muestra en el portal porque pasó su fecha (misma regla que en [publico.md](publico.md#get-apisedessedeeventos)).
 - `idExternoM365`: solo lectura; queda reservado para la sincronización con Microsoft 365 (RF-12, «Could Have»).
+- `detalle`: objeto opcional con la información de la página pública del evento (`contenido`, `direccion`, `enlaceMapa`, `programa`, `responsable`, `enlaces`) o `null`.
 
 ### Endpoints
 
-| Método y ruta                   | Descripción                                                                                                                                                                                              |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/admin/eventos`        | Paginada. Filtros: `sede`, `desde`, `hasta` (fechas), `categoria` (ids), `estado`, `finalizados` (`true` / `false`; por defecto se incluyen todos). Orden: `fechaInicio` (por defecto) o `-fechaInicio`. |
-| `GET /api/admin/eventos/:id`    | Un evento.                                                                                                                                                                                               |
-| `POST /api/admin/eventos`       | Crea. `201`.                                                                                                                                                                                             |
-| `PATCH /api/admin/eventos/:id`  | Edita, incluido el `estado`.                                                                                                                                                                             |
-| `DELETE /api/admin/eventos/:id` | Elimina.                                                                                                                                                                                                 |
+| Método y ruta                          | Descripción                                                                                                                                                                                              |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/admin/eventos`               | Paginada. Filtros: `sede`, `desde`, `hasta` (fechas), `categoria` (ids), `estado`, `finalizados` (`true` / `false`; por defecto se incluyen todos). Orden: `fechaInicio` (por defecto) o `-fechaInicio`. |
+| `GET /api/admin/eventos/:id`           | Un evento.                                                                                                                                                                                               |
+| `POST /api/admin/eventos`              | Crea. `201`.                                                                                                                                                                                             |
+| `PATCH /api/admin/eventos/:id`         | Edita, incluido el `estado` y `detalle`.                                                                                                                                                                 |
+| `PATCH /api/admin/eventos/:id/detalle` | Edita **solo** `detalle`. Pide `eventos.detalle` (también lo tiene Marketing).                                                                                                                           |
+| `DELETE /api/admin/eventos/:id`        | Elimina.                                                                                                                                                                                                 |
 
 **Cuerpo de `POST`:**
 
@@ -609,15 +613,28 @@ Calendario parroquial. Permiso de escritura: `eventos.gestionar`. Los eventos se
 | `estado`            | `PUBLICADO` (por defecto), `BORRADOR` o `ARCHIVADO`. Los eventos no usan `EN_REVISION`. |
 | `descripcion`       | Texto plano, hasta 2000 caracteres.                                                     |
 | `lugar`             | Hasta 150 caracteres.                                                                   |
+| `detalle`           | Opcional (`null` para vaciar). Objeto JSONB con la página del evento (tabla siguiente). |
+
+Forma de `detalle` (todos los campos son opcionales):
+
+| Campo         | Regla                                                                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `contenido`   | Documento BlockNote válido ([contenido.md](contenido.md)) o `null`. Sus imágenes y videos deben ser de la misma sede.     |
+| `direccion`   | Texto de hasta 200 caracteres o `null`.                                                                                   |
+| `enlaceMapa`  | URL `https://` de Google Maps (`google.*/maps`, `maps.google.*`, `maps.app.goo.gl`, `goo.gl/maps`) de hasta 1000 caracteres o `null`. |
+| `programa`    | Lista de hasta 20 elementos `{ "hora": "HH:MM", "actividad": "texto ≤ 120" }`. Se guarda ordenada por `hora`.             |
+| `responsable` | `{ "nombre": "≤ 120", "rol": "≤ 80?", "telefono": "≤ 30?", "correo": "email ≤ 120?" }` o `null`.                          |
+| `enlaces`     | Lista de hasta 10 elementos `{ "texto": "≤ 80", "url": "https:// ≤ 500" }`.                                               |
 
 Reglas adicionales:
 
 - `sedeId` (solo el Administrador, igual que en publicaciones): por defecto su sede; obligatorio si no tiene sede asignada.
-- `PATCH` acepta los mismos campos salvo `sedeId`; `fechaFin` se compara con la `fechaInicio` que quedaría guardada. `idExternoM365` es solo lectura: enviarlo es `400 VALIDACION` («Campo no permitido.»).
+- `PATCH /api/admin/eventos/:id` acepta los mismos campos salvo `sedeId`; `fechaFin` se compara con la `fechaInicio` que quedaría guardada. `idExternoM365` es solo lectura: enviarlo es `400 VALIDACION` («Campo no permitido.»).
+- `PATCH /api/admin/eventos/:id/detalle` acepta `{ "detalle": <objeto | null> }`, valida los archivos de `detalle.contenido` contra la biblioteca de la sede y responde `200` con el evento completo.
 - Con `todoElDia: true` las fechas se guardan como se envían; el portal no muestra la hora.
 - `categoriaEventoId` inexistente: `400 VALIDACION` («La categoría no existe.»). `imagenId` debe ser una imagen de la biblioteca de la misma sede («Debe ser una imagen de la biblioteca multimedia de esta sede.»).
 - Filtros de la lista: `desde` y `hasta` incluyen todo evento que se cruce con ese rango de días (hora de Bolivia); `estado` acepta `BORRADOR`, `PUBLICADO` y `ARCHIVADO` (varios con comas); `hasta` anterior a `desde` es `400 VALIDACION`.
-- Lectura: todos los roles de la sede; `POST`, `PATCH` y `DELETE` piden `eventos.gestionar` (Marketing recibe `403 SIN_PERMISO`).
+- Lectura: todos los roles de la sede; `POST`, `PATCH /:id` y `DELETE` piden `eventos.gestionar` (Marketing recibe `403 SIN_PERMISO`); `PATCH /:id/detalle` pide `eventos.detalle` (incluye a Marketing).
 
 ---
 

@@ -79,6 +79,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 1, nombre: 'Liturgia', colorHex: '#E2AD11' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 1,
@@ -90,6 +92,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 1, nombre: 'Liturgia', colorHex: '#E2AD11' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 2,
@@ -101,6 +105,27 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 2, nombre: 'Solemnidad', colorHex: '#9E1B22' },
       imagen: null,
+      tieneDetalle: true,
+      detalle: {
+        contenido: crearContenidoBlockNote(
+          'misa-sanacion',
+          'Celebración comunitaria y oración por los enfermos (texto de ejemplo).',
+        ),
+        direccion: 'Av. Héctor Ormachea N.º 167, Obrajes, La Paz',
+        enlaceMapa: 'https://www.google.com/maps/search/?api=1&query=-16.5267952%2C-68.1082157',
+        programa: [
+          { hora: '08:00', actividad: 'Primera misa de sanación (ejemplo)' },
+          { hora: '10:00', actividad: 'Misa central (ejemplo)' },
+          { hora: '12:00', actividad: 'Tercera misa (ejemplo)' },
+        ],
+        responsable: {
+          nombre: 'Equipo de Liturgia (ejemplo)',
+          rol: 'Coordinación pastoral',
+          telefono: '(2) 278 4937',
+          correo: null,
+        },
+        enlaces: [],
+      },
     },
     {
       id: 3,
@@ -112,6 +137,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 1, nombre: 'Liturgia', colorHex: '#E2AD11' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 4,
@@ -123,6 +150,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 3, nombre: 'Catequesis', colorHex: '#B5532F' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 5,
@@ -134,6 +163,28 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 4, nombre: 'Comunidad', colorHex: '#3E9C97' },
       imagen: null,
+      tieneDetalle: true,
+      detalle: {
+        contenido: crearContenidoBlockNote(
+          'encuentro-jovenes',
+          'Espacio fraterno de formación y música para jóvenes de la parroquia (texto de ejemplo).',
+        ),
+        direccion: 'Av. Héctor Ormachea N.º 167, Obrajes',
+        enlaceMapa: 'https://maps.app.goo.gl/ejemploParroquia',
+        programa: [
+          { hora: '17:00', actividad: 'Acogida y oración inicial (ejemplo)' },
+          { hora: '18:00', actividad: 'Tema central y grupos (ejemplo)' },
+        ],
+        responsable: {
+          nombre: 'Pastoral Juvenil (ejemplo)',
+          rol: 'Coordinación',
+          telefono: null,
+          correo: 'jovenes@ejemplo.test',
+        },
+        enlaces: [
+          { texto: 'Ficha de inscripción (ejemplo)', url: 'https://ejemplo.test/jovenes' },
+        ],
+      },
     },
     {
       id: 6,
@@ -145,6 +196,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: true,
       categoria: { id: 2, nombre: 'Solemnidad', colorHex: '#9E1B22' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 7,
@@ -156,6 +209,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 3, nombre: 'Catequesis', colorHex: '#B5532F' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 8,
@@ -167,6 +222,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: false,
       categoria: { id: 1, nombre: 'Liturgia', colorHex: '#E2AD11' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
     {
       id: 9,
@@ -178,6 +235,8 @@ export function obtenerEventosExaltacion() {
       todoElDia: true,
       categoria: { id: 4, nombre: 'Comunidad', colorHex: '#3E9C97' },
       imagen: null,
+      tieneDetalle: false,
+      detalle: null,
     },
   ];
 }

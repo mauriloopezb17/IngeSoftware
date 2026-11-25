@@ -4,6 +4,15 @@ import { consultar } from '../db/index.js';
 
 export const ZONA_HORARIA = 'America/La_Paz';
 
+const TIENE_DETALLE = `(e.detalle IS NOT NULL AND jsonb_typeof(e.detalle) = 'object' AND (
+  coalesce(e.detalle->>'direccion', '') <> ''
+  OR coalesce(e.detalle->>'enlaceMapa', '') <> ''
+  OR (e.detalle->'responsable' IS NOT NULL AND jsonb_typeof(e.detalle->'responsable') = 'object')
+  OR (jsonb_typeof(e.detalle->'programa') = 'array' AND jsonb_array_length(e.detalle->'programa') > 0)
+  OR (jsonb_typeof(e.detalle->'enlaces') = 'array' AND jsonb_array_length(e.detalle->'enlaces') > 0)
+  OR (jsonb_typeof(e.detalle->'contenido'->'bloques') = 'array' AND jsonb_array_length(e.detalle->'contenido'->'bloques') > 0)
+))`;
+
 const COLUMNAS = `
   e.id,
   e.titulo,
@@ -17,7 +26,8 @@ const COLUMNAS = `
   am.url AS imagen_url,
   am.texto_alternativo AS imagen_texto_alternativo,
   am.ancho_px AS imagen_ancho,
-  am.alto_px AS imagen_alto`;
+  am.alto_px AS imagen_alto,
+  ${TIENE_DETALLE} AS tiene_detalle`;
 
 const UNIONES = `
   JOIN estado_publicacion ep ON ep.id = e.estado_publicacion_id
@@ -67,4 +77,15 @@ export async function listarProximos(criterios, { limite, desplazamiento }) {
   ]);
 
   return { filas: pagina.rows, total: conteo.rows[0].total };
+}
+
+// Detalle de un evento publicado de la sede (incluye los ya pasados por si se comparte su enlace).
+export async function obtenerPublicadoPorId({ sedeId, estadoPublicado, id }) {
+  const { rows } = await consultar(
+    `SELECT ${COLUMNAS}, e.detalle
+       FROM evento e ${UNIONES}
+      WHERE e.id = $1 AND e.sede_id = $2 AND ep.nombre = $3`,
+    [id, sedeId, estadoPublicado],
+  );
+  return rows[0] ?? null;
 }

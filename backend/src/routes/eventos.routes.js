@@ -18,5 +18,6 @@ const consultaLista = paginacion
 const router = Router({ mergeParams: true });
 
 router.get('/', validar({ query: consultaLista }), eventos.listar);
+router.get('/:id', eventos.detalle);
 
 export default router;

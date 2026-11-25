@@ -25,6 +25,16 @@ export async function editar(req, res) {
   res.json({ datos });
 }
 
+export async function editarDetalle(req, res) {
+  const datos = await servicio.editarDetalleEvento(
+    req.usuario,
+    req.validado.params.id,
+    req.validado.body,
+    contextoDe(req),
+  );
+  res.json({ datos });
+}
+
 export async function eliminar(req, res) {
   await servicio.eliminarEvento(req.usuario, req.validado.params.id, contextoDe(req));
   res.status(204).end();
