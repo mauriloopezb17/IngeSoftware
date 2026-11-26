@@ -1,5 +1,4 @@
-import { useRef, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useMemo, useRef, useState } from 'react';
 import { ImageOff } from 'lucide-react';
 
 import Paginacion from '../componentes/Paginacion.jsx';
@@ -12,47 +11,68 @@ import { CLASES } from '../multimedia/tipos.js';
 import { useBiblioteca } from '../multimedia/useBiblioteca.js';
 import VistaPreviaArchivo from '../multimedia/VistaPreviaArchivo.jsx';
 import { usePermisos } from '../permisos/usePermisos.js';
-import { Aviso, Boton, EncabezadoPantalla, EsqueletoTarjetas, EstadoVacio, useToast } from '../ui/index.js';
+import {
+  Aviso,
+  Boton,
+  EncabezadoPantalla,
+  EsqueletoTarjetas,
+  EstadoVacio,
+  useFiltrosListado,
+  useToast,
+} from '../ui/index.js';
 
 const ORDEN_INICIAL = '-fechaSubida';
 
-// Los filtros viven en la URL (se conservan al recargar). Un valor desconocido se descarta.
-function leerFiltros(parametros) {
-  const clase = parametros.get('clase');
-  const enUso = parametros.get('enUso');
-  const orden = parametros.get('orden');
-  const pagina = Number.parseInt(parametros.get('pagina'), 10);
-
-  return {
-    buscar: parametros.get('buscar')?.trim() ?? '',
-    clase: clase in CLASES ? clase : '',
-    enUso: enUso === 'true' || enUso === 'false' ? enUso : '',
-    orden: orden in ORDENES ? orden : ORDEN_INICIAL,
-    pagina: pagina >= 1 ? pagina : 1,
-  };
-}
-
 export default function Multimedia() {
-  const [parametros, setParametros] = useSearchParams();
-  const filtros = leerFiltros(parametros);
-  const consulta = useBiblioteca(filtros);
+  const configFiltros = useMemo(
+    () => ({
+      buscar: { defecto: '' },
+      clase: { defecto: '', validar: (v) => v in CLASES },
+      enUso: { defecto: '', validar: (v) => v === 'true' || v === 'false' },
+    }),
+    [],
+  );
+
+  const {
+    valores,
+    orden,
+    setOrden,
+    setPagina,
+    actualizarFiltros,
+    limpiarFiltros,
+    hayFiltrosActivos,
+    filtrosActivos,
+  } = useFiltrosListado({
+    filtros: configFiltros,
+    ordenDefecto: ORDEN_INICIAL,
+    ordenesValidos: Object.keys(ORDENES),
+    porPagina: POR_PAGINA,
+    conBusqueda: false,
+  });
+
+  const consulta = useBiblioteca(filtrosActivos);
   const [abierto, setAbierto] = useState(null);
   const inicioRef = useRef(null);
   const { puede } = usePermisos();
   const toast = useToast();
 
-  const hayFiltros = Boolean(filtros.buscar || filtros.clase || filtros.enUso || filtros.orden !== ORDEN_INICIAL);
+  const filtrosVista = useMemo(
+    () => ({
+      buscar: filtrosActivos.buscar ?? '',
+      clase: valores.clase,
+      enUso: valores.enUso,
+      orden,
+      pagina: filtrosActivos.pagina,
+    }),
+    [filtrosActivos.buscar, filtrosActivos.pagina, valores.clase, valores.enUso, orden],
+  );
 
-  // Cambiar un filtro vuelve a la primera página.
   function cambiar(cambios) {
-    const siguiente = { ...filtros, pagina: 1, ...cambios };
-    const nuevos = new URLSearchParams();
-    if (siguiente.buscar) nuevos.set('buscar', siguiente.buscar);
-    if (siguiente.clase) nuevos.set('clase', siguiente.clase);
-    if (siguiente.enUso) nuevos.set('enUso', siguiente.enUso);
-    if (siguiente.orden !== ORDEN_INICIAL) nuevos.set('orden', siguiente.orden);
-    if (siguiente.pagina > 1) nuevos.set('pagina', String(siguiente.pagina));
-    setParametros(nuevos, { replace: true });
+    if ('orden' in cambios) {
+      setOrden(cambios.orden);
+      return;
+    }
+    actualizarFiltros(cambios);
   }
 
   const { data, isPending, isError, error, isPlaceholderData, refetch } = consulta;
@@ -70,10 +90,10 @@ export default function Multimedia() {
 
       <div className="mt-6 rounded-lg border border-sand bg-white p-4">
         <FiltrosMultimedia
-          valores={filtros}
-          hayFiltros={hayFiltros}
+          valores={filtrosVista}
+          hayFiltros={hayFiltrosActivos}
           onCambiar={cambiar}
-          onLimpiar={() => setParametros(new URLSearchParams(), { replace: true })}
+          onLimpiar={limpiarFiltros}
         />
       </div>
 
@@ -99,7 +119,7 @@ export default function Multimedia() {
           <>
             <p className="mb-3 text-sm tabular-nums text-muted" aria-live="polite">
               {contarArchivos(data.paginacion.total)}
-              {hayFiltros && ' con estos filtros'}
+              {hayFiltrosActivos && ' con estos filtros'}
             </p>
 
             {archivos.length ? (
@@ -119,21 +139,18 @@ export default function Multimedia() {
               <EstadoVacio
                 icono={ImageOff}
                 titulo={
-                  hayFiltros
+                  hayFiltrosActivos
                     ? 'No hay archivos que coincidan con los filtros.'
                     : 'Todavía no hay archivos en la biblioteca.'
                 }
                 descripcion={
-                  hayFiltros
-                    ? 'Limpia los filtros para volver a ver toda la biblioteca.'
-                    : 'Sube imágenes, videos o documentos PDF desde la zona superior.'
+                  hayFiltrosActivos
+                    ? 'Prueba quitar alguno de los filtros o buscar con otro término.'
+                    : 'Sube una imagen, un video o un PDF para empezar a usarlos en el portal.'
                 }
                 accion={
-                  hayFiltros && (
-                    <Boton
-                      variante="primario"
-                      onClick={() => setParametros(new URLSearchParams(), { replace: true })}
-                    >
+                  hayFiltrosActivos && (
+                    <Boton variante="primario" onClick={limpiarFiltros}>
                       Quitar los filtros
                     </Boton>
                   )
@@ -142,9 +159,12 @@ export default function Multimedia() {
             )}
 
             <Paginacion
-              paginacion={{ ...data.paginacion, porPagina: POR_PAGINA }}
-              onCambiar={(pagina) => cambiar({ pagina })}
+              paginacion={data.paginacion}
               nombre="Paginación de la biblioteca"
+              onCambiar={(pagina) => {
+                setPagina(pagina);
+                setTimeout(() => inicioRef.current?.focus(), 0);
+              }}
             />
           </>
         )}
@@ -158,7 +178,6 @@ export default function Multimedia() {
           onEliminado={(eliminado) => {
             setAbierto(null);
             toast.exito(`Se eliminó «${eliminado.nombreOriginal}».`);
-            // La tarjeta desaparece: el foco pasa al inicio de la sección para no perderse.
             setTimeout(() => inicioRef.current?.focus(), 0);
           }}
         />

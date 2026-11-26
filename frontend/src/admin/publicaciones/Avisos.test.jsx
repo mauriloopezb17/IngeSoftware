@@ -71,7 +71,7 @@ describe('avisos parroquiales', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Avisos' })).toBeInTheDocument();
     await screen.findByRole('table');
-    expect(screen.getByText('2 avisos')).toBeInTheDocument();
+    expect(screen.getByText('Mostrando 1–2 de 2')).toBeInTheDocument();
     expect(fila('secretaría atenderá')).toBeInTheDocument();
     expect(screen.queryByText(/Primeras comuniones/)).not.toBeInTheDocument();
 

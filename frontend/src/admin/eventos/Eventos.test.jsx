@@ -38,8 +38,8 @@ function montar(entrada = '/admin/eventos') {
   );
 }
 
-const tarjeta = (titulo) => screen.getByRole('article', { name: new RegExp(titulo) });
-const lista = () => screen.findByRole('list', { name: 'Eventos' });
+const tarjeta = (titulo) => screen.getByRole('row', { name: new RegExp(titulo) });
+const lista = () => screen.findByRole('table', { name: 'Eventos' });
 
 describe('eventos del panel', () => {
   beforeAll(prepararEditorEnJsdom);
@@ -50,8 +50,8 @@ describe('eventos del panel', () => {
     await entrar('secretaria');
     montar();
 
-    const eventos = within(await lista()).getAllByRole('article');
-    expect(eventos.map((e) => within(e).getByRole('heading').textContent)).toEqual([
+    const eventos = within(await lista()).getAllByRole('row').slice(1);
+    const titulosEsperados = [
       'Adoración eucarística comunitaria',
       'Misa de sanación',
       'Misa por los difuntos de la comunidad',
@@ -59,7 +59,9 @@ describe('eventos del panel', () => {
       'Charla pre-bautismal para padres y padrinos',
       'Novena al Señor de la Exaltación (suspendida)',
       'Concierto de villancicos',
-    ]);
+    ];
+    expect(eventos).toHaveLength(titulosEsperados.length);
+    titulosEsperados.forEach((t, idx) => expect(eventos[idx]).toHaveTextContent(t));
     expect(within(tarjeta('Solemnidad de Cristo Rey')).getByText('Solemnidad')).toBeInTheDocument();
     expect(within(tarjeta('Concierto de villancicos')).getByText('Borrador')).toBeInTheDocument();
     expect(screen.queryByText('Finalizado')).not.toBeInTheDocument();
@@ -71,11 +73,11 @@ describe('eventos del panel', () => {
     await lista();
 
     await userEvent.click(screen.getByRole('button', { name: 'Finalizados' }));
-    await screen.findByRole('heading', { name: 'Retiro de catequistas' });
+    await screen.findByText('Retiro de catequistas');
     expect(screen.getByRole('button', { name: 'Finalizados' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(tarjeta('Retiro de catequistas')).getByText('Finalizado')).toBeInTheDocument();
     expect(within(tarjeta('Kermés parroquial')).getByText(/Todo el día/)).toBeInTheDocument();
-    expect(screen.getByText('2 eventos')).toBeInTheDocument();
+    expect(screen.getByText('Mostrando 1–2 de 2')).toBeInTheDocument();
     expect(screen.getByTestId('ubicacion')).toHaveTextContent('?vista=finalizados');
   });
 
@@ -88,8 +90,8 @@ describe('eventos del panel', () => {
     await screen.findByRole('option', { name: 'Catequesis' });
     await userEvent.selectOptions(selector, 'Catequesis');
 
-    await screen.findByText('1 evento');
-    expect(screen.getByRole('heading', { name: 'Charla pre-bautismal para padres y padrinos' })).toBeInTheDocument();
+    await screen.findByText('Mostrando 1–1 de 1');
+    expect(screen.getByText('Charla pre-bautismal para padres y padrinos')).toBeInTheDocument();
   });
 
   it('Marketing solo edita la página del evento: no puede crear, eliminar ni editar la tarjeta', async () => {
@@ -131,7 +133,7 @@ describe('eventos del panel', () => {
 
     expect(await screen.findByText('Se creó el evento «Peregrinación a Copacabana».')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByTestId('ubicacion')).toHaveTextContent(/^\/admin\/eventos$/));
-    const nueva = await screen.findByRole('article', { name: /Peregrinación a Copacabana/ });
+    const nueva = await screen.findByRole('row', { name: /Peregrinación a Copacabana/ });
     expect(within(nueva).getByText(/Todo el día/)).toBeInTheDocument();
   }, 15000);
 
@@ -169,7 +171,7 @@ describe('eventos del panel', () => {
     await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
     expect(await screen.findByText('Se guardaron los cambios de «Solemnidad de Cristo Rey del Universo».')).toBeInTheDocument();
-    const eventoEditado = await screen.findByRole('article', { name: /Solemnidad de Cristo Rey/ });
+    const eventoEditado = await screen.findByRole('row', { name: /Solemnidad de Cristo Rey/ });
     expect(await within(eventoEditado).findByText('Archivado')).toBeInTheDocument();
   }, 15000);
 

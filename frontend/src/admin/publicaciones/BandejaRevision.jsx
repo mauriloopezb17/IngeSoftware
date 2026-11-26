@@ -1,19 +1,28 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, Inbox, Pencil, X } from 'lucide-react';
 
-import Paginacion from '../componentes/Paginacion.jsx';
 import SinPermiso from '../componentes/SinPermiso.jsx';
 import { formatearFecha } from '../multimedia/formato.js';
 import { usePermisos } from '../permisos/usePermisos.js';
-import { Aviso, Boton, EncabezadoPantalla, EsqueletoTarjetas, EstadoVacio, useToast } from '../ui/index.js';
-import { CLAVE_PUBLICACIONES, listarPublicaciones, POR_PAGINA } from './api.js';
+import {
+  Boton,
+  CampoSelect,
+  EncabezadoPantalla,
+  TablaListado,
+  useFiltrosListado,
+  useToast,
+} from '../ui/index.js';
+import {
+  CLAVE_CATALOGOS,
+  CLAVE_PUBLICACIONES,
+  listarPublicaciones,
+  obtenerCatalogos,
+  POR_PAGINA,
+  TIPOS_DE_ESTA_PANTALLA,
+} from './api.js';
 import { DialogoAprobar, DialogoRechazar } from './DialogosRevision.jsx';
-
-// La bandeja vive bajo la clave de las publicaciones: invalidar CLAVE_PUBLICACIONES refresca a la vez
-// el listado y la bandeja después de aprobar o rechazar.
-const claveBandeja = (pagina) => [...CLAVE_PUBLICACIONES, 'bandeja', pagina];
 
 // /admin/publicaciones/revision: lo que espera la revisión del Párroco en su sede. La sección la decide
 // matriz.js (permiso noticias.publicar); los botones de cada publicación, el campo `acciones` de la API.
@@ -22,14 +31,48 @@ export default function BandejaRevision() {
   const clienteConsultas = useQueryClient();
   const toast = useToast();
   const tituloRef = useRef(null);
-  const [pagina, setPagina] = useState(1);
   // { publicacion, accion: 'aprobar' | 'rechazar' } mientras hay un diálogo abierto.
   const [revisando, setRevisando] = useState(null);
   const autorizado = puede('noticias.publicar');
 
+  const configFiltros = useMemo(
+    () => ({
+      categoria: { defecto: '' },
+      tipo: { defecto: '', validar: (v) => v in TIPOS_DE_ESTA_PANTALLA },
+    }),
+    [],
+  );
+
+  const {
+    valores,
+    busqueda,
+    setBusqueda,
+    pagina,
+    setPagina,
+    actualizarFiltro,
+    limpiarFiltros,
+    hayFiltrosActivos,
+    filtrosActivos,
+  } = useFiltrosListado({
+    filtros: configFiltros,
+    porPagina: POR_PAGINA,
+  });
+
+  const filtrosApi = useMemo(
+    () => ({ ...filtrosActivos, estado: 'EN_REVISION' }),
+    [filtrosActivos],
+  );
+
+  const catalogos = useQuery({
+    queryKey: CLAVE_CATALOGOS,
+    queryFn: obtenerCatalogos,
+    staleTime: 5 * 60 * 1000,
+    enabled: autorizado,
+  });
+
   const { data, isPending, isError, error, isPlaceholderData, refetch } = useQuery({
-    queryKey: claveBandeja(pagina),
-    queryFn: ({ signal }) => listarPublicaciones({ estado: 'EN_REVISION', pagina, porPagina: POR_PAGINA }, signal),
+    queryKey: [...CLAVE_PUBLICACIONES, 'bandeja', filtrosApi],
+    queryFn: ({ signal }) => listarPublicaciones(filtrosApi, signal),
     placeholderData: keepPreviousData,
     enabled: autorizado,
   });
@@ -37,16 +80,77 @@ export default function BandejaRevision() {
   if (!autorizado) return <SinPermiso />;
 
   const publicaciones = data?.datos ?? [];
+  const categorias = catalogos.data?.categoriasPublicacion ?? [];
 
   function terminar(mensaje) {
     setRevisando(null);
     toast.exito(mensaje);
-    // Listado y bandeja salen de la misma clave: se refrescan juntos.
     clienteConsultas.invalidateQueries({ queryKey: CLAVE_PUBLICACIONES });
-    // Si era la última de una página posterior, se vuelve a la anterior.
     if (publicaciones.length === 1 && pagina > 1) setPagina(pagina - 1);
     setTimeout(() => tituloRef.current?.focus(), 0);
   }
+
+  const columnas = [
+    {
+      id: 'titulo',
+      encabezado: 'Publicación',
+      claseCelda: 'font-semibold text-ink',
+      render: (publicacion) => (
+        <div>
+          <p className="font-semibold text-ink">{publicacion.titulo}</p>
+          <p className="mt-1 text-xs font-normal text-muted">
+            {publicacion.tipo.nombre}
+            {publicacion.categoria && ` · ${publicacion.categoria.nombre}`} · {publicacion.autor.nombreCompleto} ·
+            creada el {formatearFecha(publicacion.fechaCreacion)}
+          </p>
+          {publicacion.resumen && <p className="mt-1.5 text-sm font-normal text-ink">{publicacion.resumen}</p>}
+        </div>
+      ),
+    },
+    {
+      id: 'acciones',
+      encabezado: <span className="sr-only">Acciones</span>,
+      claseCelda: 'text-right md:w-px md:whitespace-nowrap',
+      render: (publicacion) => (
+        <div className="flex flex-wrap justify-end gap-2">
+          {publicacion.acciones.includes('EDITAR') && (
+            <Boton
+              como={Link}
+              to={`/admin/publicaciones/${publicacion.id}/editar`}
+              variante="secundario"
+              tamano="sm"
+              icono={Pencil}
+              aria-label={`Revisar el contenido de «${publicacion.titulo}»`}
+            >
+              Revisar
+            </Boton>
+          )}
+          {publicacion.acciones.includes('APROBAR') && (
+            <Boton
+              variante="primario"
+              tamano="sm"
+              icono={Check}
+              onClick={() => setRevisando({ publicacion, accion: 'aprobar' })}
+              aria-label={`Aprobar «${publicacion.titulo}»`}
+            >
+              Aprobar
+            </Boton>
+          )}
+          {publicacion.acciones.includes('RECHAZAR') && (
+            <Boton
+              variante="peligro"
+              tamano="sm"
+              icono={X}
+              onClick={() => setRevisando({ publicacion, accion: 'rechazar' })}
+              aria-label={`Rechazar «${publicacion.titulo}»`}
+            >
+              Rechazar
+            </Boton>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <section className="mx-auto max-w-5xl">
@@ -61,94 +165,52 @@ export default function BandejaRevision() {
         }
       />
 
-      <div className="mt-6" aria-busy={isPending || isPlaceholderData}>
-        {isPending && <EsqueletoTarjetas cantidad={3} columnas="grid-cols-1" etiqueta="Cargando la bandeja…" />}
-
-        {isError && !data && (
-          <Aviso
-            tipo="error"
-            accion={
-              <Boton variante="secundario" tamano="sm" onClick={() => refetch()}>
-                Reintentar
-              </Boton>
-            }
-          >
-            <p>No se pudo cargar la bandeja: {error.message}</p>
-          </Aviso>
-        )}
-
-        {data && (
-          <>
-            <p className="mb-3 text-sm tabular-nums text-muted" aria-live="polite">
-              {data.paginacion.total} {data.paginacion.total === 1 ? 'publicación en revisión' : 'publicaciones en revisión'}
-            </p>
-
-            {publicaciones.length ? (
-              <ul aria-label="Publicaciones en revisión" className={`flex flex-col gap-3 ${isPlaceholderData ? 'opacity-60' : ''}`}>
-                {publicaciones.map((publicacion) => (
-                  <li key={publicacion.id} className="rounded-lg border border-sand bg-white p-5">
-                    <article aria-label={publicacion.titulo} className="flex flex-wrap items-start justify-between gap-4">
-                      <div className="min-w-0 flex-1">
-                        <h2 className="text-base font-semibold text-ink">{publicacion.titulo}</h2>
-                        <p className="mt-1 text-xs text-muted">
-                          {publicacion.tipo.nombre}
-                          {publicacion.categoria && ` · ${publicacion.categoria.nombre}`} · {publicacion.autor.nombreCompleto} ·
-                          creada el {formatearFecha(publicacion.fechaCreacion)}
-                        </p>
-                        {publicacion.resumen && <p className="mt-2 text-sm text-ink">{publicacion.resumen}</p>}
-                      </div>
-                      {/* Los botones salen de `acciones`: la API dice qué puede hacer esta sesión. */}
-                      <div className="flex flex-wrap gap-2">
-                        {publicacion.acciones.includes('EDITAR') && (
-                          <Boton
-                            como={Link}
-                            to={`/admin/publicaciones/${publicacion.id}/editar`}
-                            variante="secundario"
-                            tamano="sm"
-                            icono={Pencil}
-                            aria-label={`Revisar el contenido de «${publicacion.titulo}»`}
-                          >
-                            Revisar
-                          </Boton>
-                        )}
-                        {publicacion.acciones.includes('APROBAR') && (
-                          <Boton
-                            variante="primario"
-                            tamano="sm"
-                            icono={Check}
-                            onClick={() => setRevisando({ publicacion, accion: 'aprobar' })}
-                            aria-label={`Aprobar «${publicacion.titulo}»`}
-                          >
-                            Aprobar
-                          </Boton>
-                        )}
-                        {publicacion.acciones.includes('RECHAZAR') && (
-                          <Boton
-                            variante="peligro"
-                            tamano="sm"
-                            icono={X}
-                            onClick={() => setRevisando({ publicacion, accion: 'rechazar' })}
-                            aria-label={`Rechazar «${publicacion.titulo}»`}
-                          >
-                            Rechazar
-                          </Boton>
-                        )}
-                      </div>
-                    </article>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EstadoVacio
-                icono={Inbox}
-                titulo="No hay publicaciones esperando revisión."
-                descripcion="Cuando el equipo envíe noticias para aprobar, aparecerán aquí."
+      <div className="mt-6">
+        <TablaListado
+          caption="Publicaciones en revisión"
+          columnas={columnas}
+          datos={publicaciones}
+          paginacion={data?.paginacion}
+          onCambiarPagina={setPagina}
+          cargando={isPending}
+          tenue={isPlaceholderData}
+          error={isError && !data ? `No se pudo cargar la bandeja: ${error.message}` : null}
+          onReintentar={refetch}
+          busqueda={busqueda}
+          onCambiarBusqueda={setBusqueda}
+          placeholderBusqueda="Título o resumen"
+          categoria={
+            categorias.length > 0
+              ? {
+                  etiqueta: 'Categoría',
+                  valor: valores.categoria,
+                  opciones: categorias.map((c) => ({ valor: c.slug, etiqueta: c.nombre })),
+                  onCambiar: (v) => actualizarFiltro('categoria', v),
+                }
+              : undefined
+          }
+          filtrosExtra={
+            <div className="min-w-[150px]">
+              <CampoSelect
+                etiqueta="Tipo"
+                value={valores.tipo}
+                onChange={(e) => actualizarFiltro('tipo', e.target.value)}
+                opciones={[['', 'Todos'], ...Object.entries(TIPOS_DE_ESTA_PANTALLA)]}
               />
-            )}
-
-            <Paginacion paginacion={data.paginacion} nombre="Paginación de la bandeja" onCambiar={setPagina} />
-          </>
-        )}
+            </div>
+          }
+          hayFiltrosActivos={hayFiltrosActivos}
+          onLimpiarFiltros={limpiarFiltros}
+          vacio={{
+            icono: Inbox,
+            titulo: 'No hay publicaciones esperando revisión.',
+            descripcion: 'Cuando el equipo envíe noticias para aprobar, aparecerán aquí.',
+          }}
+          vacioConFiltros={{
+            icono: Inbox,
+            titulo: 'No hay publicaciones en revisión con estos filtros.',
+          }}
+        />
       </div>
 
       {revisando?.accion === 'aprobar' && (
