@@ -160,7 +160,7 @@ function Noticias() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative min-w-[200px] flex-1 sm:flex-initial">
+            <div className="relative w-full sm:w-auto sm:min-w-[220px]">
               <label htmlFor="buscar-noticias" className="sr-only">
                 Buscar noticias
               </label>
@@ -177,39 +177,41 @@ function Noticias() {
                   setEstadoBusqueda((prev) => ({ ...prev, texto: evento.target.value }))
                 }
                 placeholder="Buscar noticias…"
-                className="min-h-11 w-full rounded-sm border border-sand bg-white py-2 pl-9 pr-9 font-body text-meta text-ink placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="min-h-11 w-full rounded-sm border border-sand bg-white py-2 pl-9 pr-11 font-body text-meta text-ink placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               />
               {textoBusqueda && (
                 <button
                   type="button"
                   onClick={() => setEstadoBusqueda((prev) => ({ ...prev, texto: '' }))}
                   aria-label="Limpiar búsqueda"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
+                  className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-sm text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
                 >
                   <X size={14} aria-hidden="true" />
                 </button>
               )}
             </div>
 
-            <label
-              htmlFor="filtro-categoria-noticias"
-              className="font-body text-meta font-semibold text-muted"
-            >
-              Categoría
-            </label>
-            <select
-              id="filtro-categoria-noticias"
-              className="min-h-11 rounded-sm border border-sand bg-white px-3 py-2 font-body text-meta font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              value={categoriaActiva}
-              onChange={(evento) => actualizarFiltros({ categoria: evento.target.value })}
-            >
-              <option value="">Todas las categorías</option>
-              {categorias.map((categoria) => (
-                <option key={categoria.id} value={categoria.slug}>
-                  {categoria.nombre}
-                </option>
-              ))}
-            </select>
+            <div className="flex w-full items-center gap-2 sm:w-auto">
+              <label
+                htmlFor="filtro-categoria-noticias"
+                className="font-body text-meta font-semibold text-muted"
+              >
+                Categoría
+              </label>
+              <select
+                id="filtro-categoria-noticias"
+                className="min-h-11 flex-1 rounded-sm border border-sand bg-white px-3 py-2 font-body text-meta font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:flex-initial"
+                value={categoriaActiva}
+                onChange={(evento) => actualizarFiltros({ categoria: evento.target.value })}
+              >
+                <option value="">Todas las categorías</option>
+                {categorias.map((categoria) => (
+                  <option key={categoria.id} value={categoria.slug}>
+                    {categoria.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {hayFiltrosActivos && (
               <button

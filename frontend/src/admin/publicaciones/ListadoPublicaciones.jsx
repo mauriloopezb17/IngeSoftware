@@ -241,7 +241,7 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
           }
           filtrosExtra={
             <>
-              <div className="min-w-[150px]">
+              <div className="w-full sm:w-auto sm:min-w-[150px]">
                 <CampoSelect
                   etiqueta="Estado"
                   value={valores.estado}
@@ -251,7 +251,7 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
               </div>
 
               {!esAvisos && (
-                <div className="min-w-[150px]">
+                <div className="w-full sm:w-auto sm:min-w-[150px]">
                   <CampoSelect
                     etiqueta="Tipo"
                     value={valores.tipo}
@@ -261,7 +261,7 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
                 </div>
               )}
 
-              <div className="flex items-center pb-2">
+              <div className="flex min-h-11 items-center">
                 <CampoCasilla
                   etiqueta="Solo las mías"
                   checked={valores.autor === 'yo'}

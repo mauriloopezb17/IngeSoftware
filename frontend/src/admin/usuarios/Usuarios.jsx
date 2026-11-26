@@ -211,7 +211,7 @@ export default function Usuarios() {
           placeholderBusqueda="Nombre o correo"
           filtrosExtra={
             <>
-              <div className="min-w-[160px]">
+              <div className="w-full sm:w-auto sm:min-w-[160px]">
                 <CampoSelect
                   etiqueta="Rol"
                   value={valores.rol}
@@ -226,7 +226,7 @@ export default function Usuarios() {
                 </CampoSelect>
               </div>
 
-              <div className="min-w-[180px]">
+              <div className="w-full sm:w-auto sm:min-w-[180px]">
                 <CampoSelect
                   etiqueta="Sede"
                   value={valores.sede}
@@ -241,7 +241,7 @@ export default function Usuarios() {
                 </CampoSelect>
               </div>
 
-              <div className="min-w-[140px]">
+              <div className="w-full sm:w-auto sm:min-w-[140px]">
                 <CampoSelect
                   etiqueta="Estado"
                   value={valores.activo}

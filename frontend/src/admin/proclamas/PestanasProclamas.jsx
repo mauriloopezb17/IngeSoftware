@@ -17,14 +17,14 @@ export default function PestanasProclamas() {
   ];
 
   return (
-    <nav aria-label="Secciones de proclamas" className="mt-6 flex gap-1 border-b border-sand">
+    <nav aria-label="Secciones de proclamas" className="mt-6 flex flex-wrap gap-1 border-b border-sand">
       {pestanas.map(({ a, texto, fin, badge }) => (
         <NavLink
           key={a}
           to={a}
           end={fin}
           className={({ isActive }) =>
-            `-mb-px inline-flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink motion-reduce:transition-none ${
+            `-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-4 py-2.5 text-sm transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink motion-reduce:transition-none ${
               isActive
                 ? 'border-gold bg-white font-semibold text-ink'
                 : 'border-transparent font-medium text-muted hover:text-ink'

@@ -208,7 +208,7 @@ export default function Horarios() {
               : undefined
           }
           filtrosExtra={
-            <div className="min-w-[150px]">
+            <div className="w-full sm:w-auto sm:min-w-[150px]">
               <CampoSelect
                 etiqueta="Estado"
                 value={valores.activo}
