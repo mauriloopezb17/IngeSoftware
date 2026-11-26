@@ -7,10 +7,17 @@ import NoEncontrada from '../paginas/NoEncontrada.jsx';
 import { usePermisos } from '../permisos/usePermisos.js';
 import { Aviso, Boton, EncabezadoPantalla, EsqueletoFormulario } from '../ui/index.js';
 import { CLAVE_PROCLAMAS, obtenerProclama } from './api.js';
+import BandejaObservaciones from './BandejaObservaciones.jsx';
 import FormularioProclama from './FormularioProclama.jsx';
 import ListadoProclamas from './ListadoProclamas.jsx';
 import PublicacionesProclama from './PublicacionesProclama.jsx';
 import SeccionDetalleProclama from './SeccionDetalleProclama.jsx';
+
+function RutaObservaciones() {
+  const { puede } = usePermisos();
+  if (!puede('proclamas.observaciones')) return <SinPermiso />;
+  return <BandejaObservaciones />;
+}
 
 function NuevaProclama() {
   const { puede } = usePermisos();
@@ -104,6 +111,7 @@ export default function Proclamas() {
   return (
     <Routes>
       <Route index element={<ListadoProclamas />} />
+      <Route path="observaciones" element={<RutaObservaciones />} />
       <Route path="nueva" element={<NuevaProclama />} />
       <Route path=":id/editar" element={<DetalleProclama />} />
       <Route path="*" element={<NoEncontrada />} />

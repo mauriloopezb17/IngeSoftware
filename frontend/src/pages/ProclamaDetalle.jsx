@@ -11,6 +11,7 @@ import {
 } from '../components/portal/index.js';
 import ContenidoBlockNote from '../components/parroquia/ContenidoBlockNote.jsx';
 import { CargandoSeccion, ErrorSeccion } from '../components/parroquia/EstadoSeccion.jsx';
+import FormularioObservacionProclama from '../components/parroquia/FormularioObservacionProclama.jsx';
 import { construirAtributosImagen } from '../components/parroquia/imagenSrcSet.js';
 import VisorGaleria from '../components/parroquia/VisorGaleria.jsx';
 import { useProclama, useSede } from '../hooks/index.js';
@@ -232,6 +233,16 @@ function ProclamaDetalle() {
               alCerrar={() => setIndiceVisor(null)}
             />
           )}
+
+          <Seccion fondo={galeria.length > 0 ? 'blanco' : 'crema'}>
+            {proclama.aceptaObservaciones ? (
+              <FormularioObservacionProclama proclamaId={proclama.id} />
+            ) : (
+              <p className="font-body text-body text-muted">
+                Esta proclama ya no recibe observaciones.
+              </p>
+            )}
+          </Seccion>
         </>
       )}
     </>

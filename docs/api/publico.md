@@ -1033,6 +1033,7 @@ Detalle de una proclama visible (al menos una publicación cuya fecha ya llegó)
     ],
     "tieneDetalle": true,
     "imagen": null,
+    "aceptaObservaciones": true,
     "galeria": [
       {
         "id": 12,
@@ -1061,6 +1062,27 @@ Detalle de una proclama visible (al menos una publicación cuya fecha ya llegó)
 ```
 
 - `detalle` es `null` si no se cargó información adicional. Si `detalle.lugar` es `null`, la boda se celebra en la propia parroquia.
+- `aceptaObservaciones` es `true` desde la primera publicación hasta la fecha y hora del matrimonio.
+
+## `POST /api/sedes/:sede/proclamas/:id/observaciones`
+
+Envía una observación confidencial al párroco sobre una proclama (sin sesión, con protección CSRF y límite de 5 peticiones por hora por IP).
+
+**Cuerpo:**
+
+```json
+{
+  "nombreCompleto": "María Elena Quispe",
+  "correo": "maria@ejemplo.com",
+  "telefono": "+591 71234567",
+  "mensaje": "Deseo comunicar una observación sobre esta proclama.",
+  "sitioWeb": ""
+}
+```
+
+- Es obligatorio al menos uno entre `correo` o `telefono` (si faltan ambos, `400 VALIDACION` en `contacto`).
+- Responde `201 { "datos": { "recibido": true } }` sin devolver los datos enviados y sin caché (`Cache-Control: no-store`).
+- Proclama inexistente o no visible → `404 NO_ENCONTRADO`; proclama cuya boda ya pasó → `409 CONFLICTO`; límite superado → `429 DEMASIADAS_SOLICITUDES`.
 
 ---
 

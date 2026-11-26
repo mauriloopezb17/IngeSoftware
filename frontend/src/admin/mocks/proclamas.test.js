@@ -142,4 +142,23 @@ describe('mock de proclamas (admin.md §10)', () => {
     const anio = await capturar(clienteHttp.get('/admin/proclamas', { parametros: { anio: '1850' } }));
     expect(anio.detalles[0].campo).toBe('query.anio');
   });
+
+  it('observaciones: solo Párroco accede, lista, marca leída/no leída y elimina', async () => {
+    await entrar('secretaria');
+    expect((await capturar(clienteHttp.get('/admin/proclamas/observaciones'))).estado).toBe(403);
+    expect((await capturar(clienteHttp.get('/admin/proclamas/observaciones/resumen'))).estado).toBe(403);
+
+    await entrar('parroco');
+    const resumen = (await clienteHttp.get('/admin/proclamas/observaciones/resumen')).datos;
+    expect(resumen.noLeidas).toBe(2);
+
+    const lista = (await clienteHttp.get('/admin/proclamas/observaciones')).datos;
+    expect(lista).toHaveLength(2);
+
+    const marcada = (await clienteHttp.patch(`/admin/proclamas/observaciones/${lista[0].id}`, { leida: true })).datos;
+    expect(marcada.leida).toBe(true);
+    expect((await clienteHttp.get('/admin/proclamas/observaciones/resumen')).datos.noLeidas).toBe(1);
+
+    expect(await clienteHttp.delete(`/admin/proclamas/observaciones/${lista[0].id}`)).toBeNull();
+  });
 });

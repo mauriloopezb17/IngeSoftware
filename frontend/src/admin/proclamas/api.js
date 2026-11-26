@@ -2,6 +2,7 @@
 import { clienteHttp } from '../../services/clienteHttp.js';
 
 export const CLAVE_PROCLAMAS = ['admin', 'proclamas'];
+export const CLAVE_OBSERVACIONES = ['admin', 'proclamas', 'observaciones'];
 export const POR_PAGINA = 10;
 export const MAX_PUBLICACIONES = 3;
 
@@ -55,3 +56,22 @@ export async function quitarPublicacion(id, numero) {
   const { datos } = await clienteHttp.delete(`/admin/proclamas/${id}/publicaciones/${numero}`);
   return datos;
 }
+
+export function listarObservaciones({ estado = 'no-leidas', proclamaId, pagina, porPagina = POR_PAGINA }, senal) {
+  return clienteHttp.get('/admin/proclamas/observaciones', {
+    parametros: { estado, proclamaId, pagina, porPagina },
+    senal,
+  });
+}
+
+export async function obtenerResumenObservaciones(senal) {
+  const { datos } = await clienteHttp.get('/admin/proclamas/observaciones/resumen', { senal });
+  return datos;
+}
+
+export async function marcarObservacionLeida(id, leida) {
+  const { datos } = await clienteHttp.patch(`/admin/proclamas/observaciones/${id}`, { leida });
+  return datos;
+}
+
+export const eliminarObservacion = (id) => clienteHttp.delete(`/admin/proclamas/observaciones/${id}`);

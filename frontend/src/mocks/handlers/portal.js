@@ -329,6 +329,52 @@ export const handlersPortal = [
     return HttpResponse.json({ datos: detalle });
   }),
 
+  http.post(api('/sedes/:sede/proclamas/:id/observaciones'), async ({ params, request }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const detalle = esSedePrincipal(params.sede) ? obtenerDetalleProclamaExaltacion(params.id) : null;
+    if (!detalle) {
+      return HttpResponse.json(
+        { error: { codigo: 'NO_ENCONTRADO', mensaje: 'La proclama no existe.', detalles: [] } },
+        { status: 404 },
+      );
+    }
+    if (!detalle.aceptaObservaciones) {
+      return HttpResponse.json(
+        { error: { codigo: 'CONFLICTO', mensaje: 'Esta proclama ya no recibe observaciones.', detalles: [] } },
+        { status: 409 },
+      );
+    }
+
+    const cuerpo = await request.json().catch(() => null);
+    if (!cuerpo || typeof cuerpo !== 'object') {
+      return HttpResponse.json(
+        { error: { codigo: 'VALIDACION', mensaje: 'Cuerpo inválido.', detalles: [] } },
+        { status: 400 },
+      );
+    }
+    if (!cuerpo.correo?.trim() && !cuerpo.telefono?.trim()) {
+      return HttpResponse.json(
+        {
+          error: {
+            codigo: 'VALIDACION',
+            mensaje: 'Los datos enviados no son válidos.',
+            detalles: [
+              {
+                campo: 'contacto',
+                mensaje: 'Escribe tu correo o tu teléfono para que el párroco pueda responderte.',
+              },
+            ],
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    return HttpResponse.json({ datos: { recibido: true } }, { status: 201 });
+  }),
+
   http.get(api('/sedes/:sede/boletines'), ({ params, request }) => {
     const fallo = validarSede(params.sede);
     if (fallo) return fallo;

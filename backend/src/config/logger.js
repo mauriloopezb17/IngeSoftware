@@ -4,11 +4,21 @@ import pino from 'pino';
 import { pinoHttp } from 'pino-http';
 import { obtenerEntorno } from './entorno.js';
 
-// Nunca se escriben en el log: credenciales y cookies de sesión.
+// Nunca se escriben en el log: credenciales, cookies de sesión ni datos personales de observaciones.
 const RUTAS_OCULTAS = [
   'req.headers.authorization',
   'req.headers.cookie',
   'res.headers["set-cookie"]',
+  'req.body.nombreCompleto',
+  'req.body.correo',
+  'req.body.telefono',
+  'req.body.mensaje',
+  'req.body.sitioWeb',
+  '*.nombreCompleto',
+  '*.correo',
+  '*.telefono',
+  '*.mensaje',
+  '*.nombre_completo',
 ];
 
 // Un X-Request-Id que llega del cliente o de un proxy se respeta solo si es corto y seguro.

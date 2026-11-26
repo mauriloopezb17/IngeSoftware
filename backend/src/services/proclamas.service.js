@@ -90,6 +90,7 @@ export async function obtenerDetalleProclama(sedeId, id) {
 
   return {
     ...aProclama(fila),
+    aceptaObservaciones: new Date(fila.fecha_matrimonio).getTime() > Date.now(),
     galeria,
     detalle: fila.detalle ?? null,
   };

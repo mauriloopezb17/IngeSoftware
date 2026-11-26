@@ -532,6 +532,7 @@ export function obtenerDetalleProclamaExaltacion(id) {
     ];
     return {
       ...item,
+      aceptaObservaciones: new Date(item.fechaMatrimonio).getTime() > Date.now(),
       galeria,
       detalle: {
         contenido: {
@@ -562,6 +563,7 @@ export function obtenerDetalleProclamaExaltacion(id) {
   if (numId === 2) {
     return {
       ...item,
+      aceptaObservaciones: new Date(item.fechaMatrimonio).getTime() > Date.now(),
       galeria: [],
       detalle: {
         contenido: null,
@@ -577,6 +579,7 @@ export function obtenerDetalleProclamaExaltacion(id) {
 
   return {
     ...item,
+    aceptaObservaciones: new Date(item.fechaMatrimonio).getTime() > Date.now(),
     galeria: [],
     detalle: null,
   };

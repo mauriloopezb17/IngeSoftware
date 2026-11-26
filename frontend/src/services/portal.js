@@ -66,6 +66,11 @@ export async function obtenerProclama(sede, id, senal) {
   return datos;
 }
 
+export async function enviarObservacionProclama(sede, id, cuerpo) {
+  const { datos } = await clienteHttp.post(`/sedes/${sede}/proclamas/${id}/observaciones`, cuerpo);
+  return datos;
+}
+
 export async function obtenerHistorialProclamas(sede, parametros, senal) {
   return clienteHttp.get(`/sedes/${sede}/proclamas/historial`, { parametros, senal });
 }

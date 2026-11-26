@@ -10,8 +10,12 @@ describe('matriz de permisos', () => {
     expect(permisosDe('SECRETARIA')).toEqual(ejemplo.datos.permisos);
   });
 
-  it('el Administrador tiene todos los permisos', () => {
-    expect(permisosDe('ADMINISTRADOR')).toEqual(Object.values(PERMISOS));
+  it('el Administrador tiene todos los permisos salvo proclamas.observaciones (solo Párroco)', () => {
+    expect(permisosDe('ADMINISTRADOR')).toEqual(
+      Object.values(PERMISOS).filter((permiso) => permiso !== PERMISOS.PROCLAMAS_OBSERVACIONES),
+    );
+    expect(tienePermiso('ADMINISTRADOR', PERMISOS.PROCLAMAS_OBSERVACIONES)).toBe(false);
+    expect(tienePermiso('PARROCO', PERMISOS.PROCLAMAS_OBSERVACIONES)).toBe(true);
   });
 
   it.each([

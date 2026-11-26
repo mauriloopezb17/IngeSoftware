@@ -39,6 +39,7 @@ export const PERMISOS_POR_ROL = {
     'sede.editar',
     'proclamas.gestionar',
     'proclamas.detalle',
+    'proclamas.observaciones',
     'boletines.gestionar',
     'paginas.gestionar',
     'bitacora.ver',
