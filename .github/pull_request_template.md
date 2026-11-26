@@ -1,3 +1,6 @@
+**Historia:** <!-- PAR-xxx u observación -->
+**Revisor asignado:** <!-- @usuario -->
+
 ## Descripción
 
 <!-- ¿Qué hace este PR y por qué? -->
@@ -28,6 +31,7 @@
 ## Checklist
 
 - [ ] Los commits siguen el formato `[tipo] descripción en imperativo`.
+- [ ] Un integrante distinto del autor revisó y aprobó el PR.
 - [ ] El CI pasa (convención, backend y frontend).
 - [ ] Se agregaron o actualizaron pruebas cuando corresponde.
 - [ ] No se incluyen secretos, credenciales ni archivos `.env`.
