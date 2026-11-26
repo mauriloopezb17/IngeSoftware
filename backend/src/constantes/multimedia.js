@@ -42,9 +42,11 @@ export const EXTENSION_POR_TIPO = Object.freeze({
 // que lo supera se corta sin guardarse; el resto se comprueba contra el límite de su clase.
 export const MAXIMO_SUBIDA_BYTES = 2 * GB;
 
-// Capacidad del almacenamiento (50 GB) y porcentaje desde el que se dejan de aceptar subidas.
+// Capacidad del almacenamiento (20 GB, tope de la capa gratuita Always Free de OCI Object Storage;
+// fuente: https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)
+// y porcentaje desde el que se dejan de aceptar subidas.
 // Se mide con la suma de tamano_bytes de los archivos (las variantes no cuentan).
-export const CAPACIDAD_ALMACENAMIENTO_BYTES = 50 * GB;
+export const CAPACIDAD_ALMACENAMIENTO_BYTES = 20 * GB;
 export const UMBRAL_CAPACIDAD = 0.9;
 
 // Imágenes: lado largo máximo (px), calidad WebP y píxeles de entrada aceptados (sharp usa

@@ -318,6 +318,8 @@ describe('subida de archivos', () => {
       [413, 'ARCHIVO_DEMASIADO_GRANDE', 'Las imágenes pueden pesar hasta 30 MB.'],
       [415, 'TIPO_NO_PERMITIDO', 'El contenido del archivo no corresponde a un tipo permitido.'],
       [409, 'CONFLICTO', 'El almacenamiento está casi lleno.'],
+      [500, 'ERROR_INTERNO', 'Ocurrió un error inesperado. Intenta de nuevo más tarde.'],
+      [503, 'SERVICIO_NO_DISPONIBLE', 'No pudimos recibir el archivo. Intenta de nuevo.'],
     ])('muestra el error %i con el mensaje del servidor y permite reintentar', async (estado, codigo, mensaje) => {
       // El navegador no ve el contenido real: el servidor puede rechazar lo que el cliente dejó pasar.
       server.use(http.post(api('/admin/multimedia'), () => errorDelServidor(estado, codigo, mensaje), { once: true }));
