@@ -125,12 +125,20 @@ describe('ocultamiento de datos sensibles en logs (PAR-160.2)', () => {
       .get('/api/admin/proclamas/observaciones?estado=todas&pagina=1');
     expect(respuestaObs.status).toBe(200);
 
-    const respuestaFiltros = await panel
+    // Búsqueda válida: el correo viaja en un filtro aceptado por el listado.
+    const respuestaBuscar = await panel
+      .como('parroco')
+      .get(`/api/admin/eventos?buscar=${encodeURIComponent(correo)}&pagina=1`);
+    expect(respuestaBuscar.status).toBe(200);
+
+    // Parámetros desconocidos: el listado puede rechazarlos con 400, pero la línea de log
+    // de esa petición tampoco debe mostrar el correo ni el teléfono.
+    const respuestaDesconocidos = await panel
       .como('parroco')
       .get(
-        `/api/admin/eventos?buscar=${encodeURIComponent(correo)}&correo=${encodeURIComponent(correo)}&telefono=${encodeURIComponent(telefono)}`,
+        `/api/admin/eventos?pagina=1&correo=${encodeURIComponent(correo)}&telefono=${encodeURIComponent(telefono)}`,
       );
-    expect(respuestaFiltros.status).toBe(200);
+    expect([200, 400]).toContain(respuestaDesconocidos.status);
 
     const texto = captura.crudo.join('\n');
     expect(texto).not.toContain(correo);
