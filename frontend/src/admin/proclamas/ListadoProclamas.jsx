@@ -9,6 +9,7 @@ import { usePermisos } from '../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoTexto,
   EncabezadoPantalla,
   Insignia,
@@ -153,11 +154,18 @@ export default function ListadoProclamas() {
         descripcion="Proclamas matrimoniales y su historial de publicaciones."
         headingRef={tituloRef}
         acciones={
-          editable && (
-            <Boton como={Link} to="/admin/proclamas/nueva" variante="primario" icono={Plus}>
-              Nueva proclama
-            </Boton>
-          )
+          <>
+            <BotonExportarCsv
+              recurso="proclamas"
+              permiso="proclamas.exportar"
+              filtros={filtrosActivos}
+            />
+            {editable && (
+              <Boton como={Link} to="/admin/proclamas/nueva" variante="primario" icono={Plus}>
+                Nueva proclama
+              </Boton>
+            )}
+          </>
         }
       />
 

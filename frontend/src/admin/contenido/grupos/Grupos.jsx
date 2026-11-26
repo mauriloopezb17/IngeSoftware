@@ -8,6 +8,7 @@ import { usePermisos } from '../../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoSelect,
   EncabezadoPantalla,
   Insignia,
@@ -177,15 +178,22 @@ export default function Grupos() {
         descripcion="Movimientos, ministerios y pastorales de la comunidad parroquial."
         headingRef={tituloRef}
         acciones={
-          puedeGestionar && (
-            <Boton
-              variante="primario"
-              icono={Plus}
-              onClick={() => setCreando(true)}
-            >
-              Nuevo grupo
-            </Boton>
-          )
+          <>
+            <BotonExportarCsv
+              recurso="grupos-pastorales"
+              permiso="grupos.exportar"
+              filtros={filtrosActivos}
+            />
+            {puedeGestionar && (
+              <Boton
+                variante="primario"
+                icono={Plus}
+                onClick={() => setCreando(true)}
+              >
+                Nuevo grupo
+              </Boton>
+            )}
+          </>
         }
       />
 

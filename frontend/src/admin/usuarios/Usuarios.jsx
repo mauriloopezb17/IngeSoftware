@@ -7,6 +7,7 @@ import { usePermisos } from '../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoSelect,
   EncabezadoPantalla,
   Insignia,
@@ -178,18 +179,25 @@ export default function Usuarios() {
         descripcion="Cuentas de acceso al panel parroquial, roles y sedes asignadas."
         headingRef={tituloRef}
         acciones={
-          puedeGestionar ? (
-            <Boton
-              variante="primario"
-              icono={Plus}
-              onClick={() => {
-                setErrorAccion('');
-                setCreando(true);
-              }}
-            >
-              Nuevo usuario
-            </Boton>
-          ) : null
+          <>
+            <BotonExportarCsv
+              recurso="usuarios"
+              permiso="usuarios.exportar"
+              filtros={filtrosActivos}
+            />
+            {puedeGestionar && (
+              <Boton
+                variante="primario"
+                icono={Plus}
+                onClick={() => {
+                  setErrorAccion('');
+                  setCreando(true);
+                }}
+              >
+                Nuevo usuario
+              </Boton>
+            )}
+          </>
         }
       />
 

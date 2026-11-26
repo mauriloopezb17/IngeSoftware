@@ -9,6 +9,7 @@ import { usePermisos } from '../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoTexto,
   EncabezadoPantalla,
   Insignia,
@@ -143,11 +144,18 @@ export default function ListadoBoletines() {
         descripcion="Boletines parroquiales en PDF. Se publican directamente, sin revisión."
         headingRef={tituloRef}
         acciones={
-          editable && (
-            <Boton como={Link} to="/admin/boletines/nuevo" variante="primario" icono={Plus}>
-              Nuevo boletín
-            </Boton>
-          )
+          <>
+            <BotonExportarCsv
+              recurso="boletines"
+              permiso="boletines.exportar"
+              filtros={filtrosActivos}
+            />
+            {editable && (
+              <Boton como={Link} to="/admin/boletines/nuevo" variante="primario" icono={Plus}>
+                Nuevo boletín
+              </Boton>
+            )}
+          </>
         }
       />
 

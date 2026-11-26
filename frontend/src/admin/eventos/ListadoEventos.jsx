@@ -9,6 +9,7 @@ import { CLAVE_CATALOGOS, obtenerCatalogos } from '../publicaciones/api.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoSelect,
   EncabezadoPantalla,
   Insignia,
@@ -166,11 +167,18 @@ export default function ListadoEventos() {
         descripcion="Calendario parroquial. Los eventos se publican directamente, sin revisión."
         headingRef={tituloRef}
         acciones={
-          editable && (
-            <Boton como={Link} to="/admin/eventos/nuevo" variante="primario" icono={Plus}>
-              Nuevo evento
-            </Boton>
-          )
+          <>
+            <BotonExportarCsv
+              recurso="eventos"
+              permiso="eventos.exportar"
+              filtros={filtrosActivos}
+            />
+            {editable && (
+              <Boton como={Link} to="/admin/eventos/nuevo" variante="primario" icono={Plus}>
+                Nuevo evento
+              </Boton>
+            )}
+          </>
         }
       />
 

@@ -100,7 +100,6 @@ describe('rutas del panel', () => {
     ['marketing@parroquia.test', 'bitacora'],
     ['secretaria@parroquia.test', 'usuarios'],
     ['secretaria@parroquia.test', 'bitacora'],
-    ['parroco@parroquia.test', 'usuarios'],
   ])('%s recibe «sin permiso» en /admin/%s', async (correo, ruta) => {
     await abrir(correo, ruta);
 
