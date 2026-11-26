@@ -9,6 +9,7 @@ import { idDelCuerpo, textoOpcional, urlHttps } from './panel.js';
 export const paramsPublicacion = z.object({ id });
 
 export const consultaPublicaciones = esquemaListado({
+  conBuscar: true,
   filtros: {
     sede: slug.optional(),
     tipo: listaCodigos([...TIPOS_PUBLICACION.codigos]).optional(),

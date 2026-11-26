@@ -7,6 +7,7 @@ import { textoAlternativo } from './multimedia.js';
 export const paramsArchivo = z.object({ id });
 
 export const consultaBiblioteca = esquemaListado({
+  conBuscar: true,
   filtros: {
     sede: slug.optional(),
     clase: z

@@ -73,6 +73,7 @@ export const paramsServicio = z.object({ id });
 export const paramsPregunta = z.object({ id, preguntaId: id });
 
 export const consultaServicios = esquemaListado({
+  conBuscar: true,
   filtros: {
     sede: slug.optional(),
     visible: booleanoQuery.optional(),

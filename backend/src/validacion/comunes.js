@@ -113,13 +113,14 @@ export function esquemaListado({
   filtros = {},
   ordenes = [],
   ordenPredeterminado,
+  conBuscar = false,
   porPaginaMaximo = POR_PAGINA_MAXIMO,
   porPaginaPredeterminado = POR_PAGINA_PREDETERMINADO,
 } = {}) {
   const forma = {
     pagina: campoPagina(),
     porPagina: campoPorPagina(porPaginaMaximo, porPaginaPredeterminado),
-    buscar: buscarTexto.optional(),
+    ...(conBuscar ? { buscar: buscarTexto.optional() } : {}),
     ...filtros,
   };
 

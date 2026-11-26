@@ -23,6 +23,7 @@ import {
 export const paramsEvento = z.object({ id });
 
 export const consultaEventos = esquemaListado({
+  conBuscar: true,
   filtros: {
     sede: slug.optional(),
     desde: fecha.optional(),
