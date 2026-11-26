@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Clock3, Inbox, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import ConfirmarAccion from '../../componentes/ConfirmarAccion.jsx';
@@ -9,44 +9,20 @@ import {
   Boton,
   CampoSelect,
   EncabezadoPantalla,
-  EsqueletoTarjetas,
-  EstadoVacio,
   Insignia,
+  TablaListado,
+  useFiltrosListado,
   useToast,
 } from '../../ui/index.js';
 import {
   CLAVE_CATALOGOS,
   CLAVE_HORARIOS,
-  DIAS_SEMANA,
   eliminarHorario,
-  listarHorarios,
+  listarHorariosPaginados,
   nombreDia,
   obtenerCatalogos,
 } from './api.js';
 import FormularioHorario from './FormularioHorario.jsx';
-
-function agruparHorarios(horarios) {
-  const porTipo = new Map();
-  for (const h of horarios) {
-    if (!porTipo.has(h.tipo.id)) {
-      porTipo.set(h.tipo.id, { tipo: h.tipo, dias: new Map() });
-    }
-    const grupoTipo = porTipo.get(h.tipo.id);
-    if (!grupoTipo.dias.has(h.diaSemana)) {
-      grupoTipo.dias.set(h.diaSemana, []);
-    }
-    grupoTipo.dias.get(h.diaSemana).push(h);
-  }
-
-  return [...porTipo.values()].map(({ tipo, dias }) => ({
-    tipo,
-    dias: DIAS_SEMANA.filter((d) => dias.has(d.valor)).map((d) => ({
-      dia: d.valor,
-      nombre: d.nombre,
-      horarios: dias.get(d.valor),
-    })),
-  }));
-}
 
 export default function Horarios() {
   const queryClient = useQueryClient();
@@ -56,24 +32,41 @@ export default function Horarios() {
 
   const tituloRef = useRef(null);
 
-  const [filtroTipo, setFiltroTipo] = useState('');
-  const [filtroActivo, setFiltroActivo] = useState('');
   const [editando, setEditando] = useState(null);
   const [creando, setCreando] = useState(false);
   const [porEliminar, setPorEliminar] = useState(null);
 
+  const configFiltros = useMemo(
+    () => ({
+      tipo: { defecto: '', validar: (v) => /^\d+$/.test(v) },
+      activo: { defecto: '', validar: (v) => v === 'true' || v === 'false' },
+    }),
+    [],
+  );
+
+  const {
+    valores,
+    busqueda,
+    setBusqueda,
+    setPagina,
+    actualizarFiltro,
+    limpiarFiltros,
+    hayFiltrosActivos,
+    filtrosActivos,
+  } = useFiltrosListado({
+    filtros: configFiltros,
+    porPagina: 15,
+  });
+
   const catalogosQuery = useQuery({
     queryKey: CLAVE_CATALOGOS,
-    queryFn: obtenerCatalogos,
+    queryFn: () => obtenerCatalogos(),
   });
 
   const horariosQuery = useQuery({
-    queryKey: [...CLAVE_HORARIOS, { tipo: filtroTipo, activo: filtroActivo }],
-    queryFn: () =>
-      listarHorarios({
-        tipo: filtroTipo || undefined,
-        activo: filtroActivo || undefined,
-      }),
+    queryKey: [...CLAVE_HORARIOS, 'lista', filtrosActivos],
+    queryFn: ({ signal }) => listarHorariosPaginados(filtrosActivos, signal),
+    placeholderData: keepPreviousData,
   });
 
   const eliminarMut = useMutation({
@@ -87,8 +80,73 @@ export default function Horarios() {
   });
 
   const tiposHorario = catalogosQuery.data?.tiposHorario ?? [];
-  const horarios = useMemo(() => horariosQuery.data ?? [], [horariosQuery.data]);
-  const grupos = useMemo(() => agruparHorarios(horarios), [horarios]);
+  const horarios = horariosQuery.data?.datos ?? [];
+
+  const columnas = [
+    {
+      id: 'tipo',
+      encabezado: 'Tipo',
+      render: (h) => <span className="font-semibold text-ink">{h.tipo.nombre}</span>,
+    },
+    {
+      id: 'dia',
+      encabezado: 'Día',
+      render: (h) => nombreDia(h.diaSemana),
+    },
+    {
+      id: 'horario',
+      encabezado: 'Horario',
+      render: (h) => (
+        <div>
+          <span className="inline-flex items-center gap-1.5 font-medium tabular-nums text-ink">
+            <Clock3 className="size-3.5 text-muted" aria-hidden="true" />
+            {h.horaFin ? `${h.horaInicio} – ${h.horaFin}` : h.horaInicio}
+          </span>
+          {h.descripcion && <p className="mt-0.5 text-xs text-muted">{h.descripcion}</p>}
+        </div>
+      ),
+    },
+    {
+      id: 'estado',
+      encabezado: 'Estado',
+      render: (h) => (
+        <Insignia variante={h.activo ? 'publicado' : 'archivado'}>
+          {h.activo ? 'Activo' : 'Inactivo'}
+        </Insignia>
+      ),
+    },
+    ...(puedeGestionar
+      ? [
+          {
+            id: 'acciones',
+            encabezado: <span className="sr-only">Acciones</span>,
+            claseCelda: 'text-right sm:w-px sm:whitespace-nowrap',
+            render: (h) => (
+              <div className="flex flex-wrap justify-end gap-2">
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  icono={Pencil}
+                  onClick={() => setEditando(h)}
+                  aria-label={`Editar horario ${h.tipo.nombre} ${nombreDia(h.diaSemana)} ${h.horaInicio}`}
+                >
+                  Editar
+                </Boton>
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  icono={Trash2}
+                  onClick={() => setPorEliminar(h)}
+                  aria-label={`Eliminar horario ${h.tipo.nombre} ${nombreDia(h.diaSemana)} ${h.horaInicio}`}
+                >
+                  Eliminar
+                </Boton>
+              </div>
+            ),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <section className="mx-auto max-w-5xl">
@@ -119,161 +177,93 @@ export default function Horarios() {
         </Aviso>
       )}
 
-      <div className="mt-6 grid gap-4 rounded-lg border border-sand bg-white p-4 sm:max-w-lg sm:grid-cols-2">
-        <CampoSelect
-          etiqueta="Tipo de horario"
-          value={filtroTipo}
-          onChange={(e) => setFiltroTipo(e.target.value)}
-        >
-          <option value="">Todos los tipos</option>
-          {tiposHorario.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.nombre}
-            </option>
-          ))}
-        </CampoSelect>
-
-        <CampoSelect
-          etiqueta="Estado"
-          value={filtroActivo}
-          onChange={(e) => setFiltroActivo(e.target.value)}
-        >
-          <option value="">Todos</option>
-          <option value="true">Visibles</option>
-          <option value="false">Ocultos</option>
-        </CampoSelect>
-      </div>
-
-      <div className="mt-6" aria-busy={horariosQuery.isPending}>
-        {horariosQuery.isPending && (
-          <EsqueletoTarjetas cantidad={3} columnas="grid-cols-1" etiqueta="Cargando horarios…" />
-        )}
-
-        {horariosQuery.error && (
-          <Aviso
-            tipo="error"
-            accion={
-              <Boton variante="secundario" tamano="sm" onClick={() => horariosQuery.refetch()}>
-                Reintentar
-              </Boton>
-            }
-          >
-            <p>{horariosQuery.error.message || 'No se pudieron cargar los datos.'}</p>
-          </Aviso>
-        )}
-
-        {!horariosQuery.isPending && !horariosQuery.error && grupos.length === 0 && (
-          <EstadoVacio
-            icono={Inbox}
-            titulo="No hay horarios registrados con estos filtros."
-            descripcion="Ajusta los filtros o agrega un nuevo horario parroquial."
-            accion={
-              puedeGestionar &&
-              tiposHorario.length > 0 && (
-                <Boton
-                  variante="primario"
-                  icono={Plus}
-                  onClick={() => setCreando(true)}
-                >
-                  Agregar el primer horario
-                </Boton>
-              )
-            }
-          />
-        )}
-
-        {grupos.length > 0 && (
-          <div className="flex flex-col gap-6">
-            {grupos.map(({ tipo, dias }) => (
-              <section
-                key={tipo.id}
-                aria-labelledby={`tipo-horario-${tipo.id}`}
-                className="overflow-hidden rounded-lg border border-sand bg-white"
+      <div className="mt-6">
+        <TablaListado
+          caption="Horarios"
+          nombrePaginacion="Paginación de horarios"
+          columnas={columnas}
+          datos={horarios}
+          paginacion={horariosQuery.data?.paginacion}
+          onCambiarPagina={setPagina}
+          cargando={horariosQuery.isPending}
+          tenue={horariosQuery.isPlaceholderData}
+          error={
+            horariosQuery.isError
+              ? horariosQuery.error?.message || 'No se pudieron cargar los datos.'
+              : null
+          }
+          onReintentar={horariosQuery.refetch}
+          busqueda={busqueda}
+          onCambiarBusqueda={setBusqueda}
+          placeholderBusqueda="Nota del horario"
+          categoria={
+            tiposHorario.length > 0
+              ? {
+                  etiqueta: 'Tipo de horario',
+                  valor: valores.tipo,
+                  todasEtiqueta: 'Todos los tipos',
+                  opciones: tiposHorario.map((t) => ({ valor: String(t.id), etiqueta: t.nombre })),
+                  onCambiar: (v) => actualizarFiltro('tipo', v),
+                }
+              : undefined
+          }
+          filtrosExtra={
+            <div className="min-w-[150px]">
+              <CampoSelect
+                etiqueta="Estado"
+                value={valores.activo}
+                onChange={(e) => actualizarFiltro('activo', e.target.value)}
               >
-                <header className="flex items-center gap-2 border-b border-sand bg-panel px-4 py-3">
-                  <Clock3 className="size-4 text-ink" aria-hidden="true" />
-                  <h2 id={`tipo-horario-${tipo.id}`} className="font-body text-base font-semibold text-ink">
-                    {tipo.nombre}
-                  </h2>
-                </header>
-
-                <div className="divide-y divide-sand">
-                  {dias.map(({ dia, nombre, horarios: delDia }) => (
-                    <div key={dia} className="grid gap-3 px-4 py-3.5 sm:grid-cols-[10rem_1fr] sm:items-start">
-                      <p className="pt-1 text-sm font-semibold text-ink">{nombre}</p>
-                      <ul className="flex flex-col gap-2" aria-label={`${tipo.nombre} · ${nombre}`}>
-                        {delDia.map((h) => (
-                          <li
-                            key={h.id}
-                            className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-sand bg-panel/60 px-3.5 py-2.5"
-                          >
-                            <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-semibold tabular-nums text-ink">
-                                  {h.horaInicio}
-                                  {h.horaFin ? ` – ${h.horaFin}` : ''}
-                                </span>
-                                {!h.activo && <Insignia variante="archivado">Oculto</Insignia>}
-                              </div>
-                              {h.descripcion && <p className="mt-0.5 text-sm text-muted">{h.descripcion}</p>}
-                            </div>
-
-                            {puedeGestionar && (
-                              <div className="flex items-center gap-1.5">
-                                <Boton
-                                  variante="secundario"
-                                  tamano="sm"
-                                  icono={Pencil}
-                                  onClick={() => setEditando(h)}
-                                  aria-label={`Editar horario ${tipo.nombre} ${nombre} ${h.horaInicio}`}
-                                >
-                                  Editar
-                                </Boton>
-                                <Boton
-                                  variante="secundario"
-                                  tamano="sm"
-                                  icono={Trash2}
-                                  onClick={() => setPorEliminar(h)}
-                                  aria-label={`Eliminar horario ${tipo.nombre} ${nombre} ${h.horaInicio}`}
-                                >
-                                  Eliminar
-                                </Boton>
-                              </div>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
+                <option value="">Todos</option>
+                <option value="true">Activos</option>
+                <option value="false">Inactivos</option>
+              </CampoSelect>
+            </div>
+          }
+          hayFiltrosActivos={hayFiltrosActivos}
+          onLimpiarFiltros={limpiarFiltros}
+          vacio={{
+            icono: Inbox,
+            titulo: 'No hay horarios registrados con estos filtros.',
+            descripcion: 'Prueba quitando algún filtro o agrega un horario nuevo.',
+            accion:
+              puedeGestionar && (
+                <Boton variante="primario" icono={Plus} onClick={() => setCreando(true)}>
+                  Nuevo horario
+                </Boton>
+              ),
+          }}
+          vacioConFiltros={{
+            icono: Inbox,
+            titulo: 'No hay horarios registrados con estos filtros.',
+            descripcion: 'Prueba quitando algún filtro o agrega un horario nuevo.',
+          }}
+        />
       </div>
 
       {(creando || editando) && (
         <FormularioHorario
           horario={editando}
           tiposHorario={tiposHorario}
+          onGuardado={(guardado) => {
+            const msg = editando
+              ? `Se actualizó el horario de ${guardado.tipo.nombre} (${nombreDia(guardado.diaSemana)}).`
+              : `Se agregó el horario de ${guardado.tipo.nombre} (${nombreDia(guardado.diaSemana)}).`;
+            setCreando(false);
+            setEditando(null);
+            queryClient.invalidateQueries({ queryKey: CLAVE_HORARIOS });
+            toast.exito(msg);
+          }}
           onCerrar={() => {
             setCreando(false);
             setEditando(null);
-          }}
-          onGuardado={(guardado) => {
-            const msg = editando
-              ? `Se actualizó el horario de ${guardado.tipo.nombre} (${nombreDia(guardado.diaSemana)}, ${guardado.horaInicio}).`
-              : `Se creó el horario de ${guardado.tipo.nombre} (${nombreDia(guardado.diaSemana)}, ${guardado.horaInicio}).`;
-            setCreando(false);
-            setEditando(null);
-            toast.exito(msg);
           }}
         />
       )}
 
       {porEliminar && (
         <ConfirmarAccion
-          titulo={`¿Eliminar horario de ${porEliminar.tipo.nombre}?`}
+          titulo="¿Eliminar horario?"
           pendiente={eliminarMut.isPending}
           error={eliminarMut.error}
           onConfirmar={() => eliminarMut.mutate(porEliminar)}
@@ -282,8 +272,8 @@ export default function Horarios() {
             setPorEliminar(null);
           }}
         >
-          Se eliminará el horario del {nombreDia(porEliminar.diaSemana).toLowerCase()} a las {porEliminar.horaInicio}.
-          Esta acción no se puede deshacer.
+          Se quitará el horario de {porEliminar.tipo.nombre} ({nombreDia(porEliminar.diaSemana)},{' '}
+          {porEliminar.horaInicio}) del portal público.
         </ConfirmarAccion>
       )}
     </section>

@@ -10,6 +10,10 @@ export async function listarSedes(parametros = {}) {
   return datos;
 }
 
+export function listarSedesPaginadas(parametros = {}, senal) {
+  return clienteHttp.get('/admin/sedes', { parametros, senal });
+}
+
 export async function crearSede(cuerpo) {
   const { datos } = await clienteHttp.post('/admin/sedes', cuerpo);
   return datos;

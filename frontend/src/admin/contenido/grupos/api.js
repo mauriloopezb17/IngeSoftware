@@ -10,6 +10,10 @@ export async function listarGrupos(parametros = {}) {
   return datos;
 }
 
+export function listarGruposPaginados(parametros = {}, senal) {
+  return clienteHttp.get('/admin/grupos-pastorales', { parametros, senal });
+}
+
 export async function crearGrupo(cuerpo) {
   const { datos } = await clienteHttp.post('/admin/grupos-pastorales', cuerpo);
   return datos;

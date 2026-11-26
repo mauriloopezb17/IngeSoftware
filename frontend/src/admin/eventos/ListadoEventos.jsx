@@ -46,6 +46,8 @@ export default function ListadoEventos() {
 
   const {
     valores,
+    busqueda,
+    setBusqueda,
     setPagina,
     actualizarFiltro,
     limpiarFiltros,
@@ -53,7 +55,6 @@ export default function ListadoEventos() {
     filtrosActivos,
   } = useFiltrosListado({
     filtros: configFiltros,
-    conBusqueda: false,
   });
 
   const catalogos = useQuery({ queryKey: CLAVE_CATALOGOS, queryFn: obtenerCatalogos, staleTime: 5 * 60 * 1000 });
@@ -203,6 +204,9 @@ export default function ListadoEventos() {
           tenue={isPlaceholderData}
           error={isError && !data ? `No se pudieron cargar los eventos: ${error.message}` : null}
           onReintentar={refetch}
+          busqueda={busqueda}
+          onCambiarBusqueda={setBusqueda}
+          placeholderBusqueda="Título o lugar"
           categoria={{
             etiqueta: 'Categoría',
             valor: valores.categoria,

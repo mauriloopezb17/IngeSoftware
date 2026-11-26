@@ -49,7 +49,7 @@ describe('gestión de grupos pastorales', () => {
     montar();
     const usuario = userEvent.setup();
 
-    expect(await screen.findByRole('heading', { level: 2, name: 'Monaguillos' })).toBeInTheDocument();
+    expect(await within(await screen.findByRole('table')).findByText('Monaguillos')).toBeInTheDocument();
     await usuario.click(screen.getByRole('button', { name: 'Nuevo grupo' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo grupo pastoral' });
@@ -71,7 +71,7 @@ describe('gestión de grupos pastorales', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 
     expect(screen.getByText('Se creó el grupo «Pastoral Familiar».')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Pastoral Familiar' })).toBeInTheDocument();
+    expect(within(screen.getByRole('table')).getByText('Pastoral Familiar')).toBeInTheDocument();
   });
 
   it('edita un grupo pastoral existente', async () => {
@@ -79,8 +79,8 @@ describe('gestión de grupos pastorales', () => {
     montar();
     const usuario = userEvent.setup();
 
-    await screen.findByRole('heading', { level: 2, name: 'Monaguillos' });
-    await usuario.click(screen.getByRole('button', { name: 'Editar Monaguillos' }));
+    await within(await screen.findByRole('table')).findByText('Monaguillos');
+    await usuario.click(screen.getByRole('button', { name: 'Editar «Monaguillos»' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Editar grupo pastoral' });
     const horario = within(dialogo).getByLabelText('Horario de reunión (opcional)');
@@ -90,7 +90,7 @@ describe('gestión de grupos pastorales', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByText('Se actualizó el grupo «Monaguillos».')).toBeInTheDocument();
-    expect(screen.getByText('Sábados · 10:30')).toBeInTheDocument();
+    expect(screen.getByText(/Sábados · 10:30/)).toBeInTheDocument();
   });
 
   it('muestra error de validación (400 VALIDACION) junto al campo', async () => {
@@ -98,7 +98,7 @@ describe('gestión de grupos pastorales', () => {
     montar();
     const usuario = userEvent.setup();
 
-    await screen.findByRole('heading', { level: 2, name: 'Monaguillos' });
+    await screen.findByRole('table');
     await usuario.click(screen.getByRole('button', { name: 'Nuevo grupo' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo grupo pastoral' });
@@ -114,22 +114,36 @@ describe('gestión de grupos pastorales', () => {
     montar();
     const usuario = userEvent.setup();
 
-    await screen.findByRole('heading', { level: 2, name: 'Catequistas' });
-    await usuario.click(screen.getByRole('button', { name: 'Eliminar Catequistas' }));
+    await within(await screen.findByRole('table')).findByText('Catequistas');
+    await usuario.click(screen.getByRole('button', { name: 'Eliminar «Catequistas»' }));
 
     const confirmacion = await screen.findByRole('dialog', { name: '¿Eliminar «Catequistas»?' });
     await usuario.click(within(confirmacion).getByRole('button', { name: 'Eliminar' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByText('Se eliminó el grupo «Catequistas».')).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 2, name: 'Catequistas' })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('table')).queryByText('Catequistas')).not.toBeInTheDocument();
+  });
+
+  it('deshabilita el reordenamiento al filtrar grupos', async () => {
+    await entrar('secretaria');
+    montar();
+    const usuario = userEvent.setup();
+
+    await screen.findByRole('table');
+    await usuario.selectOptions(screen.getByLabelText('Visibilidad'), 'true');
+
+    expect(
+      await screen.findByText(/Para reordenar los grupos, quita los filtros y asegúrate de ver todos en una sola página/),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Subir «Monaguillos»' })).not.toBeInTheDocument();
   });
 
   it('muestra la vista en solo lectura para Marketing', async () => {
     await entrar('marketing');
     montar();
 
-    expect(await screen.findByRole('heading', { level: 2, name: 'Monaguillos' })).toBeInTheDocument();
+    expect(await within(await screen.findByRole('table')).findByText('Monaguillos')).toBeInTheDocument();
     expect(screen.getByText(/Solo lectura:/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Nuevo grupo' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Editar / })).not.toBeInTheDocument();

@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { http, HttpResponse } from 'msw';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 
+import { api } from '../../../mocks/api.js';
+import { server } from '../../../mocks/server.js';
 import { clienteHttp } from '../../../services/clienteHttp.js';
 import { reiniciarMocksAdmin } from '../../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from '../../mocks/usuarios.js';
@@ -49,9 +52,10 @@ describe('gestión de servicios y preguntas frecuentes', () => {
     montar();
     const usuario = userEvent.setup({ delay: null });
 
-    expect(await screen.findByRole('heading', { level: 2, name: 'Bautismo' })).toBeInTheDocument();
-    expect(screen.getByText('2 requisitos · 1 pregunta frecuente')).toBeInTheDocument();
-    expect(screen.getByText('1 requisito · 0 preguntas frecuentes')).toBeInTheDocument();
+    const tabla = await screen.findByRole('table');
+    expect(within(tabla).getByText('Bautismo')).toBeInTheDocument();
+    expect(within(tabla).getByText('1 pregunta')).toBeInTheDocument();
+    expect(within(tabla).getAllByText('0 preguntas').length).toBeGreaterThan(0);
     await usuario.click(screen.getByRole('button', { name: 'Nuevo servicio' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo servicio' });
@@ -68,9 +72,7 @@ describe('gestión de servicios y preguntas frecuentes', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByText('Se creó el servicio «Dirección espiritual».')).toBeInTheDocument();
-    expect(
-      await screen.findByRole('heading', { level: 2, name: 'Dirección espiritual' }),
-    ).toBeInTheDocument();
+    expect(await within(screen.getByRole('table')).findByText('Dirección espiritual')).toBeInTheDocument();
   }, 15000);
 
   it('edita un servicio existente con éxito', async () => {
@@ -78,8 +80,8 @@ describe('gestión de servicios y preguntas frecuentes', () => {
     montar();
     const usuario = userEvent.setup();
 
-    await screen.findByRole('heading', { level: 2, name: 'Bautismo' });
-    await usuario.click(screen.getByRole('button', { name: 'Editar Bautismo' }));
+    await within(await screen.findByRole('table')).findByText('Bautismo');
+    await usuario.click(screen.getByRole('button', { name: 'Editar «Bautismo»' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Editar servicio' });
     const campoNombre = within(dialogo).getByLabelText('Nombre');
@@ -96,7 +98,7 @@ describe('gestión de servicios y preguntas frecuentes', () => {
     montar();
     const usuario = userEvent.setup();
 
-    await screen.findByRole('heading', { level: 2, name: 'Bautismo' });
+    await screen.findByRole('table');
     await usuario.click(screen.getByRole('button', { name: 'Nuevo servicio' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo servicio' });
@@ -112,15 +114,15 @@ describe('gestión de servicios y preguntas frecuentes', () => {
     montar();
     const usuario = userEvent.setup();
 
-    await screen.findByRole('heading', { level: 2, name: 'Matrimonio' });
-    await usuario.click(screen.getByRole('button', { name: 'Eliminar Matrimonio' }));
+    await within(await screen.findByRole('table')).findByText('Matrimonio');
+    await usuario.click(screen.getByRole('button', { name: 'Eliminar «Matrimonio»' }));
 
     const confirmacion = await screen.findByRole('dialog', { name: '¿Eliminar «Matrimonio»?' });
     await usuario.click(within(confirmacion).getByRole('button', { name: 'Eliminar' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByText('Se eliminó el servicio «Matrimonio».')).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 2, name: 'Matrimonio' })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('table')).queryByText('Matrimonio')).not.toBeInTheDocument();
   });
 
   it('crea, reordena y elimina preguntas frecuentes de un servicio', async () => {
@@ -128,10 +130,9 @@ describe('gestión de servicios y preguntas frecuentes', () => {
     montar();
     const usuario = userEvent.setup();
 
-    await screen.findByRole('heading', { level: 2, name: 'Bautismo' });
-    const lista = screen.getByRole('list', { name: 'Servicios y sacramentos' });
-    const itemBautismo = within(lista).getAllByRole('listitem')[0];
-    await usuario.click(within(itemBautismo).getByRole('button', { name: 'Preguntas frecuentes' }));
+    const tabla = await screen.findByRole('table');
+    const filaBautismo = within(tabla).getByText('Bautismo').closest('tr');
+    await usuario.click(within(filaBautismo).getByRole('button', { name: 'Preguntas frecuentes de «Bautismo»' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Preguntas frecuentes · Bautismo' });
     expect(await within(dialogo).findByText('¿Qué requisitos necesito para bautizar a mi hijo?')).toBeInTheDocument();
@@ -159,11 +160,47 @@ describe('gestión de servicios y preguntas frecuentes', () => {
     expect(within(dialogo).queryByText('¿Qué edad máxima tiene el bautismo de niños?')).not.toBeInTheDocument();
   });
 
+  it('deshabilita el reordenamiento y muestra aviso cuando hay filtros activos o más de una página', async () => {
+    server.use(
+      http.get(api('/admin/servicios'), ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get('visible') === 'true') {
+          return HttpResponse.json({
+            datos: [
+              { id: 1, nombre: 'Bautismo', slug: 'bautismo', descripcionCorta: 'Sacramento', visible: true, orden: 1, requisitos: [], preguntasFrecuentes: [] },
+            ],
+            paginacion: { pagina: 1, porPagina: 15, total: 1, totalPaginas: 1 },
+          });
+        }
+        return HttpResponse.json({
+          datos: [
+            { id: 1, nombre: 'Bautismo', slug: 'bautismo', descripcionCorta: 'Sacramento', visible: true, orden: 1, requisitos: [], preguntasFrecuentes: [] },
+          ],
+          paginacion: { pagina: 1, porPagina: 15, total: 20, totalPaginas: 2 },
+        });
+      }),
+    );
+
+    await entrar('secretaria');
+    montar();
+    const usuario = userEvent.setup();
+
+    await screen.findByRole('table');
+    expect(screen.getByText(/Para reordenar los servicios, quita los filtros y asegúrate de ver todos en una sola página/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Subir «Bautismo»' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Bajar «Bautismo»' })).not.toBeInTheDocument();
+
+    await usuario.selectOptions(screen.getByLabelText('Visibilidad'), 'true');
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Subir «Bautismo»' })).not.toBeInTheDocument();
+    });
+  });
+
   it('muestra la vista en solo lectura para Marketing', async () => {
     await entrar('marketing');
     montar();
 
-    expect(await screen.findByRole('heading', { level: 2, name: 'Bautismo' })).toBeInTheDocument();
+    expect(await within(await screen.findByRole('table')).findByText('Bautismo')).toBeInTheDocument();
     expect(screen.getByText(/Solo lectura:/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Nuevo servicio' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Editar / })).not.toBeInTheDocument();

@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useRef, useState } from 'react';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, HelpCircle, Inbox, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import { IconoDinamico } from '../../../components/parroquia/IconoDinamico.jsx';
@@ -10,16 +10,16 @@ import {
   Boton,
   CampoSelect,
   EncabezadoPantalla,
-  EsqueletoTarjetas,
-  EstadoVacio,
   Insignia,
+  TablaListado,
+  useFiltrosListado,
   useToast,
 } from '../../ui/index.js';
 import { pluralizar } from '../componentes/texto.js';
 import {
   CLAVE_SERVICIOS,
   eliminarServicio,
-  listarServicios,
+  listarServiciosPaginados,
   reordenarServicios,
 } from './api.js';
 import FormularioServicio from './FormularioServicio.jsx';
@@ -33,15 +33,36 @@ export default function Servicios() {
 
   const tituloRef = useRef(null);
 
-  const [filtroVisible, setFiltroVisible] = useState('');
   const [creando, setCreando] = useState(false);
   const [editando, setEditando] = useState(null);
   const [faqServicio, setFaqServicio] = useState(null);
   const [porEliminar, setPorEliminar] = useState(null);
 
+  const configFiltros = useMemo(
+    () => ({
+      visible: { defecto: '', validar: (v) => v === 'true' || v === 'false' },
+    }),
+    [],
+  );
+
+  const {
+    valores,
+    busqueda,
+    setBusqueda,
+    setPagina,
+    actualizarFiltro,
+    limpiarFiltros,
+    hayFiltrosActivos,
+    filtrosActivos,
+  } = useFiltrosListado({
+    filtros: configFiltros,
+    porPagina: 15,
+  });
+
   const serviciosQuery = useQuery({
-    queryKey: [...CLAVE_SERVICIOS, { visible: filtroVisible }],
-    queryFn: () => listarServicios({ visible: filtroVisible || undefined }),
+    queryKey: [...CLAVE_SERVICIOS, 'lista', filtrosActivos],
+    queryFn: ({ signal }) => listarServiciosPaginados(filtrosActivos, signal),
+    placeholderData: keepPreviousData,
   });
 
   const reordenarMut = useMutation({
@@ -59,15 +80,122 @@ export default function Servicios() {
     },
   });
 
-  const servicios = serviciosQuery.data ?? [];
+  const servicios = serviciosQuery.data?.datos ?? [];
+  const totalPaginas = serviciosQuery.data?.paginacion?.totalPaginas ?? 1;
+  const puedeReordenar = !hayFiltrosActivos && totalPaginas <= 1;
 
   function mover(indice, direccion) {
+    if (!puedeReordenar) return;
     const destino = indice + direccion;
     if (destino < 0 || destino >= servicios.length) return;
     const ids = servicios.map((s) => s.id);
     [ids[indice], ids[destino]] = [ids[destino], ids[indice]];
     reordenarMut.mutate(ids);
   }
+
+  const columnas = [
+    {
+      id: 'servicio',
+      encabezado: 'Servicio',
+      render: (servicio) => (
+        <div className="flex items-start gap-3">
+          {servicio.icono && (
+            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-gold-soft text-ink">
+              <IconoDinamico nombre={servicio.icono} size={18} />
+            </span>
+          )}
+          <div className="min-w-0">
+            <p className="font-semibold text-ink">{servicio.nombre}</p>
+            <p className="mt-0.5 text-xs text-muted">/sacramentos/{servicio.slug}</p>
+            {servicio.descripcionCorta && (
+              <p className="mt-1 line-clamp-2 text-xs text-muted">{servicio.descripcionCorta}</p>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'preguntas',
+      encabezado: 'Preguntas frecuentes',
+      render: (servicio) => (
+        <span className="text-xs tabular-nums text-muted">
+          {pluralizar(servicio.preguntasFrecuentes?.length ?? 0, 'pregunta')}
+        </span>
+      ),
+    },
+    {
+      id: 'estado',
+      encabezado: 'Estado',
+      render: (servicio) => (
+        <Insignia variante={servicio.visible ? 'publicado' : 'archivado'}>
+          {servicio.visible ? 'Visible' : 'Oculto'}
+        </Insignia>
+      ),
+    },
+    ...(puedeGestionar
+      ? [
+          {
+            id: 'acciones',
+            encabezado: <span className="sr-only">Acciones</span>,
+            claseCelda: 'text-right sm:w-px sm:whitespace-nowrap',
+            render: (servicio) => {
+              const indice = servicios.findIndex((s) => s.id === servicio.id);
+              return (
+                <div className="flex flex-wrap justify-end gap-1.5">
+                  {puedeReordenar && (
+                    <>
+                      <Boton
+                        variante="secundario"
+                        tamano="sm"
+                        icono={ArrowUp}
+                        disabled={indice <= 0 || reordenarMut.isPending}
+                        onClick={() => mover(indice, -1)}
+                        aria-label={`Subir «${servicio.nombre}»`}
+                      />
+                      <Boton
+                        variante="secundario"
+                        tamano="sm"
+                        icono={ArrowDown}
+                        disabled={indice === servicios.length - 1 || reordenarMut.isPending}
+                        onClick={() => mover(indice, 1)}
+                        aria-label={`Bajar «${servicio.nombre}»`}
+                      />
+                    </>
+                  )}
+                  <Boton
+                    variante="secundario"
+                    tamano="sm"
+                    icono={HelpCircle}
+                    onClick={() => setFaqServicio(servicio)}
+                    aria-label={`Preguntas frecuentes de «${servicio.nombre}»`}
+                  >
+                    Preguntas
+                  </Boton>
+                  <Boton
+                    variante="secundario"
+                    tamano="sm"
+                    icono={Pencil}
+                    onClick={() => setEditando(servicio)}
+                    aria-label={`Editar «${servicio.nombre}»`}
+                  >
+                    Editar
+                  </Boton>
+                  <Boton
+                    variante="secundario"
+                    tamano="sm"
+                    icono={Trash2}
+                    onClick={() => setPorEliminar(servicio)}
+                    aria-label={`Eliminar «${servicio.nombre}»`}
+                  >
+                    Eliminar
+                  </Boton>
+                </div>
+              );
+            },
+          },
+        ]
+      : []),
+  ];
 
   return (
     <section className="mx-auto max-w-5xl">
@@ -97,161 +225,80 @@ export default function Servicios() {
         </Aviso>
       )}
 
-      <div className="mt-6 rounded-lg border border-sand bg-white p-4 sm:max-w-xs">
-        <CampoSelect
-          etiqueta="Visibilidad"
-          value={filtroVisible}
-          onChange={(e) => setFiltroVisible(e.target.value)}
-        >
-          <option value="">Todos</option>
-          <option value="true">Visibles</option>
-          <option value="false">Ocultos</option>
-        </CampoSelect>
-      </div>
+      {puedeGestionar && !puedeReordenar && (
+        <Aviso tipo="info" className="mt-4">
+          <p>Para reordenar los servicios, quita los filtros y asegúrate de ver todos en una sola página.</p>
+        </Aviso>
+      )}
 
-      <div className="mt-6" aria-busy={serviciosQuery.isPending}>
-        {serviciosQuery.isPending && (
-          <EsqueletoTarjetas cantidad={3} columnas="grid-cols-1" etiqueta="Cargando servicios…" />
-        )}
-
-        {serviciosQuery.error && (
-          <Aviso
-            tipo="error"
-            accion={
-              <Boton variante="secundario" tamano="sm" onClick={() => serviciosQuery.refetch()}>
-                Reintentar
-              </Boton>
-            }
-          >
-            <p>{serviciosQuery.error.message || 'No se pudieron cargar los datos.'}</p>
-          </Aviso>
-        )}
-
-        {!serviciosQuery.isPending && !serviciosQuery.error && servicios.length === 0 && (
-          <EstadoVacio
-            icono={Inbox}
-            titulo="No hay servicios registrados."
-            descripcion="Agrega sacramentos, horarios de atención y sus requisitos."
-            accion={
-              puedeGestionar && (
-                <Boton
-                  variante="primario"
-                  icono={Plus}
-                  onClick={() => setCreando(true)}
-                >
-                  Agregar el primer servicio
-                </Boton>
-              )
-            }
-          />
-        )}
-
-        {servicios.length > 0 && (
-          <ul className="flex flex-col gap-3" aria-label="Servicios y sacramentos">
-            {servicios.map((servicio, i) => (
-              <li
-                key={servicio.id}
-                className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-sand bg-white p-5"
+      <div className="mt-6">
+        <TablaListado
+          caption="Servicios"
+          nombrePaginacion="Paginación de servicios"
+          columnas={columnas}
+          datos={servicios}
+          paginacion={serviciosQuery.data?.paginacion}
+          onCambiarPagina={setPagina}
+          cargando={serviciosQuery.isPending}
+          tenue={serviciosQuery.isPlaceholderData}
+          error={
+            serviciosQuery.isError
+              ? serviciosQuery.error?.message || 'No se pudieron cargar los datos.'
+              : null
+          }
+          onReintentar={serviciosQuery.refetch}
+          busqueda={busqueda}
+          onCambiarBusqueda={setBusqueda}
+          placeholderBusqueda="Nombre o descripción"
+          filtrosExtra={
+            <div className="min-w-[160px]">
+              <CampoSelect
+                etiqueta="Visibilidad"
+                value={valores.visible}
+                onChange={(e) => actualizarFiltro('visible', e.target.value)}
               >
-                <div className="flex min-w-0 flex-1 items-start gap-3.5">
-                  <span
-                    aria-hidden="true"
-                    className="flex size-10 shrink-0 items-center justify-center rounded-md border border-sand bg-gold-soft text-ink"
-                  >
-                    <IconoDinamico nombre={servicio.icono} size={20} />
-                  </span>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="font-body text-base font-semibold text-ink">{servicio.nombre}</h2>
-                      {!servicio.visible && <Insignia variante="archivado">Oculto</Insignia>}
-                    </div>
-                    <p className="mt-1 text-sm text-ink">{servicio.descripcionCorta}</p>
-                    <p className="mt-2 text-xs text-muted">
-                      {pluralizar(servicio.contenido?.datos?.length ?? 0, 'requisito', 'requisitos')} ·{' '}
-                      {pluralizar(
-                        servicio.preguntasFrecuentes?.length ?? 0,
-                        'pregunta frecuente',
-                        'preguntas frecuentes',
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Boton
-                    variante="secundario"
-                    tamano="sm"
-                    icono={HelpCircle}
-                    onClick={() => setFaqServicio(servicio)}
-                  >
-                    Preguntas frecuentes
-                  </Boton>
-
-                  {puedeGestionar && (
-                    <>
-                      {!filtroVisible && (
-                        <>
-                          <Boton
-                            variante="secundario"
-                            tamano="sm"
-                            onClick={() => mover(i, -1)}
-                            disabled={i === 0 || reordenarMut.isPending}
-                            aria-label={`Subir ${servicio.nombre}`}
-                          >
-                            <ArrowUp className="size-3.5" aria-hidden="true" />
-                          </Boton>
-                          <Boton
-                            variante="secundario"
-                            tamano="sm"
-                            onClick={() => mover(i, 1)}
-                            disabled={i === servicios.length - 1 || reordenarMut.isPending}
-                            aria-label={`Bajar ${servicio.nombre}`}
-                          >
-                            <ArrowDown className="size-3.5" aria-hidden="true" />
-                          </Boton>
-                        </>
-                      )}
-                      <Boton
-                        variante="secundario"
-                        tamano="sm"
-                        icono={Pencil}
-                        onClick={() => setEditando(servicio)}
-                        aria-label={`Editar ${servicio.nombre}`}
-                      >
-                        Editar
-                      </Boton>
-                      <Boton
-                        variante="secundario"
-                        tamano="sm"
-                        icono={Trash2}
-                        onClick={() => setPorEliminar(servicio)}
-                        aria-label={`Eliminar ${servicio.nombre}`}
-                      >
-                        Eliminar
-                      </Boton>
-                    </>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                <option value="">Todos</option>
+                <option value="true">Visibles</option>
+                <option value="false">Ocultos</option>
+              </CampoSelect>
+            </div>
+          }
+          hayFiltrosActivos={hayFiltrosActivos}
+          onLimpiarFiltros={limpiarFiltros}
+          vacio={{
+            icono: Inbox,
+            titulo: 'No hay servicios registrados con estos filtros.',
+            descripcion: 'Prueba quitando el filtro o crea un nuevo servicio.',
+            accion:
+              puedeGestionar && (
+                <Boton variante="primario" icono={Plus} onClick={() => setCreando(true)}>
+                  Nuevo servicio
+                </Boton>
+              ),
+          }}
+          vacioConFiltros={{
+            icono: Inbox,
+            titulo: 'No hay servicios registrados con estos filtros.',
+            descripcion: 'Prueba quitando el filtro o crea un nuevo servicio.',
+          }}
+        />
       </div>
 
       {(creando || editando) && (
         <FormularioServicio
           servicio={editando}
-          onCerrar={() => {
-            setCreando(false);
-            setEditando(null);
-          }}
           onGuardado={(guardado) => {
             const msg = editando
               ? `Se actualizó el servicio «${guardado.nombre}».`
               : `Se creó el servicio «${guardado.nombre}».`;
             setCreando(false);
             setEditando(null);
+            queryClient.invalidateQueries({ queryKey: CLAVE_SERVICIOS });
             toast.exito(msg);
+          }}
+          onCerrar={() => {
+            setCreando(false);
+            setEditando(null);
           }}
         />
       )}
@@ -260,6 +307,7 @@ export default function Servicios() {
         <PreguntasFrecuentes
           servicio={faqServicio}
           puedeGestionar={puedeGestionar}
+          onActualizado={() => queryClient.invalidateQueries({ queryKey: CLAVE_SERVICIOS })}
           onCerrar={() => setFaqServicio(null)}
         />
       )}
@@ -275,8 +323,7 @@ export default function Servicios() {
             setPorEliminar(null);
           }}
         >
-          Sus preguntas frecuentes quedarán sin servicio asociado para el asistente virtual. Esta acción no se puede
-          deshacer.
+          Se quitará del portal público junto con sus requisitos y preguntas frecuentes.
         </ConfirmarAccion>
       )}
     </section>
