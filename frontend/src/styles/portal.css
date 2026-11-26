@@ -47,7 +47,8 @@
 }
 
 .pagina-entrada {
-  animation: paginaEntrada 400ms var(--ease-salida) both;
+  /* backwards: al terminar no deja un transform que rompa las ventanas fixed de la página. */
+  animation: paginaEntrada 400ms var(--ease-salida) backwards;
 }
 
 /* Hover de tarjetas y fotografías solo en dispositivos con puntero fino */

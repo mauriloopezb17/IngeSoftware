@@ -62,6 +62,24 @@ describe('BoletinLector', () => {
     }));
   });
 
+  it('se monta en document.body aunque la página esté dentro de un contenedor animado', async () => {
+    mockGetDocument.mockReturnValue({
+      promise: Promise.resolve(crearDocumentoPdfMock(1)),
+      destroy: vi.fn(),
+    });
+
+    const { container } = render(
+      <div style={{ transform: 'translateY(16px)' }}>
+        <BoletinLector boletin={boletinEjemplo} alCerrar={vi.fn()} />
+      </div>,
+    );
+
+    const dialogo = screen.getByRole('dialog');
+    expect(container.contains(dialogo)).toBe(false);
+    expect(document.body.contains(dialogo)).toBe(true);
+    expect(await screen.findByText('Página 1 de 1')).toBeInTheDocument();
+  });
+
   it('muestra la barra, indicador de página, zoom y se cierra con botón, Esc y clic fuera', async () => {
     const usuario = userEvent.setup();
     const alCerrar = vi.fn();

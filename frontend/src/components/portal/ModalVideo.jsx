@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 // Modal accesible para reproducir el video institucional completo con sonido.
@@ -31,7 +32,7 @@ function ModalVideo({ abierto, alCerrar, urlVideo, titulo }) {
 
   if (!abierto) return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -63,7 +64,8 @@ function ModalVideo({ abierto, alCerrar, urlVideo, titulo }) {
           className="aspect-video w-full bg-black"
         />
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

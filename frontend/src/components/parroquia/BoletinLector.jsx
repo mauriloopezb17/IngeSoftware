@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Download, ExternalLink, Maximize2, Minus, Plus, RotateCw, X } from 'lucide-react';
 import 'pdfjs-dist/web/pdf_viewer.css';
 
@@ -413,7 +414,7 @@ function BoletinLector({ boletin, alCerrar }) {
 
   const paginas = Array.from({ length: numPaginas }, (_, indice) => indice + 1);
 
-  return (
+  return createPortal(
     <>
       <title>{`${boletin.titulo} | Boletines | Parroquia Señor de la Exaltación`}</title>
 
@@ -602,7 +603,8 @@ function BoletinLector({ boletin, alCerrar }) {
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 
