@@ -3,8 +3,10 @@ import { clienteHttp } from '../../../services/clienteHttp.js';
 
 export const CLAVE_SEDES = ['admin', 'sedes'];
 
-export async function listarSedes() {
-  const { datos } = await clienteHttp.get('/admin/sedes');
+export async function listarSedes(parametros = {}) {
+  const { datos } = await clienteHttp.get('/admin/sedes', {
+    parametros: { porPagina: 100, ...parametros },
+  });
   return datos;
 }
 

@@ -19,6 +19,7 @@ import {
 import * as modelo from '../models/adminPaginas.model.js';
 import { exigirSedeDelRecurso } from '../utils/alcanceSede.js';
 import { formatearFechaHora } from '../utils/formato.js';
+import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 import { slugDesde, slugLibre } from '../utils/slugs.js';
 import { archivosDelBloque, validarContenidoDeBloque } from '../validacion/bloques.js';
 import { registrarCambio } from './bitacora.service.js';
@@ -69,12 +70,23 @@ function aPagina(fila, { conBloques = false } = {}) {
 
 // ---- Lectura ----
 
-export async function listarPaginas(sedeFiltro, { estado }) {
-  const filas = await modelo.listar({
+export async function listarPaginas(
+  sedeFiltro,
+  { estado, mostrarEnMenu, buscar, orden, pagina = 1, porPagina = 10 } = {},
+) {
+  const { filas, total } = await modelo.listar({
     sedeSlug: sedeFiltro,
     estados: estado?.map((codigo) => ESTADOS_PUBLICACION.nombreDe(codigo)),
+    mostrarEnMenu,
+    buscar,
+    orden,
+    limite: porPagina,
+    desplazamiento: desplazamiento(pagina, porPagina),
   });
-  return filas.map((fila) => aPagina(fila));
+  return {
+    datos: filas.map((fila) => aPagina(fila)),
+    paginacion: armarPaginacion({ total, pagina, porPagina }),
+  };
 }
 
 export async function obtenerPagina(usuario, id) {

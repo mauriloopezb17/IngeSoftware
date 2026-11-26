@@ -62,7 +62,10 @@ describe('GET /api/sedes/:sede/servicios', () => {
     const respuesta = await request(app).get(`${TEMPORAL}/servicios`);
 
     expect(respuesta.status).toBe(200);
-    expect(respuesta.body).toEqual({ datos: [] });
+    expect(respuesta.body).toEqual({
+      datos: [],
+      paginacion: { pagina: 1, porPagina: 10, total: 0, totalPaginas: 0 },
+    });
   });
 });
 
@@ -146,7 +149,10 @@ describe('GET /api/sedes/:sede/videos', () => {
     const respuesta = await request(app).get(`${SEDE}/videos`);
 
     expect(respuesta.status).toBe(200);
-    expect(respuesta.body).toEqual({ datos: [] });
+    expect(respuesta.body).toEqual({
+      datos: [],
+      paginacion: { pagina: 1, porPagina: 10, total: 0, totalPaginas: 0 },
+    });
   });
 
   it('ordena primero los destacados y arma las URL de YouTube', async () => {

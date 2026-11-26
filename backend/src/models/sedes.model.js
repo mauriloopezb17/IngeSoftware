@@ -1,6 +1,7 @@
 // Consultas de sedes (SQL parametrizado). Devuelven filas en snake_case; el armado de la
 // respuesta del contrato lo hace services/sedes.service.js.
 import { consultar } from '../db/index.js';
+import { patronBusqueda, sinAcentosSql } from '../utils/busqueda.js';
 
 // Columnas comunes del resumen de una sede, con su tipo, su sede padre y su imagen de portada.
 // La portada se guarda como URL (sede.url_imagen_portada); si coincide con un archivo de la
@@ -89,23 +90,67 @@ const COLUMNAS_ADMIN = `
     '[]'::json
   ) AS redes_sociales`;
 
-// Lista sedes para el panel CMS (sin paginar): parroquias primero, luego por id.
-export async function listarAdmin({ tipoPrimero, sedeId } = {}, db = { consultar }) {
-  const parametros = [tipoPrimero];
+// Lista sedes para el panel CMS paginadas: parroquias primero por defecto, o según lista blanca.
+export async function listarAdmin(
+  {
+    tipoPrimero,
+    sedeId,
+    tipos,
+    activo,
+    buscar,
+    orden = 'id',
+    limite = 10,
+    desplazamiento = 0,
+  } = {},
+  db = { consultar },
+) {
+  const parametros = [];
   const condiciones = ['TRUE'];
-  if (sedeId !== undefined) {
-    parametros.push(sedeId);
-    condiciones.push(`s.id = $${parametros.length}`);
+  const agregar = (valor) => `$${parametros.push(valor)}`;
+
+  if (sedeId !== undefined) condiciones.push(`s.id = ${agregar(sedeId)}`);
+  if (tipos) condiciones.push(`ts.nombre = ANY(${agregar(tipos)}::text[])`);
+  if (activo !== undefined) condiciones.push(`s.activo = ${agregar(activo)}`);
+  if (buscar) {
+    const p = agregar(patronBusqueda(buscar));
+    condiciones.push(
+      `(${sinAcentosSql('s.nombre')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql('s.slug')} LIKE ${p} ESCAPE '\\')`,
+    );
   }
 
-  const { rows } = await db.consultar(
-    `SELECT ${COLUMNAS_ADMIN}
-     FROM sede s ${UNIONES_RESUMEN}
-     WHERE ${condiciones.join(' AND ')}
-     ORDER BY (ts.nombre = $1) DESC, s.id`,
-    parametros,
-  );
-  return rows;
+  const donde = condiciones.join(' AND ');
+  const esOrdenPorId = orden === 'id' || orden === '-id';
+  const paramTipoIdx = parametros.length + 1;
+  const parametrosPagina = esOrdenPorId
+    ? [...parametros, tipoPrimero, limite, desplazamiento]
+    : [...parametros, limite, desplazamiento];
+  const idxLimite = esOrdenPorId ? parametros.length + 2 : parametros.length + 1;
+  const idxDesplazamiento = idxLimite + 1;
+
+  const clausulaOrden =
+    orden === '-id'
+      ? `(ts.nombre = $${paramTipoIdx}) DESC, s.id DESC`
+      : orden === 'nombre'
+        ? 's.nombre ASC, s.id ASC'
+        : orden === '-nombre'
+          ? 's.nombre DESC, s.id DESC'
+          : `(ts.nombre = $${paramTipoIdx}) DESC, s.id ASC`;
+
+  const [pagina, conteo] = await Promise.all([
+    db.consultar(
+      `SELECT ${COLUMNAS_ADMIN}
+       FROM sede s ${UNIONES_RESUMEN}
+       WHERE ${donde}
+       ORDER BY ${clausulaOrden}
+       LIMIT $${idxLimite} OFFSET $${idxDesplazamiento}`,
+      parametrosPagina,
+    ),
+    db.consultar(
+      `SELECT count(*)::int AS total FROM sede s ${UNIONES_RESUMEN} WHERE ${donde}`,
+      parametros,
+    ),
+  ]);
+  return { filas: pagina.rows, total: conteo.rows[0].total };
 }
 
 export async function buscarDetalleAdminPorId(sedeId, db = { consultar }) {

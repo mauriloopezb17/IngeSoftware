@@ -2,7 +2,15 @@
 import { z } from 'zod';
 import '../config/zod.js';
 import { contenidoBlockNote } from './blocknote.js';
-import { anio, booleanoQuery, fecha, fechaHoraConZona, id, paginacion, slug } from './comunes.js';
+import {
+  anio,
+  booleanoQuery,
+  esquemaListado,
+  fecha,
+  fechaHoraConZona,
+  id,
+  slug,
+} from './comunes.js';
 import { idDelCuerpo, textoObligatorio, textoOpcional, urlHttps } from './panel.js';
 
 export const paramsProclama = z.object({ id });
@@ -15,21 +23,14 @@ export const paramsPublicacionProclama = z.object({
     .max(3, 'Debe ser 1, 2 o 3.'),
 });
 
-export const consultaProclamas = paginacion.extend({
-  sede: slug.optional(),
-  vigentes: booleanoQuery.optional(),
-  anio: anio.optional(),
-  buscar: z
-    .string()
-    .trim()
-    .min(1, 'No puede estar vacío.')
-    .max(100, 'Es demasiado largo.')
-    .optional(),
-  orden: z
-    .enum(['fechaMatrimonio', '-fechaMatrimonio'], {
-      error: 'Debe ser fechaMatrimonio o -fechaMatrimonio.',
-    })
-    .default('fechaMatrimonio'),
+export const consultaProclamas = esquemaListado({
+  filtros: {
+    sede: slug.optional(),
+    vigentes: booleanoQuery.optional(),
+    anio: anio.optional(),
+  },
+  ordenes: ['fechaMatrimonio', '-fechaMatrimonio'],
+  ordenPredeterminado: 'fechaMatrimonio',
 });
 
 const publicacion = z.strictObject({ fecha });
@@ -151,11 +152,15 @@ export const cuerpoCrearObservacion = z
     }
   });
 
-export const consultaObservaciones = paginacion.extend({
-  estado: z
-    .enum(['no-leidas', 'todas'], { error: 'Debe ser no-leidas o todas.' })
-    .default('no-leidas'),
-  proclamaId: id.optional(),
+export const consultaObservaciones = esquemaListado({
+  filtros: {
+    estado: z
+      .enum(['no-leidas', 'todas'], { error: 'Debe ser no-leidas o todas.' })
+      .default('no-leidas'),
+    proclamaId: id.optional(),
+  },
+  ordenes: ['fechaEnvio', '-fechaEnvio'],
+  ordenPredeterminado: '-fechaEnvio',
 });
 
 export const cuerpoMarcarObservacion = z.strictObject({
