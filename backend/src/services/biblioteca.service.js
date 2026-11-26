@@ -81,6 +81,9 @@ const DESCRIPCION_DE_USO = {
   CONTENIDO_SERVICIO: (nombre) => `Usado dentro del contenido del servicio «${nombre}».`,
   BLOQUE_PAGINA: (nombre) => `Usado en un bloque de la página «${nombre}».`,
   DETALLE_EVENTO: (nombre) => `Usado dentro del detalle del evento «${nombre}».`,
+  IMAGEN_PROCLAMA: (nombre) => `Usado como foto principal de la proclama «${nombre}».`,
+  GALERIA_PROCLAMA: (nombre) => `Usado en la galería de la proclama «${nombre}».`,
+  CONTENIDO_PROCLAMA: (nombre) => `Usado dentro del contenido de la proclama «${nombre}».`,
 };
 
 function errorEnUso(usos) {

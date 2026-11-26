@@ -404,6 +404,15 @@ export function obtenerProclamasExaltacion() {
         { numero: 2, fecha: soloFechaRelativa(-7) },
         { numero: 3, fecha: soloFechaRelativa(0) },
       ],
+      tieneDetalle: true,
+      imagen: {
+        id: 101,
+        url: '/media/seed/templo-exterior.webp',
+        textoAlternativo: 'Templo de la Parroquia Señor de la Exaltación (imagen de ejemplo)',
+        ancho: 1200,
+        alto: 800,
+        variantes: [],
+      },
     },
     {
       id: 2,
@@ -415,6 +424,8 @@ export function obtenerProclamasExaltacion() {
         { numero: 1, fecha: soloFechaRelativa(-7) },
         { numero: 2, fecha: soloFechaRelativa(0) },
       ],
+      tieneDetalle: true,
+      imagen: null,
     },
     {
       id: 3,
@@ -423,6 +434,8 @@ export function obtenerProclamasExaltacion() {
       fechaMatrimonio: fechaRelativaBolivia(baseSabado + 21, '12:00:00'),
       numeroProclama: 1,
       publicaciones: [{ numero: 1, fecha: soloFechaRelativa(0) }],
+      tieneDetalle: false,
+      imagen: null,
     },
   ];
 }
@@ -441,6 +454,8 @@ export function obtenerHistorialProclamasExaltacion() {
         { numero: 2, fecha: '2026-08-09' },
         { numero: 3, fecha: '2026-08-16' },
       ],
+      tieneDetalle: false,
+      imagen: null,
     },
     {
       id: 5,
@@ -453,6 +468,8 @@ export function obtenerHistorialProclamasExaltacion() {
         { numero: 2, fecha: '2026-05-31' },
         { numero: 3, fecha: '2026-06-07' },
       ],
+      tieneDetalle: false,
+      imagen: null,
     },
     {
       id: 6,
@@ -465,6 +482,8 @@ export function obtenerHistorialProclamasExaltacion() {
         { numero: 2, fecha: '2025-11-02' },
         { numero: 3, fecha: '2025-11-09' },
       ],
+      tieneDetalle: false,
+      imagen: null,
     },
     {
       id: 7,
@@ -477,8 +496,88 @@ export function obtenerHistorialProclamasExaltacion() {
         { numero: 2, fecha: '2025-09-07' },
         { numero: 3, fecha: '2025-09-14' },
       ],
+      tieneDetalle: false,
+      imagen: null,
     },
   ];
 
   return [...vigentes, ...pasadas];
+}
+
+export function obtenerDetalleProclamaExaltacion(id) {
+  const numId = Number(id);
+  const item = obtenerHistorialProclamasExaltacion().find((p) => p.id === numId);
+  if (!item) return null;
+
+  if (numId === 1) {
+    const galeria = [
+      {
+        id: 101,
+        url: '/media/seed/templo-exterior.webp',
+        textoAlternativo: 'Templo de la Parroquia Señor de la Exaltación (imagen de ejemplo)',
+        ancho: 1200,
+        alto: 800,
+        variantes: [],
+        tipoMime: 'image/webp',
+      },
+      {
+        id: 102,
+        url: '/media/seed/altar-mayor.webp',
+        textoAlternativo: 'Altar mayor del templo (imagen de ejemplo)',
+        ancho: 1200,
+        alto: 800,
+        variantes: [],
+        tipoMime: 'image/webp',
+      },
+    ];
+    return {
+      ...item,
+      galeria,
+      detalle: {
+        contenido: {
+          formato: 'blocknote',
+          version: 1,
+          bloques: [
+            {
+              id: 'proclama-1-p1',
+              type: 'paragraph',
+              props: {},
+              content: [
+                {
+                  type: 'text',
+                  text: 'Con alegría compartimos el anuncio de nuestro matrimonio religioso (texto de ejemplo).',
+                  styles: {},
+                },
+              ],
+              children: [],
+            },
+          ],
+        },
+        galeria: galeria.map((g) => g.id),
+        lugar: null,
+      },
+    };
+  }
+
+  if (numId === 2) {
+    return {
+      ...item,
+      galeria: [],
+      detalle: {
+        contenido: null,
+        galeria: [],
+        lugar: {
+          templo: 'Capilla San Pablo de la Cruz (ejemplo)',
+          direccion: 'Av. Costanera 123, Obrajes',
+          enlaceMapa: 'https://maps.app.goo.gl/ejemplo',
+        },
+      },
+    };
+  }
+
+  return {
+    ...item,
+    galeria: [],
+    detalle: null,
+  };
 }

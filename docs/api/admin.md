@@ -935,7 +935,9 @@ Proclamas matrimoniales (RF-02). Permiso de escritura: `proclamas.gestionar`.
   "fechaRegistro": "2026-11-05T11:20:00-04:00",
   "numeroProclama": 1,
   "publicaciones": [{ "numero": 1, "fecha": "2026-11-08" }],
-  "vigente": true
+  "vigente": true,
+  "imagenId": null,
+  "detalle": null
 }
 ```
 
@@ -948,7 +950,8 @@ Proclamas matrimoniales (RF-02). Permiso de escritura: `proclamas.gestionar`.
 | `GET /api/admin/proclamas`                              | Paginada. Filtros: `sede`, `vigentes` (`true` / `false`), `anio`, `buscar` (nombres). Orden: `fechaMatrimonio` (por defecto) o `-fechaMatrimonio`.     |
 | `GET /api/admin/proclamas/:id`                          | Una proclama.                                                                                                                                          |
 | `POST /api/admin/proclamas`                             | Crea. `201`.                                                                                                                                           |
-| `PATCH /api/admin/proclamas/:id`                        | Edita los nombres o la fecha del matrimonio.                                                                                                           |
+| `PATCH /api/admin/proclamas/:id`                        | Edita los nombres, la fecha del matrimonio, `imagenId` o `detalle`.                                                                                    |
+| `PATCH /api/admin/proclamas/:id/detalle`                | Edita **solo** `imagenId` y `detalle` (requiere `proclamas.detalle`).                                                                                  |
 | `DELETE /api/admin/proclamas/:id`                       | Elimina la proclama y sus publicaciones. Solo si ninguna publicación llegó todavía a su fecha; si no, `409 CONFLICTO`, porque el historial es público. |
 | `POST /api/admin/proclamas/:id/publicaciones`           | Agrega la siguiente publicación: `{ "fecha": "2026-11-15" }`. El `numero` se asigna solo (1, 2, 3).                                                    |
 | `PATCH /api/admin/proclamas/:id/publicaciones/:numero`  | Cambia la fecha: `{ "fecha": "2026-11-15" }`.                                                                                                          |
@@ -983,8 +986,10 @@ Reglas adicionales:
 - `tramiteOrigenId` repetido: `409 CONFLICTO` con un detalle en `tramiteOrigenId`. Varias proclamas sin trámite (`null`) son válidas.
 - `numeroProclama` es el número de la última publicación **ya alcanzada** (su fecha llegó, hoy en Bolivia o antes), o `null` si ninguna. Una proclama con solo publicaciones futuras tiene `numeroProclama: null` y `vigente: false`.
 - `GET` (lista): `vigentes=true|false`, `anio` (año de la boda, hora de Bolivia, 1900–2100) y `buscar` (en ambos nombres, sin distinguir mayúsculas ni acentos).
+- `imagenId` (opcional, `null` para quitar): id de una imagen de la biblioteca de la misma sede (foto principal de los novios).
+- `detalle` (opcional, `null` para quitar): `{ contenido, galeria, lugar }`, donde `contenido` es un documento BlockNote (o `null`), `galeria` es una lista de hasta 12 ids de imágenes o videos de la biblioteca de la misma sede, y `lugar` es `{ templo, direccion, enlaceMapa }` (o `null` si se celebra en la propia parroquia; `enlaceMapa` debe ser `https://` de Google Maps o `null`).
 - Los cambios de las publicaciones se registran en la bitácora como cambios de la entidad `proclama`: sus `datosAnteriores` y `datosNuevos` incluyen la clave `publicaciones` (`[{ numero, fecha }]`).
-- Lectura: todos los roles de la sede; `POST`, `PATCH` y `DELETE` piden `proclamas.gestionar` (Marketing recibe `403 SIN_PERMISO`).
+- Lectura: todos los roles de la sede; `POST`, `PATCH /:id` y `DELETE` piden `proclamas.gestionar` (Marketing recibe `403 SIN_PERMISO`); `PATCH /:id/detalle` pide `proclamas.detalle` (incluye a Marketing).
 
 ---
 

@@ -1,10 +1,11 @@
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 
 import {
   EncabezadoPagina,
   EncabezadoSeccion,
   Seccion,
 } from '../components/portal/index.js';
+import { construirAtributosImagen } from '../components/parroquia/imagenSrcSet.js';
 import PaginacionPortal from '../components/parroquia/PaginacionPortal.jsx';
 import {
   CargandoSeccion,
@@ -22,38 +23,65 @@ function obtenerAniosDisponibles() {
 }
 
 function FilaProclama({ proclama, mostrarPublicaciones = false }) {
-  const { contrayente1, contrayente2, fechaMatrimonio, numeroProclama, publicaciones = [] } =
+  const { id, contrayente1, contrayente2, fechaMatrimonio, numeroProclama, publicaciones = [], imagen } =
     proclama;
+  const nombres = `${contrayente1} & ${contrayente2}`;
 
   return (
-    <article className="flex flex-col gap-3 py-6 sm:flex-row sm:items-start sm:justify-between">
-      <div>
-        <h3 className="font-display text-h3 font-semibold text-ink">
-          {`${contrayente1} & ${contrayente2}`}
-        </h3>
-
-        <p className="mt-1 font-body text-meta text-muted">
-          {formatearFechaBoda(fechaMatrimonio)}
-        </p>
-
-        {mostrarPublicaciones && publicaciones.length > 0 && (
-          <ul
-            className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-body text-meta text-muted"
-            aria-label="Fechas de publicación"
-          >
-            {publicaciones.map((pub) => (
-              <li key={pub.numero}>
-                <strong className="font-semibold text-ink">{pub.numero}.ª:</strong>{' '}
-                {formatearFechaLarga(pub.fecha)}
-              </li>
-            ))}
-          </ul>
+    <article className="group relative flex flex-col gap-4 rounded-sm py-6 transition-colors duration-200 ease-salida focus-within:ring-2 focus-within:ring-gold focus-within:ring-offset-2 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex min-w-0 items-start gap-4">
+        {imagen && (
+          <div className="size-16 shrink-0 overflow-hidden rounded-sm border border-sand bg-cream sm:size-20">
+            <img
+              {...construirAtributosImagen(imagen, '80px')}
+              alt=""
+              aria-hidden="true"
+              className="size-full object-cover transition-transform duration-700 ease-salida group-hover:scale-[1.06] motion-reduce:transition-none"
+            />
+          </div>
         )}
+
+        <div className="min-w-0">
+          <h3 className="font-display text-h3 font-semibold text-ink">
+            <Link
+              to={`/proclamas/${id}`}
+              className="after:absolute after:inset-0 focus-visible:outline-none"
+            >
+              {nombres}
+            </Link>
+          </h3>
+
+          <p className="mt-1 font-body text-meta text-muted">
+            {formatearFechaBoda(fechaMatrimonio)}
+          </p>
+
+          {mostrarPublicaciones && publicaciones.length > 0 && (
+            <ul
+              className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-body text-meta text-muted"
+              aria-label="Fechas de publicación"
+            >
+              {publicaciones.map((pub) => (
+                <li key={pub.numero}>
+                  <strong className="font-semibold text-ink">{pub.numero}.ª:</strong>{' '}
+                  {formatearFechaLarga(pub.fecha)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
-      <span className="inline-flex w-fit shrink-0 items-center rounded-sm bg-gold-soft px-3 py-1 font-body text-meta font-semibold text-ink">
-        {`${numeroProclama}.ª proclama`}
-      </span>
+      <div className="flex shrink-0 flex-wrap items-center gap-3 sm:flex-col sm:items-end">
+        <span className="inline-flex w-fit items-center rounded-sm bg-gold-soft px-3 py-1 font-body text-meta font-semibold text-ink">
+          {`${numeroProclama}.ª proclama`}
+        </span>
+        <span
+          aria-hidden="true"
+          className="inline-flex items-center gap-1 font-body text-meta font-semibold text-ink transition-transform duration-200 ease-salida group-hover:translate-x-1 motion-reduce:transition-none"
+        >
+          Ver proclama →
+        </span>
+      </div>
     </article>
   );
 }

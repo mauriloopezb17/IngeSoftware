@@ -24,6 +24,18 @@ export async function listarHistorialProclamas(req, res) {
   );
 }
 
+export async function detalleProclama(req, res) {
+  const { id } = req.validado.params;
+  const clave = {
+    recurso: RECURSOS_CACHE.PROCLAMAS,
+    sedeId: req.sede.id,
+    variante: { detalle: id },
+  };
+  await responderConCache(req, res, clave, async () => ({
+    datos: await proclamas.obtenerDetalleProclama(req.sede.id, id),
+  }));
+}
+
 export async function listarBoletines(req, res) {
   const { query } = req.validado;
   const clave = { recurso: RECURSOS_CACHE.BOLETINES, sedeId: req.sede.id, variante: query };

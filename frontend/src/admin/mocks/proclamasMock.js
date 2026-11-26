@@ -31,7 +31,7 @@ const diaDe = (iso) => fechaBolivia(new Date(iso)).slice(0, 10);
 
 const MAX_PUBLICACIONES = 3;
 
-const proclama = (id, contrayente1, contrayente2, fechaMatrimonio, fechas) => ({
+const proclama = (id, contrayente1, contrayente2, fechaMatrimonio, fechas, extra = {}) => ({
   id,
   sede: SEDE_PRINCIPAL,
   contrayente1,
@@ -40,6 +40,9 @@ const proclama = (id, contrayente1, contrayente2, fechaMatrimonio, fechas) => ({
   tramiteOrigenId: null,
   fechaRegistro: matrimonio(-40, '11:20'),
   publicaciones: fechas.map((fecha, i) => ({ numero: i + 1, fecha })),
+  imagenId: null,
+  detalle: null,
+  ...extra,
 });
 
 // Los nombres son los ficticios de la landing (publico.md). Las fechas son relativas a hoy para que
@@ -116,11 +119,74 @@ function validarFechas(fechas, fechaMatrimonio, campoDe) {
   return detalles;
 }
 
-const CAMPOS_CREAR = ['sedeId', 'contrayente1', 'contrayente2', 'fechaMatrimonio', 'tramiteOrigenId', 'publicaciones'];
-const CAMPOS_EDITAR = ['contrayente1', 'contrayente2', 'fechaMatrimonio'];
+const CAMPOS_CREAR = [
+  'sedeId',
+  'contrayente1',
+  'contrayente2',
+  'fechaMatrimonio',
+  'tramiteOrigenId',
+  'publicaciones',
+  'imagenId',
+  'detalle',
+];
+const CAMPOS_EDITAR = ['contrayente1', 'contrayente2', 'fechaMatrimonio', 'imagenId', 'detalle'];
+const CAMPOS_DETALLE = ['imagenId', 'detalle'];
 
 const SIN_PERMISO = 'Tu rol no tiene permiso para gestionar las proclamas.';
+const SIN_PERMISO_DETALLE = 'Tu rol no tiene permiso para editar la página de la proclama.';
 const NO_EXISTE = 'La proclama no existe.';
+
+function esUrlGoogleMaps(valor) {
+  try {
+    const { protocol, hostname, pathname } = new URL(valor);
+    if (protocol !== 'https:') return false;
+    const host = hostname.toLowerCase();
+    return (
+      host === 'maps.app.goo.gl' ||
+      host.startsWith('maps.google.') ||
+      ((host === 'google.com' || host.endsWith('.google.com')) && pathname.startsWith('/maps')) ||
+      (host === 'goo.gl' && pathname.startsWith('/maps'))
+    );
+  } catch {
+    return false;
+  }
+}
+
+function validarDetalleCuerpo(cuerpo) {
+  const detalles = [];
+  if ('imagenId' in cuerpo && cuerpo.imagenId !== null && (!Number.isInteger(cuerpo.imagenId) || cuerpo.imagenId <= 0)) {
+    detalles.push({ campo: 'imagenId', mensaje: 'Debe ser un identificador válido.' });
+  }
+  if ('detalle' in cuerpo && cuerpo.detalle !== null) {
+    const d = cuerpo.detalle;
+    if (!d || typeof d !== 'object' || Array.isArray(d)) {
+      detalles.push({ campo: 'detalle', mensaje: 'Debe ser un objeto.' });
+      return detalles;
+    }
+    const permitidos = ['contenido', 'galeria', 'lugar'];
+    for (const k of Object.keys(d)) {
+      if (!permitidos.includes(k)) detalles.push({ campo: `detalle.${k}`, mensaje: 'Campo no permitido.' });
+    }
+    if ('galeria' in d && d.galeria !== undefined) {
+      if (!Array.isArray(d.galeria)) detalles.push({ campo: 'detalle.galeria', mensaje: 'Debe ser una lista.' });
+      else if (d.galeria.length > 12)
+        detalles.push({ campo: 'detalle.galeria', mensaje: 'La galería puede tener hasta 12 archivos.' });
+    }
+    if ('lugar' in d && d.lugar !== null && d.lugar !== undefined) {
+      if (typeof d.lugar !== 'object' || Array.isArray(d.lugar)) {
+        detalles.push({ campo: 'detalle.lugar', mensaje: 'Debe ser un objeto.' });
+      } else {
+        if (typeof d.lugar.templo !== 'string' || !d.lugar.templo.trim() || d.lugar.templo.trim().length > 150) {
+          detalles.push({ campo: 'detalle.lugar.templo', mensaje: 'El templo es obligatorio, hasta 150 caracteres.' });
+        }
+        if (d.lugar.enlaceMapa && !esUrlGoogleMaps(d.lugar.enlaceMapa)) {
+          detalles.push({ campo: 'detalle.lugar.enlaceMapa', mensaje: 'Debe ser un enlace https:// de Google Maps.' });
+        }
+      }
+    }
+  }
+  return detalles;
+}
 
 function listar(parametros, slugSede) {
   const detalles = [];
@@ -202,6 +268,7 @@ export const handlersProclamas = [
     if (fechas.length > MAX_PUBLICACIONES)
       detalles.push({ campo: 'publicaciones', mensaje: `Una proclama tiene hasta ${MAX_PUBLICACIONES} publicaciones.` });
     if (!detalles.length) detalles.push(...validarFechas(fechas, cuerpo.fechaMatrimonio, (i) => `publicaciones.${i}.fecha`));
+    detalles.push(...validarDetalleCuerpo(cuerpo));
     if (detalles.length) return fallo(errorValidacion(detalles));
 
     const nueva = proclama(
@@ -210,6 +277,10 @@ export const handlersProclamas = [
       cuerpo.contrayente2.trim(),
       fechaBolivia(new Date(cuerpo.fechaMatrimonio)),
       fechas,
+      {
+        imagenId: cuerpo.imagenId ?? null,
+        detalle: cuerpo.detalle ?? null,
+      },
     );
     nueva.sede = usuario.sede ?? SEDE_PRINCIPAL;
     nueva.fechaRegistro = fechaBolivia(new Date());
@@ -228,7 +299,11 @@ export const handlersProclamas = [
     const cuerpo = await leerCuerpo(request);
     if (!cuerpo) return cuerpoInvalido();
 
-    const detalles = [...camposNoPermitidos(cuerpo, CAMPOS_EDITAR), ...validarNombres(cuerpo, { parcial: true })];
+    const detalles = [
+      ...camposNoPermitidos(cuerpo, CAMPOS_EDITAR),
+      ...validarNombres(cuerpo, { parcial: true }),
+      ...validarDetalleCuerpo(cuerpo),
+    ];
     if ('fechaMatrimonio' in cuerpo) {
       if (!esFechaHoraConZona(cuerpo.fechaMatrimonio))
         detalles.push({ campo: 'fechaMatrimonio', mensaje: 'Debe ser una fecha y hora con zona.' });
@@ -244,6 +319,25 @@ export const handlersProclamas = [
     if ('contrayente1' in cuerpo) p.contrayente1 = cuerpo.contrayente1.trim();
     if ('contrayente2' in cuerpo) p.contrayente2 = cuerpo.contrayente2.trim();
     if ('fechaMatrimonio' in cuerpo) p.fechaMatrimonio = fechaBolivia(new Date(cuerpo.fechaMatrimonio));
+    if ('imagenId' in cuerpo) p.imagenId = cuerpo.imagenId ?? null;
+    if ('detalle' in cuerpo) p.detalle = cuerpo.detalle ?? null;
+    return respuesta(p);
+  }),
+
+  http.patch(api('/admin/proclamas/:id/detalle'), async ({ request, params }) => {
+    const auth = autorizar('proclamas.detalle', SIN_PERMISO_DETALLE);
+    if (auth.respuesta) return auth.respuesta;
+    const leido = leerDeLaSede(proclamas, params.id, auth.usuario, NO_EXISTE);
+    if (leido.respuesta) return leido.respuesta;
+    const p = leido.recurso;
+    const cuerpo = await leerCuerpo(request);
+    if (!cuerpo) return cuerpoInvalido();
+
+    const detalles = [...camposNoPermitidos(cuerpo, CAMPOS_DETALLE), ...validarDetalleCuerpo(cuerpo)];
+    if (detalles.length) return fallo(errorValidacion(detalles));
+
+    if ('imagenId' in cuerpo) p.imagenId = cuerpo.imagenId ?? null;
+    if ('detalle' in cuerpo) p.detalle = cuerpo.detalle ?? null;
     return respuesta(p);
   }),
 

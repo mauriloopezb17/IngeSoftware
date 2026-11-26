@@ -9,6 +9,7 @@ import { crearQueryClient } from '../../services/queryClient.js';
 import { hoyBolivia } from '../mocks/apoyoMock.js';
 import { reiniciarMocksAdmin } from '../mocks/handlers.js';
 import { CONTRASENA_DESARROLLO } from '../mocks/usuarios.js';
+import { prepararEditorEnJsdom } from '../publicaciones/apoyoPruebas.js';
 import { SesionProvider } from '../sesion/SesionProvider.jsx';
 import { ProveedorToasts } from '../ui/index.js';
 import Proclamas from './Proclamas.jsx';
@@ -40,6 +41,8 @@ function montar(entrada = '/admin/proclamas') {
 
 const dia = (n) => hoyBolivia(new Date(Date.now() + n * 86400000));
 const tarjeta = (nombre) => screen.getByRole('article', { name: new RegExp(nombre) });
+
+prepararEditorEnJsdom();
 
 describe('proclamas del panel', () => {
   beforeEach(reiniciarMocksAdmin);

@@ -22,6 +22,18 @@ export async function editar(req, res) {
   });
 }
 
+export async function editarDetalle(req, res) {
+  const { id } = req.validado.params;
+  res.json({
+    datos: await servicio.editarDetalleProclama(
+      req.usuario,
+      id,
+      req.validado.body,
+      contextoDe(req),
+    ),
+  });
+}
+
 export async function eliminar(req, res) {
   await servicio.eliminarProclama(req.usuario, req.validado.params.id, contextoDe(req));
   res.status(204).end();

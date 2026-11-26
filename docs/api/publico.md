@@ -27,7 +27,7 @@ Una sede que existe pero aún no tiene contenido (ej. `resurreccion`) responde `
 | `Agenda`: avisos parroquiales                            | [`GET /api/sedes/:sede/publicaciones?tipo=AVISO`](#get-apisedessedepublicaciones)                                                                  |
 | `Agenda`: boletín parroquial                             | [`GET /api/sedes/:sede/boletines?porPagina=1`](#get-apisedessedeboletines)                                                                         |
 | `VidaParroquial` (noticias y notas de prensa)            | [`GET /api/sedes/:sede/publicaciones?tipo=NOTICIA,NOTA_DE_PRENSA`](#get-apisedessedepublicaciones) y [detalle](#get-apisedessedepublicacionesslug) |
-| `Proclamas`                                              | [`GET /api/sedes/:sede/proclamas`](#get-apisedessedeproclamas) e [historial](#get-apisedessedeproclamashistorial)                                  |
+| `Proclamas`                                              | [`GET /api/sedes/:sede/proclamas`](#get-apisedessedeproclamas), [historial](#get-apisedessedeproclamashistorial) y [detalle](#get-apisedessedeproclamasid) |
 | `VideoInstitucional`                                     | [`GET /api/sedes/:sede/videos`](#get-apisedessedevideos); mientras no haya videos, el bloque `hero_video` de `inicio`                              |
 | `GruposPastorales`                                       | [`GET /api/sedes/:sede/grupos-pastorales`](#get-apisedessedegrupos-pastorales)                                                                     |
 | `Comunidades`                                            | [`GET /api/sedes`](#get-apisedes)                                                                                                                  |
@@ -942,7 +942,9 @@ Proclamas matrimoniales **vigentes** (RF-02): las que tienen al menos una public
         { "numero": 1, "fecha": "2026-10-25" },
         { "numero": 2, "fecha": "2026-11-01" },
         { "numero": 3, "fecha": "2026-11-08" }
-      ]
+      ],
+      "tieneDetalle": false,
+      "imagen": null
     },
     {
       "id": 2,
@@ -953,7 +955,9 @@ Proclamas matrimoniales **vigentes** (RF-02): las que tienen al menos una public
       "publicaciones": [
         { "numero": 1, "fecha": "2026-11-01" },
         { "numero": 2, "fecha": "2026-11-08" }
-      ]
+      ],
+      "tieneDetalle": false,
+      "imagen": null
     },
     {
       "id": 3,
@@ -961,7 +965,9 @@ Proclamas matrimoniales **vigentes** (RF-02): las que tienen al menos una public
       "contrayente2": "Andrea Mamani C.",
       "fechaMatrimonio": "2026-12-05T12:00:00-04:00",
       "numeroProclama": 1,
-      "publicaciones": [{ "numero": 1, "fecha": "2026-11-08" }]
+      "publicaciones": [{ "numero": 1, "fecha": "2026-11-08" }],
+      "tieneDetalle": false,
+      "imagen": null
     }
   ]
 }
@@ -992,7 +998,9 @@ Historial público de proclamas (RF-02): todas las que tuvieron al menos una pub
         { "numero": 1, "fecha": "2026-10-25" },
         { "numero": 2, "fecha": "2026-11-01" },
         { "numero": 3, "fecha": "2026-11-08" }
-      ]
+      ],
+      "tieneDetalle": false,
+      "imagen": null
     }
   ],
   "paginacion": {
@@ -1003,6 +1011,56 @@ Historial público de proclamas (RF-02): todas las que tuvieron al menos una pub
   }
 }
 ```
+
+## `GET /api/sedes/:sede/proclamas/:id`
+
+Detalle de una proclama visible (al menos una publicación cuya fecha ya llegó). Si no existe, pertenece a otra sede o todavía no tiene publicaciones alcanzadas, responde `404 NO_ENCONTRADO`.
+
+**Respuesta `200`:**
+
+```json
+{
+  "datos": {
+    "id": 1,
+    "contrayente1": "Juan Carlos M. Q.",
+    "contrayente2": "María Fernanda R. V.",
+    "fechaMatrimonio": "2026-11-14T11:00:00-04:00",
+    "numeroProclama": 3,
+    "publicaciones": [
+      { "numero": 1, "fecha": "2026-10-25" },
+      { "numero": 2, "fecha": "2026-11-01" },
+      { "numero": 3, "fecha": "2026-11-08" }
+    ],
+    "tieneDetalle": true,
+    "imagen": null,
+    "galeria": [
+      {
+        "id": 12,
+        "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/11/foto.webp",
+        "textoAlternativo": "Foto de los novios",
+        "ancho": 1200,
+        "alto": 800,
+        "variantes": [
+          { "ancho": 480, "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/11/foto-480w.webp" },
+          { "ancho": 960, "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/11/foto-960w.webp" }
+        ],
+        "tipoMime": "image/webp"
+      }
+    ],
+    "detalle": {
+      "contenido": null,
+      "galeria": [12],
+      "lugar": {
+        "templo": "Capilla San Pablo de la Cruz",
+        "direccion": "Av. Costanera 123, Obrajes",
+        "enlaceMapa": "https://maps.app.goo.gl/ejemplo"
+      }
+    }
+  }
+}
+```
+
+- `detalle` es `null` si no se cargó información adicional. Si `detalle.lugar` es `null`, la boda se celebra en la propia parroquia.
 
 ---
 

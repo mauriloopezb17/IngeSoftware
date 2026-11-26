@@ -32,6 +32,11 @@ export async function actualizarProclama(id, cuerpo) {
   return datos;
 }
 
+export async function actualizarDetalleProclama(id, cuerpo) {
+  const { datos } = await clienteHttp.patch(`/admin/proclamas/${id}/detalle`, cuerpo);
+  return datos;
+}
+
 export const eliminarProclama = (id) => clienteHttp.delete(`/admin/proclamas/${id}`);
 
 // Las acciones sobre publicaciones devuelven la proclama completa (con su historial actualizado).

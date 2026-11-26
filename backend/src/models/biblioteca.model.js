@@ -40,7 +40,18 @@ const USOS = `
   UNION ALL
   SELECT 9, 'DETALLE_EVENTO', e.titulo
     FROM evento e
-   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND e.detalle IS NOT NULL AND e.detalle::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'`;
+   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND e.detalle IS NOT NULL AND e.detalle::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'
+  UNION ALL
+  SELECT 10, 'IMAGEN_PROCLAMA', pr.nombre_contrayente_1 || ' y ' || pr.nombre_contrayente_2
+    FROM proclama pr WHERE pr.imagen_id = m.id
+  UNION ALL
+  SELECT 11, 'GALERIA_PROCLAMA', pr.nombre_contrayente_1 || ' y ' || pr.nombre_contrayente_2
+    FROM proclama pr
+   WHERE pr.detalle -> 'galeria' @> to_jsonb(m.id)
+  UNION ALL
+  SELECT 12, 'CONTENIDO_PROCLAMA', pr.nombre_contrayente_1 || ' y ' || pr.nombre_contrayente_2
+    FROM proclama pr
+   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND (pr.detalle -> 'contenido')::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'`;
 
 const SELECCION = `
   SELECT ${COLUMNAS_ARCHIVO},

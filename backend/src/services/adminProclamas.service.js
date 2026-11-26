@@ -8,8 +8,9 @@ import { exigirSedeDelRecurso } from '../utils/alcanceSede.js';
 import { patronBusqueda } from '../utils/busqueda.js';
 import { formatearFecha, formatearFechaHora } from '../utils/formato.js';
 import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
+import { archivosDelContenido, tieneContenido } from '../validacion/blocknote.js';
 import { registrarCambio } from './bitacora.service.js';
-import { sedeDelRecursoNuevo } from './referencias.service.js';
+import { sedeDelRecursoNuevo, verificarArchivos } from './referencias.service.js';
 
 const ENTIDAD = 'proclama';
 const MAXIMO_PUBLICACIONES = 3;
@@ -29,6 +30,8 @@ function aProclama(fila) {
       fecha: formatearFecha(fecha),
     })),
     vigente: fila.vigente,
+    imagenId: fila.imagen_id ?? null,
+    detalle: fila.detalle ?? null,
   };
 }
 
@@ -105,6 +108,38 @@ const errorTramiteRepetido = () =>
     { campo: 'tramiteOrigenId', mensaje: 'Ya está en uso.' },
   ]);
 
+function normalizarDetalle(detalle) {
+  if (detalle === undefined || detalle === null) return detalle;
+  const contenido = tieneContenido(detalle.contenido) ? detalle.contenido : null;
+  const galeria = detalle.galeria ?? [];
+  const lugar = detalle.lugar ?? null;
+  if (!contenido && galeria.length === 0 && !lugar) return null;
+  return { contenido, galeria, lugar };
+}
+
+async function validarReferenciasDetalle(sedeId, { imagenId, detalle }, db) {
+  const referencias = [];
+  if (imagenId !== undefined && imagenId !== null) {
+    referencias.push({ campo: 'imagenId', clase: 'IMAGEN', id: imagenId });
+  }
+  if (detalle?.galeria?.length) {
+    detalle.galeria.forEach((archivoId, indice) => {
+      referencias.push({
+        campo: `detalle.galeria.${indice}`,
+        clase: ['IMAGEN', 'VIDEO'],
+        id: archivoId,
+      });
+    });
+  }
+  if (detalle?.contenido) {
+    referencias.push(...archivosDelContenido(detalle.contenido, 'detalle.contenido'));
+  }
+  if (referencias.length === 0) return;
+
+  const { detalles } = await verificarArchivos(sedeId, referencias, db);
+  if (detalles.length > 0) throw ErrorApp.validacion(undefined, detalles);
+}
+
 // ---- Proclama ----
 
 export async function crearProclama(usuario, cuerpo, contexto) {
@@ -116,6 +151,8 @@ export async function crearProclama(usuario, cuerpo, contexto) {
       cuerpo.fechaMatrimonio,
       (indice) => `publicaciones.${indice}.fecha`,
     );
+    const detalle = normalizarDetalle(cuerpo.detalle) ?? null;
+    await validarReferenciasDetalle(sedeId, { imagenId: cuerpo.imagenId, detalle }, db);
 
     let fila;
     try {
@@ -126,6 +163,8 @@ export async function crearProclama(usuario, cuerpo, contexto) {
           contrayente1: cuerpo.contrayente1,
           contrayente2: cuerpo.contrayente2,
           fechaMatrimonio: cuerpo.fechaMatrimonio,
+          imagenId: cuerpo.imagenId ?? null,
+          detalle,
         },
         db,
       );
@@ -178,15 +217,58 @@ export async function editarProclama(usuario, id, cambios, contexto) {
       ]);
     }
 
+    const imagenId = cambios.imagenId !== undefined ? cambios.imagenId : fila.imagen_id;
+    const detalle =
+      cambios.detalle !== undefined ? normalizarDetalle(cambios.detalle) : fila.detalle;
+    await validarReferenciasDetalle(
+      fila.sede_id,
+      {
+        imagenId: cambios.imagenId,
+        detalle: cambios.detalle !== undefined ? detalle : undefined,
+      },
+      db,
+    );
+
     const nuevaFila = await modelo.actualizar(
       id,
       {
         contrayente1: cambios.contrayente1 ?? fila.nombre_contrayente_1,
         contrayente2: cambios.contrayente2 ?? fila.nombre_contrayente_2,
         fechaMatrimonio,
+        imagenId,
+        detalle,
       },
       db,
     );
+    await registrarCambio(db, contexto, {
+      entidad: ENTIDAD,
+      entidadId: id,
+      accion: 'UPDATE',
+      anterior,
+      nuevo: await instantanea(nuevaFila, db),
+    });
+  });
+  return obtenerProclama(usuario, id);
+}
+
+export async function editarDetalleProclama(usuario, id, cambios, contexto) {
+  await transaccion(async (db) => {
+    const fila = await proclamaParaModificar(usuario, id, db);
+    const anterior = await instantanea(fila, db);
+
+    const imagenId = cambios.imagenId !== undefined ? cambios.imagenId : fila.imagen_id;
+    const detalle =
+      cambios.detalle !== undefined ? normalizarDetalle(cambios.detalle) : fila.detalle;
+    await validarReferenciasDetalle(
+      fila.sede_id,
+      {
+        imagenId: cambios.imagenId,
+        detalle: cambios.detalle !== undefined ? detalle : undefined,
+      },
+      db,
+    );
+
+    const nuevaFila = await modelo.actualizarDetalle(id, { imagenId, detalle }, db);
     await registrarCambio(db, contexto, {
       entidad: ENTIDAD,
       entidadId: id,
