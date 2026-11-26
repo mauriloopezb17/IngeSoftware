@@ -663,7 +663,7 @@ Permiso de escritura: `horarios.gestionar`. A diferencia del endpoint público, 
 
 | Método y ruta                    | Descripción                                                                              |
 | -------------------------------- | ---------------------------------------------------------------------------------------- |
-| `GET /api/admin/horarios`        | Sin paginar. Filtros: `sede`, `tipo` (ids), `activo`. Orden: tipo, día y hora de inicio. |
+| `GET /api/admin/horarios`        | Paginado (`porPagina` hasta 100). Filtros: `sede`, `tipo` (ids), `activo`, `buscar`. Orden: `tipo` (defecto), `diaSemana`, `-diaSemana`, `horaInicio`, `-horaInicio`. |
 | `GET /api/admin/horarios/:id`    | Un horario.                                                                              |
 | `POST /api/admin/horarios`       | Crea. `201`.                                                                             |
 | `PATCH /api/admin/horarios/:id`  | Edita. Para ocultar un horario sin borrarlo: `{ "activo": false }`.                      |
@@ -732,7 +732,7 @@ Permiso de escritura: `servicios.gestionar`.
 
 | Método y ruta                                                      | Descripción                                                                                                                                |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `GET /api/admin/servicios`                                         | Sin paginar, por `orden`. Filtros: `sede`, `visible`.                                                                                      |
+| `GET /api/admin/servicios`                                         | Paginado (`porPagina` hasta 100). Filtros: `sede`, `visible`, `buscar`. Orden: `orden` (defecto), `-orden`, `nombre`, `-nombre`. |
 | `GET /api/admin/servicios/:id`                                     | Un servicio con sus preguntas frecuentes (activas e inactivas).                                                                            |
 | `POST /api/admin/servicios`                                        | Crea. `201`.                                                                                                                               |
 | `PATCH /api/admin/servicios/:id`                                   | Edita.                                                                                                                                     |
@@ -794,7 +794,7 @@ Permiso de escritura: `grupos.gestionar`.
 
 | Método y ruta                                 | Descripción                                           |
 | --------------------------------------------- | ----------------------------------------------------- |
-| `GET /api/admin/grupos-pastorales`            | Sin paginar, por `orden`. Filtros: `sede`, `visible`. |
+| `GET /api/admin/grupos-pastorales`            | Paginado (`porPagina` hasta 100). Filtros: `sede`, `visible`, `buscar`. Orden: `orden` (defecto), `-orden`, `nombre`, `-nombre`. |
 | `GET /api/admin/grupos-pastorales/:id`        | Un grupo.                                             |
 | `POST /api/admin/grupos-pastorales`           | Crea. `201`.                                          |
 | `PATCH /api/admin/grupos-pastorales/:id`      | Edita.                                                |
@@ -829,7 +829,7 @@ El mismo objeto del [endpoint público](publico.md#get-apisedessedevideos), más
 
 | Método y ruta                      | Descripción                                |
 | ---------------------------------- | ------------------------------------------ |
-| `GET /api/admin/videos`            | Sin paginar. Filtros: `sede`, `destacado`. |
+| `GET /api/admin/videos`            | Paginado (`porPagina` hasta 100). Filtros: `sede`, `destacado`, `buscar`. Orden: `orden` (defecto), `-orden`, `fechaPublicacion`, `-fechaPublicacion`, `titulo`, `-titulo`. |
 | `GET /api/admin/videos/:id`        | Un video.                                  |
 | `POST /api/admin/videos`           | Crea. `201`.                               |
 | `PATCH /api/admin/videos/:id`      | Edita.                                     |
@@ -865,7 +865,7 @@ El mismo objeto de [`GET /api/sedes/:sede`](publico.md#get-apisedessede), más `
 
 | Método y ruta                | Permiso                                       | Descripción                                                                                                                 |
 | ---------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/admin/sedes`       | todos                                         | Sin paginar. El Administrador ve todas, incluidas las inactivas; los demás roles solo la suya.                              |
+| `GET /api/admin/sedes`       | todos                                         | Paginado (`porPagina` hasta 100). Filtros: `tipo`, `activo`, `buscar`. Orden: `id` (defecto), `-id`, `nombre`, `-nombre`. El Administrador ve todas, incluidas las inactivas; los demás roles solo la suya. |
 | `GET /api/admin/sedes/:id`   | todos                                         | Una sede.                                                                                                                   |
 | `POST /api/admin/sedes`      | `sedes.gestionar`                             | Crea una sede. `201`.                                                                                                       |
 | `PATCH /api/admin/sedes/:id` | `sede.editar` (la propia) o `sedes.gestionar` | Edita datos, configuración y redes sociales. Solo `sedes.gestionar` puede cambiar `slug`, `tipo`, `sedePadreId` y `activo`. |
@@ -1093,7 +1093,7 @@ En el panel, `bloques` incluye también los no visibles (`visible: false`). La l
 
 | Método y ruta                   | Descripción                                                                                                                                                                      |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/admin/paginas`        | Sin paginar. Filtros: `sede`, `estado`. Orden: `ordenMenu`, `titulo`.                                                                                                            |
+| `GET /api/admin/paginas`        | Paginado (`porPagina` hasta 100). Filtros: `sede`, `estado`, `mostrarEnMenu`, `buscar`. Orden: `ordenMenu` (defecto), `-ordenMenu`, `titulo`, `-titulo`, `fechaCreacion`, `-fechaCreacion`. |
 | `GET /api/admin/paginas/:id`    | Una página con todos sus bloques.                                                                                                                                                |
 | `POST /api/admin/paginas`       | Crea. `201`.                                                                                                                                                                     |
 | `PATCH /api/admin/paginas/:id`  | Edita datos o estado. Actualiza `actualizadoPor` y `fechaActualizacion`.                                                                                                         |

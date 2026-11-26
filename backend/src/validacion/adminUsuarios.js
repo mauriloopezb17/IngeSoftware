@@ -4,7 +4,7 @@ import '../config/zod.js';
 import { ROLES } from '../constantes/catalogos.js';
 import { contrasenaNueva } from '../utils/contrasenas.js';
 import { correoUsuario } from './auth.js';
-import { booleanoQuery, id, listaCodigos, paginacion, slug } from './comunes.js';
+import { booleanoQuery, esquemaListado, id, listaCodigos, slug } from './comunes.js';
 
 const ENTERO_MAXIMO_PG = 2_147_483_647;
 
@@ -26,21 +26,14 @@ const rolCodigo = z.enum(ROLES.codigos, {
 
 export const paramsUsuario = z.object({ id });
 
-export const consultaUsuarios = paginacion.extend({
-  rol: listaCodigos(ROLES.codigos).optional(),
-  sede: slug.optional(),
-  activo: booleanoQuery.optional(),
-  buscar: z
-    .string()
-    .trim()
-    .max(120, 'La búsqueda puede tener hasta 120 caracteres.')
-    .transform((texto) => (texto === '' ? undefined : texto))
-    .optional(),
-  orden: z
-    .enum(['nombreCompleto', '-nombreCompleto'], {
-      error: 'Debe ser nombreCompleto o -nombreCompleto.',
-    })
-    .default('nombreCompleto'),
+export const consultaUsuarios = esquemaListado({
+  filtros: {
+    rol: listaCodigos(ROLES.codigos).optional(),
+    sede: slug.optional(),
+    activo: booleanoQuery.optional(),
+  },
+  ordenes: ['nombreCompleto', '-nombreCompleto'],
+  ordenPredeterminado: 'nombreCompleto',
 });
 
 export const cuerpoCrearUsuario = z.strictObject({

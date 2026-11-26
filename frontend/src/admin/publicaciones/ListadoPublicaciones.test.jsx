@@ -51,7 +51,7 @@ describe('listado de publicaciones', () => {
 
     expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Publicaciones' })).toBeInTheDocument();
-    expect(screen.getByText('9 publicaciones')).toBeInTheDocument();
+    expect(screen.getByText('Mostrando 1–8 de 9')).toBeInTheDocument();
     expect(filas()).toHaveLength(8);
     expect(screen.queryByText(/la secretaría atenderá solo por la mañana/)).not.toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: 'Título' })).toBeInTheDocument();
@@ -88,8 +88,8 @@ describe('listado de publicaciones', () => {
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Estado' }), 'EN_REVISION');
 
-    expect(await screen.findByText('2 publicaciones con estos filtros', {}, esperar)).toBeInTheDocument();
-    expect(filas().map((f) => within(f).getByRole('rowheader').firstChild.textContent)).toEqual(
+    expect(await screen.findByText('Mostrando 1–2 de 2', {}, esperar)).toBeInTheDocument();
+    expect(filas().map((f) => within(f).getAllByRole('cell')[0].firstChild.textContent)).toEqual(
       expect.arrayContaining(['Jornada de oración por las vocaciones', 'Solemnidad de Cristo Rey: invitación a la procesión']),
     );
     expect(filas()).toHaveLength(2);
@@ -103,7 +103,7 @@ describe('listado de publicaciones', () => {
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Tipo' }), 'NOTA_DE_PRENSA');
 
-    expect(await screen.findByText('2 publicaciones con estos filtros', {}, esperar)).toBeInTheDocument();
+    expect(await screen.findByText('Mostrando 1–2 de 2', {}, esperar)).toBeInTheDocument();
     for (const f of filas()) expect(within(f).getByText('Nota de prensa')).toBeInTheDocument();
   });
 
@@ -113,10 +113,10 @@ describe('listado de publicaciones', () => {
     await screen.findByRole('table');
 
     await userEvent.click(screen.getByRole('checkbox', { name: 'Solo las mías' }));
-    expect(await screen.findByText('4 publicaciones con estos filtros', {}, esperar)).toBeInTheDocument();
+    expect(await screen.findByText('Mostrando 1–4 de 4', {}, esperar)).toBeInTheDocument();
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Estado' }), 'BORRADOR');
-    expect(await screen.findByText('2 publicaciones con estos filtros', {}, esperar)).toBeInTheDocument();
+    expect(await screen.findByText('Mostrando 1–2 de 2', {}, esperar)).toBeInTheDocument();
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Tipo' }), 'NOTA_DE_PRENSA');
     expect(await screen.findByText(/No hay publicaciones que coincidan con los filtros/, {}, esperar)).toBeInTheDocument();
   });
@@ -128,7 +128,7 @@ describe('listado de publicaciones', () => {
 
     await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar' }), 'procesion');
 
-    expect(await screen.findByText('1 publicación con estos filtros', {}, esperar)).toBeInTheDocument();
+    expect(await screen.findByText('Mostrando 1–1 de 1', {}, esperar)).toBeInTheDocument();
     expect(filas()).toHaveLength(1);
     expect(screen.getByTestId('ubicacion')).toHaveTextContent('?buscar=procesion');
   });
@@ -138,9 +138,9 @@ describe('listado de publicaciones', () => {
     montar('/admin/publicaciones?estado=ARCHIVADO&tipo=NOTA_DE_PRENSA');
 
     expect(await screen.findByText('No hay publicaciones que coincidan con los filtros.')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Quitar los filtros' }));
+    await userEvent.click(screen.getAllByRole('button', { name: 'Quitar filtros' })[0]);
 
-    expect(await screen.findByText('9 publicaciones')).toBeInTheDocument();
+    expect(await screen.findByText('Mostrando 1–8 de 9')).toBeInTheDocument();
     expect(screen.getByTestId('ubicacion')).toHaveTextContent(/^\/admin\/publicaciones$/);
   });
 
@@ -148,7 +148,7 @@ describe('listado de publicaciones', () => {
     await entrar('parroco');
     montar('/admin/publicaciones?estado=INVENTADO&tipo=AVISO&pagina=-3');
 
-    expect(await screen.findByText('9 publicaciones')).toBeInTheDocument();
+    expect(await screen.findByText('Mostrando 1–8 de 9')).toBeInTheDocument();
   });
 
   it('muestra el error de la API y permite reintentar', async () => {

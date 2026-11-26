@@ -22,7 +22,9 @@ export const NOMBRES_TIPO_BLOQUE = {
 const REGEX_YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 
 export async function listarPaginas(parametros = {}) {
-  const { datos } = await clienteHttp.get('/admin/paginas', { parametros });
+  const { datos } = await clienteHttp.get('/admin/paginas', {
+    parametros: { porPagina: 100, ...parametros },
+  });
   return datos;
 }
 

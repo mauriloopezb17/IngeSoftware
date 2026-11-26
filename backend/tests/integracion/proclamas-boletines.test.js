@@ -132,7 +132,10 @@ describe('GET /api/sedes/:sede/proclamas: vigentes', () => {
     );
 
     expect(inexistente.status).toBe(404);
-    expect(sinProclamas.body).toEqual({ datos: [] });
+    expect(sinProclamas.body).toEqual({
+      datos: [],
+      paginacion: { pagina: 1, porPagina: 10, total: 0, totalPaginas: 0 },
+    });
   });
 });
 

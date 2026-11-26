@@ -4,6 +4,7 @@ import { ErrorApp } from '../errores/ErrorApp.js';
 import * as modelo from '../models/horarios.model.js';
 import { exigirSedeDelRecurso, sedeParaCrear } from '../utils/alcanceSede.js';
 import { formatearHora } from '../utils/formato.js';
+import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 import { registrarCambio } from './bitacora.service.js';
 
 function aHorarioAdmin(fila) {
@@ -26,13 +27,22 @@ async function horarioDelUsuario(usuario, id) {
   return fila;
 }
 
-export async function listarHorarios(sedeFiltro, consulta) {
-  const filas = await modelo.listarAdmin({
+export async function listarHorarios(sedeFiltro, consulta = {}) {
+  const pagina = consulta.pagina ?? 1;
+  const porPagina = consulta.porPagina ?? 10;
+  const { filas, total } = await modelo.listarAdmin({
     sedeSlug: sedeFiltro,
     tipoIds: consulta.tipo,
     activo: consulta.activo,
+    buscar: consulta.buscar,
+    orden: consulta.orden,
+    limite: porPagina,
+    desplazamiento: desplazamiento(pagina, porPagina),
   });
-  return filas.map(aHorarioAdmin);
+  return {
+    datos: filas.map(aHorarioAdmin),
+    paginacion: armarPaginacion({ total, pagina, porPagina }),
+  };
 }
 
 export async function obtenerHorario(usuario, id) {

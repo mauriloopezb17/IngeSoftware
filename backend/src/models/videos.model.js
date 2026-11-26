@@ -1,17 +1,48 @@
 // Consultas de videos de YouTube (SQL parametrizado).
 import { consultar } from '../db/index.js';
+import { patronBusqueda, sinAcentosSql } from '../utils/busqueda.js';
 
-// Videos de una sede: primero los destacados, luego por orden.
-export async function listar(sedeId) {
-  const { rows } = await consultar(
-    `SELECT id, titulo, descripcion, youtube_video_id, duracion_segundos, destacado, orden,
-            fecha_publicacion
-       FROM video
-      WHERE sede_id = $1
-      ORDER BY destacado DESC, orden, id`,
-    [sedeId],
-  );
-  return rows;
+const ORDENES_VIDEO = {
+  orden: 'destacado DESC, orden ASC, id ASC',
+  '-orden': 'destacado DESC, orden DESC, id DESC',
+  fechaPublicacion: 'fecha_publicacion ASC NULLS LAST, id ASC',
+  '-fechaPublicacion': 'fecha_publicacion DESC NULLS LAST, id DESC',
+  titulo: 'titulo ASC, id ASC',
+  '-titulo': 'titulo DESC, id DESC',
+};
+
+// Videos de una sede: paginados y ordenados según lista blanca.
+export async function listar(
+  sedeId,
+  { destacado, buscar, orden = 'orden', limite = null, desplazamiento = 0 } = {},
+) {
+  const parametros = [sedeId];
+  const condiciones = ['sede_id = $1'];
+  if (destacado !== undefined) condiciones.push(`destacado = $${parametros.push(destacado)}`);
+  if (buscar) {
+    const p = `$${parametros.push(patronBusqueda(buscar))}`;
+    condiciones.push(
+      `(${sinAcentosSql('titulo')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql("coalesce(descripcion, '')")} LIKE ${p} ESCAPE '\\')`,
+    );
+  }
+  const donde = condiciones.join(' AND ');
+  const clausulaOrden = ORDENES_VIDEO[orden] ?? ORDENES_VIDEO.orden;
+
+  const selectBase = `SELECT id, titulo, descripcion, youtube_video_id, duracion_segundos, destacado, orden, fecha_publicacion FROM video WHERE ${donde}`;
+
+  if (limite === null) {
+    const { rows } = await consultar(`${selectBase} ORDER BY ${clausulaOrden}`, parametros);
+    return { filas: rows, total: rows.length };
+  }
+
+  const [pagina, conteo] = await Promise.all([
+    consultar(
+      `${selectBase} ORDER BY ${clausulaOrden} LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
+      [...parametros, limite, desplazamiento],
+    ),
+    consultar(`SELECT count(*)::int AS total FROM video WHERE ${donde}`, parametros),
+  ]);
+  return { filas: pagina.rows, total: conteo.rows[0].total };
 }
 
 const COLUMNAS_ADMIN = `
@@ -31,7 +62,19 @@ const UNIONES_ADMIN = `
   FROM video v
   JOIN sede s ON s.id = v.sede_id`;
 
-export async function listarAdmin({ sedeSlug, sedeId, destacado } = {}, db = { consultar }) {
+const ORDENES_VIDEO_ADMIN = {
+  orden: 'v.destacado DESC, v.orden ASC, v.id ASC',
+  '-orden': 'v.destacado DESC, v.orden DESC, v.id DESC',
+  fechaPublicacion: 'v.fecha_publicacion ASC NULLS LAST, v.id ASC',
+  '-fechaPublicacion': 'v.fecha_publicacion DESC NULLS LAST, v.id DESC',
+  titulo: 'v.titulo ASC, v.id ASC',
+  '-titulo': 'v.titulo DESC, v.id DESC',
+};
+
+export async function listarAdmin(
+  { sedeSlug, sedeId, destacado, buscar, orden = 'orden', limite = null, desplazamiento = 0 } = {},
+  db = { consultar },
+) {
   const parametros = [];
   const condiciones = ['TRUE'];
   const agregar = (valor) => {
@@ -42,15 +85,36 @@ export async function listarAdmin({ sedeSlug, sedeId, destacado } = {}, db = { c
   if (sedeSlug !== undefined) condiciones.push(`s.slug = ${agregar(sedeSlug)}`);
   if (sedeId !== undefined) condiciones.push(`v.sede_id = ${agregar(sedeId)}`);
   if (destacado !== undefined) condiciones.push(`v.destacado = ${agregar(destacado)}`);
+  if (buscar) {
+    const p = agregar(patronBusqueda(buscar));
+    condiciones.push(
+      `(${sinAcentosSql('v.titulo')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql("coalesce(v.descripcion, '')")} LIKE ${p} ESCAPE '\\')`,
+    );
+  }
 
-  const { rows } = await db.consultar(
-    `SELECT ${COLUMNAS_ADMIN}
-     ${UNIONES_ADMIN}
-     WHERE ${condiciones.join(' AND ')}
-     ORDER BY v.destacado DESC, v.orden, v.id`,
-    parametros,
-  );
-  return rows;
+  const donde = condiciones.join(' AND ');
+  const clausulaOrden = ORDENES_VIDEO_ADMIN[orden] ?? ORDENES_VIDEO_ADMIN.orden;
+
+  if (limite === null) {
+    const { rows } = await db.consultar(
+      `SELECT ${COLUMNAS_ADMIN} ${UNIONES_ADMIN} WHERE ${donde} ORDER BY ${clausulaOrden}`,
+      parametros,
+    );
+    return { filas: rows, total: rows.length };
+  }
+
+  const [pagina, conteo] = await Promise.all([
+    db.consultar(
+      `SELECT ${COLUMNAS_ADMIN}
+       ${UNIONES_ADMIN}
+       WHERE ${donde}
+       ORDER BY ${clausulaOrden}
+       LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
+      [...parametros, limite, desplazamiento],
+    ),
+    db.consultar(`SELECT count(*)::int AS total ${UNIONES_ADMIN} WHERE ${donde}`, parametros),
+  ]);
+  return { filas: pagina.rows, total: conteo.rows[0].total };
 }
 
 export async function buscarPorId(id, db = { consultar }) {

@@ -1,6 +1,7 @@
 // Consultas de eventos del calendario (SQL parametrizado). Todo se compara con now() de
 // PostgreSQL y los días se calculan en la zona de Bolivia.
 import { consultar } from '../db/index.js';
+import { patronBusqueda, sinAcentosSql } from '../utils/busqueda.js';
 
 export const ZONA_HORARIA = 'America/La_Paz';
 
@@ -40,7 +41,7 @@ const UNIONES = `
 //    día de fecha_inicio en Bolivia (antes de la medianoche siguiente).
 //  * Rango [desde, hasta] en días de Bolivia: el evento se incluye si se cruza con el rango
 //    (un evento de varios días que ya empezó sigue apareciendo). desde nunca es anterior a hoy.
-function filtros({ sedeId, estadoPublicado, desde, hasta, categorias }) {
+function filtros({ sedeId, estadoPublicado, desde, hasta, categorias, buscar }) {
   const parametros = [sedeId, estadoPublicado, ZONA_HORARIA];
   const agregar = (valor) => `$${parametros.push(valor)}`;
   const diaInicio = '(e.fecha_inicio AT TIME ZONE $3)::date';
@@ -56,20 +57,27 @@ function filtros({ sedeId, estadoPublicado, desde, hasta, categorias }) {
   ];
   if (hasta) condiciones.push(`${diaInicio} <= ${agregar(hasta)}::date`);
   if (categorias) condiciones.push(`ce.id = ANY(${agregar(categorias)}::int[])`);
+  if (buscar) {
+    const p = agregar(patronBusqueda(buscar));
+    condiciones.push(
+      `(${sinAcentosSql('e.titulo')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql("coalesce(e.lugar, '')")} LIKE ${p} ESCAPE '\\')`,
+    );
+  }
 
   return { donde: condiciones.join(' AND '), parametros };
 }
 
 // Página de próximos eventos (por fecha de inicio) y el total que cumple los filtros.
-export async function listarProximos(criterios, { limite, desplazamiento }) {
+export async function listarProximos(criterios, { limite, desplazamiento, ascendente = true }) {
   const { donde, parametros } = filtros(criterios);
+  const direccion = ascendente ? 'ASC' : 'DESC';
 
   const [pagina, conteo] = await Promise.all([
     consultar(
       `SELECT ${COLUMNAS}
          FROM evento e ${UNIONES}
         WHERE ${donde}
-        ORDER BY e.fecha_inicio, e.id
+        ORDER BY e.fecha_inicio ${direccion}, e.id ${direccion}
         LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
       [...parametros, limite, desplazamiento],
     ),

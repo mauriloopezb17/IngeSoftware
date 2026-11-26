@@ -1,5 +1,6 @@
 // Gestión de sedes y redes sociales en el panel CMS (docs/api/admin.md, sección 9).
 import { TIPOS_SEDE } from '../constantes/catalogos.js';
+import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 import { PERMISOS, tienePermiso } from '../constantes/permisos.js';
 import { transaccion } from '../db/index.js';
 import { ErrorApp } from '../errores/ErrorApp.js';
@@ -92,17 +93,30 @@ function traducirErrorSlugUnico(err, slugValor) {
   throw err;
 }
 
-export async function listarSedes(usuario) {
+export async function listarSedes(usuario, consulta = {}) {
   const tipoPrimero = TIPOS_SEDE.nombreDe('PARROQUIA');
-  if (esAdministrador(usuario)) {
-    const filas = await modelo.listarAdmin({ tipoPrimero });
-    return filas.map(aSedeAdmin);
-  }
-  if (usuario.sedeId === null || usuario.sedeId === undefined) {
+  const pagina = consulta.pagina ?? 1;
+  const porPagina = consulta.porPagina ?? 10;
+  const sedeId = esAdministrador(usuario) ? undefined : usuario.sedeId;
+
+  if (!esAdministrador(usuario) && (sedeId === null || sedeId === undefined)) {
     throw ErrorApp.sinPermiso('Tu usuario no tiene una sede asignada.');
   }
-  const filas = await modelo.listarAdmin({ tipoPrimero, sedeId: usuario.sedeId });
-  return filas.map(aSedeAdmin);
+
+  const { filas, total } = await modelo.listarAdmin({
+    tipoPrimero,
+    sedeId,
+    tipos: consulta.tipo?.map((codigo) => TIPOS_SEDE.nombreDe(codigo)),
+    activo: consulta.activo,
+    buscar: consulta.buscar,
+    orden: consulta.orden,
+    limite: porPagina,
+    desplazamiento: desplazamiento(pagina, porPagina),
+  });
+  return {
+    datos: filas.map(aSedeAdmin),
+    paginacion: armarPaginacion({ total, pagina, porPagina }),
+  };
 }
 
 export async function obtenerSede(usuario, id) {

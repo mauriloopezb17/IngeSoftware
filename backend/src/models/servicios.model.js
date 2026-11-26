@@ -1,18 +1,52 @@
 // Consultas de servicios y sacramentos (SQL parametrizado).
 import { consultar } from '../db/index.js';
+import { patronBusqueda, sinAcentosSql } from '../utils/busqueda.js';
 
 const COLUMNAS = 's.id, s.slug, s.nombre, s.descripcion_corta, s.icono, s.orden';
 
-// Servicios visibles de una sede, por orden.
-export async function listarVisibles(sedeId) {
-  const { rows } = await consultar(
-    `SELECT ${COLUMNAS}
-       FROM servicio s
-      WHERE s.sede_id = $1 AND s.visible
-      ORDER BY s.orden, s.id`,
-    [sedeId],
-  );
-  return rows;
+const ORDENES_PORTAL = {
+  orden: 's.orden ASC, s.id ASC',
+  '-orden': 's.orden DESC, s.id DESC',
+  nombre: 's.nombre ASC, s.id ASC',
+  '-nombre': 's.nombre DESC, s.id DESC',
+};
+
+// Servicios visibles de una sede, paginados y ordenados según lista blanca.
+export async function listarVisibles(
+  sedeId,
+  { buscar, orden = 'orden', limite = null, desplazamiento = 0 } = {},
+) {
+  const parametros = [sedeId];
+  const condiciones = ['s.sede_id = $1', 's.visible'];
+  if (buscar) {
+    const p = `$${parametros.push(patronBusqueda(buscar))}`;
+    condiciones.push(
+      `(${sinAcentosSql('s.nombre')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql('s.descripcion_corta')} LIKE ${p} ESCAPE '\\')`,
+    );
+  }
+  const donde = condiciones.join(' AND ');
+  const clausulaOrden = ORDENES_PORTAL[orden] ?? ORDENES_PORTAL.orden;
+
+  if (limite === null) {
+    const { rows } = await consultar(
+      `SELECT ${COLUMNAS} FROM servicio s WHERE ${donde} ORDER BY ${clausulaOrden}`,
+      parametros,
+    );
+    return { filas: rows, total: rows.length };
+  }
+
+  const [pagina, conteo] = await Promise.all([
+    consultar(
+      `SELECT ${COLUMNAS}
+         FROM servicio s
+        WHERE ${donde}
+        ORDER BY ${clausulaOrden}
+        LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
+      [...parametros, limite, desplazamiento],
+    ),
+    consultar(`SELECT count(*)::int AS total FROM servicio s WHERE ${donde}`, parametros),
+  ]);
+  return { filas: pagina.rows, total: conteo.rows[0].total };
 }
 
 // Servicio visible por slug, con su contenido y sus preguntas frecuentes activas (misma consulta).
@@ -66,8 +100,18 @@ const UNIONES_ADMIN = `
   FROM servicio s
   JOIN sede se ON se.id = s.sede_id`;
 
-// Lista servicios para el panel CMS (sin paginar), por orden.
-export async function listarAdmin({ sedeSlug, sedeId, visible } = {}, db = { consultar }) {
+const ORDENES_ADMIN = {
+  orden: 's.orden ASC, s.id ASC',
+  '-orden': 's.orden DESC, s.id DESC',
+  nombre: 's.nombre ASC, s.id ASC',
+  '-nombre': 's.nombre DESC, s.id DESC',
+};
+
+// Lista servicios para el panel CMS (con paginación opcional; limite=null devuelve todos para reordenar).
+export async function listarAdmin(
+  { sedeSlug, sedeId, visible, buscar, orden = 'orden', limite = null, desplazamiento = 0 } = {},
+  db = { consultar },
+) {
   const parametros = [];
   const condiciones = ['TRUE'];
   const agregar = (valor) => {
@@ -78,15 +122,36 @@ export async function listarAdmin({ sedeSlug, sedeId, visible } = {}, db = { con
   if (sedeSlug !== undefined) condiciones.push(`se.slug = ${agregar(sedeSlug)}`);
   if (sedeId !== undefined) condiciones.push(`s.sede_id = ${agregar(sedeId)}`);
   if (visible !== undefined) condiciones.push(`s.visible = ${agregar(visible)}`);
+  if (buscar) {
+    const p = agregar(patronBusqueda(buscar));
+    condiciones.push(
+      `(${sinAcentosSql('s.nombre')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql('s.descripcion_corta')} LIKE ${p} ESCAPE '\\')`,
+    );
+  }
 
-  const { rows } = await db.consultar(
-    `SELECT ${COLUMNAS_ADMIN}
-     ${UNIONES_ADMIN}
-     WHERE ${condiciones.join(' AND ')}
-     ORDER BY s.orden, s.id`,
-    parametros,
-  );
-  return rows;
+  const donde = condiciones.join(' AND ');
+  const clausulaOrden = ORDENES_ADMIN[orden] ?? ORDENES_ADMIN.orden;
+
+  if (limite === null) {
+    const { rows } = await db.consultar(
+      `SELECT ${COLUMNAS_ADMIN} ${UNIONES_ADMIN} WHERE ${donde} ORDER BY ${clausulaOrden}`,
+      parametros,
+    );
+    return { filas: rows, total: rows.length };
+  }
+
+  const [pagina, conteo] = await Promise.all([
+    db.consultar(
+      `SELECT ${COLUMNAS_ADMIN}
+       ${UNIONES_ADMIN}
+       WHERE ${donde}
+       ORDER BY ${clausulaOrden}
+       LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
+      [...parametros, limite, desplazamiento],
+    ),
+    db.consultar(`SELECT count(*)::int AS total ${UNIONES_ADMIN} WHERE ${donde}`, parametros),
+  ]);
+  return { filas: pagina.rows, total: conteo.rows[0].total };
 }
 
 export async function buscarPorId(id, db = { consultar }) {

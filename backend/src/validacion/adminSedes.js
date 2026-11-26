@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import '../config/zod.js';
 import { TIPOS_SEDE } from '../constantes/catalogos.js';
-import { id, slug } from './comunes.js';
+import { booleanoQuery, esquemaListado, id, listaCodigos, slug } from './comunes.js';
 
 const ENTERO_MAXIMO_PG = 2_147_483_647;
 
@@ -83,6 +83,16 @@ const redesSociales = z
 const configuracion = z.record(z.string().min(1), z.unknown());
 
 export const paramsSede = z.object({ id });
+
+export const consultaSedes = esquemaListado({
+  filtros: {
+    tipo: listaCodigos(TIPOS_SEDE.codigos).optional(),
+    activo: booleanoQuery.optional(),
+  },
+  ordenes: ['id', '-id', 'nombre', '-nombre'],
+  ordenPredeterminado: 'id',
+  porPaginaMaximo: 100,
+});
 
 export const cuerpoCrearSede = z
   .strictObject({

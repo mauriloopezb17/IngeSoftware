@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   anio,
   booleanoQuery,
+  esquemaListado,
   fecha,
   fechaHoraConZona,
   id,
@@ -10,6 +11,8 @@ import {
   paginacion,
   slug,
 } from '../../src/validacion/comunes.js';
+import { errorDeZod } from '../../src/middlewares/errores.js';
+import { patronBusqueda } from '../../src/utils/busqueda.js';
 import { armarPaginacion, desplazamiento } from '../../src/utils/paginacion.js';
 
 const valido = (esquema, valor) => esquema.safeParse(valor).success;
@@ -170,5 +173,72 @@ describe('listas separadas por comas', () => {
     expect(resultado.error.issues[0].message).toBe(
       'Debe ser uno de: AVISO, NOTICIA, NOTA_DE_PRENSA.',
     );
+  });
+});
+
+describe('esquemaListado', () => {
+  const esquema = esquemaListado({
+    filtros: { categoria: slug.optional() },
+    ordenes: ['titulo', '-titulo', 'fechaPublicacion'],
+    ordenPredeterminado: '-titulo',
+  });
+
+  it('aplica valores por defecto de paginación y orden predeterminado', () => {
+    expect(valor(esquema, {})).toEqual({
+      pagina: 1,
+      porPagina: 10,
+      orden: '-titulo',
+    });
+  });
+
+  it('respeta porPaginaMaximo y porPaginaPredeterminado personalizados', () => {
+    const esquemaAmplio = esquemaListado({ porPaginaMaximo: 200, porPaginaPredeterminado: 100 });
+    expect(valor(esquemaAmplio, {})).toEqual({ pagina: 1, porPagina: 100 });
+    expect(valor(esquemaAmplio, { porPagina: '200' })).toEqual({ pagina: 1, porPagina: 200 });
+    expect(valido(esquemaAmplio, { porPagina: '201' })).toBe(false);
+  });
+
+  it('rechaza parámetros desconocidos con detalle en query.<nombre>', () => {
+    const resultado = esquema.safeParse({ pagina: '1', inventado: 'hola' });
+    expect(resultado.success).toBe(false);
+    const err = errorDeZod(resultado.error, 'query');
+    expect(err.detalles).toEqual([{ campo: 'query.inventado', mensaje: 'Campo no permitido.' }]);
+  });
+
+  it('rechaza parámetros repetidos (arreglos en query)', () => {
+    expect(valido(esquema, { pagina: ['1', '2'] })).toBe(false);
+    expect(valido(esquema, { porPagina: ['10', '20'] })).toBe(false);
+    expect(valido(esquema, { buscar: ['a', 'b'] })).toBe(false);
+    expect(valido(esquema, { orden: ['titulo', '-titulo'] })).toBe(false);
+  });
+
+  it.each([
+    ['pagina', '0'],
+    ['pagina', '-1'],
+    ['pagina', '2147483648'],
+    ['pagina', '1.5'],
+    ['pagina', 'abc'],
+    ['porPagina', '0'],
+    ['porPagina', '-1'],
+    ['porPagina', '51'],
+    ['porPagina', '2147483648'],
+    ['porPagina', '1.5'],
+    ['porPagina', 'abc'],
+  ])('rechaza número fuera de rango o inválido %s=%s', (campo, entrada) => {
+    expect(valido(esquema, { [campo]: entrada })).toBe(false);
+  });
+
+  it('sanea buscar (trim, 1–100 caracteres, sin caracteres de control) y escapa comodines SQL', () => {
+    expect(valor(esquema, { buscar: '  Misa 100%  ' }).buscar).toBe('Misa 100%');
+    expect(patronBusqueda('100%_\\test')).toBe('%100\\%\\_\\\\test%');
+    expect(valido(esquema, { buscar: '   ' })).toBe(false);
+    expect(valido(esquema, { buscar: 'a'.repeat(101) })).toBe(false);
+    expect(valido(esquema, { buscar: 'hola\u0000mundo' })).toBe(false);
+    expect(valido(esquema, { buscar: 'hola\nmundo' })).toBe(false);
+  });
+
+  it('rechaza intentos de inyección en orden (lista blanca estricta)', () => {
+    expect(valido(esquema, { orden: 'titulo; DROP TABLE usuario;--' })).toBe(false);
+    expect(valido(esquema, { orden: '1 DESC' })).toBe(false);
   });
 });

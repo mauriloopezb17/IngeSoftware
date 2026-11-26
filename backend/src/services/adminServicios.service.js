@@ -4,6 +4,7 @@ import { ErrorApp } from '../errores/ErrorApp.js';
 import * as modelo from '../models/servicios.model.js';
 import { generarSlug, reordenarPorSede } from '../utils/adminContenido.js';
 import { exigirSedeDelRecurso, sedeParaCrear } from '../utils/alcanceSede.js';
+import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 import { registrarCambio } from './bitacora.service.js';
 
 function aServicioAdmin(fila) {
@@ -56,12 +57,21 @@ function traducirErrorUnicoSlug(err, slugValor) {
   throw err;
 }
 
-export async function listarServicios(sedeFiltro, consulta) {
-  const filas = await modelo.listarAdmin({
+export async function listarServicios(sedeFiltro, consulta = {}) {
+  const pagina = consulta.pagina ?? 1;
+  const porPagina = consulta.porPagina ?? 10;
+  const { filas, total } = await modelo.listarAdmin({
     sedeSlug: sedeFiltro,
     visible: consulta.visible,
+    buscar: consulta.buscar,
+    orden: consulta.orden,
+    limite: porPagina,
+    desplazamiento: desplazamiento(pagina, porPagina),
   });
-  return filas.map(aServicioAdmin);
+  return {
+    datos: filas.map(aServicioAdmin),
+    paginacion: armarPaginacion({ total, pagina, porPagina }),
+  };
 }
 
 export async function obtenerServicio(usuario, id) {
@@ -191,7 +201,7 @@ export async function reordenarServicios(usuario, ids, contexto) {
     contexto,
     baseOrden: 1,
   });
-  const filas = await modelo.listarAdmin({ sedeId });
+  const { filas } = await modelo.listarAdmin({ sedeId });
   return filas.map(aServicioAdmin);
 }
 

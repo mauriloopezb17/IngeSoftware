@@ -4,11 +4,16 @@ import { PERMISOS } from '../constantes/permisos.js';
 import * as controlador from '../controllers/adminSedes.controller.js';
 import { requerirPermiso } from '../middlewares/autorizar.js';
 import { validar } from '../middlewares/validar.js';
-import { cuerpoCrearSede, cuerpoEditarSede, paramsSede } from '../validacion/adminSedes.js';
+import {
+  consultaSedes,
+  cuerpoCrearSede,
+  cuerpoEditarSede,
+  paramsSede,
+} from '../validacion/adminSedes.js';
 
 const router = Router();
 
-router.get('/', controlador.listar);
+router.get('/', validar({ query: consultaSedes }), controlador.listar);
 router.get('/:id', validar({ params: paramsSede }), controlador.detalle);
 
 router.post(

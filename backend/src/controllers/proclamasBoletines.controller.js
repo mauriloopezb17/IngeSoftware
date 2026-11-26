@@ -6,10 +6,15 @@ import * as observaciones from '../services/observacionesProclama.service.js';
 import * as proclamas from '../services/proclamas.service.js';
 
 export async function listarProclamasVigentes(req, res) {
-  const clave = { recurso: RECURSOS_CACHE.PROCLAMAS, sedeId: req.sede.id, variante: 'vigentes' };
-  await responderConCache(req, res, clave, async () => ({
-    datos: await proclamas.listarProclamasVigentes(req.sede.id),
-  }));
+  const { query } = req.validado;
+  const clave = {
+    recurso: RECURSOS_CACHE.PROCLAMAS,
+    sedeId: req.sede.id,
+    variante: { vigentes: query },
+  };
+  await responderConCache(req, res, clave, () =>
+    proclamas.listarProclamasVigentes(req.sede.id, query),
+  );
 }
 
 export async function listarHistorialProclamas(req, res) {

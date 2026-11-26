@@ -99,11 +99,16 @@ describe('GET /api/admin/servicios', () => {
     expect(res.status).toBe(401);
   });
 
-  it('devuelve los servicios sin paginar, ordenados y con sus preguntas frecuentes', async () => {
+  it('devuelve los servicios paginados, ordenados y con sus preguntas frecuentes', async () => {
     const res = await request(app).get('/api/admin/servicios').set('Cookie', sesiones.marketing);
 
     expect(res.status).toBe(200);
-    expect(res.body.paginacion).toBeUndefined();
+    expect(res.body.paginacion).toEqual({
+      pagina: 1,
+      porPagina: 10,
+      total: expect.any(Number),
+      totalPaginas: expect.any(Number),
+    });
     expect(res.body.datos.length).toBeGreaterThanOrEqual(6);
     expect(res.body.datos[0]).toEqual({
       id: expect.any(Number),

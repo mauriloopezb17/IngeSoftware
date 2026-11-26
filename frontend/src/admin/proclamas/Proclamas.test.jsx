@@ -40,7 +40,7 @@ function montar(entrada = '/admin/proclamas') {
 }
 
 const dia = (n) => hoyBolivia(new Date(Date.now() + n * 86400000));
-const tarjeta = (nombre) => screen.getByRole('article', { name: new RegExp(nombre) });
+const tarjeta = (nombre) => screen.getByRole('row', { name: new RegExp(nombre) });
 
 prepararEditorEnJsdom();
 
@@ -52,8 +52,8 @@ describe('proclamas del panel', () => {
     await entrar('secretaria');
     montar();
 
-    await screen.findByRole('list', { name: 'Proclamas' });
-    expect(screen.getByText('3 proclamas')).toBeInTheDocument();
+    await screen.findByRole('table', { name: 'Proclamas' });
+    expect(screen.getByText('Mostrando 1–3 de 3')).toBeInTheDocument();
     const juan = tarjeta('Juan Carlos');
     expect(within(juan).getByText('Vigente')).toBeInTheDocument();
     expect(within(juan).getAllByRole('listitem').map((li) => li.textContent.slice(0, 4))).toEqual(['1.ª ', '2.ª ', '3.ª ']);
@@ -63,10 +63,10 @@ describe('proclamas del panel', () => {
   it('el historial incluye las celebradas y las que aún no salieron', async () => {
     await entrar('secretaria');
     montar();
-    await screen.findByRole('list', { name: 'Proclamas' });
+    await screen.findByRole('table', { name: 'Proclamas' });
 
     await userEvent.click(screen.getByRole('button', { name: 'Historial' }));
-    await screen.findByText('2 proclamas');
+    await screen.findByText('Mostrando 1–2 de 2');
     expect(within(tarjeta('Marcelo')).getByText('Celebrada')).toBeInTheDocument();
     expect(within(tarjeta('Rodrigo')).getByText('Aún sin publicar')).toBeInTheDocument();
     expect(within(tarjeta('Rodrigo')).getByText(/\(programada\)/)).toBeInTheDocument();
@@ -76,18 +76,18 @@ describe('proclamas del panel', () => {
   it('busca por nombre', async () => {
     await entrar('secretaria');
     montar();
-    await screen.findByRole('list', { name: 'Proclamas' });
+    await screen.findByRole('table', { name: 'Proclamas' });
 
     await userEvent.type(screen.getByLabelText('Buscar por nombre'), 'camila');
-    await screen.findByText('1 proclama');
-    expect(screen.getByRole('heading', { name: 'Diego A. Choque L. y Camila S. Paredes' })).toBeInTheDocument();
+    await screen.findByText('Mostrando 1–1 de 1');
+    expect(screen.getByText('Diego A. Choque L. y Camila S. Paredes')).toBeInTheDocument();
   });
 
   it('Marketing solo consulta: sin botones de modificar y con el historial en solo lectura', async () => {
     await entrar('marketing');
     montar();
 
-    await screen.findByRole('list', { name: 'Proclamas' });
+    await screen.findByRole('table', { name: 'Proclamas' });
     expect(screen.getByRole('note')).toHaveTextContent('Solo lectura');
     expect(screen.queryByRole('link', { name: /Nueva proclama/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Eliminar/ })).not.toBeInTheDocument();
@@ -185,14 +185,14 @@ describe('proclamas del panel', () => {
     await entrar('secretaria');
     montar();
     const usuario = userEvent.setup();
-    await screen.findByRole('list', { name: 'Proclamas' });
+    await screen.findByRole('table', { name: 'Proclamas' });
 
     await usuario.click(screen.getByRole('button', { name: /Eliminar «Juan Carlos/ }));
     const dialogo = screen.getByRole('dialog');
     await usuario.click(within(dialogo).getByRole('button', { name: 'Eliminar' }));
 
     expect(await within(dialogo).findByRole('alert')).toHaveTextContent(/historial público/);
-    expect(screen.getByRole('article', { name: /Juan Carlos/ })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /Juan Carlos/ })).toBeInTheDocument();
   });
 
   it('edita los datos de una proclama', async () => {

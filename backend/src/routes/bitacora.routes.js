@@ -5,10 +5,10 @@ import { PERMISOS } from '../constantes/permisos.js';
 import * as controlador from '../controllers/bitacora.controller.js';
 import { requerirPermiso } from '../middlewares/autorizar.js';
 import { validar } from '../middlewares/validar.js';
-import { fecha, id, paginacion } from '../validacion/comunes.js';
+import { esquemaListado, fecha, id } from '../validacion/comunes.js';
 
-const consultaBitacora = paginacion
-  .extend({
+const consultaBitacora = esquemaListado({
+  filtros: {
     entidad: z
       .string()
       .trim()
@@ -26,11 +26,13 @@ const consultaBitacora = paginacion
       .optional(),
     desde: fecha.optional(),
     hasta: fecha.optional(),
-  })
-  .refine(({ desde, hasta }) => !desde || !hasta || hasta >= desde, {
-    path: ['hasta'],
-    message: 'Debe ser igual o posterior a desde.',
-  });
+  },
+  ordenes: ['fecha', '-fecha'],
+  ordenPredeterminado: '-fecha',
+}).refine(({ desde, hasta }) => !desde || !hasta || hasta >= desde, {
+  path: ['hasta'],
+  message: 'Debe ser igual o posterior a desde.',
+});
 
 const router = Router();
 
