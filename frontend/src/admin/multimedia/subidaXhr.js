@@ -60,7 +60,12 @@ export function subirFormulario(ruta, formulario, { onProgreso, senal } = {}) {
       rechazar(
         new ErrorApi({
           estado: xhr.status,
-          mensaje: cuerpo?.error?.mensaje ?? cuerpo?.mensaje ?? (xhr.statusText || 'Error del servidor.'),
+          mensaje:
+            cuerpo?.error?.mensaje ??
+            cuerpo?.mensaje ??
+            (xhr.status >= 500
+              ? 'No se pudo subir el archivo por un problema del servidor. Intenta de nuevo.'
+              : xhr.statusText || 'Error del servidor.'),
           codigo: cuerpo?.error?.codigo ?? null,
           detalles: cuerpo?.error?.detalles ?? null,
         }),
