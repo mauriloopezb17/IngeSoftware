@@ -1,10 +1,8 @@
-import { useRef, useState } from 'react';
-import { ArrowRight, Pause, Play } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import '../../styles/portal.css';
 
-import { Boton, BotonEnlace, Contenedor, Eyebrow } from '../portal/index.js';
-import ModalVideo from '../portal/ModalVideo.jsx';
+import { BotonEnlace, Contenedor, Eyebrow } from '../portal/index.js';
 import EnlacePortal from './EnlacePortal.jsx';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { IconoDinamico } from './IconoDinamico.jsx';
@@ -20,34 +18,13 @@ function debeMostrarSoloPoster() {
 }
 
 function Portada() {
-  const referenciaVideo = useRef(null);
   const { data: pagina, isPending, isError, refetch } = usePagina('inicio');
 
   const soloPoster = debeMostrarSoloPoster();
-  const [reproduciendo, setReproduciendo] = useState(!soloPoster);
-  const [modalVideoAbierto, setModalVideoAbierto] = useState(false);
 
   const bloques = pagina?.bloques ?? [];
   const hero = bloques.find((bloque) => bloque.tipo === 'hero_video')?.contenido;
   const tarjetas = bloques.find((bloque) => bloque.tipo === 'tarjetas')?.contenido?.items ?? [];
-
-  const alternarReproduccion = async () => {
-    const video = referenciaVideo.current;
-    if (!video) return;
-
-    if (!video.paused) {
-      video.pause();
-      setReproduciendo(false);
-      return;
-    }
-
-    try {
-      await video.play();
-      setReproduciendo(true);
-    } catch {
-      setReproduciendo(false);
-    }
-  };
 
   return (
     <section id="inicio" className="bg-white">
@@ -64,7 +41,6 @@ function Portada() {
 
         {hero?.url_video && !soloPoster && (
           <video
-            ref={referenciaVideo}
             autoPlay
             muted
             loop
@@ -72,9 +48,6 @@ function Portada() {
             preload="metadata"
             poster={hero.url_poster || undefined}
             aria-hidden="true"
-            onPlay={() => setReproduciendo(true)}
-            onPause={() => setReproduciendo(false)}
-            onEnded={() => setReproduciendo(false)}
             className="absolute inset-0 h-full w-full object-cover"
           >
             <source src={hero.url_video} type="video/mp4" />
@@ -117,51 +90,23 @@ function Portada() {
                   </p>
                 )}
 
-                <div className="hero-entrada hero-entrada-retraso-2 mt-8 flex flex-wrap items-center gap-4">
-                  {hero.botones?.map((boton, indice) => (
-                    <BotonEnlace
-                      key={boton.texto}
-                      to={boton.enlace}
-                      variante={indice === 0 ? 'primarioOscuro' : 'secundarioOscuro'}
-                    >
-                      <span>{boton.texto}</span>
-                      {indice === 0 && <ArrowRight size={17} aria-hidden="true" />}
-                    </BotonEnlace>
-                  ))}
-
-                  {hero.url_video && (
-                    <Boton
-                      variante="secundarioOscuro"
-                      onClick={() => setModalVideoAbierto(true)}
-                    >
-                      <Play size={16} aria-hidden="true" />
-                      <span>{hero.texto_video || 'Video institucional'}</span>
-                    </Boton>
-                  )}
-                </div>
+                {hero.botones?.length > 0 && (
+                  <div className="hero-entrada hero-entrada-retraso-2 mt-8 flex flex-wrap items-center gap-4">
+                    {hero.botones.map((boton, indice) => (
+                      <BotonEnlace
+                        key={boton.texto}
+                        to={boton.enlace}
+                        variante={indice === 0 ? 'primarioOscuro' : 'secundarioOscuro'}
+                      >
+                        <span>{boton.texto}</span>
+                        {indice === 0 && <ArrowRight size={17} aria-hidden="true" />}
+                      </BotonEnlace>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </div>
-
-          {hero?.url_video && !soloPoster && (
-            <div className="mt-10 flex items-center justify-end">
-              <button
-                type="button"
-                onClick={alternarReproduccion}
-                aria-label={
-                  reproduciendo ? 'Pausar video de fondo' : 'Reproducir video de fondo'
-                }
-                aria-pressed={reproduciendo}
-                className="inline-flex size-11 cursor-pointer items-center justify-center rounded-full border border-white/35 bg-ink/80 text-white transition-colors duration-150 hover:border-gold hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-              >
-                {reproduciendo ? (
-                  <Pause size={18} aria-hidden="true" />
-                ) : (
-                  <Play size={18} aria-hidden="true" />
-                )}
-              </button>
-            </div>
-          )}
         </Contenedor>
       </div>
 
@@ -198,15 +143,6 @@ function Portada() {
             ))}
           </div>
         </Contenedor>
-      )}
-
-      {hero?.url_video && (
-        <ModalVideo
-          abierto={modalVideoAbierto}
-          alCerrar={() => setModalVideoAbierto(false)}
-          urlVideo={hero.url_video}
-          titulo={hero.texto_video || 'Video institucional'}
-        />
       )}
     </section>
   );

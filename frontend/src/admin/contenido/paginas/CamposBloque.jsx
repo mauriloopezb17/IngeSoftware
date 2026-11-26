@@ -173,26 +173,15 @@ export default function CamposBloque({
             deshabilitado={deshabilitado}
           />
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <CampoTexto
-              etiqueta="Título del botón de video (opcional)"
-              value={contenido.texto_video ?? ''}
-              onChange={(e) => actualizar({ texto_video: e.target.value })}
-              maxLength={60}
-              placeholder="Ej. Video institucional"
-              error={campoError(errores, 'texto_video')}
-              disabled={deshabilitado}
-            />
-            <CampoTexto
-              etiqueta="Detalle del video (opcional)"
-              value={contenido.detalle_video ?? ''}
-              onChange={(e) => actualizar({ detalle_video: e.target.value })}
-              maxLength={60}
-              placeholder="Ej. Recorrido aéreo · 0:30"
-              error={campoError(errores, 'detalle_video')}
-              disabled={deshabilitado}
-            />
-          </div>
+          <CampoTexto
+            etiqueta="Detalle del video (opcional)"
+            value={contenido.detalle_video ?? ''}
+            onChange={(e) => actualizar({ detalle_video: e.target.value })}
+            maxLength={60}
+            placeholder="Ej. Recorrido aéreo · 0:30"
+            error={campoError(errores, 'detalle_video')}
+            disabled={deshabilitado}
+          />
 
           <div className="flex flex-col gap-3 rounded-lg border border-sand p-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
