@@ -52,7 +52,7 @@ describe('Calendario (eventos próximos con filtros y paginación)', () => {
       await screen.findByText('No hay próximos eventos que coincidan con los filtros seleccionados.'),
     ).toBeInTheDocument();
 
-    await usuario.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
+    await usuario.click(screen.getAllByRole('button', { name: 'Quitar filtros' })[0]);
 
     expect(await screen.findByText('Adoración eucarística comunitaria')).toBeInTheDocument();
   });

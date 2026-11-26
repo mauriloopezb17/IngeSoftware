@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { ArrowRight, CalendarDays, Clock3, MapPin } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 
@@ -79,6 +80,7 @@ function calcularRangoMes(mesParam, hoy) {
 
 function Calendario() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const inicioListadoRef = useRef(null);
 
   const mesActivo = searchParams.get('mes') ?? '';
   const categoriaActiva = searchParams.get('categoria') ?? '';
@@ -231,12 +233,13 @@ function Calendario() {
                 className="min-h-11 cursor-pointer px-3 py-2 font-body text-meta font-semibold text-ink underline underline-offset-4 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 onClick={() => setSearchParams({})}
               >
-                Limpiar filtros
+                Quitar filtros
               </button>
             )}
           </div>
         </div>
 
+        <div ref={inicioListadoRef} tabIndex={-1} className="outline-none">
         {isPending && !esMesPasado ? (
           <CargandoSeccion alturaMinima={340} etiqueta="Cargando calendario de eventos" />
         ) : isError && !esMesPasado ? (
@@ -245,13 +248,24 @@ function Calendario() {
             onReintentar={refetch}
           />
         ) : eventos.length === 0 ? (
-          <SinResultados
-            mensaje={
-              hayFiltrosActivos
-                ? 'No hay próximos eventos que coincidan con los filtros seleccionados.'
-                : 'No hay próximos eventos programados por el momento.'
-            }
-          />
+          <div className="space-y-4">
+            <SinResultados
+              mensaje={
+                hayFiltrosActivos
+                  ? 'No hay próximos eventos que coincidan con los filtros seleccionados.'
+                  : 'No hay próximos eventos programados por el momento.'
+              }
+            />
+            {hayFiltrosActivos && (
+              <button
+                type="button"
+                onClick={() => setSearchParams({})}
+                className="inline-flex min-h-11 cursor-pointer items-center rounded-sm border border-sand bg-white px-5 py-2.5 font-body text-meta font-semibold text-ink hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Quitar filtros
+              </button>
+            )}
+          </div>
         ) : (
           <>
             <div className="flex flex-col gap-10">
@@ -384,9 +398,11 @@ function Calendario() {
               totalPaginas={paginacion.totalPaginas}
               etiqueta="Paginación del calendario"
               alCambiarPagina={(siguiente) => actualizarFiltros({ pagina: siguiente })}
+              destinoFocoRef={inicioListadoRef}
             />
           </>
         )}
+        </div>
 
         <p className="mt-8 flex items-center gap-2 font-body text-meta text-muted">
           <CalendarDays size={15} aria-hidden="true" />
