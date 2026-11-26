@@ -1,28 +1,60 @@
 // Consultas de grupos pastorales (SQL parametrizado).
 import { consultar } from '../db/index.js';
+import { patronBusqueda, sinAcentosSql } from '../utils/busqueda.js';
 
-// Grupos visibles de una sede, por orden, con su imagen (si tiene) en la misma consulta.
-export async function listarVisibles(sedeId) {
-  const { rows } = await consultar(
-    `SELECT g.id,
-            g.nombre,
-            g.descripcion,
-            g.horario_reunion,
-            g.contacto,
-            g.icono,
-            g.orden,
-            am.id AS imagen_id,
-            am.url AS imagen_url,
-            am.texto_alternativo AS imagen_texto_alternativo,
-            am.ancho_px AS imagen_ancho,
-            am.alto_px AS imagen_alto
-       FROM grupo_pastoral g
-       LEFT JOIN archivo_multimedia am ON am.id = g.imagen_id
-      WHERE g.sede_id = $1 AND g.visible
-      ORDER BY g.orden, g.id`,
-    [sedeId],
-  );
-  return rows;
+const ORDENES_PORTAL = {
+  orden: 'g.orden ASC, g.id ASC',
+  '-orden': 'g.orden DESC, g.id DESC',
+  nombre: 'g.nombre ASC, g.id ASC',
+  '-nombre': 'g.nombre DESC, g.id DESC',
+};
+
+// Grupos visibles de una sede, paginados y con su imagen (si tiene) en la misma consulta.
+export async function listarVisibles(
+  sedeId,
+  { buscar, orden = 'orden', limite = null, desplazamiento = 0 } = {},
+) {
+  const parametros = [sedeId];
+  const condiciones = ['g.sede_id = $1', 'g.visible'];
+  if (buscar) {
+    const p = `$${parametros.push(patronBusqueda(buscar))}`;
+    condiciones.push(
+      `(${sinAcentosSql('g.nombre')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql("coalesce(g.descripcion, '')")} LIKE ${p} ESCAPE '\\')`,
+    );
+  }
+  const donde = condiciones.join(' AND ');
+  const clausulaOrden = ORDENES_PORTAL[orden] ?? ORDENES_PORTAL.orden;
+
+  const base = `
+    SELECT g.id,
+           g.nombre,
+           g.descripcion,
+           g.horario_reunion,
+           g.contacto,
+           g.icono,
+           g.orden,
+           am.id AS imagen_id,
+           am.url AS imagen_url,
+           am.texto_alternativo AS imagen_texto_alternativo,
+           am.ancho_px AS imagen_ancho,
+           am.alto_px AS imagen_alto
+      FROM grupo_pastoral g
+      LEFT JOIN archivo_multimedia am ON am.id = g.imagen_id
+     WHERE ${donde}`;
+
+  if (limite === null) {
+    const { rows } = await consultar(`${base} ORDER BY ${clausulaOrden}`, parametros);
+    return { filas: rows, total: rows.length };
+  }
+
+  const [pagina, conteo] = await Promise.all([
+    consultar(
+      `${base} ORDER BY ${clausulaOrden} LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
+      [...parametros, limite, desplazamiento],
+    ),
+    consultar(`SELECT count(*)::int AS total FROM grupo_pastoral g WHERE ${donde}`, parametros),
+  ]);
+  return { filas: pagina.rows, total: conteo.rows[0].total };
 }
 
 const COLUMNAS_ADMIN = `
@@ -48,7 +80,10 @@ const UNIONES_ADMIN = `
   JOIN sede s ON s.id = g.sede_id
   LEFT JOIN archivo_multimedia am ON am.id = g.imagen_id`;
 
-export async function listarAdmin({ sedeSlug, sedeId, visible } = {}, db = { consultar }) {
+export async function listarAdmin(
+  { sedeSlug, sedeId, visible, buscar, orden = 'orden', limite = null, desplazamiento = 0 } = {},
+  db = { consultar },
+) {
   const parametros = [];
   const condiciones = ['TRUE'];
   const agregar = (valor) => {
@@ -59,15 +94,36 @@ export async function listarAdmin({ sedeSlug, sedeId, visible } = {}, db = { con
   if (sedeSlug !== undefined) condiciones.push(`s.slug = ${agregar(sedeSlug)}`);
   if (sedeId !== undefined) condiciones.push(`g.sede_id = ${agregar(sedeId)}`);
   if (visible !== undefined) condiciones.push(`g.visible = ${agregar(visible)}`);
+  if (buscar) {
+    const p = agregar(patronBusqueda(buscar));
+    condiciones.push(
+      `(${sinAcentosSql('g.nombre')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql("coalesce(g.descripcion, '')")} LIKE ${p} ESCAPE '\\')`,
+    );
+  }
 
-  const { rows } = await db.consultar(
-    `SELECT ${COLUMNAS_ADMIN}
-     ${UNIONES_ADMIN}
-     WHERE ${condiciones.join(' AND ')}
-     ORDER BY g.orden, g.id`,
-    parametros,
-  );
-  return rows;
+  const donde = condiciones.join(' AND ');
+  const clausulaOrden = ORDENES_PORTAL[orden] ?? ORDENES_PORTAL.orden;
+
+  if (limite === null) {
+    const { rows } = await db.consultar(
+      `SELECT ${COLUMNAS_ADMIN} ${UNIONES_ADMIN} WHERE ${donde} ORDER BY ${clausulaOrden}`,
+      parametros,
+    );
+    return { filas: rows, total: rows.length };
+  }
+
+  const [pagina, conteo] = await Promise.all([
+    db.consultar(
+      `SELECT ${COLUMNAS_ADMIN}
+       ${UNIONES_ADMIN}
+       WHERE ${donde}
+       ORDER BY ${clausulaOrden}
+       LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
+      [...parametros, limite, desplazamiento],
+    ),
+    db.consultar(`SELECT count(*)::int AS total ${UNIONES_ADMIN} WHERE ${donde}`, parametros),
+  ]);
+  return { filas: pagina.rows, total: conteo.rows[0].total };
 }
 
 export async function buscarPorId(id, db = { consultar }) {

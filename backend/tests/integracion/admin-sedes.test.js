@@ -109,9 +109,16 @@ describe('GET /api/admin/sedes y GET /api/admin/sedes/:id', () => {
     const sinSesion = await request(app).get('/api/admin/sedes');
     expect(sinSesion.status).toBe(401);
 
-    const listaAdmin = await request(app).get('/api/admin/sedes').set('Cookie', sesiones.admin);
+    const listaAdmin = await request(app)
+      .get('/api/admin/sedes?porPagina=100')
+      .set('Cookie', sesiones.admin);
     expect(listaAdmin.status).toBe(200);
-    expect(listaAdmin.body.paginacion).toBeUndefined();
+    expect(listaAdmin.body.paginacion).toEqual({
+      pagina: 1,
+      porPagina: 100,
+      total: listaAdmin.body.datos.length,
+      totalPaginas: 1,
+    });
     expect(listaAdmin.body.datos.length).toBeGreaterThanOrEqual(4);
 
     const principal = listaAdmin.body.datos.find((s) => s.id === sedePrincipalId);
@@ -204,7 +211,9 @@ describe('POST /api/admin/sedes', () => {
     expect(duplicado.status).toBe(409);
 
     // El Administrador ve también las sedes inactivas.
-    const listaAdmin = await request(app).get('/api/admin/sedes').set('Cookie', sesiones.admin);
+    const listaAdmin = await request(app)
+      .get('/api/admin/sedes?porPagina=100')
+      .set('Cookie', sesiones.admin);
     expect(listaAdmin.body.datos.some((s) => s.id === creada.body.datos.id && !s.activo)).toBe(
       true,
     );

@@ -1,14 +1,18 @@
 // Validación de /api/admin/boletines (contrato: docs/api/admin.md, sección 11).
 import { z } from 'zod';
 import '../config/zod.js';
-import { anio, id, paginacion, slug } from './comunes.js';
+import { anio, esquemaListado, id, slug } from './comunes.js';
 import { idDelCuerpo, textoObligatorio } from './panel.js';
 
 export const paramsBoletin = z.object({ id });
 
-export const consultaBoletines = paginacion.extend({
-  sede: slug.optional(),
-  anio: anio.optional(),
+export const consultaBoletines = esquemaListado({
+  filtros: {
+    sede: slug.optional(),
+    anio: anio.optional(),
+  },
+  ordenes: ['periodo', '-periodo', 'fechaPublicacion', '-fechaPublicacion'],
+  ordenPredeterminado: '-periodo',
 });
 
 // YYYY-MM con un mes real. Se guarda como el primer día del mes.

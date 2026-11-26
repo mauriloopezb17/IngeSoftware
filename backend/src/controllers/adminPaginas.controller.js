@@ -3,7 +3,7 @@ import * as servicio from '../services/adminPaginas.service.js';
 import { contextoDe } from '../services/bitacora.service.js';
 
 export async function listar(req, res) {
-  res.json({ datos: await servicio.listarPaginas(req.sedeFiltro, req.validado.query) });
+  res.json(await servicio.listarPaginas(req.sedeFiltro, req.validado.query));
 }
 
 export async function detalle(req, res) {

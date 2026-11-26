@@ -99,7 +99,7 @@ Excepción: `GET /api/salud` responde sin envoltorio, porque lo consultan monito
 | Parámetro (query) | Tipo        | Por defecto       | Regla                                                                                                                 |
 | ----------------- | ----------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `pagina`          | entero ≥ 1  | `1`               | Una página fuera de rango devuelve `"datos": []` con la `paginacion` real, no un 404.                                 |
-| `porPagina`       | entero 1–50 | `10`              | Un valor mayor a 50 es `400 VALIDACION`.                                                                              |
+| `porPagina`       | entero 1–50 | `10`              | Un valor mayor a 50 es `400 VALIDACION` (hasta 100 en horarios, servicios, grupos, videos, páginas, sedes y proclamas vigentes para pedir la lista completa). |
 | `orden`           | texto       | según el endpoint | Nombre del campo; con `-` delante es descendente (`orden=-fechaPublicacion`). Cada endpoint indica qué campos acepta. |
 
 - Los filtros son parámetros de query con el nombre del campo (`tipo=AVISO`, `categoria=sacramentos`). Para varios valores se separan con comas (`tipo=NOTICIA,NOTA_DE_PRENSA`).

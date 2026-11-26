@@ -50,6 +50,7 @@ export async function listarEventos(sedeFiltro, consulta) {
       categorias: consulta.categoria,
       estados: consulta.estado?.map((codigo) => ESTADOS_PUBLICACION.nombreDe(codigo)),
       finalizados: consulta.finalizados,
+      buscar: consulta.buscar,
     },
     {
       limite: porPagina,

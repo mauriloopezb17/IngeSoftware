@@ -57,9 +57,9 @@ function resolverDetalle(detalle) {
 }
 
 // GET /api/sedes/:sede/eventos
-// consulta: { desde?, hasta? (YYYY-MM-DD), categoria?: ids, pagina, porPagina }
+// consulta: { desde?, hasta? (YYYY-MM-DD), categoria?: ids, buscar?, orden?, pagina, porPagina }
 export async function listarEventos(sedeId, consulta) {
-  const { pagina, porPagina } = consulta;
+  const { pagina, porPagina, orden } = consulta;
 
   const { filas, total } = await modelo.listarProximos(
     {
@@ -68,8 +68,13 @@ export async function listarEventos(sedeId, consulta) {
       desde: consulta.desde,
       hasta: consulta.hasta,
       categorias: consulta.categoria,
+      buscar: consulta.buscar,
     },
-    { limite: porPagina, desplazamiento: desplazamiento(pagina, porPagina) },
+    {
+      limite: porPagina,
+      desplazamiento: desplazamiento(pagina, porPagina),
+      ascendente: orden !== '-fechaInicio',
+    },
   );
 
   return {

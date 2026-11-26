@@ -11,13 +11,38 @@ import * as sedes from '../controllers/sedes.controller.js';
 import { resolverSede } from '../middlewares/resolverSede.js';
 import { limitarObservaciones } from '../middlewares/limiteObservaciones.js';
 import { validar } from '../middlewares/validar.js';
-import { anio, id, listaIds, paginacion } from '../validacion/comunes.js';
+import { anio, booleanoQuery, esquemaListado, id, listaIds } from '../validacion/comunes.js';
 import { cuerpoCrearObservacion } from '../validacion/proclamas.js';
 import eventosRoutes from './eventos.routes.js';
 import publicacionesRoutes from './publicaciones.routes.js';
 
-// Historial de proclamas y boletines: paginación más filtro opcional por año.
-const consultaPorAnio = paginacion.extend({ anio: anio.optional() });
+const consultaPorAnio = esquemaListado({
+  filtros: { anio: anio.optional() },
+  porPaginaMaximo: 100,
+});
+const consultaHorariosPortal = esquemaListado({
+  filtros: { tipo: listaIds.optional() },
+  ordenes: ['tipo'],
+  ordenPredeterminado: 'tipo',
+  porPaginaMaximo: 100,
+});
+const consultaPastoralPortal = esquemaListado({
+  ordenes: ['orden', '-orden', 'nombre', '-nombre'],
+  ordenPredeterminado: 'orden',
+  porPaginaMaximo: 100,
+});
+const consultaVideosPortal = esquemaListado({
+  filtros: { destacado: booleanoQuery.optional() },
+  ordenes: ['orden', '-orden', 'fechaPublicacion', '-fechaPublicacion', 'titulo', '-titulo'],
+  ordenPredeterminado: 'orden',
+  porPaginaMaximo: 100,
+});
+const consultaProclamasVigentes = esquemaListado({
+  filtros: { anio: anio.optional() },
+  ordenes: ['fechaMatrimonio', '-fechaMatrimonio'],
+  ordenPredeterminado: 'fechaMatrimonio',
+  porPaginaMaximo: 100,
+});
 
 const router = Router();
 
@@ -26,18 +51,22 @@ router.get('/', sedes.listar);
 // Rutas de una sede: resolverSede deja la sede activa en req.sede o responde 404.
 const deSede = Router({ mergeParams: true });
 deSede.get('/', sedes.detalle);
-deSede.get(
-  '/horarios',
-  validar({ query: z.object({ tipo: listaIds.optional() }) }),
-  horarios.listar,
-);
-deSede.get('/servicios', pastoral.listarServicios);
+deSede.get('/horarios', validar({ query: consultaHorariosPortal }), horarios.listar);
+deSede.get('/servicios', validar({ query: consultaPastoralPortal }), pastoral.listarServicios);
 deSede.get('/servicios/:slug', pastoral.detalleServicio);
-deSede.get('/grupos-pastorales', pastoral.listarGruposPastorales);
-deSede.get('/videos', pastoral.listarVideos);
+deSede.get(
+  '/grupos-pastorales',
+  validar({ query: consultaPastoralPortal }),
+  pastoral.listarGruposPastorales,
+);
+deSede.get('/videos', validar({ query: consultaVideosPortal }), pastoral.listarVideos);
 deSede.use('/publicaciones', publicacionesRoutes);
 deSede.use('/eventos', eventosRoutes);
-deSede.get('/proclamas', proclamasBoletines.listarProclamasVigentes);
+deSede.get(
+  '/proclamas',
+  validar({ query: consultaProclamasVigentes }),
+  proclamasBoletines.listarProclamasVigentes,
+);
 deSede.get(
   '/proclamas/historial',
   validar({ query: consultaPorAnio }),

@@ -1,10 +1,16 @@
 // Consultas de horarios (SQL parametrizado).
 import { consultar } from '../db/index.js';
+import { patronBusqueda, sinAcentosSql } from '../utils/busqueda.js';
 
 // Horarios activos de una sede con su tipo, ya ordenados para agruparlos:
 // por tipo (id), día, hora de inicio, hora de fin y descripción.
 // tipoIds: lista de ids de tipo_horario para filtrar, o null para todos.
-export async function listarActivos(sedeId, tipoIds = null) {
+export async function listarActivos(sedeId, tipoIds = null, buscar = null) {
+  const parametros = [sedeId, tipoIds];
+  const filtroBuscar = buscar
+    ? `AND (${sinAcentosSql('th.nombre')} LIKE $${parametros.push(patronBusqueda(buscar))} ESCAPE '\\' OR ${sinAcentosSql("coalesce(h.descripcion, '')")} LIKE $${parametros.length} ESCAPE '\\')`
+    : '';
+
   const { rows } = await consultar(
     `SELECT th.id AS tipo_id,
             th.nombre AS tipo_nombre,
@@ -17,8 +23,9 @@ export async function listarActivos(sedeId, tipoIds = null) {
       WHERE h.sede_id = $1
         AND h.activo
         AND ($2::int[] IS NULL OR th.id = ANY($2::int[]))
+        ${filtroBuscar}
       ORDER BY th.id, h.dia_semana, h.hora_inicio, h.hora_fin NULLS FIRST, h.descripcion NULLS FIRST`,
-    [sedeId, tipoIds],
+    parametros,
   );
   return rows;
 }
@@ -41,8 +48,24 @@ const UNIONES_ADMIN = `
   JOIN sede s ON s.id = h.sede_id
   JOIN tipo_horario th ON th.id = h.tipo_horario_id`;
 
-// Lista horarios para el panel CMS (sin agrupar ni paginar), ordenados por tipo, día y hora.
-export async function listarAdmin({ sedeSlug, tipoIds, activo } = {}) {
+const ORDENES_ADMIN = {
+  tipo: 'th.id, h.dia_semana, h.hora_inicio, h.hora_fin NULLS FIRST, h.id',
+  diaSemana: 'h.dia_semana ASC, h.hora_inicio ASC, th.id ASC, h.id ASC',
+  '-diaSemana': 'h.dia_semana DESC, h.hora_inicio ASC, th.id ASC, h.id ASC',
+  horaInicio: 'h.hora_inicio ASC, h.dia_semana ASC, th.id ASC, h.id ASC',
+  '-horaInicio': 'h.hora_inicio DESC, h.dia_semana ASC, th.id ASC, h.id ASC',
+};
+
+// Lista horarios para el panel CMS paginados, ordenados según lista blanca.
+export async function listarAdmin({
+  sedeSlug,
+  tipoIds,
+  activo,
+  buscar,
+  orden = 'tipo',
+  limite = 10,
+  desplazamiento = 0,
+} = {}) {
   const parametros = [];
   const condiciones = ['TRUE'];
   const agregar = (valor) => {
@@ -53,15 +76,28 @@ export async function listarAdmin({ sedeSlug, tipoIds, activo } = {}) {
   if (sedeSlug !== undefined) condiciones.push(`s.slug = ${agregar(sedeSlug)}`);
   if (tipoIds !== undefined) condiciones.push(`th.id = ANY(${agregar(tipoIds)}::int[])`);
   if (activo !== undefined) condiciones.push(`h.activo = ${agregar(activo)}`);
+  if (buscar) {
+    const p = agregar(patronBusqueda(buscar));
+    condiciones.push(
+      `(${sinAcentosSql('th.nombre')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql("coalesce(h.descripcion, '')")} LIKE ${p} ESCAPE '\\')`,
+    );
+  }
 
-  const { rows } = await consultar(
-    `SELECT ${COLUMNAS_ADMIN}
-     ${UNIONES_ADMIN}
-     WHERE ${condiciones.join(' AND ')}
-     ORDER BY th.id, h.dia_semana, h.hora_inicio, h.hora_fin NULLS FIRST, h.id`,
-    parametros,
-  );
-  return rows;
+  const donde = condiciones.join(' AND ');
+  const clausulaOrden = ORDENES_ADMIN[orden] ?? ORDENES_ADMIN.tipo;
+
+  const [pagina, conteo] = await Promise.all([
+    consultar(
+      `SELECT ${COLUMNAS_ADMIN}
+       ${UNIONES_ADMIN}
+       WHERE ${donde}
+       ORDER BY ${clausulaOrden}
+       LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
+      [...parametros, limite, desplazamiento],
+    ),
+    consultar(`SELECT count(*)::int AS total ${UNIONES_ADMIN} WHERE ${donde}`, parametros),
+  ]);
+  return { filas: pagina.rows, total: conteo.rows[0].total };
 }
 
 export async function buscarPorId(id) {
