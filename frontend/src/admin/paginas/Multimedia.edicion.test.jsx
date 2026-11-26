@@ -57,7 +57,7 @@ describe('edición y eliminación de archivos', () => {
       await usuario.click(within(dialogo).getByRole('button', { name: 'Editar texto alternativo' }));
       const campo = within(dialogo).getByLabelText('Texto alternativo');
       expect(campo).toHaveFocus();
-      await usuario.type(campo, 'Catequesis de confirmación en el salón parroquial');
+      await usuario.paste('Catequesis de confirmación en el salón parroquial');
       await usuario.click(within(dialogo).getByRole('button', { name: 'Guardar' }));
 
       expect(await within(dialogo).findByText('Catequesis de confirmación en el salón parroquial')).toBeInTheDocument();
@@ -74,7 +74,8 @@ describe('edición y eliminación de archivos', () => {
       const usuario = userEvent.setup();
 
       await usuario.click(within(dialogo).getByRole('button', { name: 'Editar texto alternativo' }));
-      await usuario.type(within(dialogo).getByLabelText('Texto alternativo'), ' (cambio descartado)');
+      await usuario.click(within(dialogo).getByLabelText('Texto alternativo'));
+      await usuario.paste(' (cambio descartado)');
       await usuario.click(within(dialogo).getByRole('button', { name: 'Cancelar' }));
 
       expect(within(dialogo).getByText('Niños de primera comunión frente al altar')).toBeInTheDocument();

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 
@@ -96,15 +96,17 @@ describe('SeccionDetalleProclama (página de la proclama)', () => {
 
     // Descripción
     const editor = await screen.findByLabelText('Descripción de la proclama');
-    await usuario.type(editor, 'Celebración con toda la comunidad.');
+    fireEvent.change(editor, { target: { value: 'Celebración con toda la comunidad.' } });
 
     // Lugar externo
     const casilla = screen.getByLabelText('Se celebra en esta parroquia');
     expect(casilla).toBeChecked();
     await usuario.click(casilla);
-    await usuario.type(screen.getByLabelText(/Templo o capilla/), 'Capilla San Pablo');
-    await usuario.type(screen.getByLabelText(/Dirección/), 'Av. Costanera 123');
-    await usuario.type(screen.getByLabelText(/Enlace de Google Maps/), 'https://maps.app.goo.gl/ejemplo');
+    fireEvent.change(screen.getByLabelText(/Templo o capilla/), { target: { value: 'Capilla San Pablo' } });
+    fireEvent.change(screen.getByLabelText(/Dirección/), { target: { value: 'Av. Costanera 123' } });
+    fireEvent.change(screen.getByLabelText(/Enlace de Google Maps/), {
+      target: { value: 'https://maps.app.goo.gl/ejemplo' },
+    });
 
     await usuario.click(screen.getByRole('button', { name: 'Guardar página' }));
 
@@ -128,8 +130,10 @@ describe('SeccionDetalleProclama (página de la proclama)', () => {
 
     await screen.findByRole('heading', { name: 'Página de la proclama' });
     await usuario.click(screen.getByLabelText('Se celebra en esta parroquia'));
-    await usuario.type(screen.getByLabelText(/Templo o capilla/), 'Capilla');
-    await usuario.type(screen.getByLabelText(/Enlace de Google Maps/), 'https://ejemplo.com/no-es-maps');
+    fireEvent.change(screen.getByLabelText(/Templo o capilla/), { target: { value: 'Capilla' } });
+    fireEvent.change(screen.getByLabelText(/Enlace de Google Maps/), {
+      target: { value: 'https://ejemplo.com/no-es-maps' },
+    });
     await usuario.click(screen.getByRole('button', { name: 'Guardar página' }));
 
     await waitFor(() => {
