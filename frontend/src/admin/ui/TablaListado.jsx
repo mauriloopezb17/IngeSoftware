@@ -34,6 +34,7 @@ export default function TablaListado({
   vacio,
   vacioConFiltros,
   claseTabla,
+  nombrePaginacion = 'Paginación',
 }) {
   const idBusqueda = useId();
   const idCategoria = useId();
@@ -184,7 +185,7 @@ export default function TablaListado({
           </div>
 
           {paginacion && onCambiarPagina && (
-            <Paginacion paginacion={paginacion} onCambiar={manejarCambioPagina} />
+            <Paginacion paginacion={paginacion} onCambiar={manejarCambioPagina} nombre={nombrePaginacion} />
           )}
         </>
       )}
