@@ -15,15 +15,21 @@ import {
   armarHrefTelefono,
   formatearRangoHorario,
 } from '../utils/formatoPortal.js';
+import {
+  enlaceComoLlegar,
+  enlaceVerEnMapa,
+  urlMapaIncrustado,
+} from '../utils/mapas.js';
 
 function ContactoPagina() {
   const { data: sede, isPending, isError, refetch } = useSede();
   const { data: horarios = [] } = useHorarios();
 
   const configuracion = sede?.configuracion ?? {};
-  const enlaceGoogleMaps = configuracion.enlaceComoLlegar;
+  const enlaceGoogleMaps = enlaceComoLlegar(sede);
+  const enlaceMapa = enlaceVerEnMapa(sede);
   const enlaceMessenger = configuracion.enlaceMessenger;
-  const urlMapaEmbed = configuracion.urlMapaEmbed || null;
+  const urlMapaEmbed = urlMapaIncrustado(sede);
   const telefono = sede?.telefono;
   const hrefTelefono = armarHrefTelefono(telefono);
   const whatsappUrl = sede?.whatsapp
@@ -217,47 +223,61 @@ function ContactoPagina() {
                     src={urlMapaEmbed}
                     title={`Mapa de ${sede.nombre}`}
                     loading="lazy"
-                    className="aspect-[4/3] w-full border-0"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="h-[320px] w-full border-0 md:h-[380px]"
                   />
                 ) : (
-                  <div className="relative">
-                    {sede.imagenPortada?.url && (
-                      <img
-                        src={sede.imagenPortada.url}
-                        alt={sede.imagenPortada.textoAlternativo || sede.nombre}
-                        width={sede.imagenPortada.ancho ?? undefined}
-                        height={sede.imagenPortada.alto ?? undefined}
-                        className="aspect-[16/10] w-full object-cover"
-                        loading="lazy"
-                      />
-                    )}
-                    <div className="p-6 md:p-8">
-                      <p className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-muted">
-                        Cómo llegar
-                      </p>
-                      <h2 className="mt-2 font-display text-h2 font-semibold text-ink">
-                        {sede.nombre}
-                      </h2>
-                      {sede.direccion && (
-                        <p className="mt-2 font-body text-body text-muted">{sede.direccion}</p>
-                      )}
-                      {sede.ubicacion?.latitud != null && sede.ubicacion?.longitud != null && (
-                        <p className="mt-2 font-body text-meta tabular-nums text-muted">
-                          Coordenadas: {sede.ubicacion.latitud}, {sede.ubicacion.longitud}
-                        </p>
-                      )}
+                  sede.imagenPortada?.url && (
+                    <img
+                      src={sede.imagenPortada.url}
+                      alt={sede.imagenPortada.textoAlternativo || sede.nombre}
+                      width={sede.imagenPortada.ancho ?? undefined}
+                      height={sede.imagenPortada.alto ?? undefined}
+                      className="aspect-[16/10] w-full object-cover"
+                      loading="lazy"
+                    />
+                  )
+                )}
 
+                <div className="p-6 md:p-8">
+                  <p className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-muted">
+                    Cómo llegar
+                  </p>
+                  <h2 className="mt-2 font-display text-h2 font-semibold text-ink">
+                    {sede.nombre}
+                  </h2>
+                  {sede.direccion && (
+                    <p className="mt-2 font-body text-body text-muted">{sede.direccion}</p>
+                  )}
+                  {sede.ubicacion?.latitud != null && sede.ubicacion?.longitud != null && (
+                    <p className="mt-2 font-body text-meta tabular-nums text-muted">
+                      Coordenadas: {sede.ubicacion.latitud}, {sede.ubicacion.longitud}
+                    </p>
+                  )}
+
+                  {(enlaceGoogleMaps || enlaceMapa) && (
+                    <div className="mt-6 flex flex-wrap gap-3">
                       {enlaceGoogleMaps && (
-                        <div className="mt-6 flex flex-wrap gap-3">
-                          <BotonEnlace to={enlaceGoogleMaps} variante="primario">
-                            <Navigation size={16} aria-hidden="true" />
-                            Abrir en Google Maps
-                          </BotonEnlace>
-                        </div>
+                        <BotonEnlace to={enlaceGoogleMaps} variante="primario">
+                          <Navigation size={16} aria-hidden="true" />
+                          <span>Cómo llegar</span>
+                        </BotonEnlace>
+                      )}
+                      {enlaceMapa && (
+                        <BotonEnlace to={enlaceMapa} variante="secundario">
+                          <MapPin size={16} aria-hidden="true" />
+                          <span>Ver en Google Maps</span>
+                        </BotonEnlace>
                       )}
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {enlaceGoogleMaps && (
+                    <p className="mt-4 font-body text-meta text-muted">
+                      Google Maps usará tu ubicación actual como punto de partida; si no la compartes, te pedirá desde dónde sales.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>

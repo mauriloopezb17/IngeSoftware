@@ -82,4 +82,27 @@ describe('erroresFormulario', () => {
     });
     expect(resumenDeErrores(errores, generales)).toEqual(['El nombre es obligatorio.']);
   });
+
+  it('agrupa errores de bloques dentro de detalle.contenido y resuelve prefijos de programa y enlaces', () => {
+    const { errores, generales } = erroresDe(
+      {
+        detalles: [
+          { campo: 'detalle.contenido.bloques.0.content.0.styles.textColor', mensaje: 'Estilo no permitido.' },
+          { campo: 'detalle.contenido.bloques.2.props.textColor', mensaje: 'Estilo no permitido.' },
+          { campo: 'detalle.programa.1.hora', mensaje: 'Formato HH:MM inválido.' },
+          { campo: 'detalle.enlaces.0.url', mensaje: 'URL https:// inválida.' },
+        ],
+      },
+      {
+        'detalle.contenido': 'contenido',
+        'detalle.programa': 'programa',
+        'detalle.enlaces': 'enlaces',
+      },
+    );
+
+    expect(errores.contenido).toContain('2 párrafos');
+    expect(errores.programa).toBe('Formato HH:MM inválido.');
+    expect(errores.enlaces).toBe('URL https:// inválida.');
+    expect(generales).toEqual([]);
+  });
 });

@@ -21,6 +21,7 @@ import {
   obtenerPublicacionesExaltacion,
   obtenerProclamasExaltacion,
   obtenerHistorialProclamasExaltacion,
+  obtenerDetalleProclamaExaltacion,
 } from '../datos/comunidad.js';
 
 const SEDE_PRINCIPAL = 'senor-de-la-exaltacion';
@@ -185,17 +186,45 @@ export const handlersPortal = [
 
     const desdeParam = url.searchParams.get('desde');
     const desde = desdeParam && desdeParam > hoyBolivia ? desdeParam : hoyBolivia;
-    lista = lista.filter((evento) => evento.fechaInicio.slice(0, 10) >= desde);
+    lista = lista.filter((evento) => (evento.fechaFin ?? evento.fechaInicio).slice(0, 10) >= desde);
 
     const hasta = url.searchParams.get('hasta');
     if (hasta) {
       lista = lista.filter((evento) => evento.fechaInicio.slice(0, 10) <= hasta);
     }
 
-    lista = [...lista].sort((a, b) => a.fechaInicio.localeCompare(b.fechaInicio));
+    lista = [...lista]
+      .sort((a, b) => a.fechaInicio.localeCompare(b.fechaInicio))
+      .map((evento) => ({
+        ...omitirCampos(evento, ['detalle']),
+        tieneDetalle: Boolean(evento.tieneDetalle),
+      }));
 
     const resultado = paginar(lista, url);
     return resultado.error ?? resultado.respuesta;
+  }),
+
+  http.get(api('/sedes/:sede/eventos/:id'), ({ params }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const id = Number(params.id);
+    const evento =
+      Number.isInteger(id) && id > 0 && esSedePrincipal(params.sede)
+        ? obtenerEventosExaltacion().find((item) => item.id === id)
+        : null;
+
+    if (!evento) {
+      return errorJson(404, 'NO_ENCONTRADO', `No existe el evento «${params.id}».`);
+    }
+
+    return HttpResponse.json({
+      datos: {
+        ...evento,
+        tieneDetalle: Boolean(evento.tieneDetalle),
+        detalle: evento.detalle ?? null,
+      },
+    });
   }),
 
   http.get(api('/sedes/:sede/publicaciones'), ({ params, request }) => {
@@ -283,6 +312,67 @@ export const handlersPortal = [
     return HttpResponse.json({
       datos: esSedePrincipal(params.sede) ? obtenerProclamasExaltacion() : [],
     });
+  }),
+
+  http.get(api('/sedes/:sede/proclamas/:id'), ({ params }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const detalle = esSedePrincipal(params.sede) ? obtenerDetalleProclamaExaltacion(params.id) : null;
+    if (!detalle) {
+      return HttpResponse.json(
+        { error: { codigo: 'NO_ENCONTRADO', mensaje: 'La proclama no existe.', detalles: [] } },
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json({ datos: detalle });
+  }),
+
+  http.post(api('/sedes/:sede/proclamas/:id/observaciones'), async ({ params, request }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const detalle = esSedePrincipal(params.sede) ? obtenerDetalleProclamaExaltacion(params.id) : null;
+    if (!detalle) {
+      return HttpResponse.json(
+        { error: { codigo: 'NO_ENCONTRADO', mensaje: 'La proclama no existe.', detalles: [] } },
+        { status: 404 },
+      );
+    }
+    if (!detalle.aceptaObservaciones) {
+      return HttpResponse.json(
+        { error: { codigo: 'CONFLICTO', mensaje: 'Esta proclama ya no recibe observaciones.', detalles: [] } },
+        { status: 409 },
+      );
+    }
+
+    const cuerpo = await request.json().catch(() => null);
+    if (!cuerpo || typeof cuerpo !== 'object') {
+      return HttpResponse.json(
+        { error: { codigo: 'VALIDACION', mensaje: 'Cuerpo inválido.', detalles: [] } },
+        { status: 400 },
+      );
+    }
+    if (!cuerpo.correo?.trim() && !cuerpo.telefono?.trim()) {
+      return HttpResponse.json(
+        {
+          error: {
+            codigo: 'VALIDACION',
+            mensaje: 'Los datos enviados no son válidos.',
+            detalles: [
+              {
+                campo: 'contacto',
+                mensaje: 'Escribe tu correo o tu teléfono para que el párroco pueda responderte.',
+              },
+            ],
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    return HttpResponse.json({ datos: { recibido: true } }, { status: 201 });
   }),
 
   http.get(api('/sedes/:sede/boletines'), ({ params, request }) => {

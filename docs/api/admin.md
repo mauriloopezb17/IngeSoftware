@@ -171,7 +171,7 @@ Archivos guardados en Oracle Cloud Object Storage (compatible con S3, bucket pú
 - No se aceptan SVG ni GIF: un SVG puede contener scripts.
 - Los videos y los PDF se guardan tal cual. La API no lee su ancho ni su alto: quedan en `null`.
 - El tamaño máximo se comprueba contra el archivo subido, antes de procesarlo.
-- **Capacidad**: el almacenamiento total es de 50 GB. Se mide con la suma de `tamanoBytes` de todos los archivos (las variantes de las imágenes no se cuentan). Al llegar al 90 %, la subida responde `409 CONFLICTO` con el mensaje «El almacenamiento está casi lleno.».
+- **Capacidad**: el almacenamiento total es de 20 GB (capa gratuita Always Free de OCI Object Storage). Se mide con la suma de `tamanoBytes` de todos los archivos (las variantes de las imágenes no se cuentan). Al llegar al 90 %, la subida responde `409 CONFLICTO` con el mensaje «El almacenamiento está casi lleno.».
 - **Duración de la subida**: una subida que tarda más de 30 minutos se corta. Un video de 2 GB necesita una conexión de al menos 10 Mbps. Como mejora futura queda la subida directa al bucket con una URL prefirmada para los videos grandes.
 
 ### Imágenes
@@ -202,7 +202,7 @@ Las imágenes subidas desde el CMS tienen versiones más pequeñas para que el n
 - como imagen de un evento o de un grupo pastoral;
 - como archivo de un boletín;
 - como portada de una sede (la `url` de la portada es la del archivo);
-- dentro del contenido de una publicación o de un servicio;
+- dentro del contenido de una publicación, de un servicio o del detalle de un evento;
 - dentro de un bloque de una página.
 
 > El contenido de las publicaciones, los servicios y los bloques es JSON: en él el archivo se busca por su **identificador único** (el `<uuid>` de la clave del objeto), no por la URL completa. Así también se detecta cuando el contenido usa una de sus variantes.
@@ -253,7 +253,7 @@ Mensajes:
 | 415   | «El archivo no es una imagen válida.»                                                                                         | `[]`               |
 | 415   | «La petición debe ser multipart/form-data.»                                                                                   | `[]`               |
 | 409   | «El almacenamiento está casi lleno.»                                                                                          | `[]`               |
-| 503   | «El almacenamiento de archivos no está configurado.» / «No se pudo guardar el archivo. Intenta de nuevo más tarde.»           | `[]`               |
+| 503   | «El almacenamiento de archivos no está configurado.» / «No se pudo guardar el archivo. Intenta de nuevo más tarde.» / «No pudimos recibir el archivo. Intenta de nuevo.» | `[]`               |
 
 > Un video de hasta 2 GB tarda en subir. `fetch` no informa el avance de la subida; para mostrar una barra de progreso, el panel puede usar `XMLHttpRequest` con `upload.onprogress` solo en este endpoint.
 
@@ -331,6 +331,7 @@ Si el archivo está en uso, el `mensaje` es «El archivo está en uso y no se pu
 | Portada de una sede          | Usado como portada de la sede «nombre».                |
 | Contenido de una publicación | Usado dentro del contenido de la publicación «título». |
 | Contenido de un servicio     | Usado dentro del contenido del servicio «nombre».      |
+| Detalle de un evento         | Usado dentro del detalle del evento «título».          |
 | Bloque de una página         | Usado en un bloque de la página «título».              |
 
 Se listan hasta 5 usos. Si hay más, el último elemento dice «Y N usos más.».
@@ -564,6 +565,7 @@ Calendario parroquial. Permiso de escritura: `eventos.gestionar`. Los eventos se
   "todoElDia": false,
   "categoria": { "id": 2, "nombre": "Solemnidad", "colorHex": "#9E1B22" },
   "imagen": null,
+  "detalle": null,
   "idExternoM365": null,
   "creadoPor": { "id": 3, "nombreCompleto": "Secretaría (desarrollo)" },
   "finalizado": false
@@ -572,16 +574,18 @@ Calendario parroquial. Permiso de escritura: `eventos.gestionar`. Los eventos se
 
 - `finalizado`: `true` cuando el evento ya no se muestra en el portal porque pasó su fecha (misma regla que en [publico.md](publico.md#get-apisedessedeeventos)).
 - `idExternoM365`: solo lectura; queda reservado para la sincronización con Microsoft 365 (RF-12, «Could Have»).
+- `detalle`: objeto opcional con la información de la página pública del evento (`contenido`, `direccion`, `enlaceMapa`, `programa`, `responsable`, `enlaces`) o `null`.
 
 ### Endpoints
 
-| Método y ruta                   | Descripción                                                                                                                                                                                              |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/admin/eventos`        | Paginada. Filtros: `sede`, `desde`, `hasta` (fechas), `categoria` (ids), `estado`, `finalizados` (`true` / `false`; por defecto se incluyen todos). Orden: `fechaInicio` (por defecto) o `-fechaInicio`. |
-| `GET /api/admin/eventos/:id`    | Un evento.                                                                                                                                                                                               |
-| `POST /api/admin/eventos`       | Crea. `201`.                                                                                                                                                                                             |
-| `PATCH /api/admin/eventos/:id`  | Edita, incluido el `estado`.                                                                                                                                                                             |
-| `DELETE /api/admin/eventos/:id` | Elimina.                                                                                                                                                                                                 |
+| Método y ruta                          | Descripción                                                                                                                                                                                              |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/admin/eventos`               | Paginada. Filtros: `sede`, `desde`, `hasta` (fechas), `categoria` (ids), `estado`, `finalizados` (`true` / `false`; por defecto se incluyen todos). Orden: `fechaInicio` (por defecto) o `-fechaInicio`. |
+| `GET /api/admin/eventos/:id`           | Un evento.                                                                                                                                                                                               |
+| `POST /api/admin/eventos`              | Crea. `201`.                                                                                                                                                                                             |
+| `PATCH /api/admin/eventos/:id`         | Edita, incluido el `estado` y `detalle`.                                                                                                                                                                 |
+| `PATCH /api/admin/eventos/:id/detalle` | Edita **solo** `detalle`. Pide `eventos.detalle` (también lo tiene Marketing).                                                                                                                           |
+| `DELETE /api/admin/eventos/:id`        | Elimina.                                                                                                                                                                                                 |
 
 **Cuerpo de `POST`:**
 
@@ -609,15 +613,28 @@ Calendario parroquial. Permiso de escritura: `eventos.gestionar`. Los eventos se
 | `estado`            | `PUBLICADO` (por defecto), `BORRADOR` o `ARCHIVADO`. Los eventos no usan `EN_REVISION`. |
 | `descripcion`       | Texto plano, hasta 2000 caracteres.                                                     |
 | `lugar`             | Hasta 150 caracteres.                                                                   |
+| `detalle`           | Opcional (`null` para vaciar). Objeto JSONB con la página del evento (tabla siguiente). |
+
+Forma de `detalle` (todos los campos son opcionales):
+
+| Campo         | Regla                                                                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `contenido`   | Documento BlockNote válido ([contenido.md](contenido.md)) o `null`. Sus imágenes y videos deben ser de la misma sede.     |
+| `direccion`   | Texto de hasta 200 caracteres o `null`.                                                                                   |
+| `enlaceMapa`  | URL `https://` de Google Maps (`google.*/maps`, `maps.google.*`, `maps.app.goo.gl`, `goo.gl/maps`) de hasta 1000 caracteres o `null`. |
+| `programa`    | Lista de hasta 20 elementos `{ "hora": "HH:MM", "actividad": "texto ≤ 120" }`. Se guarda ordenada por `hora`.             |
+| `responsable` | `{ "nombre": "≤ 120", "rol": "≤ 80?", "telefono": "≤ 30?", "correo": "email ≤ 120?" }` o `null`.                          |
+| `enlaces`     | Lista de hasta 10 elementos `{ "texto": "≤ 80", "url": "https:// ≤ 500" }`.                                               |
 
 Reglas adicionales:
 
 - `sedeId` (solo el Administrador, igual que en publicaciones): por defecto su sede; obligatorio si no tiene sede asignada.
-- `PATCH` acepta los mismos campos salvo `sedeId`; `fechaFin` se compara con la `fechaInicio` que quedaría guardada. `idExternoM365` es solo lectura: enviarlo es `400 VALIDACION` («Campo no permitido.»).
+- `PATCH /api/admin/eventos/:id` acepta los mismos campos salvo `sedeId`; `fechaFin` se compara con la `fechaInicio` que quedaría guardada. `idExternoM365` es solo lectura: enviarlo es `400 VALIDACION` («Campo no permitido.»).
+- `PATCH /api/admin/eventos/:id/detalle` acepta `{ "detalle": <objeto | null> }`, valida los archivos de `detalle.contenido` contra la biblioteca de la sede y responde `200` con el evento completo.
 - Con `todoElDia: true` las fechas se guardan como se envían; el portal no muestra la hora.
 - `categoriaEventoId` inexistente: `400 VALIDACION` («La categoría no existe.»). `imagenId` debe ser una imagen de la biblioteca de la misma sede («Debe ser una imagen de la biblioteca multimedia de esta sede.»).
 - Filtros de la lista: `desde` y `hasta` incluyen todo evento que se cruce con ese rango de días (hora de Bolivia); `estado` acepta `BORRADOR`, `PUBLICADO` y `ARCHIVADO` (varios con comas); `hasta` anterior a `desde` es `400 VALIDACION`.
-- Lectura: todos los roles de la sede; `POST`, `PATCH` y `DELETE` piden `eventos.gestionar` (Marketing recibe `403 SIN_PERMISO`).
+- Lectura: todos los roles de la sede; `POST`, `PATCH /:id` y `DELETE` piden `eventos.gestionar` (Marketing recibe `403 SIN_PERMISO`); `PATCH /:id/detalle` pide `eventos.detalle` (incluye a Marketing).
 
 ---
 
@@ -918,7 +935,9 @@ Proclamas matrimoniales (RF-02). Permiso de escritura: `proclamas.gestionar`.
   "fechaRegistro": "2026-11-05T11:20:00-04:00",
   "numeroProclama": 1,
   "publicaciones": [{ "numero": 1, "fecha": "2026-11-08" }],
-  "vigente": true
+  "vigente": true,
+  "imagenId": null,
+  "detalle": null
 }
 ```
 
@@ -931,7 +950,8 @@ Proclamas matrimoniales (RF-02). Permiso de escritura: `proclamas.gestionar`.
 | `GET /api/admin/proclamas`                              | Paginada. Filtros: `sede`, `vigentes` (`true` / `false`), `anio`, `buscar` (nombres). Orden: `fechaMatrimonio` (por defecto) o `-fechaMatrimonio`.     |
 | `GET /api/admin/proclamas/:id`                          | Una proclama.                                                                                                                                          |
 | `POST /api/admin/proclamas`                             | Crea. `201`.                                                                                                                                           |
-| `PATCH /api/admin/proclamas/:id`                        | Edita los nombres o la fecha del matrimonio.                                                                                                           |
+| `PATCH /api/admin/proclamas/:id`                        | Edita los nombres, la fecha del matrimonio, `imagenId` o `detalle`.                                                                                    |
+| `PATCH /api/admin/proclamas/:id/detalle`                | Edita **solo** `imagenId` y `detalle` (requiere `proclamas.detalle`).                                                                                  |
 | `DELETE /api/admin/proclamas/:id`                       | Elimina la proclama y sus publicaciones. Solo si ninguna publicación llegó todavía a su fecha; si no, `409 CONFLICTO`, porque el historial es público. |
 | `POST /api/admin/proclamas/:id/publicaciones`           | Agrega la siguiente publicación: `{ "fecha": "2026-11-15" }`. El `numero` se asigna solo (1, 2, 3).                                                    |
 | `PATCH /api/admin/proclamas/:id/publicaciones/:numero`  | Cambia la fecha: `{ "fecha": "2026-11-15" }`.                                                                                                          |
@@ -966,8 +986,21 @@ Reglas adicionales:
 - `tramiteOrigenId` repetido: `409 CONFLICTO` con un detalle en `tramiteOrigenId`. Varias proclamas sin trámite (`null`) son válidas.
 - `numeroProclama` es el número de la última publicación **ya alcanzada** (su fecha llegó, hoy en Bolivia o antes), o `null` si ninguna. Una proclama con solo publicaciones futuras tiene `numeroProclama: null` y `vigente: false`.
 - `GET` (lista): `vigentes=true|false`, `anio` (año de la boda, hora de Bolivia, 1900–2100) y `buscar` (en ambos nombres, sin distinguir mayúsculas ni acentos).
+- `imagenId` (opcional, `null` para quitar): id de una imagen de la biblioteca de la misma sede (foto principal de los novios).
+- `detalle` (opcional, `null` para quitar): `{ contenido, galeria, lugar }`, donde `contenido` es un documento BlockNote (o `null`), `galeria` es una lista de hasta 12 ids de imágenes o videos de la biblioteca de la misma sede, y `lugar` es `{ templo, direccion, enlaceMapa }` (o `null` si se celebra en la propia parroquia; `enlaceMapa` debe ser `https://` de Google Maps o `null`).
 - Los cambios de las publicaciones se registran en la bitácora como cambios de la entidad `proclama`: sus `datosAnteriores` y `datosNuevos` incluyen la clave `publicaciones` (`[{ numero, fecha }]`).
-- Lectura: todos los roles de la sede; `POST`, `PATCH` y `DELETE` piden `proclamas.gestionar` (Marketing recibe `403 SIN_PERMISO`).
+- Lectura: todos los roles de la sede; `POST`, `PATCH /:id` y `DELETE` piden `proclamas.gestionar` (Marketing recibe `403 SIN_PERMISO`); `PATCH /:id/detalle` pide `proclamas.detalle` (incluye a Marketing).
+
+### Observaciones confidenciales (solo Párroco)
+
+Permiso: `proclamas.observaciones` (solo `PARROCO`, limitado a su sede; otro rol recibe `403 SIN_PERMISO`).
+
+| Método y ruta                                         | Descripción                                                                                                     |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `GET /api/admin/proclamas/observaciones`              | Lista paginada (`estado=no-leidas\|todas`, `proclamaId`, `pagina`, `porPagina`), más reciente primero.          |
+| `GET /api/admin/proclamas/observaciones/resumen`      | Devuelve `{ "datos": { "noLeidas": N } }` para la insignia del menú.                                            |
+| `PATCH /api/admin/proclamas/observaciones/:id`        | `{ "leida": true \| false }`. Guarda o borra `leidoEn` y `leidoPor`.                                            |
+| `DELETE /api/admin/proclamas/observaciones/:id`       | Elimina la observación (`204`). En la bitácora solo se registra la acción y el id, nunca los datos personales. |
 
 ---
 
@@ -993,19 +1026,21 @@ El mismo objeto del [endpoint público](publico.md#get-apisedessedeboletines), m
 {
   "titulo": "Edición de noviembre 2026",
   "periodo": "2026-11",
-  "archivoId": 9
+  "archivoId": 9,
+  "portadaId": 31
 }
 ```
 
 - `periodo`: `YYYY-MM`. Se guarda como el primer día del mes. Solo puede haber un boletín por sede y mes: repetir el periodo es `409 CONFLICTO`.
 - `archivoId`: debe ser un `application/pdf` de la misma sede. Si no, `400 VALIDACION`.
+- `portadaId` (opcional, `null` para quitar): imagen de la biblioteca multimedia de la misma sede (miniatura de la primera página). Si no es imagen o es de otra sede, `400 VALIDACION`. La biblioteca la cuenta como en uso (`PORTADA_BOLETIN`).
 
 Reglas adicionales:
 
 - `sedeId` (solo el Administrador): por defecto su sede; obligatorio si no tiene sede asignada.
 - `titulo`: obligatorio, hasta 150 caracteres. `periodo` con otro formato que `YYYY-MM` (ej. `2026-11-01` o `2026-13`) es `400 VALIDACION`.
 - `archivoId` inexistente, de otra sede o que no es un PDF: `400 VALIDACION` en `archivoId` («Debe ser un documento PDF de la biblioteca multimedia de esta sede.» o «El archivo no es un documento PDF.»).
-- `periodo` repetido en la sede (al crear o al editar): `409 CONFLICTO` con un detalle en `periodo`. `PATCH` acepta `titulo`, `periodo` y `archivoId`; cualquier otro campo es `400`.
+- `periodo` repetido en la sede (al crear o al editar): `409 CONFLICTO` con un detalle en `periodo`. `PATCH` acepta `titulo`, `periodo`, `archivoId` y `portadaId`; cualquier otro campo es `400`.
 - `publicadoPor` es quien creó el boletín y no cambia al editarlo. `fechaPublicacion` es el momento de la creación.
 - Lectura: todos los roles de la sede; `POST`, `PATCH` y `DELETE` piden `boletines.gestionar` (incluye a Marketing).
 

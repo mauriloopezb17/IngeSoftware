@@ -4,6 +4,7 @@ import { EncabezadoSeccion, Reveal, Seccion } from '../portal/index.js';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { SEDE_ACTUAL } from '../../config/sede.js';
 import { useComunidades } from '../../hooks/index.js';
+import { enlaceComoLlegar } from '../../utils/mapas.js';
 import { construirAtributosImagen } from './imagenSrcSet.js';
 
 function formatearNombreComunidad(comunidad) {
@@ -40,6 +41,7 @@ function Comunidades() {
           {comunidades.map((comunidad, indice) => {
             const principal = comunidad.slug === SEDE_ACTUAL;
             const imagen = comunidad.imagenPortada;
+            const hrefComoLlegar = enlaceComoLlegar(comunidad);
 
             return (
               <Reveal
@@ -88,10 +90,10 @@ function Comunidades() {
                     )}
                   </div>
 
-                  {comunidad.enlaceComoLlegar && (
+                  {hrefComoLlegar && (
                     <div className="mt-4 pt-3 border-t border-sand">
                       <a
-                        href={comunidad.enlaceComoLlegar}
+                        href={hrefComoLlegar}
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`Cómo llegar a ${comunidad.nombre} en Google Maps`}

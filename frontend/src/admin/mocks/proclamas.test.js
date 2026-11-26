@@ -104,11 +104,29 @@ describe('mock de proclamas (admin.md §10)', () => {
     expect((await capturar(clienteHttp.get('/admin/proclamas/4'))).estado).toBe(404);
   });
 
-  it('Marketing consulta pero no escribe (403)', async () => {
+  it('Marketing consulta, no edita datos base (403), pero sí edita el detalle (200)', async () => {
     await entrar('marketing');
     expect((await clienteHttp.get('/admin/proclamas')).datos.length).toBeGreaterThan(0);
     const error = await capturar(clienteHttp.patch('/admin/proclamas/1', { contrayente1: 'X' }));
     expect(error.estado).toBe(403);
+
+    const { datos } = await clienteHttp.patch('/admin/proclamas/1/detalle', {
+      imagenId: 8,
+      detalle: {
+        contenido: null,
+        galeria: [8],
+        lugar: { templo: 'Capilla San Pablo', direccion: 'Av. 1', enlaceMapa: 'https://maps.app.goo.gl/abc' },
+      },
+    });
+    expect(datos.imagenId).toBe(8);
+    expect(datos.detalle.lugar.templo).toBe('Capilla San Pablo');
+
+    const mapaMalo = await capturar(
+      clienteHttp.patch('/admin/proclamas/1/detalle', {
+        detalle: { lugar: { templo: 'Capilla', direccion: null, enlaceMapa: 'https://ejemplo.com' } },
+      }),
+    );
+    expect(mapaMalo.detalles[0].campo).toBe('detalle.lugar.enlaceMapa');
   });
 
   it('el matrimonio no puede quedar antes de una publicación', async () => {
@@ -123,5 +141,24 @@ describe('mock de proclamas (admin.md §10)', () => {
     expect(extra.detalles).toEqual([{ campo: 'tramiteOrigenId', mensaje: 'Campo no permitido.' }]);
     const anio = await capturar(clienteHttp.get('/admin/proclamas', { parametros: { anio: '1850' } }));
     expect(anio.detalles[0].campo).toBe('query.anio');
+  });
+
+  it('observaciones: solo Párroco accede, lista, marca leída/no leída y elimina', async () => {
+    await entrar('secretaria');
+    expect((await capturar(clienteHttp.get('/admin/proclamas/observaciones'))).estado).toBe(403);
+    expect((await capturar(clienteHttp.get('/admin/proclamas/observaciones/resumen'))).estado).toBe(403);
+
+    await entrar('parroco');
+    const resumen = (await clienteHttp.get('/admin/proclamas/observaciones/resumen')).datos;
+    expect(resumen.noLeidas).toBe(2);
+
+    const lista = (await clienteHttp.get('/admin/proclamas/observaciones')).datos;
+    expect(lista).toHaveLength(2);
+
+    const marcada = (await clienteHttp.patch(`/admin/proclamas/observaciones/${lista[0].id}`, { leida: true })).datos;
+    expect(marcada.leida).toBe(true);
+    expect((await clienteHttp.get('/admin/proclamas/observaciones/resumen')).datos.noLeidas).toBe(1);
+
+    expect(await clienteHttp.delete(`/admin/proclamas/observaciones/${lista[0].id}`)).toBeNull();
   });
 });

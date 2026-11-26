@@ -10,7 +10,12 @@ const COLUMNAS = `
   am.url AS archivo_url,
   am.nombre_original AS archivo_nombre_original,
   am.tipo_mime AS archivo_tipo_mime,
-  am.tamano_bytes AS archivo_tamano_bytes`;
+  am.tamano_bytes AS archivo_tamano_bytes,
+  pt.id AS portada_id,
+  pt.url AS portada_url,
+  pt.texto_alternativo AS portada_texto_alternativo,
+  pt.ancho_px AS portada_ancho,
+  pt.alto_px AS portada_alto`;
 
 // Boletines ya publicados de una sede (fecha_publicacion <= now()), del periodo más reciente al
 // más antiguo. anio (opcional) filtra por el año del periodo.
@@ -25,6 +30,7 @@ export async function listarPublicados(sedeId, { anio, limite, desplazamiento })
       `SELECT ${COLUMNAS}
          FROM boletin b
          JOIN archivo_multimedia am ON am.id = b.archivo_id
+         LEFT JOIN archivo_multimedia pt ON pt.id = b.portada_id
         WHERE ${donde}
         ORDER BY b.periodo DESC, b.id DESC
         LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,

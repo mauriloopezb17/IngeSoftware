@@ -342,6 +342,32 @@ describe('GET /api/admin/bitacora', () => {
     expect(futuro.body.paginacion.total).toBe(0);
   });
 
+  it('el día se corta en hora de Bolivia, sin importar la zona de la base', async () => {
+    // 22:30 del 10-06-2030 en Bolivia = 02:30 del 11-06 en UTC: entra en el día 10, no en el 11.
+    const entidadId = `zona-${randomUUID().slice(0, 8)}`;
+    const filtro = `entidad=archivo_multimedia&entidadId=${entidadId}`;
+    await consultar(
+      `INSERT INTO bitacora_cambio (entidad, entidad_id, accion, fecha)
+       VALUES ('archivo_multimedia', $1, 'INSERT', '2030-06-10 22:30:00-04')`,
+      [entidadId],
+    );
+    try {
+      const delDia = await consultarBitacora(
+        'admin',
+        `${filtro}&desde=2030-06-10&hasta=2030-06-10`,
+      );
+      expect(delDia.body.datos).toHaveLength(1);
+
+      const delSiguiente = await consultarBitacora('admin', `${filtro}&desde=2030-06-11`);
+      expect(delSiguiente.body.datos).toEqual([]);
+
+      const delAnterior = await consultarBitacora('admin', `${filtro}&hasta=2030-06-09`);
+      expect(delAnterior.body.datos).toEqual([]);
+    } finally {
+      await consultar('DELETE FROM bitacora_cambio WHERE entidad_id = $1', [entidadId]);
+    }
+  });
+
   it('el Párroco solo ve los cambios de su sede', async () => {
     const propios = await consultarBitacora('parroco', 'entidad=archivo_multimedia&porPagina=50');
     const ids = propios.body.datos.map((c) => c.entidadId);

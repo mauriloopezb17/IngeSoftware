@@ -10,6 +10,12 @@ const BASE = `
          p.nombre_contrayente_1,
          p.nombre_contrayente_2,
          p.fecha_matrimonio,
+         p.imagen_id,
+         am.url AS imagen_url,
+         am.texto_alternativo AS imagen_texto_alternativo,
+         am.ancho_px AS imagen_ancho,
+         am.alto_px AS imagen_alto,
+         p.detalle,
          pub.ultima AS numero_proclama,
          pub.lista AS publicaciones
     FROM proclama p
@@ -21,6 +27,7 @@ const BASE = `
            WHERE pp.proclama_id = p.id
              AND pp.fecha_publicacion <= (now() AT TIME ZONE $2)::date
          ) pub ON pub.ultima IS NOT NULL
+    LEFT JOIN archivo_multimedia am ON am.id = p.imagen_id
    WHERE p.sede_id = $1`;
 
 // Vigentes: con alguna publicación alcanzada y cuya boda todavía no pasó. Por fecha de boda.
@@ -51,4 +58,20 @@ export async function listarHistorial(sedeId, { anio, limite, desplazamiento }) 
   ]);
 
   return { filas: pagina.rows, total: conteo.rows[0].total };
+}
+
+export async function buscarDetallePorId(sedeId, id) {
+  const { rows } = await consultar(`${BASE} AND p.id = $3`, [sedeId, ZONA_HORARIA, id]);
+  return rows[0];
+}
+
+export async function archivosPorIds(sedeId, ids) {
+  if (!ids?.length) return [];
+  const { rows } = await consultar(
+    `SELECT id, url, tipo_mime, texto_alternativo, ancho_px, alto_px
+       FROM archivo_multimedia
+      WHERE sede_id = $1 AND id = ANY($2::int[])`,
+    [sedeId, ids],
+  );
+  return rows;
 }

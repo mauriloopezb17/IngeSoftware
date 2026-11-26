@@ -9,3 +9,11 @@ export async function listar(req, res) {
   // La lista paginada ya trae { datos, paginacion }.
   await responderConCache(req, res, clave, () => servicio.listarEventos(req.sede.id, query));
 }
+
+export async function detalle(req, res) {
+  const { id } = req.params;
+  const clave = { recurso: RECURSOS_CACHE.EVENTOS, sedeId: req.sede.id, variante: { id } };
+  await responderConCache(req, res, clave, async () => ({
+    datos: await servicio.obtenerEvento(req.sede.id, id),
+  }));
+}

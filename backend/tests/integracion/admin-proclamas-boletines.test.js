@@ -594,6 +594,20 @@ describe('boletines', () => {
       expect((await mensajes(999999999))[0].campo).toBe('archivoId');
     });
 
+    it('acepta portadaId de la misma sede, la marca en uso y rechaza no-imagen', async () => {
+      const invalida = await como('secretaria').post(RUTA, boletin({ portadaId: pdf.id }));
+      expect(invalida.status).toBe(400);
+      expect(invalida.body.error.detalles[0].campo).toBe('portadaId');
+
+      const creado = await como('secretaria').post(RUTA, boletin({ portadaId: imagen.id }));
+      expect(creado.status).toBe(201);
+      expect(creado.body.datos.portada).toMatchObject({ id: imagen.id });
+
+      const uso = await como('secretaria').get(`/api/admin/multimedia/${imagen.id}`);
+      expect(uso.status).toBe(200);
+      expect(uso.body.datos.enUso).toBe(true);
+    });
+
     it('valida el cuerpo: título, periodo AAAA-MM, archivo y campos desconocidos', async () => {
       const respuesta = await como('secretaria').post(RUTA, {
         titulo: '',

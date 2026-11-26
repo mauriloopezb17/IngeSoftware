@@ -21,10 +21,12 @@ export const cuerpoCrearBoletin = z.strictObject({
   titulo: textoObligatorio(150),
   periodo,
   archivoId: idDelCuerpo,
+  portadaId: idDelCuerpo.nullable().optional(),
 });
 
 export const cuerpoEditarBoletin = z.strictObject({
   titulo: textoObligatorio(150).optional(),
   periodo: periodo.optional(),
   archivoId: idDelCuerpo.optional(),
+  portadaId: idDelCuerpo.nullable().optional(),
 });

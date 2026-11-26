@@ -27,7 +27,7 @@ Una sede que existe pero aún no tiene contenido (ej. `resurreccion`) responde `
 | `Agenda`: avisos parroquiales                            | [`GET /api/sedes/:sede/publicaciones?tipo=AVISO`](#get-apisedessedepublicaciones)                                                                  |
 | `Agenda`: boletín parroquial                             | [`GET /api/sedes/:sede/boletines?porPagina=1`](#get-apisedessedeboletines)                                                                         |
 | `VidaParroquial` (noticias y notas de prensa)            | [`GET /api/sedes/:sede/publicaciones?tipo=NOTICIA,NOTA_DE_PRENSA`](#get-apisedessedepublicaciones) y [detalle](#get-apisedessedepublicacionesslug) |
-| `Proclamas`                                              | [`GET /api/sedes/:sede/proclamas`](#get-apisedessedeproclamas) e [historial](#get-apisedessedeproclamashistorial)                                  |
+| `Proclamas`                                              | [`GET /api/sedes/:sede/proclamas`](#get-apisedessedeproclamas), [historial](#get-apisedessedeproclamashistorial) y [detalle](#get-apisedessedeproclamasid) |
 | `VideoInstitucional`                                     | [`GET /api/sedes/:sede/videos`](#get-apisedessedevideos); mientras no haya videos, el bloque `hero_video` de `inicio`                              |
 | `GruposPastorales`                                       | [`GET /api/sedes/:sede/grupos-pastorales`](#get-apisedessedegrupos-pastorales)                                                                     |
 | `Comunidades`                                            | [`GET /api/sedes`](#get-apisedes)                                                                                                                  |
@@ -546,7 +546,8 @@ Orden fijo: `fechaInicio` ascendente.
         "nombre": "Liturgia",
         "colorHex": "#E2AD11"
       },
-      "imagen": null
+      "imagen": null,
+      "tieneDetalle": false
     },
     {
       "id": 2,
@@ -561,7 +562,8 @@ Orden fijo: `fechaInicio` ascendente.
         "nombre": "Solemnidad",
         "colorHex": "#9E1B22"
       },
-      "imagen": null
+      "imagen": null,
+      "tieneDetalle": true
     },
     {
       "id": 3,
@@ -576,7 +578,8 @@ Orden fijo: `fechaInicio` ascendente.
         "nombre": "Liturgia",
         "colorHex": "#E2AD11"
       },
-      "imagen": null
+      "imagen": null,
+      "tieneDetalle": false
     },
     {
       "id": 4,
@@ -591,7 +594,8 @@ Orden fijo: `fechaInicio` ascendente.
         "nombre": "Catequesis",
         "colorHex": "#B5532F"
       },
-      "imagen": null
+      "imagen": null,
+      "tieneDetalle": false
     }
   ],
   "paginacion": {
@@ -604,7 +608,55 @@ Orden fijo: `fechaInicio` ascendente.
 ```
 
 - `todoElDia: true`: el portal muestra solo la fecha, sin hora.
+- `tieneDetalle`: indica si el evento tiene información adicional cargada en su página de detalle (la lista no envía `detalle` para mantenerse liviana).
 - La tarjeta de la landing muestra día y mes (`18 NOV`), la hora y el lugar. El portal los arma con `fechaInicio`. Cuando hay varias horas (ej. «8:00 – 10:00 – 12:00»), van en `descripcion`.
+- **Vista de un solo día**: enviando `desde=YYYY-MM-DD&hasta=YYYY-MM-DD` con la misma fecha se obtienen todos los eventos publicados que ocurren o se cruzan con ese día (siempre desde hoy en adelante).
+
+## `GET /api/sedes/:sede/eventos/:id`
+
+Detalle completo de un evento publicado de la sede (RF-09). Si el evento ya pasó pero sigue en estado `PUBLICADO`, responde `200` para que los enlaces compartidos sigan funcionando. Un evento en `BORRADOR`, `ARCHIVADO`, inexistente o de otra sede responde `404 NO_ENCONTRADO`.
+
+**Respuesta `200`:**
+
+```json
+{
+  "datos": {
+    "id": 2,
+    "titulo": "Misa de sanación",
+    "descripcion": "Horarios: 8:00 – 10:00 – 12:00",
+    "lugar": "Templo parroquial",
+    "fechaInicio": "2026-11-19T08:00:00-04:00",
+    "fechaFin": null,
+    "todoElDia": false,
+    "categoria": {
+      "id": 2,
+      "nombre": "Solemnidad",
+      "colorHex": "#9E1B22"
+    },
+    "imagen": null,
+    "tieneDetalle": true,
+    "detalle": {
+      "contenido": {
+        "formato": "blocknote",
+        "version": 1,
+        "bloques": []
+      },
+      "direccion": "Av. Héctor Ormachea N.º 167, Obrajes, La Paz",
+      "enlaceMapa": "https://www.google.com/maps/search/?api=1&query=-16.5267952%2C-68.1082157",
+      "programa": [
+        { "hora": "08:00", "actividad": "Primera misa de sanación (ejemplo)" }
+      ],
+      "responsable": {
+        "nombre": "Equipo de Liturgia (ejemplo)",
+        "rol": "Coordinación pastoral",
+        "telefono": "(2) 278 4937",
+        "correo": null
+      },
+      "enlaces": []
+    }
+  }
+}
+```
 
 ---
 
@@ -890,7 +942,9 @@ Proclamas matrimoniales **vigentes** (RF-02): las que tienen al menos una public
         { "numero": 1, "fecha": "2026-10-25" },
         { "numero": 2, "fecha": "2026-11-01" },
         { "numero": 3, "fecha": "2026-11-08" }
-      ]
+      ],
+      "tieneDetalle": false,
+      "imagen": null
     },
     {
       "id": 2,
@@ -901,7 +955,9 @@ Proclamas matrimoniales **vigentes** (RF-02): las que tienen al menos una public
       "publicaciones": [
         { "numero": 1, "fecha": "2026-11-01" },
         { "numero": 2, "fecha": "2026-11-08" }
-      ]
+      ],
+      "tieneDetalle": false,
+      "imagen": null
     },
     {
       "id": 3,
@@ -909,7 +965,9 @@ Proclamas matrimoniales **vigentes** (RF-02): las que tienen al menos una public
       "contrayente2": "Andrea Mamani C.",
       "fechaMatrimonio": "2026-12-05T12:00:00-04:00",
       "numeroProclama": 1,
-      "publicaciones": [{ "numero": 1, "fecha": "2026-11-08" }]
+      "publicaciones": [{ "numero": 1, "fecha": "2026-11-08" }],
+      "tieneDetalle": false,
+      "imagen": null
     }
   ]
 }
@@ -940,7 +998,9 @@ Historial público de proclamas (RF-02): todas las que tuvieron al menos una pub
         { "numero": 1, "fecha": "2026-10-25" },
         { "numero": 2, "fecha": "2026-11-01" },
         { "numero": 3, "fecha": "2026-11-08" }
-      ]
+      ],
+      "tieneDetalle": false,
+      "imagen": null
     }
   ],
   "paginacion": {
@@ -951,6 +1011,78 @@ Historial público de proclamas (RF-02): todas las que tuvieron al menos una pub
   }
 }
 ```
+
+## `GET /api/sedes/:sede/proclamas/:id`
+
+Detalle de una proclama visible (al menos una publicación cuya fecha ya llegó). Si no existe, pertenece a otra sede o todavía no tiene publicaciones alcanzadas, responde `404 NO_ENCONTRADO`.
+
+**Respuesta `200`:**
+
+```json
+{
+  "datos": {
+    "id": 1,
+    "contrayente1": "Juan Carlos M. Q.",
+    "contrayente2": "María Fernanda R. V.",
+    "fechaMatrimonio": "2026-11-14T11:00:00-04:00",
+    "numeroProclama": 3,
+    "publicaciones": [
+      { "numero": 1, "fecha": "2026-10-25" },
+      { "numero": 2, "fecha": "2026-11-01" },
+      { "numero": 3, "fecha": "2026-11-08" }
+    ],
+    "tieneDetalle": true,
+    "imagen": null,
+    "aceptaObservaciones": true,
+    "galeria": [
+      {
+        "id": 12,
+        "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/11/foto.webp",
+        "textoAlternativo": "Foto de los novios",
+        "ancho": 1200,
+        "alto": 800,
+        "variantes": [
+          { "ancho": 480, "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/11/foto-480w.webp" },
+          { "ancho": 960, "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/11/foto-960w.webp" }
+        ],
+        "tipoMime": "image/webp"
+      }
+    ],
+    "detalle": {
+      "contenido": null,
+      "galeria": [12],
+      "lugar": {
+        "templo": "Capilla San Pablo de la Cruz",
+        "direccion": "Av. Costanera 123, Obrajes",
+        "enlaceMapa": "https://maps.app.goo.gl/ejemplo"
+      }
+    }
+  }
+}
+```
+
+- `detalle` es `null` si no se cargó información adicional. Si `detalle.lugar` es `null`, la boda se celebra en la propia parroquia.
+- `aceptaObservaciones` es `true` desde la primera publicación hasta la fecha y hora del matrimonio.
+
+## `POST /api/sedes/:sede/proclamas/:id/observaciones`
+
+Envía una observación confidencial al párroco sobre una proclama (sin sesión, con protección CSRF y límite de 5 peticiones por hora por IP).
+
+**Cuerpo:**
+
+```json
+{
+  "nombreCompleto": "María Elena Quispe",
+  "correo": "maria@ejemplo.com",
+  "telefono": "+591 71234567",
+  "mensaje": "Deseo comunicar una observación sobre esta proclama.",
+  "sitioWeb": ""
+}
+```
+
+- Es obligatorio al menos uno entre `correo` o `telefono` (si faltan ambos, `400 VALIDACION` en `contacto`).
+- Responde `201 { "datos": { "recibido": true } }` sin devolver los datos enviados y sin caché (`Cache-Control: no-store`).
+- Proclama inexistente o no visible → `404 NO_ENCONTRADO`; proclama cuya boda ya pasó → `409 CONFLICTO`; límite superado → `429 DEMASIADAS_SOLICITUDES`.
 
 ---
 
@@ -976,7 +1108,8 @@ Boletines parroquiales en PDF, del más reciente al más antiguo (por `periodo`)
         "nombreOriginal": "Boletín octubre 2026.pdf",
         "tipoMime": "application/pdf",
         "tamanoBytes": 2516582
-      }
+      },
+      "portada": null
     }
   ],
   "paginacion": {
@@ -990,6 +1123,7 @@ Boletines parroquiales en PDF, del más reciente al más antiguo (por `periodo`)
 
 - `periodo` es siempre el primer día del mes del boletín. Hay como máximo un boletín por sede y mes.
 - `archivo` es el **objeto archivo** (para lo que no es imagen): `{ id, url, nombreOriginal, tipoMime, tamanoBytes }`. El portal formatea el tamaño («PDF · 2,4 MB»).
+- `portada` es el **objeto imagen estándar** (`{ id, url, textoAlternativo, ancho, alto, variantes }`) de la miniatura de la primera página, o `null` si no tiene portada.
 - La URL del CDN de los ejemplos es ilustrativa: la real sale de `CDN_PUBLIC_URL`.
 - El seed **no** tiene boletines, porque no hay un PDF real en el repositorio. Con el seed, este endpoint responde `"datos": []` y el portal oculta la tarjeta del boletín.
 

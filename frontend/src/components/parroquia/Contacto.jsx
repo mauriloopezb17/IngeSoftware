@@ -4,12 +4,13 @@ import { BotonEnlace, EncabezadoSeccion, Reveal, Seccion } from '../portal/index
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { useSede } from '../../hooks/index.js';
 import { armarHrefGmail, armarHrefTelefono } from '../../utils/formatoPortal.js';
+import { enlaceComoLlegar } from '../../utils/mapas.js';
 
 function Contacto() {
   const { data: sede, isPending, isError, refetch } = useSede();
 
   const configuracion = sede?.configuracion ?? {};
-  const enlaceGoogleMaps = configuracion.enlaceComoLlegar;
+  const enlaceGoogleMaps = enlaceComoLlegar(sede);
   const enlaceMessenger = configuracion.enlaceMessenger;
 
   const informacionContacto = sede

@@ -9,8 +9,10 @@ import * as paginas from '../controllers/paginas.controller.js';
 import * as proclamasBoletines from '../controllers/proclamasBoletines.controller.js';
 import * as sedes from '../controllers/sedes.controller.js';
 import { resolverSede } from '../middlewares/resolverSede.js';
+import { limitarObservaciones } from '../middlewares/limiteObservaciones.js';
 import { validar } from '../middlewares/validar.js';
-import { anio, listaIds, paginacion } from '../validacion/comunes.js';
+import { anio, id, listaIds, paginacion } from '../validacion/comunes.js';
+import { cuerpoCrearObservacion } from '../validacion/proclamas.js';
 import eventosRoutes from './eventos.routes.js';
 import publicacionesRoutes from './publicaciones.routes.js';
 
@@ -40,6 +42,17 @@ deSede.get(
   '/proclamas/historial',
   validar({ query: consultaPorAnio }),
   proclamasBoletines.listarHistorialProclamas,
+);
+deSede.get(
+  '/proclamas/:id',
+  validar({ params: z.object({ id }) }),
+  proclamasBoletines.detalleProclama,
+);
+deSede.post(
+  '/proclamas/:id/observaciones',
+  limitarObservaciones,
+  validar({ params: z.object({ id }), body: cuerpoCrearObservacion }),
+  proclamasBoletines.crearObservacion,
 );
 deSede.get('/boletines', validar({ query: consultaPorAnio }), proclamasBoletines.listarBoletines);
 deSede.get('/paginas', paginas.listar);

@@ -6,9 +6,12 @@ import * as controlador from '../controllers/adminProclamas.controller.js';
 import { filtrarPorSede, requerirPermiso } from '../middlewares/autorizar.js';
 import { validar } from '../middlewares/validar.js';
 import {
+  consultaObservaciones,
   consultaProclamas,
   cuerpoCrearProclama,
+  cuerpoEditarDetalleProclama,
   cuerpoEditarProclama,
+  cuerpoMarcarObservacion,
   cuerpoPublicacionProclama,
   paramsProclama as params,
   paramsPublicacionProclama,
@@ -16,6 +19,28 @@ import {
 
 const router = Router();
 const gestionar = requerirPermiso(PERMISOS.PROCLAMAS_GESTIONAR);
+const editarDetalle = requerirPermiso(PERMISOS.PROCLAMAS_DETALLE);
+const verObservaciones = requerirPermiso(PERMISOS.PROCLAMAS_OBSERVACIONES);
+
+router.get(
+  '/observaciones',
+  verObservaciones,
+  validar({ query: consultaObservaciones }),
+  controlador.listarObservaciones,
+);
+router.get('/observaciones/resumen', verObservaciones, controlador.resumenObservaciones);
+router.patch(
+  '/observaciones/:id',
+  verObservaciones,
+  validar({ params, body: cuerpoMarcarObservacion }),
+  controlador.marcarObservacion,
+);
+router.delete(
+  '/observaciones/:id',
+  verObservaciones,
+  validar({ params }),
+  controlador.eliminarObservacion,
+);
 
 router.get('/', validar({ query: consultaProclamas }), filtrarPorSede, controlador.listar);
 router.get('/:id', validar({ params }), controlador.detalle);
@@ -25,6 +50,12 @@ router.patch(
   gestionar,
   validar({ params, body: cuerpoEditarProclama }),
   controlador.editar,
+);
+router.patch(
+  '/:id/detalle',
+  editarDetalle,
+  validar({ params, body: cuerpoEditarDetalleProclama }),
+  controlador.editarDetalle,
 );
 router.delete('/:id', gestionar, validar({ params }), controlador.eliminar);
 

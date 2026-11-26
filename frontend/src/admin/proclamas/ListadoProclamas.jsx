@@ -19,6 +19,7 @@ import {
 } from '../ui/index.js';
 import { CLAVE_PROCLAMAS, eliminarProclama, listarProclamas, VISTAS } from './api.js';
 import { estaPublicada, formatearDia, ordinal } from './fechas.js';
+import PestanasProclamas from './PestanasProclamas.jsx';
 
 function leerFiltros(parametros) {
   const vista = parametros.get('vista');
@@ -183,11 +184,15 @@ export default function ListadoProclamas() {
         }
       />
 
+      <PestanasProclamas />
+
       {!editable && (
         <Aviso tipo="soloLectura" className="mt-4">
           <p>
-            <strong className="font-semibold text-ink">Solo lectura.</strong> Tu rol puede consultar las proclamas, pero no
-            modificarlas.
+            <strong className="font-semibold text-ink">Solo lectura.</strong>{' '}
+            {puede('proclamas.detalle')
+              ? 'Tu rol no puede crear ni eliminar proclamas, pero puedes abrir cada una para editar su página pública.'
+              : 'Tu rol puede consultar las proclamas, pero no modificarlas.'}
           </p>
         </Aviso>
       )}

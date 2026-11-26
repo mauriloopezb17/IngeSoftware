@@ -41,4 +41,9 @@ export async function actualizarEvento(id, cuerpo) {
   return datos;
 }
 
+export async function actualizarDetalleEvento(id, detalle) {
+  const { datos } = await clienteHttp.patch(`/admin/eventos/${id}/detalle`, { detalle });
+  return datos;
+}
+
 export const eliminarEvento = (id) => clienteHttp.delete(`/admin/eventos/${id}`);
