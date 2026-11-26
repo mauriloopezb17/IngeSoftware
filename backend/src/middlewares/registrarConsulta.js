@@ -4,7 +4,7 @@
 // - Si una ruta usa marcarConsulta('exportacion'), queda marcada explícitamente como exportación.
 // - Si no, toda petición GET cuya consulta validada incluye «pagina» (esquema paginacion) se
 //   registra automáticamente como «listado» (incluidos los 400 cuando ?pagina o ?porPagina llegan en query).
-import { obtenerLogger } from '../config/logger.js';
+import { censurarFiltros, obtenerLogger } from '../config/logger.js';
 
 export function marcarConsulta(tipo) {
   return function marcarTipoConsulta(req, _res, next) {
@@ -60,7 +60,7 @@ function resolverFiltros(req) {
       filtros[clave] = origen[clave];
     }
   }
-  return filtros;
+  return censurarFiltros(filtros);
 }
 
 export function registrarConsulta(req, res, next) {
