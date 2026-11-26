@@ -6,6 +6,7 @@ import 'pdfjs-dist/web/pdf_viewer.css';
 import { descargarBoletinPdf } from '../../utils/boletines.js';
 import { formatearPeriodoMes } from '../../utils/formatoPortal.js';
 import { cargarPdfJs } from '../../utils/pdfJs.js';
+import { prefiereMovimientoReducido } from '../portal/observadorCompartido.js';
 
 const ZOOM_MIN = 0.5;
 const ZOOM_MAX = 2.5;
@@ -209,6 +210,13 @@ function BoletinLector({ boletin, alCerrar }) {
   const [zoom, setZoom] = useState(1);
   const [anchoContenedor, setAnchoContenedor] = useState(ANCHO_MAXIMO_HOJA);
   const [descargando, setDescargando] = useState(false);
+  const [visible, setVisible] = useState(() => prefiereMovimientoReducido());
+
+  useEffect(() => {
+    if (visible) return undefined;
+    const frame = window.requestAnimationFrame(() => setVisible(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [visible]);
 
   const urlPdf = boletin?.archivo?.url ?? '';
 
@@ -419,7 +427,9 @@ function BoletinLector({ boletin, alCerrar }) {
       <title>{`${boletin.titulo} | Boletines | Parroquia Señor de la Exaltación`}</title>
 
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-0 md:p-4 lg:p-6"
+        className={`fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-0 transition-opacity duration-200 ease-salida motion-reduce:opacity-100 motion-reduce:transition-none md:p-4 lg:p-6 ${
+          visible ? 'opacity-100' : 'opacity-0'
+        }`}
         onClick={(evento) => {
           if (evento.target === evento.currentTarget) alCerrar();
         }}

@@ -73,7 +73,7 @@ function Agenda() {
                     <Reveal
                       key={evento.id}
                       variante="tarjeta"
-                      retraso={indice * 90}
+                      retraso={indice * 120}
                       as="article"
                       className="group relative -mx-3 flex flex-col gap-4 rounded-sm px-3 py-6 transition-colors duration-150 hover:bg-cream focus-within:bg-cream focus-within:ring-2 focus-within:ring-ink/25 sm:flex-row sm:items-center sm:gap-6"
                     >

@@ -1,7 +1,15 @@
 import { ArrowLeft, Calendar, Clock, ExternalLink, Mail, MapPin, Navigation, Phone, User } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 
-import { BotonEnlace, Contenedor, EncabezadoPagina, Seccion } from '../components/portal/index.js';
+import {
+  BotonEnlace,
+  Contenedor,
+  EncabezadoPagina,
+  Reveal,
+  RevealImagen,
+  RevealTitulo,
+  Seccion,
+} from '../components/portal/index.js';
 import ContenidoBlockNote from '../components/parroquia/ContenidoBlockNote.jsx';
 import { CargandoSeccion, ErrorSeccion } from '../components/parroquia/EstadoSeccion.jsx';
 import { construirAtributosImagen } from '../components/parroquia/imagenSrcSet.js';
@@ -226,14 +234,16 @@ function EventoDetalle() {
             <div className="flex min-w-0 flex-col gap-10">
               {evento.imagen?.url && (
                 <figure className="overflow-hidden rounded-sm border border-sand bg-cream">
-                  <img
-                    src={evento.imagen.url}
-                    alt={evento.imagen.textoAlternativo || evento.titulo}
-                    width={evento.imagen.ancho ?? undefined}
-                    height={evento.imagen.alto ?? undefined}
-                    {...construirAtributosImagen(evento.imagen, '(min-width: 1024px) 720px, 100vw')}
-                    className="aspect-video w-full object-cover"
-                  />
+                  <RevealImagen lado="izquierda">
+                    <img
+                      src={evento.imagen.url}
+                      alt={evento.imagen.textoAlternativo || evento.titulo}
+                      width={evento.imagen.ancho ?? undefined}
+                      height={evento.imagen.alto ?? undefined}
+                      {...construirAtributosImagen(evento.imagen, '(min-width: 1024px) 720px, 100vw')}
+                      className="aspect-video w-full object-cover"
+                    />
+                  </RevealImagen>
                 </figure>
               )}
 
@@ -245,21 +255,28 @@ function EventoDetalle() {
 
               {programa.length > 0 && (
                 <section aria-labelledby="programa-evento" className="border-t border-sand pt-8">
-                  <h2 id="programa-evento" className="font-display text-h2 font-semibold text-ink">
+                  <RevealTitulo
+                    as="h2"
+                    id="programa-evento"
+                    className="font-display text-h2 font-semibold text-ink"
+                  >
                     Programa
-                  </h2>
+                  </RevealTitulo>
                   <div className="mt-3 h-0.5 w-12 bg-gold" aria-hidden="true" />
                   <ol className="mt-6 divide-y divide-sand border-y border-sand">
                     {programa.map((item, indice) => (
-                      <li
+                      <Reveal
                         key={`${indice}-${item.hora}`}
+                        as="li"
+                        variante="tarjeta"
+                        retraso={indice * 120}
                         className="flex flex-col gap-1 py-4 sm:flex-row sm:items-baseline sm:gap-8"
                       >
                         <span className="w-20 shrink-0 font-display text-xl font-semibold text-ink lining-nums tabular-nums">
                           {item.hora}
                         </span>
                         <span className="font-body text-body text-ink">{item.actividad}</span>
-                      </li>
+                      </Reveal>
                     ))}
                   </ol>
                 </section>
@@ -267,13 +284,22 @@ function EventoDetalle() {
 
               {enlaces.length > 0 && (
                 <section aria-labelledby="enlaces-evento" className="border-t border-sand pt-8">
-                  <h2 id="enlaces-evento" className="font-display text-h2 font-semibold text-ink">
+                  <RevealTitulo
+                    as="h2"
+                    id="enlaces-evento"
+                    className="font-display text-h2 font-semibold text-ink"
+                  >
                     Enlaces y recursos
-                  </h2>
+                  </RevealTitulo>
                   <div className="mt-3 h-0.5 w-12 bg-gold" aria-hidden="true" />
                   <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {enlaces.map((item, indice) => (
-                      <li key={`${indice}-${item.url}`}>
+                      <Reveal
+                        key={`${indice}-${item.url}`}
+                        as="li"
+                        variante="tarjeta"
+                        retraso={indice * 120}
+                      >
                         <a
                           href={item.url}
                           target="_blank"
@@ -284,7 +310,7 @@ function EventoDetalle() {
                           <ExternalLink size={16} className="shrink-0 text-muted" aria-hidden="true" />
                           <span className="sr-only">(se abre en una pestaña nueva)</span>
                         </a>
-                      </li>
+                      </Reveal>
                     ))}
                   </ul>
                 </section>
