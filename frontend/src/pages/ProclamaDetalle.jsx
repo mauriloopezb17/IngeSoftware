@@ -7,6 +7,7 @@ import {
   EncabezadoSeccion,
   Eyebrow,
   Reveal,
+  RevealImagen,
   Seccion,
 } from '../components/portal/index.js';
 import ContenidoBlockNote from '../components/parroquia/ContenidoBlockNote.jsx';
@@ -95,15 +96,17 @@ function ProclamaDetalle() {
               {tieneBloquePrincipal && (
                 <div className="lg:col-span-7">
                   {proclama.imagen && (
-                    <Reveal>
-                      <figure className="overflow-hidden rounded-md border border-sand bg-cream">
+                    <figure className="overflow-hidden rounded-md border border-sand bg-cream">
+                      <RevealImagen lado="izquierda">
                         <img
                           {...construirAtributosImagen(proclama.imagen, '(min-width: 1024px) 58vw, 100vw')}
                           alt={proclama.imagen.textoAlternativo || nombres}
+                          width={proclama.imagen.ancho ?? undefined}
+                          height={proclama.imagen.alto ?? undefined}
                           className="aspect-4/3 w-full object-cover"
                         />
-                      </figure>
-                    </Reveal>
+                      </RevealImagen>
+                    </figure>
                   )}
 
                   {tieneContenido && (
@@ -191,7 +194,12 @@ function ProclamaDetalle() {
                   const esVideo = item.tipoMime?.startsWith('video/');
                   const alt = item.textoAlternativo || `Archivo ${indice + 1} de ${nombres}`;
                   return (
-                    <li key={item.id ?? indice}>
+                    <Reveal
+                      key={item.id ?? indice}
+                      as="li"
+                      variante="tarjeta"
+                      retraso={indice * 120}
+                    >
                       {esVideo ? (
                         <div className="overflow-hidden rounded-md border border-sand bg-white">
                           <video
@@ -214,11 +222,13 @@ function ProclamaDetalle() {
                           <img
                             {...construirAtributosImagen(item, '(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw')}
                             alt={alt}
+                            width={item.ancho ?? undefined}
+                            height={item.alto ?? undefined}
                             className="aspect-4/3 w-full object-cover transition-transform duration-700 ease-salida group-hover:scale-[1.04] motion-reduce:transition-none"
                           />
                         </button>
                       )}
-                    </li>
+                    </Reveal>
                   );
                 })}
               </ul>

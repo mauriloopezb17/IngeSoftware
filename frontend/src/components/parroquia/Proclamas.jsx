@@ -3,6 +3,7 @@ import { ScrollText } from 'lucide-react';
 import {
   EncabezadoSeccion,
   EnlaceFlecha,
+  Reveal,
   Seccion,
 } from '../portal/index.js';
 import EnlacePortal from '../portal/EnlacePortal.jsx';
@@ -46,9 +47,12 @@ function Proclamas() {
             <div className="rounded-md border border-sand bg-cream p-6 md:p-8">
               <ul className="divide-y divide-sand">
                 {proclamas.map(
-                  ({ id, contrayente1, contrayente2, fechaMatrimonio, numeroProclama, imagen }) => (
-                    <li
+                  ({ id, contrayente1, contrayente2, fechaMatrimonio, numeroProclama, imagen }, indice) => (
+                    <Reveal
                       key={id}
+                      as="li"
+                      variante="tarjeta"
+                      retraso={indice * 120}
                       className="group relative flex flex-col gap-3 rounded-sm py-5 first:pt-0 last:pb-0 focus-within:ring-2 focus-within:ring-gold focus-within:ring-offset-2 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="flex min-w-0 items-center gap-4">
@@ -88,7 +92,7 @@ function Proclamas() {
                           Ver proclama →
                         </span>
                       </div>
-                    </li>
+                    </Reveal>
                   ),
                 )}
               </ul>
