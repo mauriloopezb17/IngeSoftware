@@ -47,6 +47,26 @@ describe('subida con XMLHttpRequest (progreso y cancelación)', () => {
     expect(error).toMatchObject({ estado: 413, codigo: 'ARCHIVO_DEMASIADO_GRANDE', message: 'Las imágenes pueden pesar hasta 30 MB.' });
   });
 
+  it('un error 500/503 sin cuerpo JSON devuelve un mensaje claro en español', async () => {
+    server.use(
+      http.post(api('/admin/multimedia'), () =>
+        new HttpResponse('<html>503 Service Unavailable</html>', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/html' },
+        }),
+      ),
+    );
+
+    const error = await subirArchivo({ archivo: archivo() }).catch((e) => e);
+
+    expect(error).toBeInstanceOf(ErrorApi);
+    expect(error).toMatchObject({
+      estado: 503,
+      message: 'No se pudo subir el archivo por un problema del servidor. Intenta de nuevo.',
+    });
+  });
+
   it('un 401 sale como ErrorApi 401 (el panel vuelve al login)', async () => {
     server.use(
       http.post(api('/admin/multimedia'), () =>

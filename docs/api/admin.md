@@ -171,7 +171,7 @@ Archivos guardados en Oracle Cloud Object Storage (compatible con S3, bucket pú
 - No se aceptan SVG ni GIF: un SVG puede contener scripts.
 - Los videos y los PDF se guardan tal cual. La API no lee su ancho ni su alto: quedan en `null`.
 - El tamaño máximo se comprueba contra el archivo subido, antes de procesarlo.
-- **Capacidad**: el almacenamiento total es de 50 GB. Se mide con la suma de `tamanoBytes` de todos los archivos (las variantes de las imágenes no se cuentan). Al llegar al 90 %, la subida responde `409 CONFLICTO` con el mensaje «El almacenamiento está casi lleno.».
+- **Capacidad**: el almacenamiento total es de 20 GB (capa gratuita Always Free de OCI Object Storage). Se mide con la suma de `tamanoBytes` de todos los archivos (las variantes de las imágenes no se cuentan). Al llegar al 90 %, la subida responde `409 CONFLICTO` con el mensaje «El almacenamiento está casi lleno.».
 - **Duración de la subida**: una subida que tarda más de 30 minutos se corta. Un video de 2 GB necesita una conexión de al menos 10 Mbps. Como mejora futura queda la subida directa al bucket con una URL prefirmada para los videos grandes.
 
 ### Imágenes
@@ -253,7 +253,7 @@ Mensajes:
 | 415   | «El archivo no es una imagen válida.»                                                                                         | `[]`               |
 | 415   | «La petición debe ser multipart/form-data.»                                                                                   | `[]`               |
 | 409   | «El almacenamiento está casi lleno.»                                                                                          | `[]`               |
-| 503   | «El almacenamiento de archivos no está configurado.» / «No se pudo guardar el archivo. Intenta de nuevo más tarde.»           | `[]`               |
+| 503   | «El almacenamiento de archivos no está configurado.» / «No se pudo guardar el archivo. Intenta de nuevo más tarde.» / «No pudimos recibir el archivo. Intenta de nuevo.» | `[]`               |
 
 > Un video de hasta 2 GB tarda en subir. `fetch` no informa el avance de la subida; para mostrar una barra de progreso, el panel puede usar `XMLHttpRequest` con `upload.onprogress` solo en este endpoint.
 

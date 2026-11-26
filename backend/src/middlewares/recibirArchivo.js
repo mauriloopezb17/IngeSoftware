@@ -3,10 +3,11 @@
 // módulo lo borra al terminar la respuesta. Los errores de multer se traducen al contrato.
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
-import { unlink } from 'node:fs/promises';
+import { mkdir, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import multer from 'multer';
+import { obtenerLogger } from '../config/logger.js';
 import { CLASES_MULTIMEDIA, MAXIMO_SUBIDA_BYTES } from '../constantes/multimedia.js';
 import { ErrorApp } from '../errores/ErrorApp.js';
 
@@ -15,7 +16,13 @@ mkdirSync(DIRECTORIO_TEMPORAL, { recursive: true });
 
 const subida = multer({
   storage: multer.diskStorage({
-    destination: DIRECTORIO_TEMPORAL,
+    // El Sensor de almacenamiento de Windows u otros procesos pueden borrar la carpeta temporal
+    // con el backend corriendo: se recrea antes de cada subida.
+    destination: (_req, _archivo, devolver) => {
+      mkdir(DIRECTORIO_TEMPORAL, { recursive: true })
+        .then(() => devolver(null, DIRECTORIO_TEMPORAL))
+        .catch((error) => devolver(error));
+    },
     // Nombre propio: el que manda el cliente nunca se usa como ruta.
     filename: (_req, _archivo, devolver) => devolver(null, randomUUID()),
   }),
@@ -38,6 +45,18 @@ function mensajeDemasiadoGrande(tipoDeclarado = '') {
   return CLASES_MULTIMEDIA.VIDEO.mensajeDemasiadoGrande;
 }
 
+const ERRORES_RED_CONOCIDOS = new Set(['ECONNRESET', 'EPIPE', 'ECONNABORTED']);
+
+function esErrorDeDisco(error) {
+  if (!error) return false;
+  if (ERRORES_RED_CONOCIDOS.has(error.code)) return false;
+  return (
+    typeof error.errno === 'number' ||
+    typeof error.syscall === 'string' ||
+    typeof error.code === 'string'
+  );
+}
+
 function errorDeCarga(error, req) {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
@@ -53,6 +72,13 @@ function errorDeCarga(error, req) {
   // Cuerpo multipart cortado o mal formado (lo informa busboy con un Error común).
   if (/multipart|form|boundary|part header/i.test(error.message)) {
     return ErrorApp.validacion('La petición multipart no es válida.');
+  }
+  if (esErrorDeDisco(error)) {
+    (req.log ?? obtenerLogger()).error(
+      { err: error, codigo: error.code, llamada: error.syscall },
+      'Error de disco al recibir el archivo',
+    );
+    return ErrorApp.servicioNoDisponible('No pudimos recibir el archivo. Intenta de nuevo.');
   }
   return error;
 }
