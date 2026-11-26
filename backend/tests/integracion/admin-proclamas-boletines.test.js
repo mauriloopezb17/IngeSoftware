@@ -661,6 +661,17 @@ describe('boletines', () => {
       expect(pagina.body.datos.map((b) => b.id)).toEqual([antiguo.id]);
     });
 
+    it('busca en el título sin distinguir mayúsculas ni acentos', async () => {
+      const buscar = (texto) =>
+        como('parroco').get(`${RUTA}?porPagina=50&anio=2100&buscar=${encodeURIComponent(texto)}`);
+
+      expect(propios(await buscar(`${PREFIJO} LISTA B`))).toEqual([reciente.id]);
+      expect(propios(await buscar(`${PREFIJO} lista`))).toEqual([reciente.id, antiguo.id]);
+      const sinCoincidencias = await buscar('zzqq-nada');
+      expect(sinCoincidencias.status).toBe(200);
+      expect(sinCoincidencias.body.paginacion.total).toBe(0);
+    });
+
     it('valida los parámetros; cada rol ve su sede y el Administrador filtra por sede', async () => {
       expect(
         (await como('parroco').get(`${RUTA}?anio=1800&porPagina=51`)).body.error.detalles

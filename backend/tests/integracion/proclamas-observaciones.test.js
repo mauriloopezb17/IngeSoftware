@@ -286,6 +286,34 @@ describe('observaciones de proclamas (admin)', () => {
     expect((await como('parroco').get(RUTA_ADM)).status).toBe(200);
   });
 
+  it('buscar filtra por nombre o mensaje, sin distinguir mayúsculas ni acentos', async () => {
+    await consultar(
+      `INSERT INTO observacion_proclama (proclama_id, nombre_completo, correo, mensaje)
+       VALUES ($1, 'Mónica Quispe Búsqueda', 'monica@ejemplo.com', 'Conozco a los novios desde siempre.'),
+              ($1, 'Otra Persona', 'otra@ejemplo.com', 'Tengo un impedimento canónico que informar.')`,
+      [proclamaVigenteId],
+    );
+    const filtrar = (texto) =>
+      como('parroco').get(
+        `${RUTA_ADM}?estado=todas&proclamaId=${proclamaVigenteId}&buscar=${encodeURIComponent(texto)}`,
+      );
+
+    const porNombre = await filtrar('monica quispe');
+    expect(porNombre.status).toBe(200);
+    expect(porNombre.body.datos.map((o) => o.nombreCompleto)).toEqual(['Mónica Quispe Búsqueda']);
+    expect(porNombre.body.paginacion.total).toBe(1);
+
+    const porMensaje = await filtrar('IMPEDIMENTO CANONICO');
+    expect(porMensaje.body.datos.map((o) => o.nombreCompleto)).toEqual(['Otra Persona']);
+
+    const sinCoincidencias = await filtrar('zzqq-nada');
+    expect(sinCoincidencias.body.datos).toEqual([]);
+    expect(sinCoincidencias.body.paginacion.total).toBe(0);
+
+    // El comodín % se busca como texto, no como "cualquier cosa".
+    expect((await filtrar('%')).body.paginacion.total).toBe(0);
+  });
+
   it('resumen, marcar leída/no leída, otra sede 404 y eliminar sin datos personales en bitácora', async () => {
     await como()
       .post(RUTA_PUB(proclamaAjenaId, sedeAjena.slug), {
