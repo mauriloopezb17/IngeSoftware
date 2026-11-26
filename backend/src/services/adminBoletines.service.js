@@ -42,9 +42,9 @@ function aBoletin(fila) {
 // "2026-11" -> "2026-11-01".
 const primerDia = (periodo) => `${periodo}-01`;
 
-export async function listarBoletines(sedeFiltro, { anio, pagina, porPagina }) {
+export async function listarBoletines(sedeFiltro, { anio, buscar, pagina, porPagina }) {
   const { filas, total } = await modelo.listar(
-    { sedeSlug: sedeFiltro, anio },
+    { sedeSlug: sedeFiltro, anio, buscar },
     { limite: porPagina, desplazamiento: desplazamiento(pagina, porPagina) },
   );
   return { datos: filas.map(aBoletin), paginacion: armarPaginacion({ total, pagina, porPagina }) };

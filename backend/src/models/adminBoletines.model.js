@@ -1,5 +1,6 @@
 // Consultas de boletines del panel (SQL parametrizado).
 import { consultar } from '../db/index.js';
+import { patronBusqueda, sinAcentosSql } from '../utils/busqueda.js';
 
 const COLUMNAS = `
   b.id,
@@ -29,7 +30,8 @@ const UNIONES = `
   JOIN archivo_multimedia am ON am.id = b.archivo_id
   LEFT JOIN archivo_multimedia pt ON pt.id = b.portada_id`;
 
-// filtros: { sedeSlug?, anio? }. Del periodo más reciente al más antiguo.
+// filtros: { sedeSlug?, anio?, buscar? } (buscar: en el título, sin mayúsculas ni acentos).
+// Del periodo más reciente al más antiguo.
 export async function listar(filtros, { limite, desplazamiento }) {
   const parametros = [];
   const condiciones = ['TRUE'];
@@ -38,6 +40,11 @@ export async function listar(filtros, { limite, desplazamiento }) {
   if (filtros.sedeSlug !== undefined) condiciones.push(`s.slug = ${agregar(filtros.sedeSlug)}`);
   if (filtros.anio !== undefined) {
     condiciones.push(`extract(year FROM b.periodo) = ${agregar(filtros.anio)}`);
+  }
+  if (filtros.buscar) {
+    condiciones.push(
+      `${sinAcentosSql('b.titulo')} LIKE ${agregar(patronBusqueda(filtros.buscar))} ESCAPE '\\'`,
+    );
   }
   const donde = condiciones.join(' AND ');
 

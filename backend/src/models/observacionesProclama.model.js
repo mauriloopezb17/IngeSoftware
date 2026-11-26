@@ -1,5 +1,6 @@
 // Consultas de observaciones confidenciales sobre proclamas matrimoniales (SQL parametrizado).
 import { consultar } from '../db/index.js';
+import { patronBusqueda, sinAcentosSql } from '../utils/busqueda.js';
 
 const COLUMNAS = `
   o.id,
@@ -28,7 +29,8 @@ export async function insertar({ proclamaId, nombreCompleto, correo, telefono, m
   return rows[0];
 }
 
-export async function listar({ sedeId, estado, proclamaId }, { limite, desplazamiento }) {
+// buscar: en el nombre de quien escribe y en el mensaje, sin distinguir mayúsculas ni acentos.
+export async function listar({ sedeId, estado, proclamaId, buscar }, { limite, desplazamiento }) {
   const parametros = [];
   const condiciones = ['TRUE'];
   const agregar = (valor) => `$${parametros.push(valor)}`;
@@ -36,6 +38,12 @@ export async function listar({ sedeId, estado, proclamaId }, { limite, desplazam
   if (sedeId !== undefined) condiciones.push(`p.sede_id = ${agregar(sedeId)}`);
   if (estado === 'no-leidas') condiciones.push('o.leido_en IS NULL');
   if (proclamaId !== undefined) condiciones.push(`o.proclama_id = ${agregar(proclamaId)}`);
+  if (buscar) {
+    const p = agregar(patronBusqueda(buscar));
+    condiciones.push(
+      `(${sinAcentosSql('o.nombre_completo')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql('o.mensaje')} LIKE ${p} ESCAPE '\\')`,
+    );
+  }
 
   const donde = condiciones.join(' AND ');
 

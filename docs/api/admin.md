@@ -997,7 +997,7 @@ Permiso: `proclamas.observaciones` (solo `PARROCO`, limitado a su sede; otro rol
 
 | Método y ruta                                         | Descripción                                                                                                     |
 | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `GET /api/admin/proclamas/observaciones`              | Lista paginada (`estado=no-leidas\|todas`, `proclamaId`, `pagina`, `porPagina`), más reciente primero.          |
+| `GET /api/admin/proclamas/observaciones`              | Lista paginada (`estado=no-leidas\|todas`, `proclamaId`, `buscar` en nombre o mensaje, `pagina`, `porPagina`), más reciente primero. |
 | `GET /api/admin/proclamas/observaciones/resumen`      | Devuelve `{ "datos": { "noLeidas": N } }` para la insignia del menú.                                            |
 | `PATCH /api/admin/proclamas/observaciones/:id`        | `{ "leida": true \| false }`. Guarda o borra `leidoEn` y `leidoPor`.                                            |
 | `DELETE /api/admin/proclamas/observaciones/:id`       | Elimina la observación (`204`). En la bitácora solo se registra la acción y el id, nunca los datos personales. |
@@ -1014,7 +1014,7 @@ El mismo objeto del [endpoint público](publico.md#get-apisedessedeboletines), m
 
 | Método y ruta                     | Descripción                                                            |
 | --------------------------------- | ---------------------------------------------------------------------- |
-| `GET /api/admin/boletines`        | Paginada, del más reciente al más antiguo. Filtros: `sede`, `anio`.    |
+| `GET /api/admin/boletines`        | Paginada, del más reciente al más antiguo. Filtros: `sede`, `anio`, `buscar` (título). |
 | `GET /api/admin/boletines/:id`    | Un boletín.                                                            |
 | `POST /api/admin/boletines`       | Publica un boletín. `201`. Se publica directamente, sin revisión.      |
 | `PATCH /api/admin/boletines/:id`  | Cambia el título o el periodo, o reemplaza el PDF (`archivoId`).       |

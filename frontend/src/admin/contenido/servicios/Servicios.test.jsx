@@ -99,7 +99,7 @@ describe('gestión de servicios y preguntas frecuentes', () => {
     const usuario = userEvent.setup();
 
     await screen.findByRole('table');
-    await usuario.click(screen.getByRole('button', { name: 'Nuevo servicio' }));
+    await usuario.click(await screen.findByRole('button', { name: 'Nuevo servicio' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo servicio' });
     await usuario.click(within(dialogo).getByRole('button', { name: 'Crear servicio' }));
@@ -132,7 +132,7 @@ describe('gestión de servicios y preguntas frecuentes', () => {
 
     const tabla = await screen.findByRole('table');
     const filaBautismo = within(tabla).getByText('Bautismo').closest('tr');
-    await usuario.click(within(filaBautismo).getByRole('button', { name: 'Preguntas frecuentes de «Bautismo»' }));
+    await usuario.click(await within(filaBautismo).findByRole('button', { name: 'Preguntas frecuentes de «Bautismo»' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Preguntas frecuentes · Bautismo' });
     expect(await within(dialogo).findByText('¿Qué requisitos necesito para bautizar a mi hijo?')).toBeInTheDocument();

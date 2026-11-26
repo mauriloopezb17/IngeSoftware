@@ -53,9 +53,9 @@ export async function crearObservacionPublica(sedeId, proclamaId, cuerpo) {
 
 // GET /api/admin/proclamas/observaciones
 export async function listarObservaciones(sedeId, consulta) {
-  const { estado, proclamaId, pagina, porPagina } = consulta;
+  const { estado, proclamaId, buscar, pagina, porPagina } = consulta;
   const { filas, total } = await modelo.listar(
-    { sedeId, estado, proclamaId },
+    { sedeId, estado, proclamaId, buscar },
     { limite: porPagina, desplazamiento: desplazamiento(pagina, porPagina) },
   );
   return {
