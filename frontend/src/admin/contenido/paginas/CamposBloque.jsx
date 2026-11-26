@@ -94,7 +94,7 @@ export default function CamposBloque({
 
   const videosQuery = useQuery({
     queryKey: ['admin', 'multimedia', 'videos'],
-    queryFn: listarVideosBiblioteca,
+    queryFn: () => listarVideosBiblioteca(),
     enabled: tipo === 'hero_video',
   });
 

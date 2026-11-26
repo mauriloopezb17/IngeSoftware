@@ -28,6 +28,10 @@ export async function listarPaginas(parametros = {}) {
   return datos;
 }
 
+export function listarPaginasPaginadas(parametros = {}, senal) {
+  return clienteHttp.get('/admin/paginas', { parametros, senal });
+}
+
 export async function obtenerPagina(id) {
   const { datos } = await clienteHttp.get(`/admin/paginas/${id}`);
   return datos;

@@ -35,6 +35,8 @@ export default function ListadoBoletines() {
 
   const {
     valores,
+    busqueda,
+    setBusqueda,
     setPagina,
     actualizarFiltro,
     limpiarFiltros,
@@ -42,7 +44,6 @@ export default function ListadoBoletines() {
     filtrosActivos,
   } = useFiltrosListado({
     filtros: configFiltros,
-    conBusqueda: false,
   });
 
   const { data, isPending, isError, error, isPlaceholderData, refetch } = useQuery({
@@ -170,6 +171,9 @@ export default function ListadoBoletines() {
           tenue={isPlaceholderData}
           error={isError && !data ? `No se pudieron cargar los boletines: ${error.message}` : null}
           onReintentar={refetch}
+          busqueda={busqueda}
+          onCambiarBusqueda={setBusqueda}
+          placeholderBusqueda="Título del boletín"
           filtrosExtra={
             <div className="w-48">
               <CampoTexto

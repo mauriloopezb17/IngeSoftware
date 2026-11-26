@@ -30,6 +30,10 @@ export async function listarHorarios(parametros = {}) {
   return datos;
 }
 
+export function listarHorariosPaginados(parametros = {}, senal) {
+  return clienteHttp.get('/admin/horarios', { parametros, senal });
+}
+
 export async function crearHorario(cuerpo) {
   const { datos } = await clienteHttp.post('/admin/horarios', cuerpo);
   return datos;

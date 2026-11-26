@@ -46,6 +46,8 @@ export default function BandejaObservaciones() {
 
   const {
     valores,
+    busqueda,
+    setBusqueda,
     setPagina,
     actualizarFiltro,
     limpiarFiltros,
@@ -53,7 +55,6 @@ export default function BandejaObservaciones() {
     filtrosActivos,
   } = useFiltrosListado({
     filtros: configFiltros,
-    conBusqueda: false,
   });
 
   const { data: proclamasData } = useQuery({
@@ -164,6 +165,9 @@ export default function BandejaObservaciones() {
             tenue={isPlaceholderData}
             error={isError && !data ? `No se pudieron cargar las observaciones: ${error.message}` : null}
             onReintentar={refetch}
+            busqueda={busqueda}
+            onCambiarBusqueda={setBusqueda}
+            placeholderBusqueda="Nombre o mensaje"
             claseTabla="min-w-full"
             filtrosExtra={
               <>

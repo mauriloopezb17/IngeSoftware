@@ -47,19 +47,20 @@ describe('gestión de horarios', () => {
     reiniciarMocksContenido();
   });
 
-  it('muestra los horarios agrupados por tipo y día', async () => {
+  it('muestra los horarios en la tabla con tipo, día, hora y estado', async () => {
     await entrar('secretaria');
     montar();
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Horarios' })).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { level: 2, name: 'Santa Misa' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Confesiones' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Adoración' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Secretaría' })).toBeInTheDocument();
+    const tabla = await screen.findByRole('table');
+    expect(within(tabla).getAllByText('Santa Misa').length).toBeGreaterThan(0);
+    expect(within(tabla).getAllByText('Confesiones').length).toBeGreaterThan(0);
+    expect(within(tabla).getAllByText('Adoración').length).toBeGreaterThan(0);
+    expect(within(tabla).getAllByText('Secretaría').length).toBeGreaterThan(0);
 
-    const listaSabado = screen.getByRole('list', { name: 'Santa Misa · Sábado' });
-    expect(listaSabado).toHaveTextContent('18:00');
-    expect(listaSabado).toHaveTextContent('Misa vespertina dominical');
+    const filaSabado = within(tabla).getByText('Misa vespertina dominical').closest('tr');
+    expect(filaSabado).toHaveTextContent('Sábado');
+    expect(filaSabado).toHaveTextContent('18:00');
   });
 
   it('crea un nuevo horario con éxito', async () => {
@@ -67,7 +68,7 @@ describe('gestión de horarios', () => {
     montar();
     const usuario = userEvent.setup();
 
-    await screen.findByRole('heading', { level: 2, name: 'Santa Misa' });
+    await screen.findByRole('table');
     await usuario.click(screen.getByRole('button', { name: 'Nuevo horario' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo horario' });
@@ -79,8 +80,10 @@ describe('gestión de horarios', () => {
     await usuario.click(within(dialogo).getByRole('button', { name: 'Crear horario' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(screen.getByText(/Se creó el horario de Adoración/)).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: 'Adoración · Viernes' })).toHaveTextContent('17:00 – 18:00');
+    expect(screen.getByText(/Se agregó el horario de Adoración/)).toBeInTheDocument();
+    const filaNueva = (await within(screen.getByRole('table')).findByText('Hora santa')).closest('tr');
+    expect(filaNueva).toHaveTextContent('Viernes');
+    expect(filaNueva).toHaveTextContent('17:00 – 18:00');
   });
 
   it('edita un horario existente con éxito', async () => {
@@ -88,7 +91,7 @@ describe('gestión de horarios', () => {
     montar();
     const usuario = userEvent.setup();
 
-    await screen.findByRole('heading', { level: 2, name: 'Adoración' });
+    await screen.findByRole('table');
     await usuario.click(screen.getByRole('button', { name: 'Editar horario Adoración Jueves 19:30' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Editar horario' });
@@ -98,7 +101,7 @@ describe('gestión de horarios', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByText(/Se actualizó el horario de Adoración/)).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: 'Adoración · Jueves' })).toHaveTextContent('Adoración al Santísimo');
+    expect(within(screen.getByRole('table')).getByText('Adoración al Santísimo')).toBeInTheDocument();
   });
 
   it('muestra errores de validación (400 VALIDACION) junto al campo', async () => {
@@ -106,7 +109,7 @@ describe('gestión de horarios', () => {
     montar();
     const usuario = userEvent.setup();
 
-    await screen.findByRole('heading', { level: 2, name: 'Santa Misa' });
+    await screen.findByRole('table');
     await usuario.click(screen.getByRole('button', { name: 'Nuevo horario' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo horario' });
@@ -124,15 +127,15 @@ describe('gestión de horarios', () => {
     montar();
     const usuario = userEvent.setup();
 
-    await screen.findByRole('heading', { level: 2, name: 'Adoración' });
+    await screen.findByRole('table');
     await usuario.click(screen.getByRole('button', { name: 'Eliminar horario Adoración Jueves 19:30' }));
 
-    const confirmacion = await screen.findByRole('dialog', { name: '¿Eliminar horario de Adoración?' });
+    const confirmacion = await screen.findByRole('dialog', { name: '¿Eliminar horario?' });
     await usuario.click(within(confirmacion).getByRole('button', { name: 'Eliminar' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByText(/Se eliminó el horario de Adoración/)).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 2, name: 'Adoración' })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('table')).queryByText('Adoración')).not.toBeInTheDocument();
   });
 
   it('muestra error de carga y permite reintentar', async () => {
@@ -152,14 +155,43 @@ describe('gestión de horarios', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Fallo temporal.');
     await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
-    expect(await screen.findByRole('heading', { level: 2, name: 'Santa Misa' })).toBeInTheDocument();
+    const tabla = await screen.findByRole('table');
+    expect(within(tabla).getAllByText('Santa Misa').length).toBeGreaterThan(0);
+  });
+
+  it('envía filtros de tipo, estado y búsqueda al backend', async () => {
+    let ultimaUrl = '';
+    server.use(
+      http.get(api('/admin/horarios'), ({ request }) => {
+        ultimaUrl = request.url;
+        return HttpResponse.json({
+          datos: [],
+          paginacion: { pagina: 1, porPagina: 15, total: 0, totalPaginas: 0 },
+        });
+      }),
+    );
+    await entrar('secretaria');
+    montar();
+    const usuario = userEvent.setup();
+
+    await screen.findByText(/No hay horarios registrados con estos filtros/i);
+    await usuario.selectOptions(screen.getByLabelText('Tipo de horario'), '1');
+    await usuario.selectOptions(screen.getByLabelText('Estado'), 'true');
+    await usuario.type(screen.getByPlaceholderText('Nota del horario'), 'vespertina');
+
+    await waitFor(() => {
+      const url = new URL(ultimaUrl);
+      expect(url.searchParams.get('tipo')).toBe('1');
+      expect(url.searchParams.get('activo')).toBe('true');
+      expect(url.searchParams.get('buscar')).toBe('vespertina');
+    });
   });
 
   it('muestra la vista en solo lectura para Marketing (sin botones de crear, editar ni eliminar)', async () => {
     await entrar('marketing');
     montar();
 
-    expect(await screen.findByRole('heading', { level: 2, name: 'Santa Misa' })).toBeInTheDocument();
+    expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(screen.getByText(/Solo lectura:/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Nuevo horario' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Editar horario/ })).not.toBeInTheDocument();

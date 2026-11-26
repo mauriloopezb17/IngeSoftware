@@ -55,10 +55,12 @@ describe('gestión de páginas y bloques', () => {
     montar();
     const u = userEvent.setup({ delay: null });
 
-    const lista = await screen.findByRole('list', { name: 'Páginas' });
-    expect(within(lista).getByText('Inicio')).toBeInTheDocument();
-    expect(within(lista).getByText('Quiénes somos')).toBeInTheDocument();
-    expect(within(lista).getByText('Nuestra historia')).toBeInTheDocument();
+    const tabla = await screen.findByRole('table');
+    expect(within(tabla).getByText('Inicio')).toBeInTheDocument();
+    expect(within(tabla).getByText('Quiénes somos')).toBeInTheDocument();
+    expect(within(tabla).getByText('Nuestra historia')).toBeInTheDocument();
+    expect(screen.getByLabelText('Estado')).toBeInTheDocument();
+    expect(screen.getByLabelText('Menú')).toBeInTheDocument();
 
     // Crear nueva página
     await u.click(screen.getByRole('button', { name: /Nueva página/ }));
@@ -68,11 +70,11 @@ describe('gestión de páginas y bloques', () => {
     await u.selectOptions(within(dialogo).getByLabelText('Estado'), 'PUBLICADO');
     await u.click(within(dialogo).getByRole('button', { name: 'Crear página' }));
 
-    expect(await screen.findByText('Comunidades')).toBeInTheDocument();
+    expect(await within(screen.getByRole('table')).findByText('Comunidades')).toBeInTheDocument();
 
     // Las páginas inicio y nosotros devuelven 409 CONFLICTO al intentar eliminarlas
     await u.click(screen.getByRole('button', { name: 'Eliminar «Inicio»' }));
-    const dialogoEliminarInicio = await screen.findByRole('dialog', { name: 'Eliminar «Inicio»' });
+    const dialogoEliminarInicio = await screen.findByRole('dialog', { name: '¿Eliminar «Inicio»?' });
     await u.click(within(dialogoEliminarInicio).getByRole('button', { name: 'Eliminar' }));
     expect(await within(dialogoEliminarInicio).findByRole('alert')).toHaveTextContent(
       /no se puede eliminar/i,
@@ -82,11 +84,11 @@ describe('gestión de páginas y bloques', () => {
     // Una página hija sí puede eliminarse
     await u.click(screen.getByRole('button', { name: 'Eliminar «Nuestra historia»' }));
     const dialogoEliminarHija = await screen.findByRole('dialog', {
-      name: 'Eliminar «Nuestra historia»',
+      name: '¿Eliminar «Nuestra historia»?',
     });
     await u.click(within(dialogoEliminarHija).getByRole('button', { name: 'Eliminar' }));
     await waitFor(() =>
-      expect(screen.queryByText('Nuestra historia')).not.toBeInTheDocument(),
+      expect(within(screen.getByRole('table')).queryByText('Nuestra historia')).not.toBeInTheDocument(),
     );
   }, 15000);
 
@@ -95,8 +97,8 @@ describe('gestión de páginas y bloques', () => {
     montar();
     const u = userEvent.setup({ delay: null });
 
-    const lista = await screen.findByRole('list', { name: 'Páginas' });
-    const filaNosotros = within(lista).getByText('Quiénes somos').closest('li');
+    const tabla = await screen.findByRole('table');
+    const filaNosotros = within(tabla).getByText('Quiénes somos').closest('tr');
     await u.click(within(filaNosotros).getByRole('link', { name: 'Bloques de «Quiénes somos»' }));
 
     expect(
@@ -175,8 +177,8 @@ describe('gestión de páginas y bloques', () => {
     montar();
     const u = userEvent.setup({ delay: null });
 
-    const lista = await screen.findByRole('list', { name: 'Páginas' });
-    const filaHistoria = within(lista).getByText('Nuestra historia').closest('li');
+    const tabla = await screen.findByRole('table');
+    const filaHistoria = within(tabla).getByText('Nuestra historia').closest('tr');
     await u.click(within(filaHistoria).getByRole('link', { name: 'Bloques de «Nuestra historia»' }));
 
     // Bloque galeria usando SelectorImagenes
@@ -211,9 +213,9 @@ describe('gestión de páginas y bloques', () => {
     expect(screen.queryByRole('button', { name: /Nueva página/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Eliminar/ })).not.toBeInTheDocument();
 
-    const lista = await screen.findByRole('list', { name: 'Páginas' });
-    const filaInicio = within(lista).getByText('Inicio').closest('li');
-    await u.click(within(filaInicio).getByRole('link', { name: 'Ver bloques de «Inicio»' }));
+    const tabla = await screen.findByRole('table');
+    const filaInicio = within(tabla).getByText('Inicio').closest('tr');
+    await u.click(within(filaInicio).getByRole('link', { name: 'Bloques de «Inicio»' }));
 
     expect(await screen.findByText(/solo lectura/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Agregar bloque/ })).not.toBeInTheDocument();

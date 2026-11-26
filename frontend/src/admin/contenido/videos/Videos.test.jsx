@@ -54,10 +54,10 @@ describe('gestión de videos de YouTube', () => {
     const usuario = userEvent.setup();
 
     expect(
-      await screen.findByText('Todavía no hay videos de YouTube registrados.'),
+      await screen.findByText('No hay videos registrados.'),
     ).toBeInTheDocument();
 
-    await usuario.click(screen.getByRole('button', { name: 'Nuevo video' }));
+    await usuario.click(screen.getAllByRole('button', { name: 'Nuevo video' })[0]);
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo video de YouTube' });
     fireEvent.change(within(dialogo).getByLabelText('URL o ID de YouTube'), {
       target: { value: 'https://www.youtube.com/watch?v=pX7aQm3kR2c' },
@@ -73,11 +73,11 @@ describe('gestión de videos de YouTube', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByText('Se agregó el video «Un recorrido por nuestra parroquia».')).toBeInTheDocument();
-    expect(screen.getByText('ID: pX7aQm3kR2c')).toBeInTheDocument();
+    expect(within(await screen.findByRole('table')).getByText('Un recorrido por nuestra parroquia')).toBeInTheDocument();
     expect(screen.getByText('Duración: 0:30')).toBeInTheDocument();
 
     // Editar
-    await usuario.click(screen.getByRole('button', { name: 'Editar Un recorrido por nuestra parroquia' }));
+    await usuario.click(screen.getByRole('button', { name: 'Editar «Un recorrido por nuestra parroquia»' }));
     const dialogoEditar = await screen.findByRole('dialog', { name: 'Editar video' });
     const titulo = within(dialogoEditar).getByLabelText('Título');
     fireEvent.change(titulo, { target: { value: 'Recorrido actualizado' } });
@@ -92,8 +92,8 @@ describe('gestión de videos de YouTube', () => {
     montar();
     const usuario = userEvent.setup();
 
-    await screen.findByText('Todavía no hay videos de YouTube registrados.');
-    await usuario.click(screen.getByRole('button', { name: 'Nuevo video' }));
+    await screen.findByText('No hay videos registrados.');
+    await usuario.click(screen.getAllByRole('button', { name: 'Nuevo video' })[0]);
 
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo video de YouTube' });
     fireEvent.change(within(dialogo).getByLabelText('URL o ID de YouTube'), {
@@ -116,15 +116,38 @@ describe('gestión de videos de YouTube', () => {
     montar();
     const usuario = userEvent.setup();
 
-    expect(await screen.findByRole('heading', { level: 2, name: 'Video a eliminar' })).toBeInTheDocument();
-    await usuario.click(screen.getByRole('button', { name: 'Eliminar Video a eliminar' }));
+    expect(await within(await screen.findByRole('table')).findByText('Video a eliminar')).toBeInTheDocument();
+    await usuario.click(screen.getByRole('button', { name: 'Eliminar «Video a eliminar»' }));
 
     const confirmacion = await screen.findByRole('dialog', { name: '¿Eliminar «Video a eliminar»?' });
     await usuario.click(within(confirmacion).getByRole('button', { name: 'Eliminar' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByText('Se eliminó el video «Video a eliminar».')).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 2, name: 'Video a eliminar' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Video a eliminar')).not.toBeInTheDocument();
+  });
+
+  it('oculta los botones de reordenar y muestra aviso cuando hay filtros activos', async () => {
+    await entrar('marketing');
+    await clienteHttp.post('/admin/videos', {
+      youtube: 'pX7aQm3kR2c',
+      titulo: 'Video A',
+    });
+    await clienteHttp.post('/admin/videos', {
+      youtube: 'dQw4w9WgXcQ',
+      titulo: 'Video B',
+    });
+    montar();
+    const usuario = userEvent.setup();
+
+    await within(await screen.findByRole('table')).findByText('Video A');
+    expect(screen.getByRole('button', { name: 'Subir «Video A»' })).toBeInTheDocument();
+
+    await usuario.selectOptions(screen.getByLabelText('Destacado'), 'true');
+    expect(
+      await screen.findByText(/Para reordenar los videos, quita los filtros y asegúrate de ver todos en una sola página/),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Subir «Video A»' })).not.toBeInTheDocument();
   });
 
   it('muestra la vista en solo lectura para un rol sin permiso videos.gestionar', async () => {
@@ -154,7 +177,7 @@ describe('gestión de videos de YouTube', () => {
     );
     montar();
 
-    expect(await screen.findByRole('heading', { level: 2, name: 'Video institucional' })).toBeInTheDocument();
+    expect(await within(await screen.findByRole('table')).findByText('Video institucional')).toBeInTheDocument();
     expect(screen.getByText(/Solo lectura:/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Nuevo video' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Editar / })).not.toBeInTheDocument();

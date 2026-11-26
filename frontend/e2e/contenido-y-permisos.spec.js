@@ -24,13 +24,13 @@ test.describe('Gestión de contenido y permisos por rol', () => {
       await dialogoCrear.getByRole('button', { name: 'Crear grupo' }).click();
       await expect(dialogoCrear).toBeHidden();
 
-      await expect(secretaria.page.getByRole('heading', { level: 2, name: nombre })).toBeVisible();
+      await expect(secretaria.page.getByRole('table').getByText(nombre)).toBeVisible();
 
       await page.goto('/comunidad');
       const seccionComunidad = page.locator('#comunidad');
       await expect(seccionComunidad).toContainText(nombre);
 
-      await secretaria.page.getByRole('button', { name: `Editar ${nombre}` }).click();
+      await secretaria.page.getByRole('button', { name: `Editar «${nombre}»` }).click();
       const dialogoEditar = secretaria.page.getByRole('dialog', { name: 'Editar grupo' });
       await expect(dialogoEditar).toBeVisible();
       await dialogoEditar.getByLabel('Nombre').fill(nombreEditado);
@@ -38,20 +38,20 @@ test.describe('Gestión de contenido y permisos por rol', () => {
       await expect(dialogoEditar).toBeHidden();
 
       await expect(
-        secretaria.page.getByRole('heading', { level: 2, name: nombreEditado }),
+        secretaria.page.getByRole('table').getByText(nombreEditado),
       ).toBeVisible();
 
       await page.reload();
       await expect(seccionComunidad).toContainText(nombreEditado);
       await expect(seccionComunidad).not.toContainText(nombre);
 
-      await secretaria.page.getByRole('button', { name: `Eliminar ${nombreEditado}` }).click();
+      await secretaria.page.getByRole('button', { name: `Eliminar «${nombreEditado}»` }).click();
       const dialogoBorrar = secretaria.page.getByRole('dialog');
       await expect(dialogoBorrar).toBeVisible();
       await dialogoBorrar.getByRole('button', { name: 'Eliminar' }).click();
       await expect(dialogoBorrar).toBeHidden();
       await expect(
-        secretaria.page.getByRole('heading', { level: 2, name: nombreEditado }),
+        secretaria.page.getByRole('table').getByText(nombreEditado),
       ).toBeHidden();
 
       await page.reload();

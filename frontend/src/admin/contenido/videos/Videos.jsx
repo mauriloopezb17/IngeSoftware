@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useRef, useState } from 'react';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, ExternalLink, Inbox, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 
 import ConfirmarAccion from '../../componentes/ConfirmarAccion.jsx';
@@ -9,16 +9,16 @@ import {
   Boton,
   CampoSelect,
   EncabezadoPantalla,
-  EsqueletoTarjetas,
-  EstadoVacio,
   Insignia,
+  TablaListado,
+  useFiltrosListado,
   useToast,
 } from '../../ui/index.js';
 import {
   CLAVE_VIDEOS,
   eliminarVideo,
   formatearDuracion,
-  listarVideos,
+  listarVideosPaginados,
   reordenarVideos,
 } from './api.js';
 import FormularioVideo from './FormularioVideo.jsx';
@@ -31,14 +31,35 @@ export default function Videos() {
 
   const tituloRef = useRef(null);
 
-  const [filtroDestacado, setFiltroDestacado] = useState('');
   const [creando, setCreando] = useState(false);
   const [editando, setEditando] = useState(null);
   const [porEliminar, setPorEliminar] = useState(null);
 
+  const configFiltros = useMemo(
+    () => ({
+      destacado: { defecto: '', validar: (v) => v === 'true' || v === 'false' },
+    }),
+    [],
+  );
+
+  const {
+    valores,
+    busqueda,
+    setBusqueda,
+    setPagina,
+    actualizarFiltro,
+    limpiarFiltros,
+    hayFiltrosActivos,
+    filtrosActivos,
+  } = useFiltrosListado({
+    filtros: configFiltros,
+    porPagina: 15,
+  });
+
   const videosQuery = useQuery({
-    queryKey: [...CLAVE_VIDEOS, { destacado: filtroDestacado }],
-    queryFn: () => listarVideos({ destacado: filtroDestacado || undefined }),
+    queryKey: [...CLAVE_VIDEOS, 'lista', filtrosActivos],
+    queryFn: ({ signal }) => listarVideosPaginados(filtrosActivos, signal),
+    placeholderData: keepPreviousData,
   });
 
   const reordenarMut = useMutation({
@@ -56,15 +77,118 @@ export default function Videos() {
     },
   });
 
-  const videos = videosQuery.data ?? [];
+  const videos = videosQuery.data?.datos ?? [];
+  const totalPaginas = videosQuery.data?.paginacion?.totalPaginas ?? 1;
+  const puedeReordenar = !hayFiltrosActivos && totalPaginas <= 1;
 
   function mover(indice, direccion) {
+    if (!puedeReordenar) return;
     const destino = indice + direccion;
     if (destino < 0 || destino >= videos.length) return;
     const ids = videos.map((v) => v.id);
     [ids[indice], ids[destino]] = [ids[destino], ids[indice]];
     reordenarMut.mutate(ids);
   }
+
+  const columnas = [
+    {
+      id: 'video',
+      encabezado: 'Video',
+      render: (video) => {
+        const duracion = formatearDuracion(video.duracionSegundos);
+        return (
+          <div>
+            <p className="font-semibold text-ink">{video.titulo}</p>
+            {video.descripcion && (
+              <p className="mt-0.5 line-clamp-2 text-xs text-muted">{video.descripcion}</p>
+            )}
+            <p className="mt-1 text-xs tabular-nums text-muted">
+              {duracion ? `Duración: ${duracion}` : 'Sin duración'}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'estado',
+      encabezado: 'Destacado',
+      render: (video) =>
+        video.destacado ? (
+          <Insignia variante="programado">
+            <Star className="mr-1 inline size-3" aria-hidden="true" />
+            Destacado
+          </Insignia>
+        ) : (
+          <span className="text-xs text-muted">Normal</span>
+        ),
+    },
+    {
+      id: 'acciones',
+      encabezado: <span className="sr-only">Acciones</span>,
+      claseCelda: 'text-right sm:w-px sm:whitespace-nowrap',
+      render: (video) => {
+        const indice = videos.findIndex((v) => v.id === video.id);
+        return (
+          <div className="flex flex-wrap justify-end gap-1.5">
+            <Boton
+              como="a"
+              href={video.urlYoutube}
+              target="_blank"
+              rel="noopener noreferrer"
+              variante="secundario"
+              tamano="sm"
+              icono={ExternalLink}
+              aria-label={`Ver «${video.titulo}» en YouTube`}
+            >
+              Ver
+            </Boton>
+            {puedeGestionar && (
+              <>
+                {puedeReordenar && (
+                  <>
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
+                      icono={ArrowUp}
+                      disabled={indice <= 0 || reordenarMut.isPending}
+                      onClick={() => mover(indice, -1)}
+                      aria-label={`Subir «${video.titulo}»`}
+                    />
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
+                      icono={ArrowDown}
+                      disabled={indice === videos.length - 1 || reordenarMut.isPending}
+                      onClick={() => mover(indice, 1)}
+                      aria-label={`Bajar «${video.titulo}»`}
+                    />
+                  </>
+                )}
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  icono={Pencil}
+                  onClick={() => setEditando(video)}
+                  aria-label={`Editar «${video.titulo}»`}
+                >
+                  Editar
+                </Boton>
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  icono={Trash2}
+                  onClick={() => setPorEliminar(video)}
+                  aria-label={`Eliminar «${video.titulo}»`}
+                >
+                  Eliminar
+                </Boton>
+              </>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <section className="mx-auto max-w-5xl">
@@ -94,163 +218,80 @@ export default function Videos() {
         </Aviso>
       )}
 
-      <div className="mt-6 rounded-lg border border-sand bg-white p-4 sm:max-w-xs">
-        <CampoSelect
-          etiqueta="Destacado"
-          value={filtroDestacado}
-          onChange={(e) => setFiltroDestacado(e.target.value)}
-        >
-          <option value="">Todos</option>
-          <option value="true">Destacados</option>
-          <option value="false">No destacados</option>
-        </CampoSelect>
-      </div>
+      {puedeGestionar && !puedeReordenar && (
+        <Aviso tipo="info" className="mt-4">
+          <p>Para reordenar los videos, quita los filtros y asegúrate de ver todos en una sola página.</p>
+        </Aviso>
+      )}
 
-      <div className="mt-6" aria-busy={videosQuery.isPending}>
-        {videosQuery.isPending && (
-          <EsqueletoTarjetas cantidad={3} columnas="grid-cols-1" etiqueta="Cargando videos…" />
-        )}
-
-        {videosQuery.error && (
-          <Aviso
-            tipo="error"
-            accion={
-              <Boton variante="secundario" tamano="sm" onClick={() => videosQuery.refetch()}>
-                Reintentar
-              </Boton>
-            }
-          >
-            <p>{videosQuery.error.message || 'No se pudieron cargar los datos.'}</p>
-          </Aviso>
-        )}
-
-        {!videosQuery.isPending && !videosQuery.error && videos.length === 0 && (
-          <EstadoVacio
-            icono={Inbox}
-            titulo="Todavía no hay videos de YouTube registrados."
-            descripcion="Agrega videos de transmisiones, homilías o mensajes parroquiales."
-            accion={
+      <div className="mt-6">
+        <TablaListado
+          caption="Videos"
+          nombrePaginacion="Paginación de videos"
+          columnas={columnas}
+          datos={videos}
+          paginacion={videosQuery.data?.paginacion}
+          onCambiarPagina={setPagina}
+          cargando={videosQuery.isPending}
+          tenue={videosQuery.isPlaceholderData}
+          error={
+            videosQuery.isError
+              ? videosQuery.error?.message || 'No se pudieron cargar los datos.'
+              : null
+          }
+          onReintentar={videosQuery.refetch}
+          busqueda={busqueda}
+          onCambiarBusqueda={setBusqueda}
+          placeholderBusqueda="Título o descripción"
+          filtrosExtra={
+            <div className="min-w-[160px]">
+              <CampoSelect
+                etiqueta="Destacado"
+                value={valores.destacado}
+                onChange={(e) => actualizarFiltro('destacado', e.target.value)}
+              >
+                <option value="">Todos</option>
+                <option value="true">Destacados</option>
+                <option value="false">No destacados</option>
+              </CampoSelect>
+            </div>
+          }
+          hayFiltrosActivos={hayFiltrosActivos}
+          onLimpiarFiltros={limpiarFiltros}
+          vacio={{
+            icono: Inbox,
+            titulo: 'No hay videos registrados.',
+            descripcion: 'Agrega un enlace de YouTube para mostrarlo en el portal.',
+            accion:
               puedeGestionar && (
-                <Boton
-                  variante="primario"
-                  icono={Plus}
-                  onClick={() => setCreando(true)}
-                >
-                  Agregar el primer video
+                <Boton variante="primario" icono={Plus} onClick={() => setCreando(true)}>
+                  Nuevo video
                 </Boton>
-              )
-            }
-          />
-        )}
-
-        {videos.length > 0 && (
-          <ul className="flex flex-col gap-3" aria-label="Videos de YouTube">
-            {videos.map((video, i) => {
-              const duracion = formatearDuracion(video.duracionSegundos);
-              return (
-                <li
-                  key={video.id}
-                  className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-sand bg-white p-5"
-                >
-                  <div className="flex min-w-0 flex-1 items-start gap-4">
-                    <img
-                      src={video.urlMiniatura}
-                      alt={video.titulo}
-                      className="aspect-video w-36 shrink-0 rounded-md border border-sand bg-panel object-cover"
-                    />
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-body text-base font-semibold text-ink">{video.titulo}</h2>
-                        {video.destacado && (
-                          <Insignia variante="programado">
-                            <Star className="mr-1 size-3" aria-hidden="true" />
-                            Destacado
-                          </Insignia>
-                        )}
-                      </div>
-                      {video.descripcion && <p className="mt-1 text-sm text-ink">{video.descripcion}</p>}
-                      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted">
-                        <span>ID: {video.youtubeVideoId}</span>
-                        {duracion && <span className="tabular-nums">Duración: {duracion}</span>}
-                        {video.fechaPublicacion && <span>Fecha: {video.fechaPublicacion}</span>}
-                        <a
-                          href={video.urlVideo}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 font-semibold text-ink underline-offset-2 hover:underline"
-                        >
-                          Ver en YouTube
-                          <ExternalLink className="size-3" aria-hidden="true" />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-
-                  {puedeGestionar && (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {!filtroDestacado && (
-                        <>
-                          <Boton
-                            variante="secundario"
-                            tamano="sm"
-                            onClick={() => mover(i, -1)}
-                            disabled={i === 0 || reordenarMut.isPending}
-                            aria-label={`Subir ${video.titulo}`}
-                          >
-                            <ArrowUp className="size-3.5" aria-hidden="true" />
-                          </Boton>
-                          <Boton
-                            variante="secundario"
-                            tamano="sm"
-                            onClick={() => mover(i, 1)}
-                            disabled={i === videos.length - 1 || reordenarMut.isPending}
-                            aria-label={`Bajar ${video.titulo}`}
-                          >
-                            <ArrowDown className="size-3.5" aria-hidden="true" />
-                          </Boton>
-                        </>
-                      )}
-                      <Boton
-                        variante="secundario"
-                        tamano="sm"
-                        icono={Pencil}
-                        onClick={() => setEditando(video)}
-                        aria-label={`Editar ${video.titulo}`}
-                      >
-                        Editar
-                      </Boton>
-                      <Boton
-                        variante="secundario"
-                        tamano="sm"
-                        icono={Trash2}
-                        onClick={() => setPorEliminar(video)}
-                        aria-label={`Eliminar ${video.titulo}`}
-                      >
-                        Eliminar
-                      </Boton>
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
+              ),
+          }}
+          vacioConFiltros={{
+            icono: Inbox,
+            titulo: 'No hay videos registrados con estos filtros.',
+            descripcion: 'Prueba quitando el filtro o agrega un video nuevo.',
+          }}
+        />
       </div>
 
       {(creando || editando) && (
         <FormularioVideo
           video={editando}
-          onCerrar={() => {
-            setCreando(false);
-            setEditando(null);
-          }}
           onGuardado={(guardado) => {
             const msg = editando
               ? `Se actualizó el video «${guardado.titulo}».`
               : `Se agregó el video «${guardado.titulo}».`;
             setCreando(false);
             setEditando(null);
+            queryClient.invalidateQueries({ queryKey: CLAVE_VIDEOS });
             toast.exito(msg);
+          }}
+          onCerrar={() => {
+            setCreando(false);
+            setEditando(null);
           }}
         />
       )}
@@ -266,7 +307,7 @@ export default function Videos() {
             setPorEliminar(null);
           }}
         >
-          El video dejará de mostrarse en el portal. Esta acción no se puede deshacer.
+          El video dejará de mostrarse en el portal público.
         </ConfirmarAccion>
       )}
     </section>

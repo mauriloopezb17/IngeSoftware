@@ -100,14 +100,15 @@ describe('edición de datos de la sede y redes sociales', () => {
     expect(url1).toHaveAccessibleDescription(/La URL de la red social debe comenzar con https:\/\/\./);
   });
 
-  it('Administrador ve el selector de sedes y puede crear una nueva sede', async () => {
+  it('Administrador ve la tabla de sedes con filtros y puede crear una nueva sede', async () => {
     await entrar('admin');
     montar();
     const usuario = userEvent.setup();
 
-    const selector = await screen.findByLabelText('Sede a editar');
-    expect(selector).toBeInTheDocument();
-    expect(within(selector).getAllByRole('option')).toHaveLength(3);
+    const tabla = await screen.findByRole('table');
+    expect(within(tabla).getByText('Parroquia Señor de la Exaltación')).toBeInTheDocument();
+    expect(screen.getByLabelText('Tipo')).toBeInTheDocument();
+    expect(screen.getByLabelText('Estado')).toBeInTheDocument();
 
     await usuario.click(screen.getByRole('button', { name: 'Nueva sede' }));
     const dialogo = await screen.findByRole('dialog', { name: 'Nueva sede' });

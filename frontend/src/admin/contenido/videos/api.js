@@ -10,6 +10,10 @@ export async function listarVideos(parametros = {}) {
   return datos;
 }
 
+export function listarVideosPaginados(parametros = {}, senal) {
+  return clienteHttp.get('/admin/videos', { parametros, senal });
+}
+
 export async function crearVideo(cuerpo) {
   const { datos } = await clienteHttp.post('/admin/videos', cuerpo);
   return datos;

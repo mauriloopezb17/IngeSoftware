@@ -10,6 +10,10 @@ export async function listarServicios(parametros = {}) {
   return datos;
 }
 
+export function listarServiciosPaginados(parametros = {}, senal) {
+  return clienteHttp.get('/admin/servicios', { parametros, senal });
+}
+
 export async function obtenerServicio(id) {
   const { datos } = await clienteHttp.get(`/admin/servicios/${id}`);
   return datos;
