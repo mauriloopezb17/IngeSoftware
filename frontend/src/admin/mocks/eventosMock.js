@@ -22,7 +22,7 @@ import {
   respuestaError,
   sedeDeLaLista,
 } from './apoyoMock.js';
-import { buscarArchivo } from './multimediaMock.js';
+import { buscarArchivo, buscarArchivoPorUrl } from './multimediaMock.js';
 import { fechaBolivia, SEDE_PRINCIPAL } from './usuarios.js';
 
 const CATEGORIAS_EVENTO = CATALOGOS.categoriasEvento;
@@ -51,6 +51,7 @@ const evento = (datos) => ({
   fechaFin: null,
   todoElDia: false,
   imagenId: null,
+  detalle: null,
   idExternoM365: null,
   creadoPor: SECRETARIA,
   ...datos,
@@ -65,6 +66,41 @@ function crearEventosIniciales() {
       descripcion: 'Horarios: 8:00 – 10:00 – 12:00',
       fechaInicio: diaRelativo(7, '08:00'),
       categoria: categoria(2),
+      detalle: {
+        contenido: {
+          formato: 'blocknote',
+          version: 1,
+          bloques: [
+            {
+              id: 'ev-ejemplo-p1',
+              type: 'paragraph',
+              props: { textColor: 'default', backgroundColor: 'default', textAlignment: 'left' },
+              content: [
+                {
+                  type: 'text',
+                  text: 'Celebración comunitaria y oración por los enfermos (texto de ejemplo).',
+                  styles: {},
+                },
+              ],
+              children: [],
+            },
+          ],
+        },
+        direccion: 'Av. Héctor Ormachea N.º 167, Obrajes, La Paz',
+        enlaceMapa: 'https://www.google.com/maps/search/?api=1&query=-16.5267952%2C-68.1082157',
+        programa: [
+          { hora: '08:00', actividad: 'Primera misa de sanación (ejemplo)' },
+          { hora: '10:00', actividad: 'Misa central (ejemplo)' },
+          { hora: '12:00', actividad: 'Tercera misa (ejemplo)' },
+        ],
+        responsable: {
+          nombre: 'Equipo de Liturgia (ejemplo)',
+          rol: 'Coordinación pastoral',
+          telefono: '(2) 278 4937',
+          correo: null,
+        },
+        enlaces: [],
+      },
     }),
     evento({ id: 3, titulo: 'Misa por los difuntos de la comunidad', fechaInicio: diaRelativo(8, '19:00'), categoria: categoria(1) }),
     evento({
@@ -162,8 +198,194 @@ export function serializarEvento(ev) {
 // ---- Validación (admin.md §4) ----
 
 // Cuerpos estrictos como en la API: idExternoM365 (solo lectura) u otro campo desconocido es «Campo no permitido.».
-const CAMPOS_EDITAR = ['titulo', 'descripcion', 'lugar', 'fechaInicio', 'fechaFin', 'todoElDia', 'categoriaEventoId', 'imagenId', 'estado'];
+const CAMPOS_EDITAR = [
+  'titulo',
+  'descripcion',
+  'lugar',
+  'fechaInicio',
+  'fechaFin',
+  'todoElDia',
+  'categoriaEventoId',
+  'imagenId',
+  'estado',
+  'detalle',
+];
 const CAMPOS_CREAR = ['sedeId', ...CAMPOS_EDITAR];
+const CAMPOS_DETALLE = ['contenido', 'direccion', 'enlaceMapa', 'programa', 'responsable', 'enlaces'];
+
+function esGoogleMapsValido(valor) {
+  try {
+    const url = new URL(valor);
+    if (url.protocol !== 'https:') return false;
+    const host = url.hostname.toLowerCase();
+    if (host === 'maps.app.goo.gl') return url.pathname.length > 1;
+    if (host === 'goo.gl') return url.pathname.startsWith('/maps/');
+    if (/^(www\.)?google\.[a-z.]{2,10}$/.test(host)) return url.pathname.startsWith('/maps');
+    if (/^maps\.google\.[a-z.]{2,10}$/.test(host)) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function esUrlHttpsValida(valor) {
+  try {
+    return /^https:\/\/\S+$/i.test(valor) && new URL(valor).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function validarBloquesDetalle(bloques, sede, prefijo, detalles) {
+  if (!Array.isArray(bloques)) {
+    detalles.push({ campo: `${prefijo}.bloques`, mensaje: 'Debe ser una lista de bloques.' });
+    return;
+  }
+  bloques.forEach((bloque, indice) => {
+    if (bloque?.type === 'image' || bloque?.type === 'video') {
+      const clase = bloque.type === 'image' ? 'image/' : 'video/';
+      const archivo = buscarArchivoPorUrl(bloque.props?.url);
+      if (!archivo || archivo.sede.id !== sede.id) {
+        detalles.push({
+          campo: `${prefijo}.bloques.${indice}.props.url`,
+          mensaje: `Debe ser ${bloque.type === 'image' ? 'una imagen' : 'un video'} de la biblioteca multimedia de esta sede.`,
+        });
+      } else if (!archivo.tipoMime.startsWith(clase)) {
+        detalles.push({
+          campo: `${prefijo}.bloques.${indice}.props.url`,
+          mensaje: `El archivo no es ${bloque.type === 'image' ? 'una imagen' : 'un video'}.`,
+        });
+      }
+    }
+    if (Array.isArray(bloque?.children) && bloque.children.length > 0) {
+      validarBloquesDetalle(bloque.children, sede, `${prefijo}.bloques.${indice}.children`, detalles);
+    }
+  });
+}
+
+function validarDetalle(detalle, { sede }) {
+  const detalles = [];
+  if (detalle === null) return detalles;
+  if (!detalle || typeof detalle !== 'object' || Array.isArray(detalle)) {
+    return [{ campo: 'detalle', mensaje: 'Debe ser un objeto o null.' }];
+  }
+
+  for (const clave of Object.keys(detalle)) {
+    if (!CAMPOS_DETALLE.includes(clave)) {
+      detalles.push({ campo: `detalle.${clave}`, mensaje: 'Campo no permitido.' });
+    }
+  }
+
+  if (detalle.contenido !== undefined && detalle.contenido !== null) {
+    if (typeof detalle.contenido !== 'object' || detalle.contenido.formato !== 'blocknote' || detalle.contenido.version !== 1) {
+      detalles.push({ campo: 'detalle.contenido', mensaje: 'Documento BlockNote inválido.' });
+    } else {
+      validarBloquesDetalle(detalle.contenido.bloques, sede, 'detalle.contenido', detalles);
+    }
+  }
+
+  if (detalle.direccion !== undefined && detalle.direccion !== null) {
+    if (typeof detalle.direccion !== 'string' || detalle.direccion.trim().length > 200) {
+      detalles.push({ campo: 'detalle.direccion', mensaje: 'Puede tener hasta 200 caracteres.' });
+    }
+  }
+
+  if (detalle.enlaceMapa !== undefined && detalle.enlaceMapa !== null && detalle.enlaceMapa !== '') {
+    if (typeof detalle.enlaceMapa !== 'string' || detalle.enlaceMapa.trim().length > 1000 || !esGoogleMapsValido(detalle.enlaceMapa.trim())) {
+      detalles.push({ campo: 'detalle.enlaceMapa', mensaje: 'Debe ser una URL https:// de Google Maps.' });
+    }
+  }
+
+  if (detalle.programa !== undefined) {
+    if (!Array.isArray(detalle.programa) || detalle.programa.length > 20) {
+      detalles.push({ campo: 'detalle.programa', mensaje: 'Puede tener hasta 20 actividades.' });
+    } else {
+      detalle.programa.forEach((item, i) => {
+        if (!item || typeof item !== 'object') {
+          detalles.push({ campo: `detalle.programa.${i}`, mensaje: 'Actividad inválida.' });
+          return;
+        }
+        if (typeof item.hora !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(item.hora.trim())) {
+          detalles.push({ campo: `detalle.programa.${i}.hora`, mensaje: 'Debe tener formato HH:MM (24 horas).' });
+        }
+        if (typeof item.actividad !== 'string' || !item.actividad.trim() || item.actividad.trim().length > 120) {
+          detalles.push({ campo: `detalle.programa.${i}.actividad`, mensaje: 'Debe tener entre 1 y 120 caracteres.' });
+        }
+      });
+    }
+  }
+
+  if (detalle.responsable !== undefined && detalle.responsable !== null) {
+    const r = detalle.responsable;
+    if (typeof r !== 'object' || Array.isArray(r)) {
+      detalles.push({ campo: 'detalle.responsable', mensaje: 'Debe ser un objeto o null.' });
+    } else {
+      for (const k of Object.keys(r)) {
+        if (!['nombre', 'rol', 'telefono', 'correo'].includes(k)) {
+          detalles.push({ campo: `detalle.responsable.${k}`, mensaje: 'Campo no permitido.' });
+        }
+      }
+      if (typeof r.nombre !== 'string' || !r.nombre.trim() || r.nombre.trim().length > 120) {
+        detalles.push({ campo: 'detalle.responsable.nombre', mensaje: 'Es obligatorio y puede tener hasta 120 caracteres.' });
+      }
+      if (r.rol !== undefined && r.rol !== null && (typeof r.rol !== 'string' || r.rol.trim().length > 80)) {
+        detalles.push({ campo: 'detalle.responsable.rol', mensaje: 'Puede tener hasta 80 caracteres.' });
+      }
+      if (r.telefono !== undefined && r.telefono !== null && r.telefono !== '' && (typeof r.telefono !== 'string' || !/^[+\d()\s.-]{5,30}$/.test(r.telefono.trim()))) {
+        detalles.push({ campo: 'detalle.responsable.telefono', mensaje: 'Debe ser un número de teléfono válido.' });
+      }
+      if (r.correo !== undefined && r.correo !== null && r.correo !== '' && (typeof r.correo !== 'string' || r.correo.trim().length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.correo.trim()))) {
+        detalles.push({ campo: 'detalle.responsable.correo', mensaje: 'Debe ser un correo electrónico válido.' });
+      }
+    }
+  }
+
+  if (detalle.enlaces !== undefined) {
+    if (!Array.isArray(detalle.enlaces) || detalle.enlaces.length > 10) {
+      detalles.push({ campo: 'detalle.enlaces', mensaje: 'Puede tener hasta 10 enlaces.' });
+    } else {
+      detalle.enlaces.forEach((item, i) => {
+        if (!item || typeof item !== 'object') {
+          detalles.push({ campo: `detalle.enlaces.${i}`, mensaje: 'Enlace inválido.' });
+          return;
+        }
+        if (typeof item.texto !== 'string' || !item.texto.trim() || item.texto.trim().length > 80) {
+          detalles.push({ campo: `detalle.enlaces.${i}.texto`, mensaje: 'Debe tener entre 1 y 80 caracteres.' });
+        }
+        if (typeof item.url !== 'string' || item.url.trim().length > 500 || !esUrlHttpsValida(item.url.trim())) {
+          detalles.push({ campo: `detalle.enlaces.${i}.url`, mensaje: 'Debe ser una URL que empiece con https://.' });
+        }
+      });
+    }
+  }
+
+  return detalles;
+}
+
+function normalizarDetalle(detalle) {
+  if (detalle === null || detalle === undefined) return null;
+  const r = detalle.responsable;
+  return {
+    contenido: detalle.contenido ?? null,
+    direccion: detalle.direccion?.trim() || null,
+    enlaceMapa: detalle.enlaceMapa?.trim() || null,
+    programa: (detalle.programa ?? [])
+      .map((item) => ({ hora: item.hora.trim(), actividad: item.actividad.trim() }))
+      .sort((a, b) => a.hora.localeCompare(b.hora)),
+    responsable: r
+      ? {
+          nombre: r.nombre.trim(),
+          rol: r.rol?.trim() || null,
+          telefono: r.telefono?.trim() || null,
+          correo: r.correo?.trim() || null,
+        }
+      : null,
+    enlaces: (detalle.enlaces ?? []).map((item) => ({
+      texto: item.texto.trim(),
+      url: item.url.trim(),
+    })),
+  };
+}
 
 function validar(cuerpo, { parcial, sede }) {
   const detalles = camposNoPermitidos(cuerpo, parcial ? CAMPOS_EDITAR : CAMPOS_CREAR);
@@ -197,6 +419,9 @@ function validar(cuerpo, { parcial, sede }) {
       mal('imagenId', 'Debe ser una imagen de la biblioteca multimedia de esta sede.');
     else if (!archivo.tipoMime.startsWith('image/')) mal('imagenId', 'El archivo no es una imagen.');
   }
+  if ('detalle' in cuerpo) {
+    detalles.push(...validarDetalle(cuerpo.detalle, { sede }));
+  }
   return detalles;
 }
 
@@ -210,6 +435,7 @@ function aplicar(ev, cuerpo) {
   if ('categoriaEventoId' in cuerpo) ev.categoria = categoria(cuerpo.categoriaEventoId);
   if ('imagenId' in cuerpo) ev.imagenId = cuerpo.imagenId;
   if ('estado' in cuerpo) ev.estado = ESTADOS[cuerpo.estado];
+  if ('detalle' in cuerpo) ev.detalle = normalizarDetalle(cuerpo.detalle);
 }
 
 const finAntesDeInicio = (ev) =>
@@ -331,6 +557,24 @@ export const handlersEventos = [
     if (fechas.length) return respuestaError(errorValidacion(fechas).error);
 
     Object.assign(leido.recurso, copia);
+    return HttpResponse.json({ datos: serializarEvento(leido.recurso) });
+  }),
+
+  http.patch(api('/admin/eventos/:id/detalle'), async ({ request, params }) => {
+    const { respuesta } = autorizar('eventos.detalle', 'Tu rol no tiene permiso para editar la página de los eventos.');
+    if (respuesta) return respuesta;
+    const { usuario } = autenticar();
+    const leido = leerDeLaSede(eventos, params.id, usuario, NO_EXISTE);
+    if (leido.respuesta) return leido.respuesta;
+    const cuerpo = await leerCuerpo(request);
+    if (!cuerpo) return cuerpoInvalido();
+
+    const detalles = camposNoPermitidos(cuerpo, ['detalle']);
+    if (!('detalle' in cuerpo)) detalles.push({ campo: 'detalle', mensaje: 'Es obligatorio.' });
+    else detalles.push(...validarDetalle(cuerpo.detalle, { sede: leido.recurso.sede }));
+    if (detalles.length) return respuestaError(errorValidacion(detalles).error);
+
+    leido.recurso.detalle = normalizarDetalle(cuerpo.detalle);
     return HttpResponse.json({ datos: serializarEvento(leido.recurso) });
   }),
 

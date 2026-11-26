@@ -39,7 +39,7 @@ function leerFiltros(parametros) {
   };
 }
 
-function TarjetaEvento({ evento, editable, onEliminar }) {
+function TarjetaEvento({ evento, editable, soloDetalle, onEliminar }) {
   const { titulo, categoria, estado, lugar, finalizado } = evento;
   return (
     <li>
@@ -81,7 +81,7 @@ function TarjetaEvento({ evento, editable, onEliminar }) {
           )}
         </div>
 
-        {editable && (
+        {(editable || soloDetalle) && (
           <div className="flex shrink-0 flex-wrap gap-2">
             <Boton
               como={Link}
@@ -89,19 +89,21 @@ function TarjetaEvento({ evento, editable, onEliminar }) {
               variante="secundario"
               tamano="sm"
               icono={Pencil}
-              aria-label={`Editar «${titulo}»`}
+              aria-label={editable ? `Editar «${titulo}»` : `Editar página de «${titulo}»`}
             >
-              Editar
+              {editable ? 'Editar' : 'Editar página'}
             </Boton>
-            <Boton
-              variante="secundario"
-              tamano="sm"
-              icono={Trash2}
-              onClick={() => onEliminar(evento)}
-              aria-label={`Eliminar «${titulo}»`}
-            >
-              Eliminar
-            </Boton>
+            {editable && (
+              <Boton
+                variante="secundario"
+                tamano="sm"
+                icono={Trash2}
+                onClick={() => onEliminar(evento)}
+                aria-label={`Eliminar «${titulo}»`}
+              >
+                Eliminar
+              </Boton>
+            )}
           </div>
         )}
       </article>
@@ -115,6 +117,7 @@ export default function ListadoEventos() {
   const filtros = leerFiltros(parametros);
   const { puede } = usePermisos();
   const editable = puede('eventos.gestionar');
+  const soloDetalle = !editable && puede('eventos.detalle');
   const clienteConsultas = useQueryClient();
   const toast = useToast();
   const tituloRef = useRef(null);
@@ -166,10 +169,20 @@ export default function ListadoEventos() {
       />
 
       {!editable && (
-        <Aviso tipo="soloLectura" className="mt-4">
+        <Aviso tipo={soloDetalle ? 'info' : 'soloLectura'} className="mt-4">
           <p>
-            <strong className="font-semibold text-ink">Solo lectura.</strong> Tu rol puede consultar el calendario, pero no
-            modificarlo.
+            {soloDetalle ? (
+              <>
+                <strong className="font-semibold text-ink">Edición de página del evento.</strong> Puedes completar el
+                contenido, programa, dirección y enlaces de cada evento; los datos de fecha y estado los gestiona
+                secretaría.
+              </>
+            ) : (
+              <>
+                <strong className="font-semibold text-ink">Solo lectura.</strong> Tu rol puede consultar el calendario,
+                pero no modificarlo.
+              </>
+            )}
           </p>
         </Aviso>
       )}
@@ -229,7 +242,13 @@ export default function ListadoEventos() {
             {eventos.length ? (
               <ul aria-label="Eventos" className={`flex flex-col gap-3 ${isPlaceholderData ? 'opacity-60' : ''}`}>
                 {eventos.map((evento) => (
-                  <TarjetaEvento key={evento.id} evento={evento} editable={editable} onEliminar={setPorEliminar} />
+                  <TarjetaEvento
+                    key={evento.id}
+                    evento={evento}
+                    editable={editable}
+                    soloDetalle={soloDetalle}
+                    onEliminar={setPorEliminar}
+                  />
                 ))}
               </ul>
             ) : (

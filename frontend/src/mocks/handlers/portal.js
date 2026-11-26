@@ -185,17 +185,45 @@ export const handlersPortal = [
 
     const desdeParam = url.searchParams.get('desde');
     const desde = desdeParam && desdeParam > hoyBolivia ? desdeParam : hoyBolivia;
-    lista = lista.filter((evento) => evento.fechaInicio.slice(0, 10) >= desde);
+    lista = lista.filter((evento) => (evento.fechaFin ?? evento.fechaInicio).slice(0, 10) >= desde);
 
     const hasta = url.searchParams.get('hasta');
     if (hasta) {
       lista = lista.filter((evento) => evento.fechaInicio.slice(0, 10) <= hasta);
     }
 
-    lista = [...lista].sort((a, b) => a.fechaInicio.localeCompare(b.fechaInicio));
+    lista = [...lista]
+      .sort((a, b) => a.fechaInicio.localeCompare(b.fechaInicio))
+      .map((evento) => ({
+        ...omitirCampos(evento, ['detalle']),
+        tieneDetalle: Boolean(evento.tieneDetalle),
+      }));
 
     const resultado = paginar(lista, url);
     return resultado.error ?? resultado.respuesta;
+  }),
+
+  http.get(api('/sedes/:sede/eventos/:id'), ({ params }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const id = Number(params.id);
+    const evento =
+      Number.isInteger(id) && id > 0 && esSedePrincipal(params.sede)
+        ? obtenerEventosExaltacion().find((item) => item.id === id)
+        : null;
+
+    if (!evento) {
+      return errorJson(404, 'NO_ENCONTRADO', `No existe el evento «${params.id}».`);
+    }
+
+    return HttpResponse.json({
+      datos: {
+        ...evento,
+        tieneDetalle: Boolean(evento.tieneDetalle),
+        detalle: evento.detalle ?? null,
+      },
+    });
   }),
 
   http.get(api('/sedes/:sede/publicaciones'), ({ params, request }) => {

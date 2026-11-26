@@ -16,7 +16,9 @@ export async function actualizarFila(db, tabla, id, cambios, { jsonb = [] } = {}
     (columna, indice) => `${columna} = $${indice + 2}${jsonb.includes(columna) ? '::jsonb' : ''}`,
   );
   const valores = columnas.map((columna) =>
-    jsonb.includes(columna) ? JSON.stringify(cambios[columna]) : cambios[columna],
+    jsonb.includes(columna) && cambios[columna] !== null
+      ? JSON.stringify(cambios[columna])
+      : cambios[columna],
   );
 
   const { rows } = await db.consultar(

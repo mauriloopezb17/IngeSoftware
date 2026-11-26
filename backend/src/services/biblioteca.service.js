@@ -80,6 +80,7 @@ const DESCRIPCION_DE_USO = {
   CONTENIDO_PUBLICACION: (nombre) => `Usado dentro del contenido de la publicación «${nombre}».`,
   CONTENIDO_SERVICIO: (nombre) => `Usado dentro del contenido del servicio «${nombre}».`,
   BLOQUE_PAGINA: (nombre) => `Usado en un bloque de la página «${nombre}».`,
+  DETALLE_EVENTO: (nombre) => `Usado dentro del detalle del evento «${nombre}».`,
 };
 
 function errorEnUso(usos) {

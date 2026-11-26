@@ -252,19 +252,48 @@ WHERE slug = 'senor-de-la-exaltacion';
 -- Los títulos no mencionan fechas propias, porque los eventos caen en días relativos a la carga.
 -- "Misa de sanación" tiene tres horarios (8:00 – 10:00 – 12:00): inicia a las 8:00 y los
 -- horarios completos van en la descripción.
-INSERT INTO evento (sede_id, categoria_evento_id, estado_publicacion_id, creado_por, titulo, descripcion, lugar, fecha_inicio)
+INSERT INTO evento (sede_id, categoria_evento_id, estado_publicacion_id, creado_por, titulo, descripcion, lugar, fecha_inicio, detalle)
 SELECT (SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'),
        (SELECT id FROM categoria_evento WHERE nombre = e.categoria),
        (SELECT id FROM estado_publicacion WHERE nombre = 'Publicado'),
        (SELECT id FROM usuario WHERE correo = 'secretaria@parroquia.test'),
        e.titulo, e.descripcion, e.lugar,
-       (current_date + e.dias + e.hora::time) AT TIME ZONE 'America/La_Paz'
+       (current_date + e.dias + e.hora::time) AT TIME ZONE 'America/La_Paz',
+       e.detalle
 FROM (VALUES
-  ('Liturgia',   'Adoración eucarística comunitaria',                   NULL,                              'Templo parroquial', 6,  '19:00'),
-  ('Solemnidad', 'Misa de sanación',                                    'Horarios: 8:00 – 10:00 – 12:00',  'Templo parroquial', 7,  '08:00'),
-  ('Liturgia',   'Misa por los difuntos de la comunidad',               NULL,                              'Templo parroquial', 8,  '19:00'),
-  ('Catequesis', 'Charla pre-bautismal para padres y padrinos',         NULL,                              'Salón parroquial',  13, '09:30')
-) AS e(categoria, titulo, descripcion, lugar, dias, hora);
+  ('Liturgia',   'Adoración eucarística comunitaria',                   NULL,                              'Templo parroquial', 6,  '19:00', NULL::jsonb),
+  ('Solemnidad', 'Misa de sanación',                                    'Horarios: 8:00 – 10:00 – 12:00',  'Templo parroquial', 7,  '08:00',
+   jsonb_build_object(
+     'contenido', jsonb_build_object(
+       'formato', 'blocknote',
+       'version', 1,
+       'bloques', jsonb_build_array(
+         jsonb_build_object(
+           'id', 'ev-ejemplo-p1',
+           'type', 'paragraph',
+           'props', jsonb_build_object('textColor', 'default', 'backgroundColor', 'default', 'textAlignment', 'left'),
+           'content', jsonb_build_array(jsonb_build_object('type', 'text', 'text', 'Celebración comunitaria y oración por los enfermos (texto de ejemplo).', 'styles', jsonb_build_object())),
+           'children', jsonb_build_array()
+         )
+       )
+     ),
+     'direccion', 'Av. Héctor Ormachea N.º 167, Obrajes, La Paz',
+     'enlaceMapa', 'https://www.google.com/maps/search/?api=1&query=-16.5267952%2C-68.1082157',
+     'programa', jsonb_build_array(
+       jsonb_build_object('hora', '08:00', 'actividad', 'Primera misa de sanación (ejemplo)'),
+       jsonb_build_object('hora', '10:00', 'actividad', 'Misa central (ejemplo)'),
+       jsonb_build_object('hora', '12:00', 'actividad', 'Tercera misa (ejemplo)')
+     ),
+     'responsable', jsonb_build_object(
+       'nombre', 'Equipo de Liturgia (ejemplo)',
+       'rol', 'Coordinación pastoral',
+       'telefono', '(2) 278 4937'
+     ),
+     'enlaces', jsonb_build_array()
+   )),
+  ('Liturgia',   'Misa por los difuntos de la comunidad',               NULL,                              'Templo parroquial', 8,  '19:00', NULL::jsonb),
+  ('Catequesis', 'Charla pre-bautismal para padres y padrinos',         NULL,                              'Salón parroquial',  13, '09:30', NULL::jsonb)
+) AS e(categoria, titulo, descripcion, lugar, dias, hora, detalle);
 
 -- Avisos parroquiales (3, los de la landing): publicaciones de tipo Aviso creadas por Secretaría y
 -- publicadas directo. La landing solo muestra una fecha y un texto, así que el texto va como título y
