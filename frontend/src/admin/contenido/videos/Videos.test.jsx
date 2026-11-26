@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 
@@ -58,12 +59,15 @@ describe('gestión de videos de YouTube', () => {
 
     await usuario.click(screen.getByRole('button', { name: 'Nuevo video' }));
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo video de YouTube' });
-    await usuario.type(
-      within(dialogo).getByLabelText('URL o ID de YouTube'),
-      'https://www.youtube.com/watch?v=pX7aQm3kR2c',
-    );
-    await usuario.type(within(dialogo).getByLabelText('Título'), 'Un recorrido por nuestra parroquia');
-    await usuario.type(within(dialogo).getByLabelText('Duración en segundos (opcional)'), '30');
+    fireEvent.change(within(dialogo).getByLabelText('URL o ID de YouTube'), {
+      target: { value: 'https://www.youtube.com/watch?v=pX7aQm3kR2c' },
+    });
+    fireEvent.change(within(dialogo).getByLabelText('Título'), {
+      target: { value: 'Un recorrido por nuestra parroquia' },
+    });
+    fireEvent.change(within(dialogo).getByLabelText('Duración en segundos (opcional)'), {
+      target: { value: '30' },
+    });
     await usuario.click(within(dialogo).getByLabelText('Marcar como video destacado'));
     await usuario.click(within(dialogo).getByRole('button', { name: 'Agregar video' }));
 
@@ -76,8 +80,7 @@ describe('gestión de videos de YouTube', () => {
     await usuario.click(screen.getByRole('button', { name: 'Editar Un recorrido por nuestra parroquia' }));
     const dialogoEditar = await screen.findByRole('dialog', { name: 'Editar video' });
     const titulo = within(dialogoEditar).getByLabelText('Título');
-    await usuario.clear(titulo);
-    await usuario.type(titulo, 'Recorrido actualizado');
+    fireEvent.change(titulo, { target: { value: 'Recorrido actualizado' } });
     await usuario.click(within(dialogoEditar).getByRole('button', { name: 'Guardar cambios' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -93,8 +96,10 @@ describe('gestión de videos de YouTube', () => {
     await usuario.click(screen.getByRole('button', { name: 'Nuevo video' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo video de YouTube' });
-    await usuario.type(within(dialogo).getByLabelText('URL o ID de YouTube'), 'https://vimeo.com/123456');
-    await usuario.type(within(dialogo).getByLabelText('Título'), 'Video inválido');
+    fireEvent.change(within(dialogo).getByLabelText('URL o ID de YouTube'), {
+      target: { value: 'https://vimeo.com/123456' },
+    });
+    fireEvent.change(within(dialogo).getByLabelText('Título'), { target: { value: 'Video inválido' } });
     await usuario.click(within(dialogo).getByRole('button', { name: 'Agregar video' }));
 
     const campoUrl = await within(dialogo).findByLabelText('URL o ID de YouTube');
