@@ -4,7 +4,9 @@ import { clienteHttp } from '../../../services/clienteHttp.js';
 export const CLAVE_VIDEOS = ['admin', 'videos'];
 
 export async function listarVideos(parametros = {}) {
-  const { datos } = await clienteHttp.get('/admin/videos', { parametros });
+  const { datos } = await clienteHttp.get('/admin/videos', {
+    parametros: { porPagina: 100, ...parametros },
+  });
   return datos;
 }
 

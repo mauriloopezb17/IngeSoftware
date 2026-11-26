@@ -2,6 +2,7 @@
 // Solo cuentan las publicaciones cuya fecha ya llegó (hoy en Bolivia o antes); una proclama sin
 // ninguna publicación alcanzada todavía no es pública.
 import { consultar } from '../db/index.js';
+import { patronBusqueda, sinAcentosSql } from '../utils/busqueda.js';
 import { ZONA_HORARIA } from './eventos.model.js';
 
 // $1 = sede, $2 = zona horaria. Las publicaciones alcanzadas se agregan en la misma consulta.
@@ -30,13 +31,45 @@ const BASE = `
     LEFT JOIN archivo_multimedia am ON am.id = p.imagen_id
    WHERE p.sede_id = $1`;
 
-// Vigentes: con alguna publicación alcanzada y cuya boda todavía no pasó. Por fecha de boda.
-export async function listarVigentes(sedeId) {
-  const { rows } = await consultar(
-    `${BASE} AND p.fecha_matrimonio > now() ORDER BY p.fecha_matrimonio, p.id`,
-    [sedeId, ZONA_HORARIA],
-  );
-  return rows;
+const ORDENES_PROCLAMA = {
+  fechaMatrimonio: 'p.fecha_matrimonio ASC, p.id ASC',
+  '-fechaMatrimonio': 'p.fecha_matrimonio DESC, p.id DESC',
+};
+
+// Vigentes: con alguna publicación alcanzada y cuya boda todavía no pasó.
+export async function listarVigentes(
+  sedeId,
+  { anio, buscar, orden = 'fechaMatrimonio', limite = null, desplazamiento = 0 } = {},
+) {
+  const parametros = [sedeId, ZONA_HORARIA];
+  const filtros = ['p.fecha_matrimonio > now()'];
+  if (anio) {
+    filtros.push(
+      `extract(year FROM p.fecha_matrimonio AT TIME ZONE $2) = $${parametros.push(anio)}`,
+    );
+  }
+  if (buscar) {
+    const p = `$${parametros.push(patronBusqueda(buscar))}`;
+    filtros.push(
+      `(${sinAcentosSql('p.nombre_contrayente_1')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql('p.nombre_contrayente_2')} LIKE ${p} ESCAPE '\\')`,
+    );
+  }
+  const dondeExtra = ` AND ${filtros.join(' AND ')}`;
+  const clausulaOrden = ORDENES_PROCLAMA[orden] ?? ORDENES_PROCLAMA.fechaMatrimonio;
+
+  if (limite === null) {
+    const { rows } = await consultar(`${BASE}${dondeExtra} ORDER BY ${clausulaOrden}`, parametros);
+    return { filas: rows, total: rows.length };
+  }
+
+  const [pagina, conteo] = await Promise.all([
+    consultar(
+      `${BASE}${dondeExtra} ORDER BY ${clausulaOrden} LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
+      [...parametros, limite, desplazamiento],
+    ),
+    consultar(`SELECT count(*)::int AS total FROM (${BASE}${dondeExtra}) t`, parametros),
+  ]);
+  return { filas: pagina.rows, total: conteo.rows[0].total };
 }
 
 // Historial: todas las que tuvieron alguna publicación, incluidas las ya celebradas.

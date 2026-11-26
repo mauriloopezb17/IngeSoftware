@@ -6,5 +6,7 @@ export { EsqueletoFormulario, EsqueletoTabla, EsqueletoTarjetas } from './Esquel
 export { default as EstadoVacio } from './EstadoVacio.jsx';
 export { default as Insignia } from './Insignia.jsx';
 export { CeldaTabla, FilaTabla, Tabla } from './Tabla.jsx';
+export { default as TablaListado } from './TablaListado.jsx';
 export { ProveedorToasts } from './Toasts.jsx';
+export { useFiltrosListado } from './useFiltrosListado.js';
 export { useToast } from './useToast.js';

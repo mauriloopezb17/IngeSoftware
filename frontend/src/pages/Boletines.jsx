@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, lazy, useRef, useState } from 'react';
 import { BookOpen, Download } from 'lucide-react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 
@@ -114,6 +114,7 @@ function BotonDescargarBoletin({ boletin, variante = 'secundario', etiqueta = 'D
 function Boletines() {
   const { periodo: periodoRuta } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const inicioListadoRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -239,12 +240,13 @@ function Boletines() {
                 className="min-h-11 cursor-pointer px-3 py-2 font-body text-meta font-semibold text-ink underline underline-offset-4 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 onClick={() => setSearchParams({})}
               >
-                Limpiar filtros
+                Quitar filtros
               </button>
             )}
           </div>
         </div>
 
+        <div ref={inicioListadoRef} tabIndex={-1} className="outline-none">
         {isPending ? (
           <CargandoSeccion alturaMinima={320} etiqueta="Cargando boletines parroquiales" />
         ) : isError ? (
@@ -253,13 +255,24 @@ function Boletines() {
             onReintentar={refetch}
           />
         ) : boletines.length === 0 ? (
-          <SinResultados
-            mensaje={
-              anioActivo
-                ? `No hay boletines publicados para el año ${anioActivo}.`
-                : 'No hay boletines publicados por el momento.'
-            }
-          />
+          <div className="space-y-4">
+            <SinResultados
+              mensaje={
+                anioActivo
+                  ? `No hay boletines publicados para el año ${anioActivo}.`
+                  : 'No hay boletines publicados por el momento.'
+              }
+            />
+            {anioActivo && (
+              <button
+                type="button"
+                onClick={() => setSearchParams({})}
+                className="inline-flex min-h-11 cursor-pointer items-center rounded-sm border border-sand bg-white px-5 py-2.5 font-body text-meta font-semibold text-ink hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Quitar filtros
+              </button>
+            )}
+          </div>
         ) : (
           <>
             {boletinDestacado && (
@@ -362,9 +375,11 @@ function Boletines() {
               totalPaginas={paginacion.totalPaginas}
               etiqueta="Paginación de boletines"
               alCambiarPagina={(siguiente) => actualizarFiltros({ pagina: siguiente })}
+              destinoFocoRef={inicioListadoRef}
             />
           </>
         )}
+        </div>
       </Seccion>
 
       {periodoRuta && boletinActivo && (

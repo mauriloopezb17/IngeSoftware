@@ -53,7 +53,7 @@ describe('gestión de usuarios', () => {
     montar();
     const u = userEvent.setup({ delay: null });
 
-    const lista = await screen.findByRole('list', { name: 'Usuarios' });
+    const lista = await screen.findByRole('table', { name: 'Usuarios' });
     expect(within(lista).getByText('admin@parroquia.test')).toBeInTheDocument();
     expect(within(lista).getByText('parroco@parroquia.test')).toBeInTheDocument();
     expect(within(lista).getByText('secretaria@parroquia.test')).toBeInTheDocument();
@@ -84,7 +84,7 @@ describe('gestión de usuarios', () => {
 
     // Filtro por rol
     await u.selectOptions(screen.getByLabelText('Rol'), 'MARKETING');
-    const listaFiltrada = await screen.findByRole('list', { name: 'Usuarios' });
+    const listaFiltrada = await screen.findByRole('table', { name: 'Usuarios' });
     expect(within(listaFiltrada).getByText('marketing@parroquia.test')).toBeInTheDocument();
     expect(within(listaFiltrada).queryByText('María Elena Quispe')).not.toBeInTheDocument();
   }, 15000);
@@ -94,7 +94,7 @@ describe('gestión de usuarios', () => {
     montar();
     const u = userEvent.setup({ delay: null });
 
-    await screen.findByRole('list', { name: 'Usuarios' });
+    await screen.findByRole('table', { name: 'Usuarios' });
 
     // No se puede desactivar ni quitar rol al propio / último Administrador
     await u.click(screen.getByRole('button', { name: 'Desactivar a Administrador (desarrollo)' }));

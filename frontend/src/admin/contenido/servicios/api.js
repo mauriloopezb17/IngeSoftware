@@ -4,7 +4,9 @@ import { clienteHttp } from '../../../services/clienteHttp.js';
 export const CLAVE_SERVICIOS = ['admin', 'servicios'];
 
 export async function listarServicios(parametros = {}) {
-  const { datos } = await clienteHttp.get('/admin/servicios', { parametros });
+  const { datos } = await clienteHttp.get('/admin/servicios', {
+    parametros: { porPagina: 100, ...parametros },
+  });
   return datos;
 }
 

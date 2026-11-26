@@ -1,6 +1,7 @@
 // Servicios y sacramentos (contrato: docs/api/publico.md).
 import { ErrorApp } from '../errores/ErrorApp.js';
 import * as modelo from '../models/servicios.model.js';
+import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 import { slug as esquemaSlug } from '../validacion/comunes.js';
 
 function aResumen(fila) {
@@ -15,8 +16,19 @@ function aResumen(fila) {
 }
 
 // GET /api/sedes/:sede/servicios: sin contenido (está en el detalle).
-export async function listarServicios(sedeId) {
-  return (await modelo.listarVisibles(sedeId)).map(aResumen);
+export async function listarServicios(sedeId, consulta = {}) {
+  const pagina = consulta.pagina ?? 1;
+  const porPagina = consulta.porPagina ?? 10;
+  const { filas, total } = await modelo.listarVisibles(sedeId, {
+    buscar: consulta.buscar,
+    orden: consulta.orden,
+    limite: porPagina,
+    desplazamiento: desplazamiento(pagina, porPagina),
+  });
+  return {
+    datos: filas.map(aResumen),
+    paginacion: armarPaginacion({ total, pagina, porPagina }),
+  };
 }
 
 // GET /api/sedes/:sede/servicios/:slug. El contenido JSONB se devuelve tal como se guarda.

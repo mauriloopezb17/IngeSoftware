@@ -309,7 +309,13 @@ Horarios activos, agrupados por tipo (RF-01). La API ya agrupa los días con el 
         }
       ]
     }
-  ]
+  ],
+  "paginacion": {
+    "pagina": 1,
+    "porPagina": 10,
+    "total": 4,
+    "totalPaginas": 1
+  }
 }
 ```
 
@@ -326,7 +332,7 @@ Reglas de agrupación:
 
 ## `GET /api/sedes/:sede/servicios`
 
-Servicios y sacramentos visibles, ordenados por `orden`. Sin paginación. No incluye `contenido` (está en el detalle).
+Servicios y sacramentos visibles, ordenados por `orden`. Paginado (`porPagina` hasta 100; para obtener la lista completa enviar `porPagina=100`). Acepta `pagina`, `porPagina`, `buscar` y `orden` (`orden`, `-orden`, `nombre`, `-nombre`; defecto `orden`). No incluye `contenido` (está en el detalle).
 
 **Respuesta `200`:**
 
@@ -381,7 +387,13 @@ Servicios y sacramentos visibles, ordenados por `orden`. Sin paginación. No inc
       "icono": "heart-pulse",
       "orden": 6
     }
-  ]
+  ],
+  "paginacion": {
+    "pagina": 1,
+    "porPagina": 10,
+    "total": 6,
+    "totalPaginas": 1
+  }
 }
 ```
 
@@ -498,7 +510,13 @@ Grupos y pastorales visibles, ordenados por `orden`. Sin paginación.
       "imagen": null,
       "orden": 6
     }
-  ]
+  ],
+  "paginacion": {
+    "pagina": 1,
+    "porPagina": 10,
+    "total": 6,
+    "totalPaginas": 1
+  }
 }
 ```
 
@@ -969,7 +987,13 @@ Proclamas matrimoniales **vigentes** (RF-02): las que tienen al menos una public
       "tieneDetalle": false,
       "imagen": null
     }
-  ]
+  ],
+  "paginacion": {
+    "pagina": 1,
+    "porPagina": 10,
+    "total": 3,
+    "totalPaginas": 1
+  }
 }
 ```
 
@@ -1131,7 +1155,7 @@ Boletines parroquiales en PDF, del más reciente al más antiguo (por `periodo`)
 
 ## `GET /api/sedes/:sede/videos`
 
-Videos de YouTube de la sede (RF-05). Sin paginación. Orden: primero los destacados, luego por `orden`.
+Videos de YouTube de la sede (RF-05). Paginado (`porPagina` hasta 100). Acepta `pagina`, `porPagina`, `destacado` (`true`/`false`), `buscar` y `orden` (`orden`, `-orden`, `fechaPublicacion`, `-fechaPublicacion`, `titulo`, `-titulo`; defecto `orden`). Orden predeterminado: primero los destacados, luego por `orden`.
 
 **Respuesta `200`:**
 
@@ -1164,7 +1188,13 @@ Videos de YouTube de la sede (RF-05). Sin paginación. Orden: primero los destac
       "orden": 2,
       "fechaPublicacion": "2026-09-14"
     }
-  ]
+  ],
+  "paginacion": {
+    "pagina": 1,
+    "porPagina": 10,
+    "total": 2,
+    "totalPaginas": 1
+  }
 }
 ```
 

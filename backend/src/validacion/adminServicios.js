@@ -1,7 +1,7 @@
 // Validación de servicios y preguntas frecuentes en el panel CMS (docs/api/admin.md, sección 6).
 import { z } from 'zod';
 import '../config/zod.js';
-import { booleanoQuery, id, slug } from './comunes.js';
+import { booleanoQuery, esquemaListado, id, slug } from './comunes.js';
 
 const ENTERO_MAXIMO_PG = 2_147_483_647;
 
@@ -72,9 +72,14 @@ const respuestaTexto = z
 export const paramsServicio = z.object({ id });
 export const paramsPregunta = z.object({ id, preguntaId: id });
 
-export const consultaServicios = z.object({
-  sede: slug.optional(),
-  visible: booleanoQuery.optional(),
+export const consultaServicios = esquemaListado({
+  filtros: {
+    sede: slug.optional(),
+    visible: booleanoQuery.optional(),
+  },
+  ordenes: ['orden', '-orden', 'nombre', '-nombre'],
+  ordenPredeterminado: 'orden',
+  porPaginaMaximo: 100,
 });
 
 export const cuerpoCrearServicio = z.strictObject({

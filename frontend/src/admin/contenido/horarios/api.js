@@ -24,7 +24,9 @@ export async function obtenerCatalogos() {
 }
 
 export async function listarHorarios(parametros = {}) {
-  const { datos } = await clienteHttp.get('/admin/horarios', { parametros });
+  const { datos } = await clienteHttp.get('/admin/horarios', {
+    parametros: { porPagina: 100, ...parametros },
+  });
   return datos;
 }
 

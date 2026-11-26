@@ -3,41 +3,30 @@ import { z } from 'zod';
 import '../config/zod.js';
 import { ESTADOS_PUBLICACION, TIPOS_PUBLICACION } from '../constantes/catalogos.js';
 import { contenidoBlockNote } from './blocknote.js';
-import { fechaHoraConZona, id, listaCodigos, paginacion, slug } from './comunes.js';
+import { esquemaListado, fechaHoraConZona, id, listaCodigos, slug } from './comunes.js';
 import { idDelCuerpo, textoOpcional, urlHttps } from './panel.js';
 
 export const paramsPublicacion = z.object({ id });
 
-export const consultaPublicaciones = paginacion.extend({
-  sede: slug.optional(),
-  tipo: listaCodigos([...TIPOS_PUBLICACION.codigos]).optional(),
-  estado: listaCodigos([...ESTADOS_PUBLICACION.codigos]).optional(),
-  categoria: slug.optional(),
-  autor: z
-    .union([z.literal('yo'), id], { error: 'Debe ser el id de un usuario o «yo».' })
-    .optional(),
-  buscar: z
-    .string()
-    .trim()
-    .min(1, 'No puede estar vacío.')
-    .max(100, 'Es demasiado largo.')
-    .optional(),
-  orden: z
-    .enum(
-      [
-        'fechaCreacion',
-        '-fechaCreacion',
-        'fechaPublicacion',
-        '-fechaPublicacion',
-        'titulo',
-        '-titulo',
-      ],
-      {
-        error:
-          'Debe ser fechaCreacion, -fechaCreacion, fechaPublicacion, -fechaPublicacion, titulo o -titulo.',
-      },
-    )
-    .default('-fechaCreacion'),
+export const consultaPublicaciones = esquemaListado({
+  filtros: {
+    sede: slug.optional(),
+    tipo: listaCodigos([...TIPOS_PUBLICACION.codigos]).optional(),
+    estado: listaCodigos([...ESTADOS_PUBLICACION.codigos]).optional(),
+    categoria: slug.optional(),
+    autor: z
+      .union([z.literal('yo'), id], { error: 'Debe ser el id de un usuario o «yo».' })
+      .optional(),
+  },
+  ordenes: [
+    'fechaCreacion',
+    '-fechaCreacion',
+    'fechaPublicacion',
+    '-fechaPublicacion',
+    'titulo',
+    '-titulo',
+  ],
+  ordenPredeterminado: '-fechaCreacion',
 });
 
 const titulo = z

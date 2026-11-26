@@ -1,6 +1,7 @@
 // Consultas de eventos del panel (SQL parametrizado). A diferencia del portal, aquí se ven todos
 // los estados y los eventos ya finalizados. Los días se calculan en la zona de Bolivia.
 import { consultar } from '../db/index.js';
+import { patronBusqueda, sinAcentosSql } from '../utils/busqueda.js';
 import { ZONA_HORARIA } from './eventos.model.js';
 
 // $1 = zona horaria. "finalizado" repite la regla del portal (publico.md, RF-09): con fecha_fin,
@@ -57,6 +58,12 @@ export async function listar(filtros, { limite, desplazamiento, ascendente }) {
   if (filtros.estados) condiciones.push(`ep.nombre = ANY(${agregar(filtros.estados)}::text[])`);
   if (filtros.finalizados !== undefined) {
     condiciones.push(`${FINALIZADO} = ${agregar(filtros.finalizados)}`);
+  }
+  if (filtros.buscar) {
+    const p = agregar(patronBusqueda(filtros.buscar));
+    condiciones.push(
+      `(${sinAcentosSql('e.titulo')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql("coalesce(e.lugar, '')")} LIKE ${p} ESCAPE '\\')`,
+    );
   }
 
   const donde = condiciones.join(' AND ');

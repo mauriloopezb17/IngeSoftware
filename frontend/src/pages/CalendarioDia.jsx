@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight, Calendar, Clock, MapPin } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 
-import { BotonEnlace, EncabezadoPagina, Seccion } from '../components/portal/index.js';
+import { BotonEnlace, EncabezadoPagina, Reveal, Seccion } from '../components/portal/index.js';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from '../components/parroquia/EstadoSeccion.jsx';
 import { useEventos } from '../hooks/index.js';
 import {
@@ -114,10 +114,10 @@ function CalendarioDia() {
             </div>
           ) : (
             <ol aria-label="Eventos del día" className="flex flex-col gap-4">
-              {eventos.map((evento) => {
+              {eventos.map((evento, indice) => {
                 const horario = horarioEnDia(evento, fecha);
                 return (
-                  <li key={evento.id}>
+                  <Reveal key={evento.id} as="li" variante="tarjeta" retraso={indice * 120}>
                     <article className="group relative flex flex-col justify-between gap-4 rounded-sm border border-sand bg-white p-6 transition-[border-color,transform] duration-150 hover:-translate-y-1 hover:border-gold focus-within:border-gold focus-within:ring-2 focus-within:ring-ink/25 md:flex-row md:items-center md:gap-8">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-3">
@@ -170,7 +170,7 @@ function CalendarioDia() {
                         <ArrowRight size={16} />
                       </span>
                     </article>
-                  </li>
+                  </Reveal>
                 );
               })}
             </ol>
