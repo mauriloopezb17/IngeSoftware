@@ -70,18 +70,64 @@ export const listaCodigos = (codigos) =>
     )
     .transform((valores) => [...new Set(valores)]);
 
+const enteroQuery = (esquemaNumero) =>
+  z.preprocess((valor) => (Array.isArray(valor) ? {} : valor), esquemaNumero);
+
+function campoPagina() {
+  return enteroQuery(
+    z.coerce
+      .number({ error: 'Debe ser un número.' })
+      .int('Debe ser un número entero.')
+      .min(1, 'Debe ser 1 o mayor.')
+      .max(ENTERO_MAXIMO_PG, 'El número es demasiado grande.'),
+  ).default(PAGINA_PREDETERMINADA);
+}
+
+function campoPorPagina(maximo = POR_PAGINA_MAXIMO, predeterminado = POR_PAGINA_PREDETERMINADO) {
+  return enteroQuery(
+    z.coerce
+      .number({ error: 'Debe ser un número.' })
+      .int('Debe ser un número entero.')
+      .min(1, `Debe estar entre 1 y ${maximo}.`)
+      .max(maximo, `Debe estar entre 1 y ${maximo}.`),
+  ).default(predeterminado);
+}
+
+// Búsqueda de texto saneada: trim, 1–100 caracteres, sin caracteres de control.
+export const buscarTexto = z
+  .string({ error: 'Debe ser un texto.' })
+  .trim()
+  .min(1, 'No puede estar vacío.')
+  .max(100, 'Máximo 100 caracteres.')
+  .refine((valor) => !/[\p{Cc}]/u.test(valor), 'Contiene caracteres no permitidos.');
+
 // Paginación estándar: ?pagina=1&porPagina=10 (porPagina de 1 a 50).
 export const paginacion = z.object({
-  pagina: z.coerce
-    .number({ error: 'Debe ser un número.' })
-    .int('Debe ser un número entero.')
-    .min(1, 'Debe ser 1 o mayor.')
-    .max(ENTERO_MAXIMO_PG, 'El número es demasiado grande.')
-    .default(PAGINA_PREDETERMINADA),
-  porPagina: z.coerce
-    .number({ error: 'Debe ser un número.' })
-    .int('Debe ser un número entero.')
-    .min(1, `Debe estar entre 1 y ${POR_PAGINA_MAXIMO}.`)
-    .max(POR_PAGINA_MAXIMO, `Debe estar entre 1 y ${POR_PAGINA_MAXIMO}.`)
-    .default(POR_PAGINA_PREDETERMINADO),
+  pagina: campoPagina(),
+  porPagina: campoPorPagina(),
 });
+
+// Constructor común para consultas de listados: paginación + buscar + filtros + orden (lista blanca).
+// Usa strictObject para rechazar parámetros desconocidos en query.<nombre>.
+export function esquemaListado({
+  filtros = {},
+  ordenes = [],
+  ordenPredeterminado,
+  porPaginaMaximo = POR_PAGINA_MAXIMO,
+  porPaginaPredeterminado = POR_PAGINA_PREDETERMINADO,
+} = {}) {
+  const forma = {
+    pagina: campoPagina(),
+    porPagina: campoPorPagina(porPaginaMaximo, porPaginaPredeterminado),
+    buscar: buscarTexto.optional(),
+    ...filtros,
+  };
+
+  if (ordenes.length > 0) {
+    forma.orden = z
+      .enum(ordenes, { error: `Debe ser uno de: ${ordenes.join(', ')}.` })
+      .default(ordenPredeterminado ?? ordenes[0]);
+  }
+
+  return z.strictObject(forma);
+}

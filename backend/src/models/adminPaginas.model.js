@@ -1,6 +1,7 @@
 // Consultas de páginas y bloques del panel (SQL parametrizado). Aquí se ven todos los estados y
 // todos los bloques, también los no visibles.
 import { consultar } from '../db/index.js';
+import { patronBusqueda, sinAcentosSql } from '../utils/busqueda.js';
 
 const COLUMNAS = `
   p.id,
@@ -42,21 +43,53 @@ const UNIONES = `
   LEFT JOIN usuario ua ON ua.id = p.actualizado_por
   LEFT JOIN pagina padre ON padre.id = p.pagina_padre_id`;
 
-// Sin paginar, sin bloques. filtros: { sedeSlug?, estados? (nombres) }. Orden: menú y título.
-export async function listar({ sedeSlug, estados }) {
+const ORDENES = {
+  ordenMenu: 'p.orden_menu ASC, p.titulo ASC, p.id ASC',
+  '-ordenMenu': 'p.orden_menu DESC, p.titulo ASC, p.id ASC',
+  titulo: 'p.titulo ASC, p.id ASC',
+  '-titulo': 'p.titulo DESC, p.id DESC',
+  fechaCreacion: 'p.fecha_creacion ASC, p.id ASC',
+  '-fechaCreacion': 'p.fecha_creacion DESC, p.id DESC',
+};
+
+// Paginadas, sin bloques.
+export async function listar({
+  sedeSlug,
+  estados,
+  mostrarEnMenu,
+  buscar,
+  orden = 'ordenMenu',
+  limite = 10,
+  desplazamiento = 0,
+}) {
   const parametros = [];
   const condiciones = ['TRUE'];
   const agregar = (valor) => `$${parametros.push(valor)}`;
   if (sedeSlug !== undefined) condiciones.push(`s.slug = ${agregar(sedeSlug)}`);
   if (estados) condiciones.push(`ep.nombre = ANY(${agregar(estados)}::text[])`);
+  if (mostrarEnMenu !== undefined)
+    condiciones.push(`p.mostrar_en_menu = ${agregar(mostrarEnMenu)}`);
+  if (buscar) {
+    const p = agregar(patronBusqueda(buscar));
+    condiciones.push(
+      `(${sinAcentosSql('p.titulo')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql('p.slug')} LIKE ${p} ESCAPE '\\')`,
+    );
+  }
 
-  const { rows } = await consultar(
-    `SELECT ${COLUMNAS} ${UNIONES}
-      WHERE ${condiciones.join(' AND ')}
-      ORDER BY p.orden_menu, p.titulo, p.id`,
-    parametros,
-  );
-  return rows;
+  const donde = condiciones.join(' AND ');
+  const clausulaOrden = ORDENES[orden] ?? ORDENES.ordenMenu;
+
+  const [pagina, conteo] = await Promise.all([
+    consultar(
+      `SELECT ${COLUMNAS} ${UNIONES}
+        WHERE ${donde}
+        ORDER BY ${clausulaOrden}
+        LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
+      [...parametros, limite, desplazamiento],
+    ),
+    consultar(`SELECT count(*)::int AS total ${UNIONES} WHERE ${donde}`, parametros),
+  ]);
+  return { filas: pagina.rows, total: conteo.rows[0].total };
 }
 
 // Una página con todos sus bloques, o undefined.

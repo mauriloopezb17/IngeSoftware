@@ -1,7 +1,7 @@
 // Validación de videos de YouTube en el panel CMS (docs/api/admin.md, sección 8).
 import { z } from 'zod';
 import '../config/zod.js';
-import { booleanoQuery, fecha, id, slug } from './comunes.js';
+import { booleanoQuery, esquemaListado, fecha, id, slug } from './comunes.js';
 
 const ENTERO_MAXIMO_PG = 2_147_483_647;
 const REGEX_YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
@@ -81,9 +81,14 @@ const duracionSegundos = z
 
 export const paramsVideo = z.object({ id });
 
-export const consultaVideos = z.object({
-  sede: slug.optional(),
-  destacado: booleanoQuery.optional(),
+export const consultaVideos = esquemaListado({
+  filtros: {
+    sede: slug.optional(),
+    destacado: booleanoQuery.optional(),
+  },
+  ordenes: ['orden', '-orden', 'fechaPublicacion', '-fechaPublicacion', 'titulo', '-titulo'],
+  ordenPredeterminado: 'orden',
+  porPaginaMaximo: 100,
 });
 
 export const cuerpoCrearVideo = z.strictObject({

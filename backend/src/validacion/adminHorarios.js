@@ -1,7 +1,7 @@
 // Validación de horarios en el panel CMS (contrato: docs/api/admin.md, sección 5).
 import { z } from 'zod';
 import '../config/zod.js';
-import { booleanoQuery, id, listaIds, slug } from './comunes.js';
+import { booleanoQuery, esquemaListado, id, listaIds, slug } from './comunes.js';
 
 const ENTERO_MAXIMO_PG = 2_147_483_647;
 
@@ -27,10 +27,15 @@ const descripcion = z
 
 export const paramsHorario = z.object({ id });
 
-export const consultaHorarios = z.object({
-  sede: slug.optional(),
-  tipo: listaIds.optional(),
-  activo: booleanoQuery.optional(),
+export const consultaHorarios = esquemaListado({
+  filtros: {
+    sede: slug.optional(),
+    tipo: listaIds.optional(),
+    activo: booleanoQuery.optional(),
+  },
+  ordenes: ['tipo', 'diaSemana', '-diaSemana', 'horaInicio', '-horaInicio'],
+  ordenPredeterminado: 'tipo',
+  porPaginaMaximo: 100,
 });
 
 export const cuerpoCrearHorario = z

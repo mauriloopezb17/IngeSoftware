@@ -57,8 +57,20 @@ function aElementoGaleria(archivo) {
 }
 
 // GET /api/sedes/:sede/proclamas
-export async function listarProclamasVigentes(sedeId) {
-  return (await modelo.listarVigentes(sedeId)).map(aProclama);
+export async function listarProclamasVigentes(sedeId, consulta = {}) {
+  const pagina = consulta.pagina ?? 1;
+  const porPagina = consulta.porPagina ?? 10;
+  const { filas, total } = await modelo.listarVigentes(sedeId, {
+    anio: consulta.anio,
+    buscar: consulta.buscar,
+    orden: consulta.orden,
+    limite: porPagina,
+    desplazamiento: desplazamiento(pagina, porPagina),
+  });
+  return {
+    datos: filas.map(aProclama),
+    paginacion: armarPaginacion({ total, pagina, porPagina }),
+  };
 }
 
 // GET /api/sedes/:sede/proclamas/historial. consulta: { anio?, pagina, porPagina }

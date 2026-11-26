@@ -3,8 +3,8 @@ import * as servicio from '../services/adminSedes.service.js';
 import { contextoDe } from '../services/bitacora.service.js';
 
 export async function listar(req, res) {
-  const datos = await servicio.listarSedes(req.usuario);
-  res.json({ datos });
+  const resultado = await servicio.listarSedes(req.usuario, req.validado.query);
+  res.json(resultado);
 }
 
 export async function detalle(req, res) {

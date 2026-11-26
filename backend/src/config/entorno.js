@@ -122,6 +122,7 @@ const esquemaEntorno = z
         })
         .default('info'),
     ),
+    LOG_ARCHIVO: opcional(z.string().trim().min(1, 'no puede ser vacío.')),
     CORS_ORIGEN: sinVacio(
       z
         .string()
@@ -238,6 +239,7 @@ export function validarEntorno(variables) {
     esPrueba: v.NODE_ENV === 'test',
     puerto: v.PORT,
     nivelLog: v.LOG_LEVEL,
+    logArchivo: v.LOG_ARCHIVO ?? null,
     corsOrigenes: Object.freeze(v.CORS_ORIGEN),
     confiarProxy: v.TRUST_PROXY,
     baseDatosUrl: v.DATABASE_URL,

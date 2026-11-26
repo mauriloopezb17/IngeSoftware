@@ -58,7 +58,7 @@ export default function Usuarios() {
 
   const sedesQuery = useQuery({
     queryKey: CLAVE_SEDES,
-    queryFn: listarSedes,
+    queryFn: () => listarSedes(),
   });
 
   const usuariosQuery = useQuery({

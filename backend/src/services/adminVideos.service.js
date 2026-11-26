@@ -5,6 +5,7 @@ import * as modelo from '../models/videos.model.js';
 import { reordenarPorSede } from '../utils/adminContenido.js';
 import { exigirSedeDelRecurso, sedeParaCrear } from '../utils/alcanceSede.js';
 import { formatearFecha } from '../utils/formato.js';
+import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 import { registrarCambio } from './bitacora.service.js';
 import { urlsYoutube } from './videos.service.js';
 
@@ -37,12 +38,21 @@ function traducirErrorYoutubeUnico(err) {
   throw err;
 }
 
-export async function listarVideos(sedeFiltro, consulta) {
-  const filas = await modelo.listarAdmin({
+export async function listarVideos(sedeFiltro, consulta = {}) {
+  const pagina = consulta.pagina ?? 1;
+  const porPagina = consulta.porPagina ?? 10;
+  const { filas, total } = await modelo.listarAdmin({
     sedeSlug: sedeFiltro,
     destacado: consulta.destacado,
+    buscar: consulta.buscar,
+    orden: consulta.orden,
+    limite: porPagina,
+    desplazamiento: desplazamiento(pagina, porPagina),
   });
-  return filas.map(aVideoAdmin);
+  return {
+    datos: filas.map(aVideoAdmin),
+    paginacion: armarPaginacion({ total, pagina, porPagina }),
+  };
 }
 
 export async function obtenerVideo(usuario, id) {
@@ -150,6 +160,6 @@ export async function reordenarVideos(usuario, ids, contexto) {
     contexto,
     baseOrden: 1,
   });
-  const filas = await modelo.listarAdmin({ sedeId });
+  const { filas } = await modelo.listarAdmin({ sedeId });
   return filas.map(aVideoAdmin);
 }

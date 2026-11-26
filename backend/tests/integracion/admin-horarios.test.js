@@ -79,11 +79,18 @@ describe('GET /api/admin/horarios', () => {
     expect(res.status).toBe(401);
   });
 
-  it('devuelve la lista sin paginar con el formato del contrato y ordenada', async () => {
-    const res = await request(app).get('/api/admin/horarios').set('Cookie', sesiones.marketing);
+  it('devuelve la lista paginada con el formato del contrato y ordenada', async () => {
+    const res = await request(app)
+      .get('/api/admin/horarios?porPagina=100')
+      .set('Cookie', sesiones.marketing);
 
     expect(res.status).toBe(200);
-    expect(res.body.paginacion).toBeUndefined();
+    expect(res.body.paginacion).toEqual({
+      pagina: 1,
+      porPagina: 100,
+      total: res.body.datos.length,
+      totalPaginas: 1,
+    });
     expect(res.body.datos.length).toBeGreaterThanOrEqual(33);
     expect(res.body.datos[0]).toEqual({
       id: expect.any(Number),
@@ -134,7 +141,7 @@ describe('GET /api/admin/horarios', () => {
     expect(admin.body.datos.every((h) => h.sede.slug === sedeAjena.slug)).toBe(true);
   });
 
-  it('filtra por tipo (varios ids) y activo, e ignora parámetros desconocidos', async () => {
+  it('filtra por tipo (varios ids) y activo, y rechaza parámetros desconocidos con 400', async () => {
     const inactivo = await crearHorarioApi('secretaria', {
       tipoHorarioId: tiposHorario[2].id,
       diaSemana: 5,
@@ -143,8 +150,17 @@ describe('GET /api/admin/horarios', () => {
     });
     expect(inactivo.status).toBe(201);
 
+    const desconocido = await request(app)
+      .get('/api/admin/horarios?desconocido=1')
+      .set('Cookie', sesiones.secretaria);
+    expect(desconocido.status).toBe(400);
+    expect(desconocido.body.error.codigo).toBe('VALIDACION');
+    expect(desconocido.body.error.detalles).toEqual([
+      { campo: 'query.desconocido', mensaje: 'Campo no permitido.' },
+    ]);
+
     const porTipo = await request(app)
-      .get(`/api/admin/horarios?tipo=${tiposHorario[1].id},${tiposHorario[2].id}&desconocido=1`)
+      .get(`/api/admin/horarios?tipo=${tiposHorario[1].id},${tiposHorario[2].id}`)
       .set('Cookie', sesiones.secretaria);
     expect(porTipo.status).toBe(200);
     expect(

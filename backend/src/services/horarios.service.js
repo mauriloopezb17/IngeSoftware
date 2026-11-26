@@ -1,6 +1,7 @@
 // Horarios agrupados por tipo (contrato: docs/api/publico.md, GET /api/sedes/:sede/horarios).
 import * as modelo from '../models/horarios.model.js';
 import { formatearHora } from '../utils/formato.js';
+import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 
 // dia_semana: 1 = lunes … 7 = domingo (ISO 8601).
 const NOMBRES_DIAS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
@@ -83,7 +84,21 @@ export function agruparHorarios(filas) {
   });
 }
 
-// GET /api/sedes/:sede/horarios. tipoIds: filtro opcional por id de tipo de horario.
-export async function listarHorarios(sedeId, tipoIds = null) {
-  return agruparHorarios(await modelo.listarActivos(sedeId, tipoIds));
+// GET /api/sedes/:sede/horarios.
+export async function listarHorarios(sedeId, consulta = {}) {
+  const tipoIds = Array.isArray(consulta) ? consulta : (consulta.tipo ?? null);
+  const buscar = Array.isArray(consulta) ? null : (consulta.buscar ?? null);
+  const grupos = agruparHorarios(await modelo.listarActivos(sedeId, tipoIds, buscar));
+
+  if (Array.isArray(consulta) || consulta === null || consulta.pagina === undefined) {
+    return grupos;
+  }
+
+  const pagina = consulta.pagina ?? 1;
+  const porPagina = consulta.porPagina ?? 10;
+  const inicio = desplazamiento(pagina, porPagina);
+  return {
+    datos: grupos.slice(inicio, inicio + porPagina),
+    paginacion: armarPaginacion({ total: grupos.length, pagina, porPagina }),
+  };
 }
