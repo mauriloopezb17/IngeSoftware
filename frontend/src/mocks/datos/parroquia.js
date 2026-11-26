@@ -269,10 +269,20 @@ export const boletinesExaltacion = [
     fechaPublicacion: '2026-10-03T10:00:00-04:00',
     archivo: {
       id: 7,
-      url: 'https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/10/8f3c2a1d-5b7e-4c90-a1f4-6d2e9b0c7a35.pdf',
+      url: '/media/seed/boletin-ejemplo.pdf',
       nombreOriginal: 'Boletín octubre 2026.pdf',
       tipoMime: 'application/pdf',
       tamanoBytes: 2516582,
+    },
+    portada: {
+      id: 21,
+      url: '/media/seed/exterior-parroquia.webp',
+      textoAlternativo: 'Portada del Edición de octubre 2026',
+      ancho: 800,
+      alto: 1131,
+      variantes: [
+        { ancho: 480, url: '/media/seed/exterior-parroquia.webp' },
+      ],
     },
   },
   {
@@ -282,7 +292,7 @@ export const boletinesExaltacion = [
     fechaPublicacion: '2026-09-04T10:00:00-04:00',
     archivo: {
       id: 8,
-      url: 'https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/09/boletin-septiembre-2026.pdf',
+      url: '/media/seed/boletin-ejemplo.pdf',
       nombreOriginal: 'Boletín septiembre 2026.pdf',
       tipoMime: 'application/pdf',
       tamanoBytes: 2150400,
@@ -295,7 +305,7 @@ export const boletinesExaltacion = [
     fechaPublicacion: '2026-08-02T10:00:00-04:00',
     archivo: {
       id: 9,
-      url: 'https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/08/boletin-agosto-2026.pdf',
+      url: '/media/seed/boletin-ejemplo.pdf',
       nombreOriginal: 'Boletín agosto 2026.pdf',
       tipoMime: 'application/pdf',
       tamanoBytes: 1887436,
@@ -308,7 +318,7 @@ export const boletinesExaltacion = [
     fechaPublicacion: '2026-07-05T10:00:00-04:00',
     archivo: {
       id: 10,
-      url: 'https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/07/boletin-julio-2026.pdf',
+      url: '/media/seed/boletin-ejemplo.pdf',
       nombreOriginal: 'Boletín julio 2026.pdf',
       tipoMime: 'application/pdf',
       tamanoBytes: 1730150,
@@ -321,7 +331,7 @@ export const boletinesExaltacion = [
     fechaPublicacion: '2026-06-03T10:00:00-04:00',
     archivo: {
       id: 11,
-      url: 'https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/06/boletin-junio-2026.pdf',
+      url: '/media/seed/boletin-ejemplo.pdf',
       nombreOriginal: 'Boletín junio 2026.pdf',
       tipoMime: 'application/pdf',
       tamanoBytes: 1992294,
@@ -334,7 +344,7 @@ export const boletinesExaltacion = [
     fechaPublicacion: '2025-12-02T10:00:00-04:00',
     archivo: {
       id: 12,
-      url: 'https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2025/12/boletin-diciembre-2025.pdf',
+      url: '/media/seed/boletin-ejemplo.pdf',
       nombreOriginal: 'Boletín diciembre 2025.pdf',
       tipoMime: 'application/pdf',
       tamanoBytes: 2831155,
@@ -347,7 +357,7 @@ export const boletinesExaltacion = [
     fechaPublicacion: '2025-11-03T10:00:00-04:00',
     archivo: {
       id: 13,
-      url: 'https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2025/11/boletin-noviembre-2025.pdf',
+      url: '/media/seed/boletin-ejemplo.pdf',
       nombreOriginal: 'Boletín noviembre 2025.pdf',
       tipoMime: 'application/pdf',
       tamanoBytes: 1625292,

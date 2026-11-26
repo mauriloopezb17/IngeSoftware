@@ -1,15 +1,22 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, FileText, Save } from 'lucide-react';
+import { AlertCircle, FileText, Image as ImageIcon, RefreshCw, Save } from 'lucide-react';
 
 import { erroresDe, resumenDeErrores } from '../componentes/erroresFormulario.js';
 import { formatearTamano } from '../multimedia/formato.js';
+import SelectorImagenes from '../multimedia/SelectorImagenes.jsx';
 import { Aviso, Boton, CampoTexto, useToast } from '../ui/index.js';
 import { actualizarBoletin, CLAVE_BOLETINES, crearBoletin } from './api.js';
+import { generarPortadaPdf } from './generarPortadaPdf.js';
 import SelectorPdf from './SelectorPdf.jsx';
 
-const CAMPO_DE_ERROR = { titulo: 'titulo', periodo: 'periodo', archivoId: 'archivo' };
+const CAMPO_DE_ERROR = {
+  titulo: 'titulo',
+  periodo: 'periodo',
+  archivoId: 'archivo',
+  portadaId: 'portada',
+};
 const MAX_TITULO = 150; // admin.md §11
 
 function validarLocal(campos) {
@@ -22,8 +29,7 @@ function validarLocal(campos) {
   return errores;
 }
 
-// Formulario de un boletín (admin.md §11): título, mes y el PDF de la biblioteca multimedia.
-// `boletin` (opcional): el que se edita (el PDF se puede reemplazar).
+// Formulario de un boletín (admin.md §11): título, mes, PDF y portada opcional.
 export default function FormularioBoletin({ boletin }) {
   const navegar = useNavigate();
   const clienteConsultas = useQueryClient();
@@ -35,16 +41,42 @@ export default function FormularioBoletin({ boletin }) {
     titulo: boletin?.titulo ?? '',
     periodo: boletin?.periodo.slice(0, 7) ?? '',
     archivo: boletin?.archivo ?? null,
+    portada: boletin?.portada ?? null,
   }));
   const [errores, setErrores] = useState({});
   const [generales, setGenerales] = useState([]);
   const [eligiendo, setEligiendo] = useState(false);
+  const [eligiendoPortada, setEligiendoPortada] = useState(false);
+  const [generandoPortada, setGenerandoPortada] = useState(false);
+  const [avisoPortada, setAvisoPortada] = useState('');
+
   const cambiar = (cambios) => setCampos((actuales) => ({ ...actuales, ...cambios }));
 
   function mostrar(porCampo, avisosGenerales = []) {
     setErrores(porCampo);
     setGenerales(avisosGenerales);
     requestAnimationFrame(() => avisos.current?.focus());
+  }
+
+  async function intentarGenerarPortada(archivoPdf, tituloActual) {
+    if (!archivoPdf?.url) return;
+    setGenerandoPortada(true);
+    setAvisoPortada('');
+
+    try {
+      const imagenSubida = await generarPortadaPdf({
+        urlPdf: archivoPdf.url,
+        titulo: tituloActual,
+        nombreOriginal: archivoPdf.nombreOriginal,
+      });
+      setCampos((actuales) => ({ ...actuales, portada: imagenSubida }));
+    } catch {
+      setAvisoPortada(
+        'No se pudo generar automáticamente la miniatura de la portada. Puedes guardar el boletín igual o elegir una imagen de la biblioteca.',
+      );
+    } finally {
+      setGenerandoPortada(false);
+    }
   }
 
   const guardar = useMutation({
@@ -70,7 +102,12 @@ export default function FormularioBoletin({ boletin }) {
       mostrar(locales);
       return;
     }
-    guardar.mutate({ titulo: campos.titulo.trim(), periodo: campos.periodo, archivoId: campos.archivo.id });
+    guardar.mutate({
+      titulo: campos.titulo.trim(),
+      periodo: campos.periodo,
+      archivoId: campos.archivo.id,
+      portadaId: campos.portada?.id ?? null,
+    });
   }
 
   const mensajes = resumenDeErrores(errores, generales);
@@ -139,6 +176,92 @@ export default function FormularioBoletin({ boletin }) {
         </div>
       </fieldset>
 
+      <fieldset aria-describedby={errores.portada ? 'error-portada' : undefined} className="flex flex-col gap-3 border-t border-sand pt-4">
+        <legend className="text-sm font-semibold text-ink">Miniatura de la portada (opcional)</legend>
+
+        {generandoPortada && (
+          <p className="text-sm text-muted" aria-live="polite">
+            Generando miniatura de la primera página…
+          </p>
+        )}
+
+        {avisoPortada && (
+          <Aviso tipo="advertencia" titulo="Aviso sobre la portada">
+            {avisoPortada}
+          </Aviso>
+        )}
+
+        {campos.portada ? (
+          <div className="flex flex-wrap items-start gap-4">
+            <img
+              src={campos.portada.url}
+              alt={campos.portada.textoAlternativo || `Portada del ${campos.titulo || 'boletín'}`}
+              className="aspect-[210/297] w-28 rounded-sm border border-sand bg-white object-cover shadow-sm"
+            />
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted">Se muestra en la tarjeta del boletín en el portal.</p>
+              <div className="flex flex-wrap gap-2">
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  icono={ImageIcon}
+                  onClick={() => setEligiendoPortada(true)}
+                >
+                  Cambiar portada
+                </Boton>
+                {campos.archivo && (
+                  <Boton
+                    variante="secundario"
+                    tamano="sm"
+                    icono={RefreshCw}
+                    cargando={generandoPortada}
+                    onClick={() => intentarGenerarPortada(campos.archivo, campos.titulo)}
+                  >
+                    Volver a generar
+                  </Boton>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-muted">
+              {campos.archivo
+                ? 'Este boletín no tiene miniatura de portada.'
+                : 'Al elegir o subir el PDF se generará automáticamente la miniatura de la primera página.'}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {campos.archivo && (
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  icono={RefreshCw}
+                  cargando={generandoPortada}
+                  onClick={() => intentarGenerarPortada(campos.archivo, campos.titulo)}
+                >
+                  Generar portada
+                </Boton>
+              )}
+              <Boton
+                variante="secundario"
+                tamano="sm"
+                icono={ImageIcon}
+                onClick={() => setEligiendoPortada(true)}
+              >
+                Cambiar portada
+              </Boton>
+            </div>
+          </div>
+        )}
+
+        {errores.portada && (
+          <p id="error-portada" className="flex items-start gap-1.5 text-sm text-danger">
+            <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+            <span>{errores.portada}</span>
+          </p>
+        )}
+      </fieldset>
+
       <div className="flex flex-wrap items-center gap-3 border-t border-sand pt-5">
         <Boton type="submit" variante="primario" icono={Save} cargando={guardar.isPending}>
           {editando ? 'Guardar cambios' : 'Publicar boletín'}
@@ -151,11 +274,26 @@ export default function FormularioBoletin({ boletin }) {
       {eligiendo && (
         <SelectorPdf
           seleccionadoId={campos.archivo?.id}
+          onCerrar={() => setEligiendo(false)}
           onSeleccionar={(archivo) => {
             cambiar({ archivo });
+            setErrores((e) => ({ ...e, archivo: undefined }));
             setEligiendo(false);
+            intentarGenerarPortada(archivo, campos.titulo);
           }}
-          onCerrar={() => setEligiendo(false)}
+        />
+      )}
+
+      {eligiendoPortada && (
+        <SelectorImagenes
+          titulo="Portada del boletín"
+          onCerrar={() => setEligiendoPortada(false)}
+          onSeleccionar={(imagen) => {
+            cambiar({ portada: imagen });
+            setAvisoPortada('');
+            setErrores((e) => ({ ...e, portada: undefined }));
+            setEligiendoPortada(false);
+          }}
         />
       )}
     </form>

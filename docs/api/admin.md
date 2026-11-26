@@ -1026,19 +1026,21 @@ El mismo objeto del [endpoint público](publico.md#get-apisedessedeboletines), m
 {
   "titulo": "Edición de noviembre 2026",
   "periodo": "2026-11",
-  "archivoId": 9
+  "archivoId": 9,
+  "portadaId": 31
 }
 ```
 
 - `periodo`: `YYYY-MM`. Se guarda como el primer día del mes. Solo puede haber un boletín por sede y mes: repetir el periodo es `409 CONFLICTO`.
 - `archivoId`: debe ser un `application/pdf` de la misma sede. Si no, `400 VALIDACION`.
+- `portadaId` (opcional, `null` para quitar): imagen de la biblioteca multimedia de la misma sede (miniatura de la primera página). Si no es imagen o es de otra sede, `400 VALIDACION`. La biblioteca la cuenta como en uso (`PORTADA_BOLETIN`).
 
 Reglas adicionales:
 
 - `sedeId` (solo el Administrador): por defecto su sede; obligatorio si no tiene sede asignada.
 - `titulo`: obligatorio, hasta 150 caracteres. `periodo` con otro formato que `YYYY-MM` (ej. `2026-11-01` o `2026-13`) es `400 VALIDACION`.
 - `archivoId` inexistente, de otra sede o que no es un PDF: `400 VALIDACION` en `archivoId` («Debe ser un documento PDF de la biblioteca multimedia de esta sede.» o «El archivo no es un documento PDF.»).
-- `periodo` repetido en la sede (al crear o al editar): `409 CONFLICTO` con un detalle en `periodo`. `PATCH` acepta `titulo`, `periodo` y `archivoId`; cualquier otro campo es `400`.
+- `periodo` repetido en la sede (al crear o al editar): `409 CONFLICTO` con un detalle en `periodo`. `PATCH` acepta `titulo`, `periodo`, `archivoId` y `portadaId`; cualquier otro campo es `400`.
 - `publicadoPor` es quien creó el boletín y no cambia al editarlo. `fechaPublicacion` es el momento de la creación.
 - Lectura: todos los roles de la sede; `POST`, `PATCH` y `DELETE` piden `boletines.gestionar` (incluye a Marketing).
 

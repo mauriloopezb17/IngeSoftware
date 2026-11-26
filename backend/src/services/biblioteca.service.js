@@ -84,6 +84,7 @@ const DESCRIPCION_DE_USO = {
   IMAGEN_PROCLAMA: (nombre) => `Usado como foto principal de la proclama «${nombre}».`,
   GALERIA_PROCLAMA: (nombre) => `Usado en la galería de la proclama «${nombre}».`,
   CONTENIDO_PROCLAMA: (nombre) => `Usado dentro del contenido de la proclama «${nombre}».`,
+  PORTADA_BOLETIN: (nombre) => `Usado como portada del boletín «${nombre}».`,
 };
 
 function errorEnUso(usos) {

@@ -49,6 +49,7 @@ export const rutas = [
           { path: '/calendario/dia/:fecha', Component: CalendarioDia },
           { path: '/calendario/:id', Component: EventoDetalle },
           { path: '/boletines', Component: Boletines },
+          { path: '/boletines/:periodo', Component: Boletines },
           { path: '/paginas/:slug', Component: PaginaPublica },
           { path: '*', Component: NoEncontrado },
         ],
