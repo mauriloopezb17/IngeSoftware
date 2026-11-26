@@ -109,7 +109,8 @@ describe('Páginas internas del portal', () => {
     ).toBeInTheDocument();
     const direcciones = await screen.findAllByText('Av. Héctor Ormachea N.º 167, Obrajes, La Paz');
     expect(direcciones.length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole('link', { name: /Abrir en Google Maps/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Cómo llegar/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Ver en Google Maps/i })).toBeInTheDocument();
     expect(screen.queryByRole('form')).not.toBeInTheDocument();
   });
 });

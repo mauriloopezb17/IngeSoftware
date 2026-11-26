@@ -82,11 +82,13 @@ export async function listar(filtros, { limite, desplazamiento }) {
   if (filtros.accion !== undefined) condiciones.push(`b.accion = ${agregar(filtros.accion)}`);
   // Días completos en hora de Bolivia, ambos incluidos.
   if (filtros.desde !== undefined) {
-    condiciones.push(`b.fecha >= (${agregar(filtros.desde)}::date AT TIME ZONE 'America/La_Paz')`);
+    condiciones.push(
+      `b.fecha >= (${agregar(filtros.desde)}::date::timestamp AT TIME ZONE 'America/La_Paz')`,
+    );
   }
   if (filtros.hasta !== undefined) {
     condiciones.push(
-      `b.fecha < ((${agregar(filtros.hasta)}::date + 1) AT TIME ZONE 'America/La_Paz')`,
+      `b.fecha < ((${agregar(filtros.hasta)}::date + 1)::timestamp AT TIME ZONE 'America/La_Paz')`,
     );
   }
 
