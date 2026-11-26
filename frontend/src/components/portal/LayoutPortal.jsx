@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router';
 
+import '../../styles/portal.css';
+
 import Encabezado from '../parroquia/Encabezado.jsx';
 import PiePagina from '../parroquia/PiePagina.jsx';
 
@@ -25,8 +27,10 @@ function LayoutPortal() {
 
       <Encabezado transparente={esInicio} />
 
-      <main id="contenido" tabIndex={-1} className="flex-1 outline-none">
-        <Outlet />
+      <main id="contenido" tabIndex={-1} className="flex-1 overflow-x-clip outline-none">
+        <div key={pathname} className="pagina-entrada">
+          <Outlet />
+        </div>
       </main>
 
       <PiePagina />

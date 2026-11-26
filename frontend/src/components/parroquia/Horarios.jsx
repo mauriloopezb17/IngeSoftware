@@ -3,6 +3,7 @@ import { Church, Clock3, Cross } from 'lucide-react';
 import {
   EncabezadoSeccion,
   EnlaceFlecha,
+  Reveal,
   Seccion,
 } from '../portal/index.js';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
@@ -130,9 +131,12 @@ function Horarios() {
         <SinResultados oscuro mensaje="No hay horarios publicados por el momento." />
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {tarjetas.map(({ title, icon: Icono, rows, note }) => (
-            <article
+          {tarjetas.map(({ title, icon: Icono, rows, note }, indice) => (
+            <Reveal
               key={title}
+              variante="tarjeta"
+              retraso={indice * 120}
+              as="article"
               className="flex flex-col justify-between rounded-md border border-white/10 bg-ink-soft p-6 md:p-8"
             >
               <div>
@@ -172,7 +176,7 @@ function Horarios() {
                   {note}
                 </p>
               )}
-            </article>
+            </Reveal>
           ))}
         </div>
       )}

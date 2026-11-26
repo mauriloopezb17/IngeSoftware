@@ -3,6 +3,7 @@ import { Clock3, ExternalLink, Mail, MapPin, MessageCircle, Navigation, Phone } 
 import {
   BotonEnlace,
   EncabezadoPagina,
+  Reveal,
   Seccion,
 } from '../components/portal/index.js';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from '../components/parroquia/EstadoSeccion.jsx';
@@ -65,7 +66,7 @@ function ContactoPagina() {
         ) : (
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
             {/* Canales de contacto y horarios de secretaría */}
-            <div className="space-y-8 lg:col-span-6">
+            <Reveal variante="izquierda" className="space-y-8 lg:col-span-6">
               <dl className="divide-y divide-sand border-y border-sand">
                 {sede.direccion && (
                   <div className="flex items-start gap-4 py-5">
@@ -212,7 +213,7 @@ function ContactoPagina() {
                   </div>
                 </div>
               )}
-            </div>
+            </Reveal>
 
             {/* Ubicación y mapa */}
             <div className="lg:col-span-6">

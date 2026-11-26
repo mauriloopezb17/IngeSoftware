@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Clapperboard, ExternalLink, Pause, Play } from 'lucide-react';
 
-import { BotonEnlace, EncabezadoSeccion, Seccion } from '../portal/index.js';
+import { BotonEnlace, EncabezadoSeccion, Reveal, Seccion } from '../portal/index.js';
 import { CargandoSeccion, ErrorSeccion, SinResultados } from './EstadoSeccion.jsx';
 import { usePagina, useSede, useVideos } from '../../hooks/index.js';
 
@@ -58,7 +58,7 @@ function VideoInstitucional() {
           onReintentar={refetch}
         />
       ) : videoYoutube ? (
-        <div className="mx-auto max-w-4xl overflow-hidden rounded-md border border-white/15 bg-ink-soft">
+        <Reveal variante="tarjeta" className="mx-auto max-w-4xl overflow-hidden rounded-md border border-white/15 bg-ink-soft">
           <iframe
             className="aspect-video w-full border-0"
             src={videoYoutube.urlInsercion}
@@ -66,11 +66,11 @@ function VideoInstitucional() {
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
-        </div>
+        </Reveal>
       ) : !hero?.url_video ? (
         <SinResultados oscuro mensaje="No hay un video institucional disponible." />
       ) : (
-        <div className="mx-auto max-w-4xl overflow-hidden rounded-md border border-white/15 bg-ink-soft">
+        <Reveal variante="tarjeta" className="mx-auto max-w-4xl overflow-hidden rounded-md border border-white/15 bg-ink-soft">
           <div className="relative">
             <video
               ref={videoRef}
@@ -106,7 +106,7 @@ function VideoInstitucional() {
                 : 'Recorrido aéreo y del templo · 0:30'}
             </span>
           </div>
-        </div>
+        </Reveal>
       )}
 
       {canalBase && (

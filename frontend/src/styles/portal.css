@@ -1,5 +1,16 @@
-/* Animación de entrada del hero (respetada por prefers-reduced-motion en index.css) */
+/* Animaciones del portal público (respetadas por prefers-reduced-motion en index.css) */
 @keyframes heroEntrada {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes paginaEntrada {
   from {
     opacity: 0;
     transform: translateY(16px);
@@ -10,14 +21,56 @@
   }
 }
 
+@keyframes fadeSuave {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .hero-entrada {
-  animation: heroEntrada 900ms var(--ease-suave) both;
+  animation: heroEntrada 1000ms var(--ease-suave) both;
 }
 
 .hero-entrada-retraso-1 {
-  animation-delay: 150ms;
+  animation-delay: 140ms;
 }
 
 .hero-entrada-retraso-2 {
-  animation-delay: 300ms;
+  animation-delay: 280ms;
+}
+
+.encabezado-migas {
+  animation: fadeSuave 400ms var(--ease-salida) both;
+}
+
+.pagina-entrada {
+  animation: paginaEntrada 400ms var(--ease-salida) both;
+}
+
+/* Hover de tarjetas y fotografías solo en dispositivos con puntero fino */
+.tarjeta-portal {
+  transition:
+    transform 250ms var(--ease-salida),
+    border-color 250ms var(--ease-salida),
+    box-shadow 250ms var(--ease-salida);
+}
+
+.foto-hover {
+  transition: transform 700ms var(--ease-salida);
+}
+
+@media (hover: hover) {
+  .tarjeta-portal:hover {
+    transform: translateY(-6px);
+    border-color: var(--color-gold);
+    box-shadow: 0 12px 28px rgb(35 31 30 / 0.1);
+  }
+
+  .group:hover .foto-hover,
+  .foto-hover:hover {
+    transform: scale(1.06);
+  }
 }

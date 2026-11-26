@@ -83,7 +83,7 @@ function ComunidadPagina() {
                   <li key={grupo.id}>
                     <Reveal
                       variante="tarjeta"
-                      retraso={indice * 60}
+                      retraso={indice * 120}
                       className="flex flex-col gap-4 py-6 sm:flex-row sm:items-start sm:justify-between"
                     >
                       <div className="flex items-start gap-4">
