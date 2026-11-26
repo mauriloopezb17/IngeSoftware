@@ -99,7 +99,7 @@ describe('gestión de grupos pastorales', () => {
     const usuario = userEvent.setup();
 
     await screen.findByRole('table');
-    await usuario.click(screen.getByRole('button', { name: 'Nuevo grupo' }));
+    await usuario.click(await screen.findByRole('button', { name: 'Nuevo grupo' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo grupo pastoral' });
     await usuario.click(within(dialogo).getByRole('button', { name: 'Crear grupo' }));

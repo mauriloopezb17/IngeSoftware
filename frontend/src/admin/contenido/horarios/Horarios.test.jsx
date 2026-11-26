@@ -69,7 +69,7 @@ describe('gestión de horarios', () => {
     const usuario = userEvent.setup();
 
     await screen.findByRole('table');
-    await usuario.click(screen.getByRole('button', { name: 'Nuevo horario' }));
+    await usuario.click(await screen.findByRole('button', { name: 'Nuevo horario' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo horario' });
     await usuario.selectOptions(within(dialogo).getByLabelText('Tipo de horario'), '3');
@@ -92,7 +92,7 @@ describe('gestión de horarios', () => {
     const usuario = userEvent.setup();
 
     await screen.findByRole('table');
-    await usuario.click(screen.getByRole('button', { name: 'Editar horario Adoración Jueves 19:30' }));
+    await usuario.click(await screen.findByRole('button', { name: 'Editar horario Adoración Jueves 19:30' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Editar horario' });
     const desc = within(dialogo).getByLabelText('Descripción (opcional)');
@@ -110,7 +110,7 @@ describe('gestión de horarios', () => {
     const usuario = userEvent.setup();
 
     await screen.findByRole('table');
-    await usuario.click(screen.getByRole('button', { name: 'Nuevo horario' }));
+    await usuario.click(await screen.findByRole('button', { name: 'Nuevo horario' }));
 
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo horario' });
     await usuario.type(within(dialogo).getByLabelText('Hora de inicio'), '19:00');
@@ -128,7 +128,7 @@ describe('gestión de horarios', () => {
     const usuario = userEvent.setup();
 
     await screen.findByRole('table');
-    await usuario.click(screen.getByRole('button', { name: 'Eliminar horario Adoración Jueves 19:30' }));
+    await usuario.click(await screen.findByRole('button', { name: 'Eliminar horario Adoración Jueves 19:30' }));
 
     const confirmacion = await screen.findByRole('dialog', { name: '¿Eliminar horario?' });
     await usuario.click(within(confirmacion).getByRole('button', { name: 'Eliminar' }));

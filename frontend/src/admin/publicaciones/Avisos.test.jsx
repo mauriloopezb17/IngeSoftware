@@ -198,7 +198,7 @@ describe('avisos parroquiales', () => {
     const usuario = userEvent.setup();
     await screen.findByRole('table');
 
-    await usuario.click(screen.getByRole('button', { name: /Archivar «El próximo lunes/ }));
+    await usuario.click(await screen.findByRole('button', { name: /Archivar «El próximo lunes/ }));
     let dialogo = screen.getByRole('dialog', { name: /¿Archivar «El próximo lunes/ });
     await usuario.click(within(dialogo).getByRole('button', { name: 'Archivar' }));
     expect(await screen.findByText(/«El próximo lunes.*» se archivó\./)).toBeInTheDocument();
