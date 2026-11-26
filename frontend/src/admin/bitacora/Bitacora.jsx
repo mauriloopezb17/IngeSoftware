@@ -26,6 +26,7 @@ const VARIANTE_ACCION = {
   INSERT: 'publicado',
   UPDATE: 'programado',
   DELETE: 'rechazado',
+  EXPORT: 'borrador',
 };
 
 export default function Bitacora() {

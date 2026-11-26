@@ -32,7 +32,7 @@ CREATE TABLE bitacora_cambio (
     datos_nuevos jsonb  NULL,
     direccion_ip inet  NULL,
     fecha timestamptz  NOT NULL DEFAULT now(),
-    CONSTRAINT bitacora_cambio_accion_ck CHECK (accion IN ('INSERT', 'UPDATE', 'DELETE')),
+    CONSTRAINT bitacora_cambio_accion_ck CHECK (accion IN ('INSERT', 'UPDATE', 'DELETE', 'EXPORT')),
     CONSTRAINT bitacora_cambio_pk PRIMARY KEY (id)
 );
 

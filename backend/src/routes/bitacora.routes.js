@@ -3,11 +3,13 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { PERMISOS } from '../constantes/permisos.js';
 import * as controlador from '../controllers/bitacora.controller.js';
+import { exportarRecurso } from '../controllers/exportar.controller.js';
 import { requerirPermiso } from '../middlewares/autorizar.js';
+import { marcarConsulta } from '../middlewares/registrarConsulta.js';
 import { validar } from '../middlewares/validar.js';
-import { esquemaListado, fecha, id } from '../validacion/comunes.js';
+import { esquemaExportacion, esquemaListado, fecha, id } from '../validacion/comunes.js';
 
-const consultaBitacora = esquemaListado({
+const consultaBitacoraBase = esquemaListado({
   filtros: {
     entidad: z
       .string()
@@ -22,17 +24,25 @@ const consultaBitacora = esquemaListado({
       .optional(),
     usuario: id.optional(),
     accion: z
-      .enum(['INSERT', 'UPDATE', 'DELETE'], { error: 'Debe ser INSERT, UPDATE o DELETE.' })
+      .enum(['INSERT', 'UPDATE', 'DELETE', 'EXPORT'], {
+        error: 'Debe ser INSERT, UPDATE, DELETE o EXPORT.',
+      })
       .optional(),
     desde: fecha.optional(),
     hasta: fecha.optional(),
   },
   ordenes: ['fecha', '-fecha'],
   ordenPredeterminado: '-fecha',
-}).refine(({ desde, hasta }) => !desde || !hasta || hasta >= desde, {
-  path: ['hasta'],
-  message: 'Debe ser igual o posterior a desde.',
 });
+
+const conRangoFechas = (esquema) =>
+  esquema.refine(({ desde, hasta }) => !desde || !hasta || hasta >= desde, {
+    path: ['hasta'],
+    message: 'Debe ser igual o posterior a desde.',
+  });
+
+const consultaBitacora = conRangoFechas(consultaBitacoraBase);
+const consultaBitacoraExportar = conRangoFechas(esquemaExportacion(consultaBitacoraBase));
 
 const router = Router();
 
@@ -41,6 +51,13 @@ router.get(
   requerirPermiso(PERMISOS.BITACORA_VER),
   validar({ query: consultaBitacora }),
   controlador.listar,
+);
+router.get(
+  '/exportar',
+  requerirPermiso(PERMISOS.BITACORA_VER),
+  marcarConsulta('exportacion'),
+  validar({ query: consultaBitacoraExportar }),
+  exportarRecurso('bitacora'),
 );
 
 export default router;

@@ -7,6 +7,7 @@ export const ACCIONES_BITACORA = [
   { codigo: 'INSERT', nombre: 'Alta (INSERT)' },
   { codigo: 'UPDATE', nombre: 'Modificación (UPDATE)' },
   { codigo: 'DELETE', nombre: 'Eliminación (DELETE)' },
+  { codigo: 'EXPORT', nombre: 'Exportación (EXPORT)' },
 ];
 
 export const ENTIDADES_BITACORA = [
@@ -34,6 +35,8 @@ export function etiquetaAccion(accion) {
       return 'Modificación';
     case 'DELETE':
       return 'Eliminación';
+    case 'EXPORT':
+      return 'Exportación';
     default:
       return accion;
   }

@@ -132,3 +132,7 @@ export function esquemaListado({
 
   return z.strictObject(forma);
 }
+
+export function esquemaExportacion(esquema) {
+  return esquema.omit({ pagina: true, porPagina: true });
+}

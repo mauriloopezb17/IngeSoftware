@@ -2,8 +2,11 @@
 import { Router } from 'express';
 import { PERMISOS } from '../constantes/permisos.js';
 import * as controlador from '../controllers/adminServicios.controller.js';
+import { exportarRecurso } from '../controllers/exportar.controller.js';
 import { filtrarPorSede, requerirPermiso } from '../middlewares/autorizar.js';
+import { marcarConsulta } from '../middlewares/registrarConsulta.js';
 import { validar } from '../middlewares/validar.js';
+import { esquemaExportacion } from '../validacion/comunes.js';
 import {
   consultaServicios,
   cuerpoCrearPregunta,
@@ -22,6 +25,13 @@ const exigirPermiso = requerirPermiso(
 );
 
 router.get('/', validar({ query: consultaServicios }), filtrarPorSede, controlador.listar);
+router.get(
+  '/exportar',
+  marcarConsulta('exportacion'),
+  validar({ query: esquemaExportacion(consultaServicios) }),
+  filtrarPorSede,
+  exportarRecurso('servicios'),
+);
 router.post('/reordenar', exigirPermiso, validar({ body: cuerpoReordenar }), controlador.reordenar);
 router.get('/:id', validar({ params: paramsServicio }), controlador.detalle);
 

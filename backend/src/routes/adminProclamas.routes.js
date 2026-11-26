@@ -3,8 +3,11 @@
 import { Router } from 'express';
 import { PERMISOS } from '../constantes/permisos.js';
 import * as controlador from '../controllers/adminProclamas.controller.js';
+import { exportarRecurso } from '../controllers/exportar.controller.js';
 import { filtrarPorSede, requerirPermiso } from '../middlewares/autorizar.js';
+import { marcarConsulta } from '../middlewares/registrarConsulta.js';
 import { validar } from '../middlewares/validar.js';
+import { esquemaExportacion } from '../validacion/comunes.js';
 import {
   consultaObservaciones,
   consultaProclamas,
@@ -28,6 +31,13 @@ router.get(
   validar({ query: consultaObservaciones }),
   controlador.listarObservaciones,
 );
+router.get(
+  '/observaciones/exportar',
+  verObservaciones,
+  marcarConsulta('exportacion'),
+  validar({ query: esquemaExportacion(consultaObservaciones) }),
+  exportarRecurso('observaciones'),
+);
 router.get('/observaciones/resumen', verObservaciones, controlador.resumenObservaciones);
 router.patch(
   '/observaciones/:id',
@@ -43,6 +53,13 @@ router.delete(
 );
 
 router.get('/', validar({ query: consultaProclamas }), filtrarPorSede, controlador.listar);
+router.get(
+  '/exportar',
+  marcarConsulta('exportacion'),
+  validar({ query: esquemaExportacion(consultaProclamas) }),
+  filtrarPorSede,
+  exportarRecurso('proclamas'),
+);
 router.get('/:id', validar({ params }), controlador.detalle);
 router.post('/', gestionar, validar({ body: cuerpoCrearProclama }), controlador.crear);
 router.patch(
