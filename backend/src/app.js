@@ -6,6 +6,7 @@ import { obtenerEntorno } from './config/entorno.js';
 import { crearMiddlewareLog } from './config/logger.js';
 import { protegerCsrf } from './middlewares/csrf.js';
 import { manejarErrores, rutaNoEncontrada } from './middlewares/errores.js';
+import { registrarConsulta } from './middlewares/registrarConsulta.js';
 import routes from './routes/index.js';
 
 // Límite del cuerpo JSON (contrato: docs/api/convenciones.md). Los archivos tienen sus propios límites.
@@ -22,6 +23,7 @@ export function createApp() {
   app.set('trust proxy', entorno.confiarProxy);
   // Primero el log: así toda petición tiene su id (X-Request-Id), aunque falle después.
   app.use(crearMiddlewareLog());
+  app.use(registrarConsulta);
 
   // Cabeceras de seguridad. La API solo responde JSON, así que los valores por defecto sirven.
   app.use(helmet());
