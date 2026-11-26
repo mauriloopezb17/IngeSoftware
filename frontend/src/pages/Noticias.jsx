@@ -1,4 +1,5 @@
-import { ArrowRight, ExternalLink } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowRight, ExternalLink, Search, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 
 import {
@@ -26,12 +27,41 @@ const OPCIONES_TIPO = [
 
 function Noticias() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const inicioListadoRef = useRef(null);
 
   const tipoParam = searchParams.get('tipo') ?? '';
   const tipoActivo = TIPOS_VALIDOS.has(tipoParam) ? tipoParam : '';
   const categoriaActiva = searchParams.get('categoria') ?? '';
+  const buscarUrl = searchParams.get('buscar')?.trim() ?? '';
   const paginaNumero = Number(searchParams.get('pagina') ?? '1');
   const paginaActual = Number.isInteger(paginaNumero) && paginaNumero >= 1 ? paginaNumero : 1;
+
+  const [estadoBusqueda, setEstadoBusqueda] = useState({
+    texto: buscarUrl,
+    urlAnterior: buscarUrl,
+  });
+  if (estadoBusqueda.urlAnterior !== buscarUrl) {
+    setEstadoBusqueda({ texto: buscarUrl, urlAnterior: buscarUrl });
+  }
+  const textoBusqueda = estadoBusqueda.texto;
+
+  useEffect(() => {
+    const limpio = textoBusqueda.trim();
+    if (limpio === buscarUrl) return undefined;
+    const temporizador = setTimeout(() => {
+      setSearchParams(
+        (actuales) => {
+          const siguientes = new URLSearchParams(actuales);
+          if (limpio) siguientes.set('buscar', limpio);
+          else siguientes.delete('buscar');
+          siguientes.delete('pagina');
+          return siguientes;
+        },
+        { replace: true },
+      );
+    }, 300);
+    return () => clearTimeout(temporizador);
+  }, [textoBusqueda, buscarUrl, setSearchParams]);
 
   const { data: categorias = [] } = useCategorias();
 
@@ -42,6 +72,9 @@ function Noticias() {
   };
   if (categoriaActiva) {
     filtrosApi.categoria = categoriaActiva;
+  }
+  if (buscarUrl) {
+    filtrosApi.buscar = buscarUrl;
   }
 
   const { data, isPending, isError, refetch } = usePublicaciones(filtrosApi);
@@ -77,7 +110,12 @@ function Noticias() {
     setSearchParams(siguientes);
   };
 
-  const hayFiltrosActivos = Boolean(tipoActivo || categoriaActiva);
+  const limpiarFiltros = () => {
+    setEstadoBusqueda({ texto: '', urlAnterior: '' });
+    setSearchParams({});
+  };
+
+  const hayFiltrosActivos = Boolean(tipoActivo || categoriaActiva || buscarUrl);
 
   return (
     <>
@@ -122,6 +160,37 @@ function Noticias() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <div className="relative min-w-[200px] flex-1 sm:flex-initial">
+              <label htmlFor="buscar-noticias" className="sr-only">
+                Buscar noticias
+              </label>
+              <Search
+                size={16}
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+              />
+              <input
+                id="buscar-noticias"
+                type="search"
+                value={textoBusqueda}
+                onChange={(evento) =>
+                  setEstadoBusqueda((prev) => ({ ...prev, texto: evento.target.value }))
+                }
+                placeholder="Buscar noticias…"
+                className="min-h-11 w-full rounded-sm border border-sand bg-white py-2 pl-9 pr-9 font-body text-meta text-ink placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              />
+              {textoBusqueda && (
+                <button
+                  type="button"
+                  onClick={() => setEstadoBusqueda((prev) => ({ ...prev, texto: '' }))}
+                  aria-label="Limpiar búsqueda"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              )}
+            </div>
+
             <label
               htmlFor="filtro-categoria-noticias"
               className="font-body text-meta font-semibold text-muted"
@@ -146,26 +215,38 @@ function Noticias() {
               <button
                 type="button"
                 className="min-h-11 cursor-pointer px-3 py-2 font-body text-meta font-semibold text-ink underline underline-offset-4 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                onClick={() => setSearchParams({})}
+                onClick={limpiarFiltros}
               >
-                Limpiar filtros
+                Quitar filtros
               </button>
             )}
           </div>
         </div>
 
+        <div ref={inicioListadoRef} tabIndex={-1} className="outline-none">
         {isPending ? (
           <CargandoSeccion alturaMinima={360} etiqueta="Cargando noticias" />
         ) : isError ? (
           <ErrorSeccion mensaje="No pudimos cargar las noticias." onReintentar={refetch} />
         ) : publicaciones.length === 0 ? (
-          <SinResultados
-            mensaje={
-              hayFiltrosActivos
-                ? 'No hay noticias que coincidan con los filtros seleccionados.'
-                : 'No hay noticias publicadas por el momento.'
-            }
-          />
+          <div className="space-y-4">
+            <SinResultados
+              mensaje={
+                hayFiltrosActivos
+                  ? 'No hay noticias que coincidan con los filtros seleccionados.'
+                  : 'No hay noticias publicadas por el momento.'
+              }
+            />
+            {hayFiltrosActivos && (
+              <button
+                type="button"
+                onClick={limpiarFiltros}
+                className="inline-flex min-h-11 cursor-pointer items-center rounded-sm border border-sand bg-white px-5 py-2.5 font-body text-meta font-semibold text-ink hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Quitar filtros
+              </button>
+            )}
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -286,9 +367,11 @@ function Noticias() {
               totalPaginas={paginacion.totalPaginas}
               etiqueta="Paginación de noticias"
               alCambiarPagina={(siguiente) => actualizarFiltros({ pagina: siguiente })}
+              destinoFocoRef={inicioListadoRef}
             />
           </>
         )}
+        </div>
       </Seccion>
     </>
   );
