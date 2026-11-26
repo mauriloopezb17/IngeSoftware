@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 import { construirAtributosImagen } from './imagenSrcSet.js';
@@ -68,7 +69,7 @@ export default function VisorGaleria({ elementos, indice, alCambiar, alCerrar })
   const esVideo = actual.tipoMime?.startsWith('video/');
   const alt = actual.textoAlternativo || `Elemento ${indice + 1} de la galería`;
 
-  return (
+  return createPortal(
     <div
       ref={dialogoRef}
       role="dialog"
@@ -141,6 +142,7 @@ export default function VisorGaleria({ elementos, indice, alCambiar, alCerrar })
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
