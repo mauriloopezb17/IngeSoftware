@@ -34,6 +34,7 @@ router.get(
 router.get(
   '/observaciones/exportar',
   verObservaciones,
+  requerirPermiso(PERMISOS.OBSERVACIONES_EXPORTAR),
   marcarConsulta('exportacion'),
   validar({ query: esquemaExportacion(consultaObservaciones) }),
   exportarRecurso('observaciones'),
@@ -55,6 +56,7 @@ router.delete(
 router.get('/', validar({ query: consultaProclamas }), filtrarPorSede, controlador.listar);
 router.get(
   '/exportar',
+  requerirPermiso(PERMISOS.PROCLAMAS_EXPORTAR),
   marcarConsulta('exportacion'),
   validar({ query: esquemaExportacion(consultaProclamas) }),
   filtrarPorSede,

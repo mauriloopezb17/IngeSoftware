@@ -19,6 +19,7 @@ const router = Router();
 router.get('/', validar({ query: consultaHorarios }), filtrarPorSede, controlador.listar);
 router.get(
   '/exportar',
+  requerirPermiso(PERMISOS.HORARIOS_EXPORTAR),
   marcarConsulta('exportacion'),
   validar({ query: esquemaExportacion(consultaHorarios) }),
   filtrarPorSede,

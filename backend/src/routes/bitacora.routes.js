@@ -55,6 +55,7 @@ router.get(
 router.get(
   '/exportar',
   requerirPermiso(PERMISOS.BITACORA_VER),
+  requerirPermiso(PERMISOS.BITACORA_EXPORTAR),
   marcarConsulta('exportacion'),
   validar({ query: consultaBitacoraExportar }),
   exportarRecurso('bitacora'),

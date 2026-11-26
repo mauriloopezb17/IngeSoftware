@@ -23,6 +23,7 @@ const editarDetalle = requerirPermiso(PERMISOS.EVENTOS_DETALLE);
 router.get('/', validar({ query: consultaEventos }), filtrarPorSede, controlador.listar);
 router.get(
   '/exportar',
+  requerirPermiso(PERMISOS.EVENTOS_EXPORTAR),
   marcarConsulta('exportacion'),
   validar({ query: consultaEventosExportar }),
   filtrarPorSede,

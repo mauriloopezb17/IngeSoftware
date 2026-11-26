@@ -21,6 +21,7 @@ const gestionar = requerirPermiso(PERMISOS.BOLETINES_GESTIONAR);
 router.get('/', validar({ query: consultaBoletines }), filtrarPorSede, controlador.listar);
 router.get(
   '/exportar',
+  requerirPermiso(PERMISOS.BOLETINES_EXPORTAR),
   marcarConsulta('exportacion'),
   validar({ query: esquemaExportacion(consultaBoletines) }),
   filtrarPorSede,

@@ -3,6 +3,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { Inbox, KeyRound, Pencil, Plus, UserCheck, UserX } from 'lucide-react';
 
 import { CLAVE_SEDES, listarSedes } from '../contenido/sedes/api.js';
+import { usePermisos } from '../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
@@ -24,6 +25,8 @@ import FormularioUsuario from './FormularioUsuario.jsx';
 import RestablecerContrasena from './RestablecerContrasena.jsx';
 
 export default function Usuarios() {
+  const { puede } = usePermisos();
+  const puedeGestionar = puede('usuarios.gestionar');
   const queryClient = useQueryClient();
   const toast = useToast();
   const tituloRef = useRef(null);
@@ -108,60 +111,64 @@ export default function Usuarios() {
         </div>
       ),
     },
-    {
-      id: 'acciones',
-      encabezado: <span className="sr-only">Acciones</span>,
-      claseCelda: 'text-right sm:w-px sm:whitespace-nowrap',
-      render: (usuario) => (
-        <div className="flex flex-wrap justify-end gap-2">
-          <Boton
-            variante="secundario"
-            tamano="sm"
-            icono={Pencil}
-            onClick={() => {
-              setErrorAccion('');
-              setEditando(usuario);
-            }}
-            aria-label={`Editar a ${usuario.nombreCompleto}`}
-          >
-            Editar
-          </Boton>
+    ...(puedeGestionar
+      ? [
+          {
+            id: 'acciones',
+            encabezado: <span className="sr-only">Acciones</span>,
+            claseCelda: 'text-right sm:w-px sm:whitespace-nowrap',
+            render: (usuario) => (
+              <div className="flex flex-wrap justify-end gap-2">
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  icono={Pencil}
+                  onClick={() => {
+                    setErrorAccion('');
+                    setEditando(usuario);
+                  }}
+                  aria-label={`Editar a ${usuario.nombreCompleto}`}
+                >
+                  Editar
+                </Boton>
 
-          <Boton
-            variante="secundario"
-            tamano="sm"
-            icono={KeyRound}
-            onClick={() => {
-              setErrorAccion('');
-              setRestableciendo(usuario);
-            }}
-            aria-label={`Restablecer contraseña de ${usuario.nombreCompleto}`}
-          >
-            Contraseña
-          </Boton>
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  icono={KeyRound}
+                  onClick={() => {
+                    setErrorAccion('');
+                    setRestableciendo(usuario);
+                  }}
+                  aria-label={`Restablecer contraseña de ${usuario.nombreCompleto}`}
+                >
+                  Contraseña
+                </Boton>
 
-          <Boton
-            variante="secundario"
-            tamano="sm"
-            icono={usuario.activo ? UserX : UserCheck}
-            onClick={() =>
-              cambiarEstadoMut.mutate({
-                id: usuario.id,
-                siguienteActivo: !usuario.activo,
-              })
-            }
-            disabled={cambiarEstadoMut.isPending}
-            aria-label={
-              usuario.activo
-                ? `Desactivar a ${usuario.nombreCompleto}`
-                : `Activar a ${usuario.nombreCompleto}`
-            }
-          >
-            {usuario.activo ? 'Desactivar' : 'Activar'}
-          </Boton>
-        </div>
-      ),
-    },
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  icono={usuario.activo ? UserX : UserCheck}
+                  onClick={() =>
+                    cambiarEstadoMut.mutate({
+                      id: usuario.id,
+                      siguienteActivo: !usuario.activo,
+                    })
+                  }
+                  disabled={cambiarEstadoMut.isPending}
+                  aria-label={
+                    usuario.activo
+                      ? `Desactivar a ${usuario.nombreCompleto}`
+                      : `Activar a ${usuario.nombreCompleto}`
+                  }
+                >
+                  {usuario.activo ? 'Desactivar' : 'Activar'}
+                </Boton>
+              </div>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -171,18 +178,29 @@ export default function Usuarios() {
         descripcion="Cuentas de acceso al panel parroquial, roles y sedes asignadas."
         headingRef={tituloRef}
         acciones={
-          <Boton
-            variante="primario"
-            icono={Plus}
-            onClick={() => {
-              setErrorAccion('');
-              setCreando(true);
-            }}
-          >
-            Nuevo usuario
-          </Boton>
+          puedeGestionar ? (
+            <Boton
+              variante="primario"
+              icono={Plus}
+              onClick={() => {
+                setErrorAccion('');
+                setCreando(true);
+              }}
+            >
+              Nuevo usuario
+            </Boton>
+          ) : null
         }
       />
+
+      {!puedeGestionar && (
+        <Aviso tipo="info" titulo="Solo lectura" className="mt-4">
+          <p>
+            Puedes consultar y exportar los usuarios de tu sede. Solo el Administrador puede crear,
+            editar o desactivar cuentas.
+          </p>
+        </Aviso>
+      )}
 
       {errorAccion && (
         <Aviso tipo="error" className="mt-4">

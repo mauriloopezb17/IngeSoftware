@@ -25,6 +25,7 @@ const gestionar = requerirPermiso(PERMISOS.PAGINAS_GESTIONAR);
 router.get('/', validar({ query: consultaPaginas }), filtrarPorSede, controlador.listar);
 router.get(
   '/exportar',
+  requerirPermiso(PERMISOS.PAGINAS_EXPORTAR),
   marcarConsulta('exportacion'),
   validar({ query: esquemaExportacion(consultaPaginas) }),
   filtrarPorSede,

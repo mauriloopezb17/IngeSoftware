@@ -24,6 +24,7 @@ const exigirPermiso = requerirPermiso(
 router.get('/', validar({ query: consultaGrupos }), filtrarPorSede, controlador.listar);
 router.get(
   '/exportar',
+  requerirPermiso(PERMISOS.GRUPOS_EXPORTAR),
   marcarConsulta('exportacion'),
   validar({ query: esquemaExportacion(consultaGrupos) }),
   filtrarPorSede,

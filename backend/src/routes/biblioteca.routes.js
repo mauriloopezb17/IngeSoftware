@@ -17,6 +17,7 @@ const router = Router();
 router.get('/', validar({ query: consultaBiblioteca }), filtrarPorSede, controlador.listar);
 router.get(
   '/exportar',
+  requerirPermiso(PERMISOS.MULTIMEDIA_EXPORTAR),
   marcarConsulta('exportacion'),
   validar({ query: esquemaExportacion(consultaBiblioteca) }),
   filtrarPorSede,

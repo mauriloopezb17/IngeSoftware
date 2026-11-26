@@ -134,9 +134,27 @@ describe('gestión de usuarios', () => {
     ).toBeInTheDocument();
   }, 15000);
 
-  it('el endpoint responde 403 si intenta acceder un rol sin usuarios.gestionar', async () => {
-    await entrar('parroco');
+  it('el endpoint responde 403 si intenta acceder un rol sin usuarios.gestionar ni usuarios.exportar', async () => {
+    await entrar('secretaria');
     await expect(clienteHttp.get('/admin/usuarios')).rejects.toMatchObject({
+      estado: 403,
+      codigo: 'SIN_PERMISO',
+    });
+  });
+
+  it('el párroco puede consultar usuarios de su sede pero no crear ni modificar', async () => {
+    await entrar('parroco');
+    const respuesta = await clienteHttp.get('/admin/usuarios');
+    expect(respuesta.datos.length).toBeGreaterThan(0);
+    await expect(
+      clienteHttp.post('/admin/usuarios', {
+        nombreCompleto: 'Intento',
+        correo: 'intento@parroquia.test',
+        rol: 'SECRETARIA',
+        sedeId: 1,
+        contrasena: 'ClaveSegura2026!',
+      }),
+    ).rejects.toMatchObject({
       estado: 403,
       codigo: 'SIN_PERMISO',
     });

@@ -19,6 +19,7 @@ const router = Router();
 router.get('/', validar({ query: consultaSedes }), controlador.listar);
 router.get(
   '/exportar',
+  requerirPermiso(PERMISOS.SEDES_EXPORTAR),
   marcarConsulta('exportacion'),
   validar({ query: esquemaExportacion(consultaSedes) }),
   exportarRecurso('sedes'),
