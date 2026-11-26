@@ -91,7 +91,17 @@ Abre la sesión. Tiene límite de intentos (ver [sección 4](#4-límite-de-inten
       "proclamas.gestionar",
       "proclamas.detalle",
       "boletines.gestionar",
-      "paginas.gestionar"
+      "paginas.gestionar",
+      "publicaciones.exportar",
+      "eventos.exportar",
+      "boletines.exportar",
+      "multimedia.exportar",
+      "videos.exportar",
+      "proclamas.exportar",
+      "horarios.exportar",
+      "servicios.exportar",
+      "grupos.exportar",
+      "paginas.exportar"
     ],
     "fechaUltimoAcceso": "2026-11-12T08:31:05-04:00",
     "sesionExpiraEn": "2026-11-12T16:31:05-04:00"
