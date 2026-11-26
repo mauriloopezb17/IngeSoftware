@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -99,5 +99,52 @@ describe('Portada y Nosotros desde páginas y bloques', () => {
     expect(
       await screen.findByText('No hay contenido publicado para la portada.'),
     ).toBeInTheDocument();
+  });
+
+  it('muestra el video de fondo sin botón de video ni controles de pausa', async () => {
+    const { container } = renderConQuery(<Portada />);
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Señor de la Exaltación' }),
+    ).toBeInTheDocument();
+
+    const video = container.querySelector('video');
+    expect(video).toBeInTheDocument();
+    expect(video).toHaveAttribute('aria-hidden', 'true');
+    expect(video).toHaveAttribute('autoplay');
+    expect(video).toHaveAttribute('loop');
+    expect(video).toHaveAttribute('playsinline');
+    expect(video.muted).toBe(true);
+
+    expect(screen.queryByRole('button', { name: /Video institucional/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Pausar video/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Reproducir video/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('muestra solo el póster cuando prefers-reduced-motion está activo', async () => {
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    try {
+      const { container } = renderConQuery(<Portada />);
+
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'Señor de la Exaltación' }),
+      ).toBeInTheDocument();
+      expect(container.querySelector('video')).not.toBeInTheDocument();
+      expect(container.querySelector('img[src="/media/seed/exterior-parroquia.webp"]')).toBeInTheDocument();
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
   });
 });
