@@ -28,7 +28,7 @@ export default function Sedes() {
 
   const sedesQuery = useQuery({
     queryKey: CLAVE_SEDES,
-    queryFn: listarSedes,
+    queryFn: () => listarSedes(),
   });
 
   const catalogosQuery = useQuery({

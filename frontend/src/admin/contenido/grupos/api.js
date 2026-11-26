@@ -4,7 +4,9 @@ import { clienteHttp } from '../../../services/clienteHttp.js';
 export const CLAVE_GRUPOS = ['admin', 'grupos-pastorales'];
 
 export async function listarGrupos(parametros = {}) {
-  const { datos } = await clienteHttp.get('/admin/grupos-pastorales', { parametros });
+  const { datos } = await clienteHttp.get('/admin/grupos-pastorales', {
+    parametros: { porPagina: 100, ...parametros },
+  });
   return datos;
 }
 

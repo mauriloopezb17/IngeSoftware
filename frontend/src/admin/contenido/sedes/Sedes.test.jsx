@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -40,8 +40,21 @@ describe('edición de datos de la sede y redes sociales', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     reiniciarMocksAdmin();
     reiniciarMocksContenido();
+  });
+
+  it('pide las sedes solo con porPagina, sin mezclar el contexto de React Query en la consulta', async () => {
+    await entrar('admin');
+    const espia = vi.spyOn(clienteHttp, 'get');
+    montar();
+
+    await waitFor(() =>
+      expect(espia).toHaveBeenCalledWith('/admin/sedes', expect.anything()),
+    );
+    const [, opciones] = espia.mock.calls.find(([ruta]) => ruta === '/admin/sedes');
+    expect(opciones.parametros).toEqual({ porPagina: 100 });
   });
 
   it('Secretaría edita directamente su sede (sin selector), configuración y redes sociales', async () => {

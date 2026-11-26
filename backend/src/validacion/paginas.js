@@ -2,15 +2,21 @@
 // cada bloque lo valida Ajv (bloques.js) contra el esquema de su tipo.
 import { z } from 'zod';
 import '../config/zod.js';
-import { id, listaCodigos, slug } from './comunes.js';
+import { booleanoQuery, esquemaListado, id, listaCodigos, slug } from './comunes.js';
 import { estadoSinRevision, idDelCuerpo, textoObligatorio, textoOpcional } from './panel.js';
 
 export const paramsPagina = z.object({ id });
 export const paramsBloque = z.object({ id, bloqueId: id });
 
-export const consultaPaginas = z.object({
-  sede: slug.optional(),
-  estado: listaCodigos(['BORRADOR', 'PUBLICADO', 'ARCHIVADO']).optional(),
+export const consultaPaginas = esquemaListado({
+  filtros: {
+    sede: slug.optional(),
+    estado: listaCodigos(['BORRADOR', 'PUBLICADO', 'ARCHIVADO']).optional(),
+    mostrarEnMenu: booleanoQuery.optional(),
+  },
+  ordenes: ['ordenMenu', '-ordenMenu', 'titulo', '-titulo', 'fechaCreacion', '-fechaCreacion'],
+  ordenPredeterminado: 'ordenMenu',
+  porPaginaMaximo: 100,
 });
 
 const slugDePagina = slug.max(120, 'El slug es demasiado largo.');

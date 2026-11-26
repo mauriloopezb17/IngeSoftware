@@ -45,7 +45,7 @@ function montar(entrada = '/admin/publicaciones/revision') {
 const esperar = { timeout: 4000 };
 const TITULO_6 = 'Jornada de oración por las vocaciones';
 const TITULO_7 = 'Solemnidad de Cristo Rey: invitación a la procesión';
-const tarjeta = (titulo) => screen.getByRole('article', { name: titulo });
+const tarjeta = (titulo) => screen.getByRole('row', { name: new RegExp(titulo) });
 
 describe('bandeja de revisión del Párroco', () => {
   beforeEach(reiniciarMocksAdmin);
@@ -56,11 +56,11 @@ describe('bandeja de revisión del Párroco', () => {
     montar();
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Bandeja de revisión' })).toBeInTheDocument();
-    expect(await screen.findByText('2 publicaciones en revisión')).toBeInTheDocument();
-    const lista = screen.getByRole('list', { name: 'Publicaciones en revisión' });
-    expect(within(lista).getAllByRole('article').map((a) => a.getAttribute('aria-label')).sort()).toEqual(
-      [TITULO_6, TITULO_7].sort(),
-    );
+    expect(await screen.findByText('Mostrando 1–2 de 2')).toBeInTheDocument();
+    const tabla = screen.getByRole('table', { name: 'Publicaciones en revisión' });
+    expect(within(tabla).getAllByRole('row')).toHaveLength(3);
+    expect(tabla).toHaveTextContent(TITULO_6);
+    expect(tabla).toHaveTextContent(TITULO_7);
 
     const cristoRey = tarjeta(TITULO_7);
     expect(within(cristoRey).getByText(/Marketing \(desarrollo\)/)).toBeInTheDocument();
@@ -77,21 +77,21 @@ describe('bandeja de revisión del Párroco', () => {
     montar();
 
     expect(await screen.findByRole('heading', { name: 'Sin permiso' }, esperar)).toBeInTheDocument();
-    expect(screen.queryByRole('list', { name: 'Publicaciones en revisión' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('table', { name: 'Publicaciones en revisión' })).not.toBeInTheDocument();
   });
 
   it('el Administrador también la ve', async () => {
     await entrar('admin');
     montar();
 
-    expect(await screen.findByText('2 publicaciones en revisión')).toBeInTheDocument();
+    expect(await screen.findByText('Mostrando 1–2 de 2')).toBeInTheDocument();
   });
 
   describe('aprobar', () => {
     it('publica la noticia, la saca de la bandeja y avisa', async () => {
       await entrar('parroco');
       montar();
-      await screen.findByText('2 publicaciones en revisión');
+      await screen.findByText('Mostrando 1–2 de 2');
 
       await userEvent.click(within(tarjeta(TITULO_7)).getByRole('button', { name: /Aprobar/ }));
       const dialogo = await screen.findByRole('dialog', { name: 'Aprobar publicación' });
@@ -99,7 +99,7 @@ describe('bandeja de revisión del Párroco', () => {
 
       expect(await screen.findByRole('status')).toHaveTextContent(`«${TITULO_7}» fue aprobada y publicada.`);
       await waitFor(() => expect(screen.queryByRole('article', { name: TITULO_7 })).not.toBeInTheDocument(), esperar);
-      expect(screen.getByText('1 publicación en revisión')).toBeInTheDocument();
+      expect(screen.getByText('Mostrando 1–1 de 1')).toBeInTheDocument();
       expect((await leer(7)).estado.codigo).toBe('PUBLICADO');
     });
 
@@ -114,7 +114,7 @@ describe('bandeja de revisión del Párroco', () => {
     it('con una fecha futura la deja programada', async () => {
       await entrar('parroco');
       montar();
-      await screen.findByText('2 publicaciones en revisión');
+      await screen.findByText('Mostrando 1–2 de 2');
 
       await userEvent.click(within(tarjeta(TITULO_7)).getByRole('button', { name: /Aprobar/ }));
       const dialogo = await screen.findByRole('dialog', { name: 'Aprobar publicación' });
@@ -132,7 +132,7 @@ describe('bandeja de revisión del Párroco', () => {
     it('si la fecha deja la expiración atrás, la API responde 400 y el diálogo sigue abierto', async () => {
       await entrar('parroco');
       montar();
-      await screen.findByText('2 publicaciones en revisión');
+      await screen.findByText('Mostrando 1–2 de 2');
 
       await userEvent.click(within(tarjeta(TITULO_7)).getByRole('button', { name: /Aprobar/ }));
       const dialogo = await screen.findByRole('dialog', { name: 'Aprobar publicación' });
@@ -147,7 +147,7 @@ describe('bandeja de revisión del Párroco', () => {
     it('cancelar no cambia nada', async () => {
       await entrar('parroco');
       montar();
-      await screen.findByText('2 publicaciones en revisión');
+      await screen.findByText('Mostrando 1–2 de 2');
 
       await userEvent.click(within(tarjeta(TITULO_7)).getByRole('button', { name: /Aprobar/ }));
       await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancelar' }));
@@ -166,7 +166,7 @@ describe('bandeja de revisión del Párroco', () => {
     it('sin observación da error y no cambia la publicación', async () => {
       await entrar('parroco');
       montar();
-      await screen.findByText('2 publicaciones en revisión');
+      await screen.findByText('Mostrando 1–2 de 2');
 
       const dialogo = await abrirRechazo(TITULO_7);
       await userEvent.click(within(dialogo).getByRole('button', { name: 'Rechazar publicación' }));
@@ -184,7 +184,7 @@ describe('bandeja de revisión del Párroco', () => {
     it('muestra el contador de caracteres', async () => {
       await entrar('parroco');
       montar();
-      await screen.findByText('2 publicaciones en revisión');
+      await screen.findByText('Mostrando 1–2 de 2');
 
       const dialogo = await abrirRechazo(TITULO_7);
       expect(within(dialogo).getByText('0/500 caracteres (mínimo 5)')).toBeInTheDocument();
@@ -195,7 +195,7 @@ describe('bandeja de revisión del Párroco', () => {
     it('con observación la devuelve a borrador y el autor la ve', async () => {
       await entrar('parroco');
       montar();
-      await screen.findByText('2 publicaciones en revisión');
+      await screen.findByText('Mostrando 1–2 de 2');
 
       const dialogo = await abrirRechazo(TITULO_7);
       await userEvent.type(
@@ -222,7 +222,7 @@ describe('bandeja de revisión del Párroco', () => {
     it('si otra persona ya la resolvió, la API responde 409 y el diálogo lo explica', async () => {
       await entrar('parroco');
       montar();
-      await screen.findByText('2 publicaciones en revisión');
+      await screen.findByText('Mostrando 1–2 de 2');
 
       const dialogo = await abrirRechazo(TITULO_7);
       // Mientras tanto, otra sesión la aprobó.
@@ -244,7 +244,7 @@ describe('bandeja de revisión del Párroco', () => {
     await userEvent.click(screen.getByRole('link', { name: 'Bandeja de revisión' }));
     await screen.findByRole('heading', { level: 1, name: 'Bandeja de revisión' });
 
-    await userEvent.click(within(await screen.findByRole('article', { name: TITULO_7 })).getByRole('button', { name: /Aprobar/ }));
+    await userEvent.click(within(await screen.findByRole('row', { name: new RegExp(TITULO_7) })).getByRole('button', { name: /Aprobar/ }));
     await userEvent.click(
       within(await screen.findByRole('dialog', { name: 'Aprobar publicación' })).getByRole('button', {
         name: 'Aprobar y publicar',
@@ -266,6 +266,5 @@ describe('bandeja de revisión del Párroco', () => {
     montar();
 
     expect(await screen.findByText('No hay publicaciones esperando revisión.')).toBeInTheDocument();
-    expect(screen.getByText('0 publicaciones en revisión')).toBeInTheDocument();
   });
 });

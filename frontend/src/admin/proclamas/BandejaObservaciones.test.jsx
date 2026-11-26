@@ -39,7 +39,7 @@ describe('BandejaObservaciones (bandeja del párroco)', () => {
   it('no aparece para Secretaría ni Marketing y bloquea la ruta directa', async () => {
     await entrar('secretaria');
     montar('/admin/proclamas');
-    await screen.findByRole('list', { name: 'Proclamas' });
+    await screen.findByRole('table', { name: 'Proclamas' });
     expect(screen.queryByRole('link', { name: /Observaciones/ })).not.toBeInTheDocument();
 
     await entrar('marketing');
@@ -57,7 +57,7 @@ describe('BandejaObservaciones (bandeja del párroco)', () => {
     expect(await within(tabObs).findByText('2')).toBeInTheDocument();
 
     // Abrir la primera observación (María Elena Quispe: tiene correo y teléfono local 71234567)
-    const lista = await screen.findByRole('list', { name: 'Observaciones recibidas' });
+    const lista = await screen.findByRole('table', { name: 'Observaciones recibidas' });
     await usuario.click(within(lista).getByRole('button', { name: /María Elena Quispe/ }));
 
     const detalle = await screen.findByRole('article', { name: /Observación de María Elena Quispe/ });

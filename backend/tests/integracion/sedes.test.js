@@ -130,9 +130,15 @@ describe('GET /api/sedes/:sede/horarios', () => {
     const sinContenido = await request(app).get('/api/sedes/resurreccion/horarios');
 
     expect(sinTipo.status).toBe(200);
-    expect(sinTipo.body).toEqual({ datos: [] });
+    expect(sinTipo.body).toEqual({
+      datos: [],
+      paginacion: { pagina: 1, porPagina: 10, total: 0, totalPaginas: 0 },
+    });
     expect(sinContenido.status).toBe(200);
-    expect(sinContenido.body).toEqual({ datos: [] });
+    expect(sinContenido.body).toEqual({
+      datos: [],
+      paginacion: { pagina: 1, porPagina: 10, total: 0, totalPaginas: 0 },
+    });
   });
 
   it('responde 400 si el filtro de tipo no es una lista de ids', async () => {

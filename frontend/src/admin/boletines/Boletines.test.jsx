@@ -60,8 +60,8 @@ describe('boletines del panel', () => {
     await entrar('secretaria');
     montar();
 
-    const lista = await screen.findByRole('list', { name: 'Boletines' });
-    const boletin = within(lista).getByRole('article', { name: 'Edición de octubre 2026' });
+    const lista = await screen.findByRole('table', { name: 'Boletines' });
+    const boletin = within(lista).getByRole('row', { name: /Edición de octubre 2026/ });
     expect(within(boletin).getByText('octubre de 2026')).toBeInTheDocument();
     expect(within(boletin).getByText(/boletin-octubre-2026\.pdf · 2,4 MB/)).toBeInTheDocument();
     expect(within(boletin).getByText(/por Secretaría \(desarrollo\)/)).toBeInTheDocument();
@@ -95,11 +95,11 @@ describe('boletines del panel', () => {
     await usuario.click(screen.getByRole('button', { name: 'Publicar boletín' }));
 
     expect(await screen.findByText('Se publicó el boletín «Edición de noviembre 2026».')).toBeInTheDocument();
-    const lista = await screen.findByRole('list', { name: 'Boletines' });
-    expect(within(lista).getAllByRole('article').map((a) => within(a).getByRole('heading').textContent)).toEqual([
-      'Edición de noviembre 2026',
-      'Edición de octubre 2026',
-    ]);
+    const lista = await screen.findByRole('table', { name: 'Boletines' });
+    const filas = within(lista).getAllByRole('row').slice(1);
+    expect(filas).toHaveLength(2);
+    expect(filas[0]).toHaveTextContent('Edición de noviembre 2026');
+    expect(filas[1]).toHaveTextContent('Edición de octubre 2026');
   });
 
   it('sube un PDF nuevo desde el selector y queda elegido', async () => {
@@ -186,7 +186,7 @@ describe('boletines del panel', () => {
     await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
     expect(await screen.findByText('Se guardaron los cambios de «Octubre 2026 (corregido)».')).toBeInTheDocument();
-    const boletin = await screen.findByRole('article', { name: 'Octubre 2026 (corregido)' });
+    const boletin = await screen.findByRole('row', { name: /Octubre 2026 \(corregido\)/ });
     expect(within(boletin).getByText(/estatutos-pastoral-juvenil\.pdf/)).toBeInTheDocument();
   });
 

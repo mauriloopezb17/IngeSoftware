@@ -56,7 +56,7 @@ describe('Boletines (archivo mensual en PDF)', () => {
       expect(screen.queryByText('Edición de octubre 2026')).not.toBeInTheDocument();
     });
 
-    await usuario.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
+    await usuario.click(screen.getAllByRole('button', { name: 'Quitar filtros' })[0]);
 
     expect(await screen.findByText('Edición de octubre 2026')).toBeInTheDocument();
   });

@@ -40,7 +40,7 @@ describe('Proclamas (vigentes e historial público)', () => {
       expect(screen.queryByText('Carlos E. Mendoza T. & Valeria N. Quispe P.')).not.toBeInTheDocument();
     });
 
-    await usuario.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
+    await usuario.click(screen.getAllByRole('button', { name: 'Quitar filtros' })[0]);
 
     expect(
       await screen.findByText('Carlos E. Mendoza T. & Valeria N. Quispe P.'),

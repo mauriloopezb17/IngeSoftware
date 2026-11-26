@@ -51,7 +51,7 @@ test.describe('Flujo editorial de publicaciones', () => {
     const parroco = await abrirContextoConRol(browser, 'parroco');
     try {
       await parroco.page.goto('/admin/publicaciones/revision');
-      const tarjeta = parroco.page.getByRole('article', { name: titulo });
+      const tarjeta = parroco.page.getByRole('row', { name: new RegExp(titulo) });
       await expect(tarjeta).toBeVisible();
 
       await tarjeta.getByRole('button', { name: `Aprobar «${titulo}»` }).click();
@@ -89,7 +89,7 @@ test.describe('Flujo editorial de publicaciones', () => {
       const parroco = await abrirContextoConRol(browser, 'parroco');
       try {
         await parroco.page.goto('/admin/publicaciones/revision');
-        const tarjeta = parroco.page.getByRole('article', { name: titulo });
+        const tarjeta = parroco.page.getByRole('row', { name: new RegExp(titulo) });
         await expect(tarjeta).toBeVisible();
 
         await tarjeta.getByRole('button', { name: `Rechazar «${titulo}»` }).click();

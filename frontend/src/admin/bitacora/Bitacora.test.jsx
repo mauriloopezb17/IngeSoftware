@@ -46,7 +46,7 @@ describe('visor de la bitácora de cambios', () => {
     montar();
     const u = userEvent.setup({ delay: null });
 
-    const lista = await screen.findByRole('list', { name: 'Registros de bitácora' });
+    const lista = await screen.findByRole('table', { name: 'Registros de bitácora' });
     // Incluye el registro de la sede 2 (horario #18) y procesos del sistema
     expect(within(lista).getByText('horario #18')).toBeInTheDocument();
     expect(within(lista).getByText('Sistema')).toBeInTheDocument();
@@ -62,7 +62,7 @@ describe('visor de la bitácora de cambios', () => {
     // Filtrar por entidad y acción
     await u.selectOptions(screen.getByLabelText('Entidad'), 'publicacion');
     await u.selectOptions(screen.getByLabelText('Acción'), 'UPDATE');
-    const listaFiltrada = await screen.findByRole('list', { name: 'Registros de bitácora' });
+    const listaFiltrada = await screen.findByRole('table', { name: 'Registros de bitácora' });
     expect(within(listaFiltrada).getByText('publicacion #7')).toBeInTheDocument();
     expect(within(listaFiltrada).queryByText('publicacion #12')).not.toBeInTheDocument();
 
@@ -74,7 +74,7 @@ describe('visor de la bitácora de cambios', () => {
     await entrar('parroco');
     montar();
 
-    const lista = await screen.findByRole('list', { name: 'Registros de bitácora' });
+    const lista = await screen.findByRole('table', { name: 'Registros de bitácora' });
     expect(within(lista).getByText('publicacion #7')).toBeInTheDocument();
     expect(within(lista).queryByText('horario #18')).not.toBeInTheDocument();
   });

@@ -218,4 +218,14 @@ describe('validarEntorno', () => {
       ]);
     });
   });
+
+  describe('LOG_ARCHIVO', () => {
+    it('es null cuando falta o está vacío y recorta espacios cuando se define', () => {
+      expect(validarEntorno(BASE).logArchivo).toBeNull();
+      expect(validarEntorno({ ...BASE, LOG_ARCHIVO: '   ' }).logArchivo).toBeNull();
+      expect(validarEntorno({ ...BASE, LOG_ARCHIVO: ' logs/api.log ' }).logArchivo).toBe(
+        'logs/api.log',
+      );
+    });
+  });
 });

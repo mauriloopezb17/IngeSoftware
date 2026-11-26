@@ -4,12 +4,12 @@ import '../config/zod.js';
 import { contenidoBlockNote } from './blocknote.js';
 import {
   booleanoQuery,
+  esquemaListado,
   fecha,
   fechaHoraConZona,
   id,
   listaCodigos,
   listaIds,
-  paginacion,
   slug,
 } from './comunes.js';
 import {
@@ -22,22 +22,21 @@ import {
 
 export const paramsEvento = z.object({ id });
 
-export const consultaEventos = paginacion
-  .extend({
+export const consultaEventos = esquemaListado({
+  filtros: {
     sede: slug.optional(),
     desde: fecha.optional(),
     hasta: fecha.optional(),
     categoria: listaIds.optional(),
     estado: listaCodigos(['BORRADOR', 'PUBLICADO', 'ARCHIVADO']).optional(),
     finalizados: booleanoQuery.optional(),
-    orden: z
-      .enum(['fechaInicio', '-fechaInicio'], { error: 'Debe ser fechaInicio o -fechaInicio.' })
-      .default('fechaInicio'),
-  })
-  .refine(({ desde, hasta }) => !desde || !hasta || hasta >= desde, {
-    path: ['hasta'],
-    message: 'Debe ser igual o posterior a desde.',
-  });
+  },
+  ordenes: ['fechaInicio', '-fechaInicio'],
+  ordenPredeterminado: 'fechaInicio',
+}).refine(({ desde, hasta }) => !desde || !hasta || hasta >= desde, {
+  path: ['hasta'],
+  message: 'Debe ser igual o posterior a desde.',
+});
 
 const titulo = z
   .string({ error: 'Debe ser un texto.' })

@@ -256,10 +256,15 @@ describe('GET /api/admin/paginas', () => {
     ajena = await crear('secretariaAjena', { titulo: 'Lista D' });
   });
 
-  it('sin paginar ni bloques, por orden de menú y título', async () => {
-    const respuesta = await como('parroco').get(RUTA);
+  it('paginado y sin bloques, por orden de menú y título', async () => {
+    const respuesta = await como('parroco').get(`${RUTA}?porPagina=100`);
     expect(respuesta.status).toBe(200);
-    expect(respuesta.body).not.toHaveProperty('paginacion');
+    expect(respuesta.body.paginacion).toEqual({
+      pagina: 1,
+      porPagina: 100,
+      total: expect.any(Number),
+      totalPaginas: expect.any(Number),
+    });
     expect(propias(respuesta)).toEqual([menu1.id, archivada.id, menu2.id]);
     expect(respuesta.body.datos[0]).not.toHaveProperty('bloques');
   });
@@ -509,7 +514,7 @@ describe('DELETE /api/admin/paginas/:id', () => {
     }
 
     // Las del seed siguen existiendo.
-    const lista = await como('admin').get(`${RUTA}?sede=${sede.slug}`);
+    const lista = await como('admin').get(`${RUTA}?sede=${sede.slug}&porPagina=100`);
     expect(lista.body.datos.map((p) => p.slug)).toEqual(
       expect.arrayContaining(['inicio', 'nosotros']),
     );

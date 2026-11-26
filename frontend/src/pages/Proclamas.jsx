@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
 import {
@@ -88,6 +89,7 @@ function FilaProclama({ proclama, mostrarPublicaciones = false }) {
 
 function Proclamas() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const inicioListadoRef = useRef(null);
 
   const anioActivo = searchParams.get('anio') ?? '';
   const paginaNumero = Number(searchParams.get('pagina') ?? '1');
@@ -210,13 +212,14 @@ function Proclamas() {
                   className="min-h-11 cursor-pointer px-3 py-2 font-body text-meta font-semibold text-ink underline underline-offset-4 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                   onClick={() => setSearchParams({})}
                 >
-                  Limpiar filtros
+                  Quitar filtros
                 </button>
               )}
             </div>
           }
         />
 
+        <div ref={inicioListadoRef} tabIndex={-1} className="outline-none">
         {cargandoHistorial ? (
           <CargandoSeccion alturaMinima={280} etiqueta="Cargando historial de proclamas" />
         ) : errorHistorial ? (
@@ -225,13 +228,24 @@ function Proclamas() {
             onReintentar={reintentarHistorial}
           />
         ) : historial.length === 0 ? (
-          <SinResultados
-            mensaje={
-              anioActivo
-                ? `No hay proclamas registradas para el año ${anioActivo}.`
-                : 'No hay proclamas registradas en el historial.'
-            }
-          />
+          <div className="space-y-4">
+            <SinResultados
+              mensaje={
+                anioActivo
+                  ? `No hay proclamas registradas para el año ${anioActivo}.`
+                  : 'No hay proclamas registradas en el historial.'
+              }
+            />
+            {anioActivo && (
+              <button
+                type="button"
+                onClick={() => setSearchParams({})}
+                className="inline-flex min-h-11 cursor-pointer items-center rounded-sm border border-sand bg-white px-5 py-2.5 font-body text-meta font-semibold text-ink hover:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Quitar filtros
+              </button>
+            )}
+          </div>
         ) : (
           <>
             <div className="divide-y divide-sand rounded-md border border-sand bg-white px-6">
@@ -245,9 +259,11 @@ function Proclamas() {
               totalPaginas={paginacion.totalPaginas}
               etiqueta="Paginación del historial de proclamas"
               alCambiarPagina={(siguiente) => actualizarFiltros({ pagina: siguiente })}
+              destinoFocoRef={inicioListadoRef}
             />
           </>
         )}
+        </div>
       </Seccion>
     </>
   );

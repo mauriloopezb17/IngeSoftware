@@ -115,7 +115,7 @@ afterAll(async () => {
 });
 
 describe('Grupos pastorales (/api/admin/grupos-pastorales)', () => {
-  it('sin sesión responde 401 y con sesión lista sin paginar con el formato del contrato', async () => {
+  it('sin sesión responde 401 y con sesión lista paginado con el formato del contrato', async () => {
     const sinSesion = await request(app).get('/api/admin/grupos-pastorales');
     expect(sinSesion.status).toBe(401);
 
@@ -123,7 +123,12 @@ describe('Grupos pastorales (/api/admin/grupos-pastorales)', () => {
       .get('/api/admin/grupos-pastorales')
       .set('Cookie', sesiones.marketing);
     expect(res.status).toBe(200);
-    expect(res.body.paginacion).toBeUndefined();
+    expect(res.body.paginacion).toEqual({
+      pagina: 1,
+      porPagina: 10,
+      total: expect.any(Number),
+      totalPaginas: expect.any(Number),
+    });
     expect(res.body.datos.length).toBeGreaterThanOrEqual(6);
     expect(res.body.datos[0]).toEqual({
       id: expect.any(Number),

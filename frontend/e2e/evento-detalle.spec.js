@@ -31,7 +31,7 @@ test.describe('Detalle de eventos del calendario', () => {
       await secretaria.page.getByRole('button', { name: 'Crear evento' }).click();
 
       await expect(secretaria.page).toHaveURL(/\/admin\/eventos$/);
-      await expect(secretaria.page.getByRole('heading', { name: titulo })).toBeVisible();
+      await expect(secretaria.page.getByRole('row', { name: new RegExp(titulo) })).toBeVisible();
     } finally {
       await secretaria.context.close();
     }
