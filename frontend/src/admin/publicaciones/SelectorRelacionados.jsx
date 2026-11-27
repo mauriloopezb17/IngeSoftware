@@ -21,6 +21,7 @@ export default function SelectorRelacionados({
   alCambiarServicios,
   alCambiarGrupos,
   cargando = false,
+  soloGrupos = false,
 }) {
   const buscadorId = useId();
   const [busqueda, setBusqueda] = useState('');
@@ -32,7 +33,7 @@ export default function SelectorRelacionados({
   const filtrar = (lista) =>
     termino ? lista.filter((item) => normalizar(item.nombre).includes(termino)) : lista;
 
-  const serviciosFiltrados = filtrar(servicios);
+  const serviciosFiltrados = soloGrupos ? [] : filtrar(servicios);
   const gruposFiltrados = filtrar(grupos);
 
   const alternar = (item, seleccionados, ids, alCambiar) => {
@@ -85,7 +86,7 @@ export default function SelectorRelacionados({
 
       <div className="relative">
         <label htmlFor={buscadorId} className="sr-only">
-          Buscar sacramento o grupo
+          {soloGrupos ? 'Buscar grupo' : 'Buscar sacramento o grupo'}
         </label>
         <Search
           className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted"
@@ -96,55 +97,67 @@ export default function SelectorRelacionados({
           type="search"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="Buscar sacramento o grupo…"
+          placeholder={soloGrupos ? 'Buscar grupo…' : 'Buscar sacramento o grupo…'}
           className="min-h-11 w-full rounded-md border border-sand bg-white py-2 pl-9 pr-3 text-sm text-ink placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         />
       </div>
 
       {cargando ? (
-        <p className="text-sm text-muted">Cargando sacramentos y grupos…</p>
+        <p className="text-sm text-muted">
+          {soloGrupos ? 'Cargando grupos…' : 'Cargando sacramentos y grupos…'}
+        </p>
       ) : serviciosFiltrados.length === 0 && gruposFiltrados.length === 0 ? (
         <p className="rounded-md border border-sand bg-panel px-3 py-3 text-sm text-muted">
           {termino
-            ? 'No hay sacramentos ni grupos que coincidan con la búsqueda.'
-            : 'No hay sacramentos ni grupos disponibles en esta sede.'}
+            ? soloGrupos
+              ? 'No hay grupos que coincidan con la búsqueda.'
+              : 'No hay sacramentos ni grupos que coincidan con la búsqueda.'
+            : soloGrupos
+              ? 'No tienes grupos asignados.'
+              : 'No hay sacramentos ni grupos disponibles en esta sede.'}
         </p>
       ) : (
-        <div className="grid max-h-56 gap-4 overflow-y-auto rounded-md border border-sand bg-panel p-3 sm:grid-cols-2">
-          <div role="group" aria-label="Sacramentos y servicios">
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
-              Sacramentos y servicios ({serviciosSeleccionados.length}/{MAX_POR_TIPO})
-            </p>
-            {serviciosFiltrados.length === 0 ? (
-              <p className="text-xs text-muted">Sin coincidencias.</p>
-            ) : (
-              <div className="flex flex-col gap-1">
-                {serviciosFiltrados.map((servicio) => {
-                  const marcado = idsServicios.has(servicio.id);
-                  const deshabilitado = !marcado && serviciosSeleccionados.length >= MAX_POR_TIPO;
-                  return (
-                    <label
-                      key={servicio.id}
-                      className={`flex min-h-11 cursor-pointer items-center gap-2 rounded px-2 text-sm text-ink hover:bg-white ${
-                        deshabilitado ? 'cursor-not-allowed opacity-50' : ''
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={marcado}
-                        disabled={deshabilitado}
-                        onChange={() =>
-                          alternar(servicio, serviciosSeleccionados, idsServicios, alCambiarServicios)
-                        }
-                        className="size-4 accent-ink"
-                      />
-                      <span>{servicio.nombre}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+        <div
+          className={`grid max-h-56 gap-4 overflow-y-auto rounded-md border border-sand bg-panel p-3 ${
+            soloGrupos ? '' : 'sm:grid-cols-2'
+          }`}
+        >
+          {!soloGrupos && (
+            <div role="group" aria-label="Sacramentos y servicios">
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+                Sacramentos y servicios ({serviciosSeleccionados.length}/{MAX_POR_TIPO})
+              </p>
+              {serviciosFiltrados.length === 0 ? (
+                <p className="text-xs text-muted">Sin coincidencias.</p>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {serviciosFiltrados.map((servicio) => {
+                    const marcado = idsServicios.has(servicio.id);
+                    const deshabilitado = !marcado && serviciosSeleccionados.length >= MAX_POR_TIPO;
+                    return (
+                      <label
+                        key={servicio.id}
+                        className={`flex min-h-11 cursor-pointer items-center gap-2 rounded px-2 text-sm text-ink hover:bg-white ${
+                          deshabilitado ? 'cursor-not-allowed opacity-50' : ''
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={marcado}
+                          disabled={deshabilitado}
+                          onChange={() =>
+                            alternar(servicio, serviciosSeleccionados, idsServicios, alCambiarServicios)
+                          }
+                          className="size-4 accent-ink"
+                        />
+                        <span>{servicio.nombre}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           <div role="group" aria-label="Grupos pastorales">
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
