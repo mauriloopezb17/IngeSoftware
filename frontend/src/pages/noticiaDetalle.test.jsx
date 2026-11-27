@@ -180,4 +180,45 @@ describe('NoticiaDetalle', () => {
 
     expect(await screen.findByRole('heading', { name: 'Vida parroquial' })).toBeInTheDocument();
   });
+
+  it('muestra los chips de sacramentos y grupos relacionados con enlaces a sus páginas', async () => {
+    server.use(
+      http.get(api('/sedes/:sede/publicaciones/:slug'), () =>
+        HttpResponse.json({
+          datos: {
+            id: 99,
+            tipo: { codigo: 'NOTICIA', nombre: 'Noticia' },
+            titulo: 'Noticia con relaciones',
+            slug: 'noticia-con-relaciones',
+            resumen: 'Resumen breve',
+            categoria: { id: 1, nombre: 'Sacramentos', slug: 'sacramentos' },
+            imagenPortada: null,
+            urlExterna: null,
+            abrirEnlaceDirecto: false,
+            destacada: false,
+            fechaPublicacion: '2026-10-18T12:00:00-04:00',
+            fechaExpiracion: null,
+            contenido: { formato: 'blocknote', version: 1, bloques: [] },
+            serviciosRelacionados: [{ id: 1, slug: 'bautismo', nombre: 'Bautismo' }],
+            gruposRelacionados: [{ id: 2, slug: 'coro-parroquial', nombre: 'Coro parroquial' }],
+          },
+        }),
+      ),
+    );
+
+    renderDetalle('/noticias/noticia-con-relaciones');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Noticia con relaciones' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Relacionada con:')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Bautismo' })).toHaveAttribute(
+      'href',
+      '/sacramentos/bautismo',
+    );
+    expect(screen.getByRole('link', { name: 'Coro parroquial' })).toHaveAttribute(
+      'href',
+      '/comunidad/grupos/coro-parroquial',
+    );
+  });
 });

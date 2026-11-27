@@ -5,6 +5,7 @@
 // Los permisos se leen de `usuario.permisos` (los de la sesión simulada), no de permisos/matriz.js:
 // el mock hace de servidor, y así una prueba detecta si ambos dejan de coincidir.
 import { buscarArchivo, buscarArchivoPorUrl } from './multimediaMock.js';
+import { crearGruposIniciales, crearServiciosIniciales } from '../contenido/mocks/datos.js';
 import {
   CATEGORIAS,
   crearPublicacionesIniciales,
@@ -121,14 +122,24 @@ function visibleEnPortal(pub) {
 
 // Objeto publicación de la vista del panel. En la lista no se incluye `contenido`.
 export function serializar(pub, usuario, { conContenido = true } = {}) {
-  const { imagenPortadaId, contenido, ...resto } = pub;
+  const {
+    imagenPortadaId,
+    contenido,
+    serviciosRelacionados = [],
+    gruposRelacionados = [],
+    ...resto
+  } = pub;
   const salida = {
     ...resto,
     imagenPortada: imagenPortadaId ? imagenDeBiblioteca(imagenPortadaId) : null,
     visibleEnPortal: visibleEnPortal(pub),
     acciones: accionesDe(pub, usuario),
   };
-  if (conContenido) salida.contenido = contenido;
+  if (conContenido) {
+    salida.contenido = contenido;
+    salida.serviciosRelacionados = serviciosRelacionados;
+    salida.gruposRelacionados = gruposRelacionados;
+  }
   return salida;
 }
 
@@ -241,6 +252,19 @@ function validarCampos(cuerpo, { parcial, sede }) {
   if ('destacada' in cuerpo && typeof cuerpo.destacada !== 'boolean') mal('destacada', 'Debe ser verdadero o falso.');
   for (const campo of ['fechaPublicacion', 'fechaExpiracion'])
     if (opcional(campo) && !esFechaValida(cuerpo[campo])) mal(campo, 'Debe ser una fecha y hora válidas.');
+
+  for (const [campo, etiqueta] of [
+    ['servicioIds', 'sacramentos'],
+    ['grupoIds', 'grupos'],
+  ]) {
+    if (campo in cuerpo) {
+      if (!Array.isArray(cuerpo[campo]) || cuerpo[campo].some((id) => !Number.isInteger(id) || id < 1)) {
+        mal(campo, `Debe ser una lista de ids válidos de ${etiqueta}.`);
+      } else if (cuerpo[campo].length > 10) {
+        mal(campo, `Puedes relacionar como máximo 10 ${etiqueta}.`);
+      }
+    }
+  }
 
   return detalles;
 }
@@ -357,6 +381,20 @@ function aplicarCampos(pub, cuerpo) {
     pub.fechaPublicacion = cuerpo.fechaPublicacion ? iso(new Date(cuerpo.fechaPublicacion)) : null;
   if ('fechaExpiracion' in cuerpo)
     pub.fechaExpiracion = cuerpo.fechaExpiracion ? iso(new Date(cuerpo.fechaExpiracion)) : null;
+  if ('servicioIds' in cuerpo) {
+    const catalogoServicios = crearServiciosIniciales();
+    pub.serviciosRelacionados = [...new Set(cuerpo.servicioIds)]
+      .map((id) => catalogoServicios.find((s) => s.id === id))
+      .filter(Boolean)
+      .map(({ id, slug, nombre }) => ({ id, slug, nombre }));
+  }
+  if ('grupoIds' in cuerpo) {
+    const catalogoGrupos = crearGruposIniciales();
+    pub.gruposRelacionados = [...new Set(cuerpo.grupoIds)]
+      .map((id) => catalogoGrupos.find((g) => g.id === id))
+      .filter(Boolean)
+      .map(({ id, slug, nombre }) => ({ id, slug, nombre }));
+  }
 }
 
 const expiraAntesDePublicar = (pub) =>

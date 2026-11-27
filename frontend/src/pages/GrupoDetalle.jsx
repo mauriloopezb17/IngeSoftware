@@ -16,6 +16,7 @@ import ContenidoBlockNote from '../components/parroquia/ContenidoBlockNote.jsx';
 import { CargandoSeccion, ErrorSeccion } from '../components/parroquia/EstadoSeccion.jsx';
 import { construirAtributosImagen } from '../components/parroquia/imagenSrcSet.js';
 import VisorGaleria from '../components/parroquia/VisorGaleria.jsx';
+import NoticiasRelacionadas from '../components/parroquia/NoticiasRelacionadas.jsx';
 import { useGrupoPastoral, useSede } from '../hooks/index.js';
 import { armarHrefTelefono } from '../utils/formatoPortal.js';
 import { armarHrefCorreoGrupo, armarHrefWhatsAppGrupo } from './grupoContacto.js';
@@ -314,7 +315,7 @@ function GrupoDetalle() {
             />
           )}
 
-          {/* Espacio reservado (ola 2): Noticias del grupo (Agente A) */}
+          <NoticiasRelacionadas tipo="grupo" slug={slug} fondo="blanco" />
         </>
       )}
     </>

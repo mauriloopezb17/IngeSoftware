@@ -181,6 +181,33 @@ function NoticiaDetalle() {
 
               <ContenidoBlockNote contenido={publicacion.contenido} />
 
+              {(publicacion.serviciosRelacionados?.length > 0 ||
+                publicacion.gruposRelacionados?.length > 0) && (
+                <div className="mt-8 flex flex-wrap items-center gap-2 border-t border-sand pt-6">
+                  <span className="font-body text-meta font-semibold text-muted">
+                    Relacionada con:
+                  </span>
+                  {publicacion.serviciosRelacionados?.map((servicio) => (
+                    <Link
+                      key={`servicio-${servicio.id}`}
+                      to={`/sacramentos/${servicio.slug}`}
+                      className="inline-flex min-h-11 items-center rounded-sm border border-sand bg-cream px-3.5 py-2 font-body text-meta font-semibold text-ink transition-colors duration-150 hover:border-ink hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    >
+                      {servicio.nombre}
+                    </Link>
+                  ))}
+                  {publicacion.gruposRelacionados?.map((grupo) => (
+                    <Link
+                      key={`grupo-${grupo.id}`}
+                      to={`/comunidad/grupos/${grupo.slug}`}
+                      className="inline-flex min-h-11 items-center rounded-sm border border-sand bg-cream px-3.5 py-2 font-body text-meta font-semibold text-ink transition-colors duration-150 hover:border-ink hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    >
+                      {grupo.nombre}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
               <div className="mt-10 flex flex-wrap items-center gap-4 border-t border-sand pt-8">
                 <Boton variante="secundario" onClick={compartir}>
                   {copiado ? (

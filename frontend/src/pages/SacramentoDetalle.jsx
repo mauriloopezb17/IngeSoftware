@@ -18,6 +18,7 @@ import { CargandoSeccion, ErrorSeccion } from '../components/parroquia/EstadoSec
 import { IconoDinamico } from '../components/parroquia/IconoDinamico.jsx';
 import { construirAtributosImagen } from '../components/parroquia/imagenSrcSet.js';
 import VisorGaleria from '../components/parroquia/VisorGaleria.jsx';
+import NoticiasRelacionadas from '../components/parroquia/NoticiasRelacionadas.jsx';
 import { TIPOS_HORARIO } from '../config/sede.js';
 import { useHorarios, useSede, useServicio, useServicios } from '../hooks/index.js';
 import { armarHrefTelefono, formatearRangoHorario } from '../utils/formatoPortal.js';
@@ -318,6 +319,8 @@ function SacramentoDetalle() {
               alCerrar={() => setIndiceVisor(null)}
             />
           )}
+
+          <NoticiasRelacionadas tipo="servicio" slug={slug} fondo="blanco" />
 
           {otrosServicios.length > 0 && (
             <section className="border-t border-sand bg-cream py-16 md:py-24">
