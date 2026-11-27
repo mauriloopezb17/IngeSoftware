@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -15,6 +15,13 @@ import { CONTRASENA_DESARROLLO } from '../mocks/usuarios.js';
 import { SesionProvider } from '../sesion/SesionProvider.jsx';
 import { ProveedorToasts } from '../ui/index.js';
 import Boletines from './Boletines.jsx';
+
+// La miniatura de la portada se prueba en FormularioBoletin.portada.test.jsx. Aquí pdf.js falla de
+// inmediato (en jsdom no puede dibujar): importar la biblioteca real tardaba más de 5 s con la
+// máquina cargada y la prueba de publicar se cortaba por tiempo.
+vi.mock('../../utils/pdfJs.js', () => ({
+  cargarPdfJs: vi.fn(() => Promise.reject(new Error('pdf.js no se carga en estas pruebas'))),
+}));
 
 const entrar = (usuario) =>
   clienteHttp.post('/auth/login', { correo: `${usuario}@parroquia.test`, contrasena: CONTRASENA_DESARROLLO });
