@@ -54,11 +54,13 @@ describe('pantalla de inicio de sesión', () => {
   afterEach(reiniciarMocksAdmin);
 
   it('muestra el título «Panel de gestión» y el formulario', async () => {
-    montar();
+    const { container } = montar();
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Panel de gestión' })).toBeInTheDocument();
     expect(await campoCorreo()).toBeInTheDocument();
     expect(campoContrasena()).toHaveAttribute('type', 'password');
+    const marcas = container.querySelectorAll('svg[aria-hidden="true"]');
+    expect(marcas.length).toBeGreaterThanOrEqual(2);
   });
 
   it('con credenciales correctas abre la sesión y entra al inicio del panel', async () => {

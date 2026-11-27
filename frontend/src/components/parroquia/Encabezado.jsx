@@ -358,16 +358,7 @@ function EncabezadoBase({ transparente, rutaActual }) {
             <EnlaceNavPortal to="/contacto">Contacto</EnlaceNavPortal>
           </nav>
 
-          <div className="flex items-center gap-3">
-            <BotonEnlace
-              to="/horarios"
-              variante="primarioOscuro"
-              onClick={cerrarTodo}
-              className="hidden sm:inline-flex"
-            >
-              Horarios de misa
-            </BotonEnlace>
-
+          <div className="flex items-center gap-3 lg:hidden">
             <button
               ref={botonMenuRef}
               type="button"
@@ -375,7 +366,7 @@ function EncabezadoBase({ transparente, rutaActual }) {
               aria-label="Abrir menú"
               aria-expanded={cajonAbierto}
               aria-controls={idMenuMovil}
-              className="inline-flex size-11 cursor-pointer items-center justify-center rounded-sm border border-white/25 text-white transition-colors duration-150 hover:border-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:hidden"
+              className="inline-flex size-11 cursor-pointer items-center justify-center rounded-sm bg-gold text-ink shadow-soft transition-colors duration-150 ease-salida hover:bg-gold-dark active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
             >
               <Menu size={22} aria-hidden="true" />
             </button>

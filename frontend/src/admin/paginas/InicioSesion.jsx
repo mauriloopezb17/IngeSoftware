@@ -7,6 +7,7 @@ import logoColor from '../../assets/parroquia/logos/logo-horizontal-color.svg';
 import { ErrorApi } from '../../services/clienteHttp.js';
 import { useSesion } from '../sesion/SesionContexto.js';
 import { Aviso, Boton, CampoTexto } from '../ui/index.js';
+import EmblemaParroquia from './EmblemaParroquia.jsx';
 
 const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RUTA_INICIAL = '/admin/inicio';
@@ -84,15 +85,19 @@ export default function InicioSesion() {
 
   return (
     <main className="grid min-h-screen bg-panel font-body text-ink lg:grid-cols-2">
-      <aside className="hidden flex-col justify-between bg-ink px-12 py-14 text-white lg:flex">
-        <div>
+      <aside className="relative hidden flex-col justify-between overflow-hidden bg-ink px-12 py-14 text-white lg:flex">
+        <EmblemaParroquia
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-12 -bottom-16 h-[32rem] w-auto text-gold/[0.09]"
+        />
+        <div className="relative z-10">
           <img
             src={logoBlanco}
             alt="Parroquia Señor de la Exaltación"
             className="h-14 w-auto"
           />
         </div>
-        <div className="max-w-md">
+        <div className="relative z-10 max-w-md">
           <p className="text-xs font-semibold uppercase tracking-widest text-gold">
             Misioneros Pasionistas · Obrajes, La Paz
           </p>
@@ -103,13 +108,17 @@ export default function InicioSesion() {
             Publica noticias, horarios de celebración, eventos, proclamas y boletines mensuales del portal parroquial.
           </p>
         </div>
-        <p className="text-xs text-muted-on-dark">
+        <p className="relative z-10 text-xs text-muted-on-dark">
           Acceso restringido al equipo pastoral y administrativo autorizado.
         </p>
       </aside>
 
-      <div className="flex items-center justify-center px-4 py-10 sm:px-8">
-        <div className="w-full max-w-md rounded-lg border border-sand bg-white p-6 shadow-sm sm:p-8">
+      <div className="relative flex items-center justify-center overflow-hidden px-4 py-10 sm:px-8">
+        <EmblemaParroquia
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/2 left-1/2 h-[28rem] w-auto -translate-x-1/2 -translate-y-1/2 text-ink/[0.06] lg:hidden"
+        />
+        <div className="relative z-10 w-full max-w-md rounded-lg border border-sand bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-5 lg:hidden">
             <img
               src={logoColor}

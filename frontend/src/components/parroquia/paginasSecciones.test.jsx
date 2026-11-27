@@ -21,7 +21,8 @@ describe('Portada y Nosotros desde páginas y bloques', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Señor de la Exaltación' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Horarios de Misa')).toBeInTheDocument();
+    expect(screen.getByText('Noticias')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ir a Noticias' })).toHaveAttribute('href', '/noticias');
     expect(
       screen.getByRole('heading', {
         level: 2,
