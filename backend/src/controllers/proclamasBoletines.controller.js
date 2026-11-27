@@ -42,6 +42,12 @@ export async function detalleProclama(req, res) {
   }));
 }
 
+export async function verificacionObservacion(req, res) {
+  const { id } = req.validado.params;
+  const datos = await observaciones.obtenerVerificacionObservacion(req.sede.id, id);
+  res.set('Cache-Control', 'no-store').json({ datos });
+}
+
 export async function crearObservacion(req, res) {
   const { id } = req.validado.params;
   const datos = await observaciones.crearObservacionPublica(req.sede.id, id, req.validado.body);

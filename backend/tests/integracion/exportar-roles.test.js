@@ -5,6 +5,7 @@ import { createApp } from '../../src/app.js';
 import { ROLES } from '../../src/constantes/catalogos.js';
 import { cerrarPool, consultar } from '../../src/db/index.js';
 import { cerrarRedis } from '../../src/db/redis.js';
+import { emitirTokenObservacion } from '../../src/services/observacionesProclama.service.js';
 import { BOM_UTF8 } from '../../src/utils/csv.js';
 import { matrizDePermisosDelContrato } from '../apoyo/contrato.js';
 import { limpiarContadoresDeIntentos } from '../apoyo/limite.js';
@@ -160,6 +161,7 @@ beforeAll(async () => {
       nombreCompleto: `${PREFIJO} Confidencial`,
       correo: 'secreto161@ejemplo.test',
       mensaje: `Mensaje confidencial ${PREFIJO}`,
+      verificacion: emitirTokenObservacion(creados.proclamas[0], { ahora: Date.now() - 5000 }),
     });
   expect(resObs.status, JSON.stringify(resObs.body)).toBe(201);
   creados.observaciones.push(resObs.body.datos.id);

@@ -1,15 +1,19 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Send } from 'lucide-react';
 
 import { SEDE_ACTUAL } from '../../config/sede.js';
-import { enviarObservacionProclama } from '../../services/portal.js';
+import {
+  enviarObservacionProclama,
+  obtenerVerificacionObservacion,
+} from '../../services/portal.js';
 
 function validarCampo(nombre, valores) {
   const valor = (valores[nombre] ?? '').trim();
   if (nombre === 'nombreCompleto') {
     const limpio = valor.replace(/\s+/g, ' ');
-    if (limpio.length < 3) return 'Escribe tu nombre completo (al menos 3 caracteres).';
+    if (limpio.length === 0) return '';
+    if (limpio.length < 3) return 'Si escribes tu nombre, debe tener al menos 3 caracteres.';
     if (limpio.length > 120) return 'Puede tener hasta 120 caracteres.';
     return '';
   }
@@ -73,6 +77,15 @@ export default function FormularioObservacionProclama({ proclamaId, sede = SEDE_
   const [errorGeneral, setErrorGeneral] = useState('');
   const [enviado, setEnviado] = useState(false);
 
+  const { data: datosVerificacion, refetch: recargarToken } = useQuery({
+    queryKey: ['observacion-verificacion', sede, proclamaId],
+    queryFn: ({ signal }) => obtenerVerificacionObservacion(sede, proclamaId, signal),
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
+  const tokenVerificacion = datosVerificacion?.token ?? '';
+
   useEffect(() => {
     if (enviado) confirmacionRef.current?.focus();
   }, [enviado]);
@@ -94,6 +107,13 @@ export default function FormularioObservacionProclama({ proclamaId, sede = SEDE_
         return;
       }
       if (Array.isArray(err?.detalles) && err.detalles.length > 0) {
+        const errVerificacion = err.detalles.find((d) => d.campo === 'verificacion');
+        if (errVerificacion) {
+          setErrorGeneral(errVerificacion.mensaje);
+          recargarToken();
+          requestAnimationFrame(() => errorGeneralRef.current?.focus());
+          return;
+        }
         const siguientes = {};
         for (const d of err.detalles) {
           if (d.campo && !siguientes[d.campo]) siguientes[d.campo] = d.mensaje;
@@ -153,11 +173,12 @@ export default function FormularioObservacionProclama({ proclamaId, sede = SEDE_
     }
 
     mutacion.mutate({
-      nombreCompleto: valores.nombreCompleto.trim().replace(/\s+/g, ' '),
+      nombreCompleto: valores.nombreCompleto.trim().replace(/\s+/g, ' ') || null,
       correo: valores.correo.trim() || null,
       telefono: valores.telefono.trim() || null,
       mensaje: valores.mensaje.trim(),
       sitioWeb: valores.sitioWeb,
+      verificacion: tokenVerificacion,
     });
   }
 
@@ -190,7 +211,7 @@ export default function FormularioObservacionProclama({ proclamaId, sede = SEDE_
         ¿Conoces algún impedimento para este matrimonio?
       </h2>
       <p className="mt-3 rounded-sm border border-sand bg-cream px-4 py-3 font-body text-meta font-medium text-ink">
-        Tu mensaje es confidencial: solo lo lee el párroco y no se publica.
+        Tu mensaje es confidencial: solo lo lee el párroco y no se publica. Tu correo o tu celular solo sirven para responderte.
       </p>
 
       {errorGeneral && (
@@ -222,7 +243,7 @@ export default function FormularioObservacionProclama({ proclamaId, sede = SEDE_
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor={idNombre} className="font-body text-meta font-semibold text-ink">
-            Nombre completo
+            Tu nombre (opcional)
           </label>
           <input
             ref={nombreRef}
@@ -231,14 +252,20 @@ export default function FormularioObservacionProclama({ proclamaId, sede = SEDE_
             type="text"
             autoComplete="name"
             maxLength={120}
-            required
             value={valores.nombreCompleto}
             onChange={(e) => actualizar('nombreCompleto', e.target.value)}
             onBlur={() => alSalir('nombreCompleto')}
             aria-invalid={Boolean(errores.nombreCompleto)}
-            aria-describedby={errores.nombreCompleto ? `${idNombre}-error` : undefined}
+            aria-describedby={
+              [`${idNombre}-ayuda`, errores.nombreCompleto ? `${idNombre}-error` : '']
+                .filter(Boolean)
+                .join(' ')
+            }
             className="min-h-11 w-full rounded-sm border border-sand bg-white px-3.5 py-2.5 font-body text-ui text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
           />
+          <p id={`${idNombre}-ayuda`} className="font-body text-meta text-muted">
+            Puedes dejarlo vacío: tu observación llega igual y nadie más la ve.
+          </p>
           {errores.nombreCompleto && (
             <p id={`${idNombre}-error`} className="font-body text-meta text-danger">
               {errores.nombreCompleto}
