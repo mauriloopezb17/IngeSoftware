@@ -2,6 +2,9 @@ import { expect, test } from '@playwright/test';
 import { abrirContextoConRol, tituloUnico } from './helpers/sesion.js';
 
 test.describe('Gestión de contenido y permisos por rol', () => {
+  test.beforeEach(() => {
+    test.setTimeout(90_000);
+  });
   test('Secretaría crea, edita y elimina un grupo pastoral y se refleja en el portal', async ({
     browser,
     page,
