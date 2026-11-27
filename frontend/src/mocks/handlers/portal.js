@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { api } from '../api.js';
 import {
   sedesLista,
+  sedesArbol,
   sedesDetalle,
   menuPaginasExaltacion,
   paginasExaltacion,
@@ -94,6 +95,7 @@ function esSedePrincipal(sede) {
 // Handlers del portal público (Sección B). Copian los ejemplos de docs/api/publico.md.
 export const handlersPortal = [
   http.get(api('/sedes'), () => HttpResponse.json({ datos: sedesLista })),
+  http.get(api('/sedes/arbol'), () => HttpResponse.json({ datos: sedesArbol })),
 
   http.get(api('/sedes/:sede'), ({ params }) => {
     const fallo = validarSede(params.sede);

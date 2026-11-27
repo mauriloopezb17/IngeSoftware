@@ -53,7 +53,9 @@ Todos los catálogos en una sola respuesta, para llenar los selectores de los fo
     ],
     "tiposSede": [
       { "id": 1, "codigo": "PARROQUIA", "nombre": "Parroquia" },
-      { "id": 2, "codigo": "CAPILLA", "nombre": "Capilla" }
+      { "id": 2, "codigo": "CAPILLA", "nombre": "Capilla" },
+      { "id": 3, "codigo": "COMUNIDAD", "nombre": "Comunidad" },
+      { "id": 4, "codigo": "COMUNIDAD_PASIONISTA", "nombre": "Comunidad pasionista" }
     ],
     "estadosPublicacion": [
       { "id": 1, "codigo": "BORRADOR", "nombre": "Borrador" },
@@ -873,16 +875,31 @@ El mismo objeto del [endpoint público](publico.md#get-apisedessedevideos), más
 
 ### Objeto sede (vista del panel)
 
-El mismo objeto de [`GET /api/sedes/:sede`](publico.md#get-apisedessede), más `activo`. Además, `redesSociales` incluye el `id` de la red y `configuracion` trae todas las claves guardadas.
+El mismo objeto de [`GET /api/sedes/:sede`](publico.md#get-apisedessede), más `activo` y `orden` (posición entre sedes hermanas, entero `>= 0`). Además, `redesSociales` incluye el `id` de la red y `configuracion` trae todas las claves guardadas.
+
+### Reglas de jerarquía
+
+| Tipo (`tipo.codigo`)   | Sede superior permitida (`sedePadreId`) |
+| ---------------------- | --------------------------------------- |
+| `PARROQUIA`            | Ninguna (`null`)                        |
+| `CAPILLA`              | Una `PARROQUIA`                         |
+| `COMUNIDAD`            | Una `PARROQUIA` o una `CAPILLA`         |
+| `COMUNIDAD_PASIONISTA` | Ninguna (`null`, entidad aparte)        |
+
+- No se permiten ciclos (una sede no puede depender de sí misma ni de sus descendientes).
+- No se puede cambiar el `tipo` de una sede si sus sedes dependientes dejarían de cumplir la tabla (`409 CONFLICTO`).
+- No se puede desactivar (`activo: false`) una sede que tenga sedes dependientes activas (`409 CONFLICTO`).
 
 ### Endpoints
 
-| Método y ruta                | Permiso                                       | Descripción                                                                                                                 |
-| ---------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/admin/sedes`       | todos                                         | Paginado (`porPagina` hasta 100). Filtros: `tipo`, `activo`, `buscar`. Orden: `id` (defecto), `-id`, `nombre`, `-nombre`. El Administrador ve todas, incluidas las inactivas; los demás roles solo la suya. |
-| `GET /api/admin/sedes/:id`   | todos                                         | Una sede.                                                                                                                   |
-| `POST /api/admin/sedes`      | `sedes.gestionar`                             | Crea una sede. `201`.                                                                                                       |
-| `PATCH /api/admin/sedes/:id` | `sede.editar` (la propia) o `sedes.gestionar` | Edita datos, configuración y redes sociales. Solo `sedes.gestionar` puede cambiar `slug`, `tipo`, `sedePadreId` y `activo`. |
+| Método y ruta                    | Permiso                                       | Descripción                                                                                                                               |
+| -------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/admin/sedes`           | todos                                         | Paginado (`porPagina` hasta 100). Filtros: `tipo`, `activo`, `buscar`. Orden: `id` (defecto), `-id`, `nombre`, `-nombre`, `orden`, `-orden`. El Administrador ve todas, incluidas las inactivas; los demás roles solo la suya. |
+| `GET /api/admin/sedes/arbol`     | todos                                         | Devuelve `{ datos: { parroquias: [...], comunidadesPasionistas: [...] } }` ordenado por `orden` y `nombre`, con `capillas` y `comunidades` anidadas. |
+| `GET /api/admin/sedes/:id`       | todos                                         | Una sede.                                                                                                                                 |
+| `POST /api/admin/sedes`          | `sedes.gestionar`                             | Crea una sede. `201`. Valida la jerarquía.                                                                                                |
+| `PATCH /api/admin/sedes/:id`     | `sede.editar` (la propia) o `sedes.gestionar` | Edita datos, configuración y redes sociales. Solo `sedes.gestionar` puede cambiar `slug`, `tipo`, `sedePadreId`, `orden` y `activo`.      |
+| `POST /api/admin/sedes/:id/mover`| `sedes.gestionar`                             | Mueve la sede en la jerarquía (`{ sedePadreId, orden? }`) aplicando las reglas de jerarquía y sin ciclos.                                 |
 
 **Cuerpo de `PATCH`** (Secretaría actualiza el aviso de la barra superior, el WhatsApp y las redes):
 

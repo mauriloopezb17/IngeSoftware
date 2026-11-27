@@ -1,5 +1,5 @@
 export { clavesPortal } from './clavesPortal.js';
-export { useSede, useComunidades } from './useSede.js';
+export { useSede, useComunidades, useArbolComunidades } from './useSede.js';
 export { useMenuPaginas, usePagina } from './usePaginas.js';
 export { useHorarios } from './useHorarios.js';
 export { useServicios, useServicio } from './useServicios.js';

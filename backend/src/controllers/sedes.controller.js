@@ -9,6 +9,13 @@ export async function listar(req, res) {
   await responderConCache(req, res, clave, async () => ({ datos: await servicio.listarSedes() }));
 }
 
+export async function arbol(req, res) {
+  const clave = { recurso: RECURSOS_CACHE.SEDES, variante: 'arbol' };
+  await responderConCache(req, res, clave, async () => ({
+    datos: await servicio.obtenerArbolSedes(),
+  }));
+}
+
 export async function detalle(req, res) {
   const clave = { recurso: RECURSOS_CACHE.SEDE, sedeId: req.sede.id };
   await responderConCache(req, res, clave, async () => ({

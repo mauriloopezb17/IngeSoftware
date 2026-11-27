@@ -13,6 +13,8 @@ export const CATALOGOS = {
   tiposSede: [
     { id: 1, codigo: 'PARROQUIA', nombre: 'Parroquia' },
     { id: 2, codigo: 'CAPILLA', nombre: 'Capilla' },
+    { id: 3, codigo: 'COMUNIDAD', nombre: 'Comunidad' },
+    { id: 4, codigo: 'COMUNIDAD_PASIONISTA', nombre: 'Comunidad pasionista' },
   ],
   estadosPublicacion: [
     { id: 1, codigo: 'BORRADOR', nombre: 'Borrador' },

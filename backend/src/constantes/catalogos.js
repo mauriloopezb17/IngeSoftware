@@ -58,6 +58,8 @@ export const TIPOS_PUBLICACION = new Catalogo('tipo de publicación', {
 export const TIPOS_SEDE = new Catalogo('tipo de sede', {
   PARROQUIA: 'Parroquia',
   CAPILLA: 'Capilla',
+  COMUNIDAD: 'Comunidad',
+  COMUNIDAD_PASIONISTA: 'Comunidad pasionista',
 });
 
 export const ROLES = new Catalogo('rol', {

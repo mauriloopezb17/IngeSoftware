@@ -3,6 +3,7 @@ import { createBrowserRouter } from 'react-router';
 import LayoutPortal from './components/portal/LayoutPortal.jsx';
 import InicioParroquia from './pages/InicioParroquia.jsx';
 import NosotrosPagina from './pages/NosotrosPagina.jsx';
+import ComunidadesPagina from './pages/ComunidadesPagina.jsx';
 import HorariosPagina from './pages/HorariosPagina.jsx';
 import SacramentosPagina from './pages/SacramentosPagina.jsx';
 import SacramentoDetalle from './pages/SacramentoDetalle.jsx';
@@ -37,6 +38,7 @@ export const rutas = [
         children: [
           { path: '/', Component: InicioParroquia },
           { path: '/nosotros', Component: NosotrosPagina },
+          { path: '/comunidades', Component: ComunidadesPagina },
           { path: '/horarios', Component: HorariosPagina },
           { path: '/sacramentos', Component: SacramentosPagina },
           { path: '/sacramentos/:slug', Component: SacramentoDetalle },
