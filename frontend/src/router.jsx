@@ -17,6 +17,7 @@ import ProclamaDetalle from './pages/ProclamaDetalle.jsx';
 import Calendario from './pages/Calendario.jsx';
 import CalendarioDia from './pages/CalendarioDia.jsx';
 import Boletines from './pages/Boletines.jsx';
+import Buscar from './pages/Buscar.jsx';
 import EventoDetalle from './pages/EventoDetalle.jsx';
 import PaginaPublica from './pages/PaginaPublica.jsx';
 import NoEncontrado from './pages/NoEncontrado.jsx';
@@ -54,6 +55,7 @@ export const rutas = [
           { path: '/calendario/:id', Component: EventoDetalle },
           { path: '/boletines', Component: Boletines },
           { path: '/boletines/:periodo', Component: Boletines },
+          { path: '/buscar', Component: Buscar },
           { path: '/paginas/:slug', Component: PaginaPublica },
           { path: '*', Component: NoEncontrado },
         ],

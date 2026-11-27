@@ -479,4 +479,219 @@ export const handlersPortal = [
   http.get(api('/categorias'), () => HttpResponse.json({ datos: categoriasPublicacion })),
 
   http.get(api('/categorias-evento'), () => HttpResponse.json({ datos: categoriasEvento })),
+
+  http.get(api('/sedes/:sede/buscar'), ({ params, request }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const url = new URL(request.url);
+    const qBruto = url.searchParams.get('q') ?? '';
+    const q = qBruto.trim();
+    const tieneControl = [...q].some((ch) => {
+      const code = ch.charCodeAt(0);
+      return code < 32 || code === 127;
+    });
+    if (q.length < 2 || q.length > 100 || tieneControl) {
+      return errorJson(400, 'VALIDACION', 'Los parámetros de consulta no son válidos.', [
+        { campo: 'query.q', mensaje: 'Escribe entre 2 y 100 caracteres.' },
+      ]);
+    }
+
+    const TIPOS_BUSCABLES = ['noticia', 'evento', 'sacramento', 'grupo', 'boletin', 'pagina'];
+    const tipoParam = url.searchParams.get('tipo');
+    const tiposFiltro = tipoParam
+      ? tipoParam
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
+    if (tiposFiltro.some((t) => !TIPOS_BUSCABLES.includes(t))) {
+      return errorJson(400, 'VALIDACION', 'Los parámetros de consulta no son válidos.', [
+        { campo: 'query.tipo', mensaje: 'Tipo de contenido no válido.' },
+      ]);
+    }
+
+    const desde = url.searchParams.get('desde') ?? '';
+    const hasta = url.searchParams.get('hasta') ?? '';
+    const regexFecha = /^\d{4}-\d{2}-\d{2}$/;
+    if ((desde && !regexFecha.test(desde)) || (hasta && !regexFecha.test(hasta))) {
+      return errorJson(400, 'VALIDACION', 'Los parámetros de consulta no son válidos.', [
+        { campo: 'query.desde', mensaje: 'Formato de fecha inválido (AAAA-MM-DD).' },
+      ]);
+    }
+    if (desde && hasta && hasta < desde) {
+      return errorJson(400, 'VALIDACION', 'Los parámetros de consulta no son válidos.', [
+        { campo: 'query.hasta', mensaje: 'La fecha final debe ser mayor o igual a la inicial.' },
+      ]);
+    }
+
+    const orden = url.searchParams.get('orden') ?? 'relevancia';
+    if (!['relevancia', 'reciente', 'antiguo'].includes(orden)) {
+      return errorJson(400, 'VALIDACION', 'Los parámetros de consulta no son válidos.', [
+        { campo: 'query.orden', mensaje: 'Orden no válido.' },
+      ]);
+    }
+
+    const paginaParam = Number(url.searchParams.get('pagina') ?? 1);
+    const porPaginaParam = Number(url.searchParams.get('porPagina') ?? 10);
+    if (!Number.isInteger(paginaParam) || paginaParam < 1) {
+      return errorJson(400, 'VALIDACION', 'Los parámetros de consulta no son válidos.', [
+        { campo: 'query.pagina', mensaje: 'Debe ser un entero mayor o igual a 1.' },
+      ]);
+    }
+    if (!Number.isInteger(porPaginaParam) || porPaginaParam < 1 || porPaginaParam > 30) {
+      return errorJson(400, 'VALIDACION', 'Los parámetros de consulta no son válidos.', [
+        { campo: 'query.porPagina', mensaje: 'Debe ser un entero entre 1 y 30.' },
+      ]);
+    }
+
+    const catalogo = esSedePrincipal(params.sede)
+      ? [
+          ...obtenerPublicacionesExaltacion()
+            .filter((p) => p.tipo !== 'AVISO')
+            .map((p) => ({
+              tipo: 'noticia',
+              id: p.id,
+              titulo: p.titulo,
+              texto: `${p.titulo} ${p.resumen ?? ''} ${p.categoria?.nombre ?? ''}`,
+              url: `/noticias/${p.slug}`,
+              fecha: p.fechaPublicacion ?? null,
+              imagen: p.imagenPortada ?? null,
+            })),
+          ...obtenerEventosExaltacion().map((e) => ({
+            tipo: 'evento',
+            id: e.id,
+            titulo: e.titulo,
+            texto: `${e.titulo} ${e.descripcion ?? ''} ${e.lugar ?? ''}`,
+            url: `/calendario/${e.id}`,
+            fecha: e.fechaInicio ?? null,
+            imagen: e.imagen ?? null,
+          })),
+          ...serviciosExaltacion.map((s) => ({
+            tipo: 'sacramento',
+            id: s.id,
+            titulo: s.nombre,
+            texto: `${s.nombre} ${s.descripcionCorta ?? ''}`,
+            url: `/sacramentos/${s.slug}`,
+            fecha: null,
+            imagen: null,
+          })),
+          ...gruposPastoralesExaltacion.map((g) => ({
+            tipo: 'grupo',
+            id: g.id,
+            titulo: g.nombre,
+            texto: `${g.nombre} ${g.descripcion ?? ''} ${g.horarioReunion ?? ''}`,
+            url: `/comunidad/grupos/${g.slug}`,
+            fecha: null,
+            imagen: g.imagen ?? null,
+          })),
+          ...boletinesExaltacion.map((b) => ({
+            tipo: 'boletin',
+            id: b.id,
+            titulo: b.titulo,
+            texto: `${b.titulo} ${b.periodo ?? ''}`,
+            url: `/boletines/${b.periodo}`,
+            fecha: b.fechaPublicacion ?? null,
+            imagen: b.imagenPortada ?? null,
+          })),
+          ...Object.values(paginasExaltacion).map((p) => ({
+            tipo: 'pagina',
+            id: p.id,
+            titulo: p.titulo,
+            texto: `${p.titulo} ${p.descripcionSeo ?? ''}`,
+            url: `/paginas/${p.slug}`,
+            fecha: p.fechaActualizacion ?? null,
+            imagen: null,
+          })),
+        ]
+      : [];
+
+    const frases = [...q.matchAll(/"([^"]+)"/g)].map((m) => normalizar(m[1]));
+    const resto = q.replace(/"[^"]+"/g, ' ');
+    const tokens = resto.split(/\s+/).filter(Boolean);
+    const excluidos = tokens.filter((t) => t.startsWith('-') && t.length > 1).map((t) => normalizar(t.slice(1)));
+    const incluidos = tokens.filter((t) => !t.startsWith('-') && t !== 'OR').map(normalizar);
+    const esOr = tokens.includes('OR');
+
+    const coincideTexto = (item) => {
+      const hay = normalizar(item.texto);
+      if (excluidos.some((e) => hay.includes(e))) return false;
+      if (frases.some((f) => !hay.includes(f))) return false;
+      if (incluidos.length === 0) return frases.length > 0;
+      return esOr ? incluidos.some((t) => hay.includes(t)) : incluidos.every((t) => hay.includes(t));
+    };
+
+    const enRangoFecha = (item) => {
+      if (!desde && !hasta) return true;
+      if (!item.fecha) return false;
+      const fechaDia = item.fecha.slice(0, 10);
+      if (desde && fechaDia < desde) return false;
+      if (hasta && fechaDia > hasta) return false;
+      return true;
+    };
+
+    const filtradosSinTipo = catalogo.filter((item) => coincideTexto(item) && enRangoFecha(item));
+
+    const totalesPorTipo = {
+      noticia: 0,
+      evento: 0,
+      sacramento: 0,
+      grupo: 0,
+      boletin: 0,
+      pagina: 0,
+    };
+    for (const item of filtradosSinTipo) {
+      totalesPorTipo[item.tipo] += 1;
+    }
+
+    let filtrados =
+      tiposFiltro.length > 0
+        ? filtradosSinTipo.filter((item) => tiposFiltro.includes(item.tipo))
+        : [...filtradosSinTipo];
+
+    if (orden === 'reciente') {
+      filtrados.sort((a, b) => (b.fecha ?? '').localeCompare(a.fecha ?? ''));
+    } else if (orden === 'antiguo') {
+      filtrados.sort((a, b) => (a.fecha ?? '9999').localeCompare(b.fecha ?? '9999'));
+    }
+
+    const construirFragmento = (textoFuente) => {
+      const termino = frases[0] || incluidos[0] || '';
+      if (!termino) return [{ texto: textoFuente.slice(0, 140), resaltado: false }];
+      const idx = normalizar(textoFuente).indexOf(termino);
+      if (idx === -1) return [{ texto: textoFuente.slice(0, 140), resaltado: false }];
+      const antes = textoFuente.slice(Math.max(0, idx - 40), idx);
+      const match = textoFuente.slice(idx, idx + termino.length);
+      const despues = textoFuente.slice(idx + termino.length, idx + termino.length + 60);
+      return [
+        antes ? { texto: antes, resaltado: false } : null,
+        { texto: match, resaltado: true },
+        despues ? { texto: despues, resaltado: false } : null,
+      ].filter(Boolean);
+    };
+
+    const total = filtrados.length;
+    const totalPaginas = total === 0 ? 0 : Math.ceil(total / porPaginaParam);
+    const inicio = (paginaParam - 1) * porPaginaParam;
+    const paginaDatos = filtrados.slice(inicio, inicio + porPaginaParam).map((item) => ({
+      tipo: item.tipo,
+      id: item.id,
+      titulo: item.titulo,
+      fragmento: construirFragmento(item.texto),
+      url: item.url,
+      fecha: item.fecha,
+      imagen: item.imagen,
+    }));
+
+    return HttpResponse.json({
+      datos: paginaDatos,
+      paginacion: {
+        pagina: paginaParam,
+        porPagina: porPaginaParam,
+        total,
+        totalPaginas,
+      },
+      totalesPorTipo,
+    });
+  }),
 ];
