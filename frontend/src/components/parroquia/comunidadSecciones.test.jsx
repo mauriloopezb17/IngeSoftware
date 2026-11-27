@@ -28,7 +28,7 @@ describe('GruposPastorales, Comunidades y VideoInstitucional desde la API', () =
     expect(screen.getByRole('heading', { name: 'de la Resurrección' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'San Pablo de la Cruz' })).toBeInTheDocument();
 
-    expect(await screen.findByText('Recorrido aéreo y del templo · 0:30')).toBeInTheDocument();
+    expect(await screen.findByText('Recorrido aéreo y del templo · 0:27')).toBeInTheDocument();
     const videoEl = container.querySelector('video.video-institucional-video');
     expect(videoEl).toHaveAttribute('src', '/media/seed/portada-final.mp4');
     expect(videoEl).toHaveAttribute('poster', '/media/seed/altar.webp');
