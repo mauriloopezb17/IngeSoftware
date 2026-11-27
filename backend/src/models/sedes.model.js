@@ -74,6 +74,8 @@ export async function obtenerDetalle(sedeId) {
 
 const COLUMNAS_ADMIN = `
   ${COLUMNAS_RESUMEN},
+  s.sede_padre_id,
+  s.orden,
   s.telefono,
   s.whatsapp,
   s.correo,
@@ -89,6 +91,29 @@ const COLUMNAS_ADMIN = `
       WHERE srs.sede_id = s.id),
     '[]'::json
   ) AS redes_sociales`;
+
+export async function listarActivasParaArbol() {
+  const { rows } = await consultar(
+    `SELECT ${COLUMNAS_RESUMEN}, s.sede_padre_id
+     FROM sede s ${UNIONES_RESUMEN}
+     WHERE s.activo
+     ORDER BY s.orden ASC, s.nombre ASC, s.id ASC`,
+  );
+  return rows;
+}
+
+export async function listarAdminParaArbol({ sedeId } = {}, db = { consultar }) {
+  const parametros = [];
+  const donde = sedeId !== undefined ? `WHERE s.id = $${parametros.push(sedeId)}` : '';
+  const { rows } = await db.consultar(
+    `SELECT ${COLUMNAS_ADMIN}
+     FROM sede s ${UNIONES_RESUMEN}
+     ${donde}
+     ORDER BY s.orden ASC, s.nombre ASC, s.id ASC`,
+    parametros,
+  );
+  return rows;
+}
 
 // Lista sedes para el panel CMS paginadas: parroquias primero por defecto, o según lista blanca.
 export async function listarAdmin(
@@ -134,7 +159,11 @@ export async function listarAdmin(
         ? 's.nombre ASC, s.id ASC'
         : orden === '-nombre'
           ? 's.nombre DESC, s.id DESC'
-          : `(ts.nombre = $${paramTipoIdx}) DESC, s.id ASC`;
+          : orden === 'orden'
+            ? 's.orden ASC, s.nombre ASC, s.id ASC'
+            : orden === '-orden'
+              ? 's.orden DESC, s.nombre DESC, s.id DESC'
+              : `(ts.nombre = $${paramTipoIdx}) DESC, s.id ASC`;
 
   const [pagina, conteo] = await Promise.all([
     db.consultar(
@@ -171,6 +200,48 @@ export async function filaParaModificar(id, db = { consultar }) {
 export async function existeSede(sedeId, db = { consultar }) {
   const { rows } = await db.consultar('SELECT id FROM sede WHERE id = $1', [sedeId]);
   return Boolean(rows[0]);
+}
+
+export async function buscarTipoDeSede(sedeId, db = { consultar }) {
+  const { rows } = await db.consultar(
+    `SELECT s.id, ts.nombre AS tipo_nombre
+     FROM sede s
+     JOIN tipo_sede ts ON ts.id = s.tipo_sede_id
+     WHERE s.id = $1`,
+    [sedeId],
+  );
+  return rows[0] ?? null;
+}
+
+export async function obtenerTipoSedePorId(tipoSedeId, db = { consultar }) {
+  const { rows } = await db.consultar('SELECT id, nombre FROM tipo_sede WHERE id = $1', [
+    tipoSedeId,
+  ]);
+  return rows[0] ?? null;
+}
+
+export async function tieneDescendiente(sedePadreId, posibleDescendienteId, db = { consultar }) {
+  const { rows } = await db.consultar(
+    `WITH RECURSIVE ancestros AS (
+       SELECT id, sede_padre_id FROM sede WHERE id = $1
+       UNION ALL
+       SELECT s.id, s.sede_padre_id FROM sede s JOIN ancestros a ON s.id = a.sede_padre_id
+     )
+     SELECT 1 FROM ancestros WHERE id = $2 LIMIT 1`,
+    [sedePadreId, posibleDescendienteId],
+  );
+  return Boolean(rows[0]);
+}
+
+export async function listarHijas(sedeId, db = { consultar }) {
+  const { rows } = await db.consultar(
+    `SELECT s.id, s.activo, ts.nombre AS tipo_nombre
+     FROM sede s
+     JOIN tipo_sede ts ON ts.id = s.tipo_sede_id
+     WHERE s.sede_padre_id = $1`,
+    [sedeId],
+  );
+  return rows;
 }
 
 export async function obtenerTipoSedeIdPorNombre(nombre, db = { consultar }) {
@@ -216,6 +287,7 @@ export async function crear(
   {
     tipoSedeId,
     sedePadreId,
+    orden = 0,
     nombre,
     slug,
     direccion,
@@ -232,14 +304,15 @@ export async function crear(
 ) {
   const { rows } = await db.consultar(
     `INSERT INTO sede (
-       tipo_sede_id, sede_padre_id, nombre, slug, direccion, telefono, whatsapp,
+       tipo_sede_id, sede_padre_id, orden, nombre, slug, direccion, telefono, whatsapp,
        correo, latitud, longitud, url_imagen_portada, configuracion, activo
      )
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, $13)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14)
      RETURNING *`,
     [
       tipoSedeId,
       sedePadreId,
+      orden,
       nombre,
       slug,
       direccion,
@@ -259,6 +332,7 @@ export async function crear(
 const COLUMNAS_ACTUALIZABLES = {
   tipoSedeId: 'tipo_sede_id',
   sedePadreId: 'sede_padre_id',
+  orden: 'orden',
   nombre: 'nombre',
   slug: 'slug',
   direccion: 'direccion',

@@ -125,9 +125,62 @@ Sedes activas, para la sección «Nuestras comunidades». Sin paginación. Orden
 }
 ```
 
-- `tipo.codigo`: `PARROQUIA` o `CAPILLA`.
+- `tipo.codigo`: `PARROQUIA`, `CAPILLA`, `COMUNIDAD` o `COMUNIDAD_PASIONISTA`.
 - `imagenPortada` sale de `sede.url_imagen_portada`. Si esa URL coincide con un archivo de `archivo_multimedia`, se completan `id`, `ancho`, `alto` y `textoAlternativo`; si no, esos campos van en `null`.
 - `enlaceComoLlegar` sale de `configuracion.enlace_como_llegar`.
+
+---
+
+## `GET /api/sedes/arbol`
+
+Sedes activas ordenadas jerárquicamente (`Parroquia → Capilla → Comunidad`) y con las comunidades pasionistas como entidad aparte. Dentro de cada nivel se ordenan por `orden` ascendente y `nombre` ascendente.
+
+**Respuesta `200`:**
+
+```json
+{
+  "datos": {
+    "parroquias": [
+      {
+        "id": 1,
+        "nombre": "Parroquia Señor de la Exaltación",
+        "slug": "senor-de-la-exaltacion",
+        "tipo": { "codigo": "PARROQUIA", "nombre": "Parroquia" },
+        "sedePadre": null,
+        "direccion": "Av. Héctor Ormachea N.º 167, Obrajes, La Paz",
+        "imagenPortada": {
+          "id": 1,
+          "url": "/media/seed/exterior-parroquia.webp",
+          "textoAlternativo": "Vista exterior de la Parroquia Señor de la Exaltación",
+          "ancho": 1878,
+          "alto": 1057,
+          "variantes": []
+        },
+        "enlaceComoLlegar": "https://www.google.com/maps/dir/?api=1&destination=-16.5267952%2C-68.1082157",
+        "capillas": [
+          {
+            "id": 3,
+            "nombre": "Capilla San Pablo de la Cruz",
+            "slug": "capilla-san-pablo-de-la-cruz",
+            "tipo": { "codigo": "CAPILLA", "nombre": "Capilla" },
+            "sedePadre": {
+              "id": 1,
+              "nombre": "Parroquia Señor de la Exaltación",
+              "slug": "senor-de-la-exaltacion"
+            },
+            "direccion": "La Paz",
+            "imagenPortada": null,
+            "enlaceComoLlegar": null,
+            "comunidades": []
+          }
+        ],
+        "comunidades": []
+      }
+    ],
+    "comunidadesPasionistas": []
+  }
+}
+```
 
 ---
 
@@ -443,7 +496,7 @@ Detalle de un servicio para la vista «Ver requisitos». Incluye el `contenido` 
 
 ## `GET /api/sedes/:sede/grupos-pastorales`
 
-Grupos y pastorales visibles, ordenados por `orden`. Sin paginación.
+Grupos y pastorales visibles, ordenados por `orden`.
 
 **Respuesta `200`:**
 
@@ -452,62 +505,86 @@ Grupos y pastorales visibles, ordenados por `orden`. Sin paginación.
   "datos": [
     {
       "id": 1,
+      "slug": "monaguillos",
       "nombre": "Monaguillos",
       "descripcion": null,
       "horarioReunion": "Sábados · 10:00",
-      "contacto": null,
+      "responsable": null,
+      "whatsapp": null,
+      "correo": null,
       "icono": "star",
       "imagen": null,
+      "tieneDetalle": false,
       "orden": 1
     },
     {
       "id": 2,
+      "slug": "coro-parroquial",
       "nombre": "Coro parroquial",
       "descripcion": null,
       "horarioReunion": "Jueves · 19:00",
-      "contacto": null,
+      "responsable": null,
+      "whatsapp": null,
+      "correo": null,
       "icono": "music-2",
       "imagen": null,
+      "tieneDetalle": false,
       "orden": 2
     },
     {
       "id": 3,
+      "slug": "catequistas",
       "nombre": "Catequistas",
       "descripcion": null,
       "horarioReunion": "Formación mensual",
-      "contacto": null,
+      "responsable": null,
+      "whatsapp": null,
+      "correo": null,
       "icono": "book-open",
       "imagen": null,
+      "tieneDetalle": false,
       "orden": 3
     },
     {
       "id": 4,
+      "slug": "pastoral-juvenil",
       "nombre": "Pastoral Juvenil",
       "descripcion": null,
       "horarioReunion": "Viernes · 18:30",
-      "contacto": null,
+      "responsable": null,
+      "whatsapp": null,
+      "correo": null,
       "icono": "users",
       "imagen": null,
+      "tieneDetalle": false,
       "orden": 4
     },
     {
       "id": 5,
+      "slug": "legion-de-maria",
       "nombre": "Legión de María",
       "descripcion": null,
       "horarioReunion": "Martes · 16:00",
-      "contacto": null,
+      "responsable": null,
+      "whatsapp": null,
+      "correo": null,
       "icono": "cross",
       "imagen": null,
+      "tieneDetalle": false,
       "orden": 5
     },
     {
       "id": 6,
+      "slug": "pastoral-social",
       "nombre": "Pastoral social",
       "descripcion": null,
       "horarioReunion": "Cáritas parroquial",
-      "contacto": null,
+      "responsable": null,
+      "whatsapp": null,
+      "correo": null,
       "icono": "heart-handshake",
       "imagen": null,
+      "tieneDetalle": false,
       "orden": 6
     }
   ],
@@ -521,6 +598,12 @@ Grupos y pastorales visibles, ordenados por `orden`. Sin paginación.
 ```
 
 `horarioReunion` es texto libre (ej. «Formación mensual»), no un horario estructurado.
+
+## `GET /api/sedes/:sede/grupos-pastorales/:slug`
+
+Detalle completo de un grupo pastoral visible, incluyendo galería hidratada y contenido BlockNote.
+
+**Errores:** `404 NO_ENCONTRADO` si el slug no existe en la sede o el grupo no está visible.
 
 ---
 
@@ -1088,9 +1171,25 @@ Detalle de una proclama visible (al menos una publicación cuya fecha ya llegó)
 - `detalle` es `null` si no se cargó información adicional. Si `detalle.lugar` es `null`, la boda se celebra en la propia parroquia.
 - `aceptaObservaciones` es `true` desde la primera publicación hasta la fecha y hora del matrimonio.
 
+## `GET /api/sedes/:sede/proclamas/:id/observaciones/verificacion`
+
+Emite un token HMAC de verificación de corto plazo para el formulario de observaciones (`Cache-Control: no-store`).
+
+**Respuesta `200`:**
+
+```json
+{
+  "datos": {
+    "token": "1.1764200000000.firmahmac"
+  }
+}
+```
+
+- Proclama inexistente o no visible → `404 NO_ENCONTRADO`.
+
 ## `POST /api/sedes/:sede/proclamas/:id/observaciones`
 
-Envía una observación confidencial al párroco sobre una proclama (sin sesión, con protección CSRF y límite de 5 peticiones por hora por IP).
+Envía una observación confidencial al párroco sobre una proclama (sin sesión, con protección CSRF, verificación temporal y límite de 5 peticiones por hora por IP).
 
 **Cuerpo:**
 
@@ -1100,11 +1199,14 @@ Envía una observación confidencial al párroco sobre una proclama (sin sesión
   "correo": "maria@ejemplo.com",
   "telefono": "+591 71234567",
   "mensaje": "Deseo comunicar una observación sobre esta proclama.",
-  "sitioWeb": ""
+  "sitioWeb": "",
+  "verificacion": "1.1764200000000.firmahmac"
 }
 ```
 
+- `nombreCompleto` es opcional (`null` o vacío = observación anónima).
 - Es obligatorio al menos uno entre `correo` o `telefono` (si faltan ambos, `400 VALIDACION` en `contacto`).
+- `verificacion` es obligatorio: si falta, es inválido, corresponde a otra proclama, tiene más de 2 horas o se envía antes de 3 segundos desde su emisión, responde `400 VALIDACION` en el campo `verificacion`.
 - Responde `201 { "datos": { "recibido": true } }` sin devolver los datos enviados y sin caché (`Cache-Control: no-store`).
 - Proclama inexistente o no visible → `404 NO_ENCONTRADO`; proclama cuya boda ya pasó → `409 CONFLICTO`; límite superado → `429 DEMASIADAS_SOLICITUDES`.
 

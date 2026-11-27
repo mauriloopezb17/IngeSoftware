@@ -8,6 +8,7 @@ export const ACCIONES_BITACORA = [
   { codigo: 'UPDATE', nombre: 'Modificación (UPDATE)' },
   { codigo: 'DELETE', nombre: 'Eliminación (DELETE)' },
   { codigo: 'EXPORT', nombre: 'Exportación (EXPORT)' },
+  { codigo: 'VIEW', nombre: 'Consulta (VIEW)' },
 ];
 
 export const ENTIDADES_BITACORA = [
@@ -21,6 +22,7 @@ export const ENTIDADES_BITACORA = [
   { codigo: 'sede', nombre: 'Sede' },
   { codigo: 'usuario', nombre: 'Usuario' },
   { codigo: 'archivo_multimedia', nombre: 'Archivo multimedia' },
+  { codigo: 'observacion_proclama', nombre: 'Observación de proclama' },
 ];
 
 export function listarBitacora(parametros = {}) {
@@ -37,6 +39,8 @@ export function etiquetaAccion(accion) {
       return 'Eliminación';
     case 'EXPORT':
       return 'Exportación';
+    case 'VIEW':
+      return 'Consulta';
     default:
       return accion;
   }

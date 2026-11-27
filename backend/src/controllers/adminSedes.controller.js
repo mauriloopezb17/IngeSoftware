@@ -7,6 +7,11 @@ export async function listar(req, res) {
   res.json(resultado);
 }
 
+export async function arbol(req, res) {
+  const datos = await servicio.obtenerArbolSedesAdmin(req.usuario);
+  res.json({ datos });
+}
+
 export async function detalle(req, res) {
   const datos = await servicio.obtenerSede(req.usuario, req.validado.params.id);
   res.json({ datos });
@@ -20,6 +25,15 @@ export async function crear(req, res) {
 export async function editar(req, res) {
   const datos = await servicio.actualizarSede(
     req.usuario,
+    req.validado.params.id,
+    req.validado.body,
+    contextoDe(req),
+  );
+  res.json({ datos });
+}
+
+export async function mover(req, res) {
+  const datos = await servicio.moverSede(
     req.validado.params.id,
     req.validado.body,
     contextoDe(req),

@@ -26,6 +26,14 @@ export async function listarGruposPastorales(req, res) {
   await responderConCache(req, res, clave, () => grupos.listarGruposPastorales(req.sede.id, query));
 }
 
+export async function detalleGrupoPastoral(req, res) {
+  const { slug } = req.params;
+  const clave = { recurso: RECURSOS_CACHE.GRUPOS, sedeId: req.sede.id, variante: { slug } };
+  await responderConCache(req, res, clave, async () => ({
+    datos: await grupos.obtenerGrupoPastoral(req.sede.id, slug),
+  }));
+}
+
 export async function listarVideos(req, res) {
   const { query } = req.validado;
   const clave = { recurso: RECURSOS_CACHE.VIDEOS, sedeId: req.sede.id, variante: query };

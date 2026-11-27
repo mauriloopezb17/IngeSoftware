@@ -11,12 +11,14 @@ import {
   consultaSedes,
   cuerpoCrearSede,
   cuerpoEditarSede,
+  cuerpoMoverSede,
   paramsSede,
 } from '../validacion/adminSedes.js';
 
 const router = Router();
 
 router.get('/', validar({ query: consultaSedes }), controlador.listar);
+router.get('/arbol', controlador.arbol);
 router.get(
   '/exportar',
   requerirPermiso(PERMISOS.SEDES_EXPORTAR),
@@ -34,5 +36,12 @@ router.post(
 );
 
 router.patch('/:id', validar({ params: paramsSede, body: cuerpoEditarSede }), controlador.editar);
+
+router.post(
+  '/:id/mover',
+  requerirPermiso(PERMISOS.SEDES_GESTIONAR, 'Solo un administrador puede mover sedes.'),
+  validar({ params: paramsSede, body: cuerpoMoverSede }),
+  controlador.mover,
+);
 
 export default router;

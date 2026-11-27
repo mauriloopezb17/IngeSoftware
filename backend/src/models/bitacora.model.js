@@ -31,6 +31,8 @@ const SEDE_ACTUAL_POR_ENTIDAD = {
   evento: 'SELECT sede_id FROM evento WHERE id::text = b.entidad_id',
   grupo_pastoral: 'SELECT sede_id FROM grupo_pastoral WHERE id::text = b.entidad_id',
   horario: 'SELECT sede_id FROM horario WHERE id::text = b.entidad_id',
+  observacion_proclama: `SELECT p.sede_id FROM observacion_proclama o JOIN proclama p ON p.id = o.proclama_id
+                          WHERE o.id::text = b.entidad_id`,
   pagina: 'SELECT sede_id FROM pagina WHERE id::text = b.entidad_id',
   pregunta_frecuente: 'SELECT sede_id FROM pregunta_frecuente WHERE id::text = b.entidad_id',
   proclama: 'SELECT sede_id FROM proclama WHERE id::text = b.entidad_id',
@@ -54,7 +56,9 @@ const SEDE_DEL_CAMBIO = `COALESCE(
     ORDER BY x.id
     LIMIT 1),
   CASE
-    WHEN b.accion = 'EXPORT' THEN (SELECT u2.sede_id FROM usuario u2 WHERE u2.id = b.usuario_id)
+    WHEN b.accion = 'EXPORT' OR (b.accion = 'VIEW' AND b.entidad_id = '*') THEN (
+      SELECT u2.sede_id FROM usuario u2 WHERE u2.id = b.usuario_id
+    )
     ELSE CASE b.entidad
       ${Object.entries(SEDE_ACTUAL_POR_ENTIDAD)
         .map(([entidad, sql]) => `WHEN '${entidad}' THEN (${sql})`)

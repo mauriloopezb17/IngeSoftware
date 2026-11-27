@@ -34,7 +34,7 @@ export default function PestanasProclamas() {
           <span>{texto}</span>
           {badge > 0 && (
             <span
-              aria-label={`${badge} sin leer`}
+              aria-label={`${badge} ${badge === 1 ? 'nueva' : 'nuevas'}`}
               className="inline-flex min-w-5 items-center justify-center rounded-full bg-gold px-1.5 py-0.5 text-xs font-semibold tabular-nums text-ink"
             >
               {badge}

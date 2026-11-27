@@ -76,6 +76,11 @@ export async function obtenerResumenObservaciones(senal) {
   return datos;
 }
 
+export async function obtenerObservacion(id, senal) {
+  const { datos } = await clienteHttp.get(`/admin/proclamas/observaciones/${id}`, { senal });
+  return datos;
+}
+
 export async function marcarObservacionLeida(id, leida) {
   const { datos } = await clienteHttp.patch(`/admin/proclamas/observaciones/${id}`, { leida });
   return datos;

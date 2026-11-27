@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { api } from '../api.js';
 import {
   sedesLista,
+  sedesArbol,
   sedesDetalle,
   menuPaginasExaltacion,
   paginasExaltacion,
@@ -94,6 +95,7 @@ function esSedePrincipal(sede) {
 // Handlers del portal público (Sección B). Copian los ejemplos de docs/api/publico.md.
 export const handlersPortal = [
   http.get(api('/sedes'), () => HttpResponse.json({ datos: sedesLista })),
+  http.get(api('/sedes/arbol'), () => HttpResponse.json({ datos: sedesArbol })),
 
   http.get(api('/sedes/:sede'), ({ params }) => {
     const fallo = validarSede(params.sede);
@@ -157,6 +159,27 @@ export const handlersPortal = [
 
     return HttpResponse.json({
       datos: esSedePrincipal(params.sede) ? gruposPastoralesExaltacion : [],
+    });
+  }),
+
+  http.get(api('/sedes/:sede/grupos-pastorales/:slug'), ({ params }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const grupo = esSedePrincipal(params.sede)
+      ? gruposPastoralesExaltacion.find((item) => item.slug === params.slug)
+      : null;
+
+    if (!grupo) {
+      return errorJson(404, 'NO_ENCONTRADO', `No existe el grupo pastoral «${params.slug}».`);
+    }
+
+    return HttpResponse.json({
+      datos: {
+        ...grupo,
+        galeria: grupo.galeria ?? [],
+        detalle: grupo.detalle ?? null,
+      },
     });
   }),
 
@@ -329,6 +352,21 @@ export const handlersPortal = [
     return HttpResponse.json({ datos: detalle });
   }),
 
+  http.get(api('/sedes/:sede/proclamas/:id/observaciones/verificacion'), ({ params }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const detalle = esSedePrincipal(params.sede) ? obtenerDetalleProclamaExaltacion(params.id) : null;
+    if (!detalle) {
+      return HttpResponse.json(
+        { error: { codigo: 'NO_ENCONTRADO', mensaje: 'La proclama no existe.', detalles: [] } },
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json({ datos: { token: `mock.${params.id}.firma` } });
+  }),
+
   http.post(api('/sedes/:sede/proclamas/:id/observaciones'), async ({ params, request }) => {
     const fallo = validarSede(params.sede);
     if (fallo) return fallo;
@@ -351,6 +389,23 @@ export const handlersPortal = [
     if (!cuerpo || typeof cuerpo !== 'object') {
       return HttpResponse.json(
         { error: { codigo: 'VALIDACION', mensaje: 'Cuerpo inválido.', detalles: [] } },
+        { status: 400 },
+      );
+    }
+    if (!cuerpo.verificacion?.trim()) {
+      return HttpResponse.json(
+        {
+          error: {
+            codigo: 'VALIDACION',
+            mensaje: 'Los datos enviados no son válidos.',
+            detalles: [
+              {
+                campo: 'verificacion',
+                mensaje: 'No pudimos verificar el envío. Vuelve a cargar la página e inténtalo de nuevo.',
+              },
+            ],
+          },
+        },
         { status: 400 },
       );
     }

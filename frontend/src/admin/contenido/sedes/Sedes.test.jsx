@@ -113,6 +113,7 @@ describe('edición de datos de la sede y redes sociales', () => {
     await usuario.click(screen.getByRole('button', { name: 'Nueva sede' }));
     const dialogo = await screen.findByRole('dialog', { name: 'Nueva sede' });
     await usuario.type(within(dialogo).getByLabelText('Nombre'), 'Capilla Santa Gema');
+    await usuario.selectOptions(within(dialogo).getByLabelText('Sede superior'), '1');
     await usuario.type(within(dialogo).getByLabelText('Dirección (opcional)'), 'Obrajes, La Paz');
     await usuario.click(within(dialogo).getByRole('button', { name: 'Crear sede' }));
 

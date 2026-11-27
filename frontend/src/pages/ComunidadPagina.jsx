@@ -1,4 +1,5 @@
-import { Clock3, MessageCircle, Phone } from 'lucide-react';
+import { ArrowRight, Clock3, MessageCircle, Phone } from 'lucide-react';
+import { Link } from 'react-router';
 
 import {
   BotonEnlace,
@@ -84,7 +85,7 @@ function ComunidadPagina() {
                     <Reveal
                       variante="tarjeta"
                       retraso={indice * 120}
-                      className="flex flex-col gap-4 py-6 sm:flex-row sm:items-start sm:justify-between"
+                      className="group relative flex flex-col gap-4 py-6 sm:flex-row sm:items-start sm:justify-between"
                     >
                       <div className="flex items-start gap-4">
                         <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-sm bg-gold-soft text-ink">
@@ -93,18 +94,30 @@ function ComunidadPagina() {
 
                         <div>
                           <h2 className="font-display text-h3 font-semibold text-ink">
-                            {grupo.nombre}
+                            <Link
+                              to={`/comunidad/grupos/${grupo.slug}`}
+                              className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+                            >
+                              {grupo.nombre}
+                            </Link>
                           </h2>
                           {grupo.descripcion && (
                             <p className="mt-1 max-w-prose font-body text-body text-muted">
                               {grupo.descripcion}
                             </p>
                           )}
-                          {grupo.contacto && (
+                          {grupo.responsable && (
                             <p className="mt-2 font-body text-meta text-muted">
-                              Contacto: {grupo.contacto}
+                              Responsable: {grupo.responsable}
                             </p>
                           )}
+                          <span
+                            aria-hidden="true"
+                            className="mt-3 inline-flex items-center gap-1.5 font-body text-button font-semibold text-ink transition-transform duration-200 ease-salida group-hover:translate-x-1"
+                          >
+                            <span>Conocer el grupo</span>
+                            <ArrowRight size={15} />
+                          </span>
                         </div>
                       </div>
 

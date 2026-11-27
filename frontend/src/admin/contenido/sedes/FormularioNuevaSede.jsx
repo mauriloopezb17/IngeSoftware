@@ -5,6 +5,11 @@ import Dialogo from '../../componentes/Dialogo.jsx';
 import { Aviso, Boton, CampoCasilla, CampoSelect, CampoTexto } from '../../ui/index.js';
 import { extraerErroresApi } from '../componentes/errores.js';
 import { CLAVE_SEDES, crearSede } from './api.js';
+import {
+  AYUDA_JERARQUIA,
+  filtrarPadresPermitidos,
+  requiereSedePadre,
+} from './jerarquia.js';
 
 export default function FormularioNuevaSede({ sedesExistentes, tiposSede, onCreada, onCerrar }) {
   const queryClient = useQueryClient();
@@ -17,6 +22,10 @@ export default function FormularioNuevaSede({ sedesExistentes, tiposSede, onCrea
   const [activo, setActivo] = useState(false);
   const [erroresCampo, setErroresCampo] = useState({});
   const [errorGeneral, setErrorGeneral] = useState('');
+
+  const necesitaPadre = requiereSedePadre(tipo);
+  const padresDisponibles = filtrarPadresPermitidos(sedesExistentes, tipo);
+  const ayudaPadre = AYUDA_JERARQUIA[tipo] ?? '';
 
   const { mutate, isPending } = useMutation({
     mutationFn: crearSede,
@@ -31,6 +40,19 @@ export default function FormularioNuevaSede({ sedesExistentes, tiposSede, onCrea
     },
   });
 
+  function cambiarTipo(nuevoTipo) {
+    setTipo(nuevoTipo);
+    setErroresCampo((prev) => ({ ...prev, tipo: undefined, sedePadreId: undefined }));
+    if (!requiereSedePadre(nuevoTipo)) {
+      setSedePadreId('');
+      return;
+    }
+    const permitidos = filtrarPadresPermitidos(sedesExistentes, nuevoTipo);
+    if (!permitidos.some((s) => String(s.id) === String(sedePadreId))) {
+      setSedePadreId('');
+    }
+  }
+
   function enviar(evento) {
     evento.preventDefault();
     setErroresCampo({});
@@ -40,7 +62,7 @@ export default function FormularioNuevaSede({ sedesExistentes, tiposSede, onCrea
       nombre: nombre.trim(),
       slug: slug.trim() || null,
       tipo,
-      sedePadreId: sedePadreId ? Number(sedePadreId) : null,
+      sedePadreId: necesitaPadre && sedePadreId ? Number(sedePadreId) : null,
       direccion: direccion.trim() || null,
       activo,
     });
@@ -82,7 +104,7 @@ export default function FormularioNuevaSede({ sedesExistentes, tiposSede, onCrea
           <CampoSelect
             etiqueta="Tipo de sede"
             value={tipo}
-            onChange={(e) => setTipo(e.target.value)}
+            onChange={(e) => cambiarTipo(e.target.value)}
             error={erroresCampo.tipo}
             disabled={isPending}
           >
@@ -94,14 +116,15 @@ export default function FormularioNuevaSede({ sedesExistentes, tiposSede, onCrea
           </CampoSelect>
 
           <CampoSelect
-            etiqueta="Sede padre (opcional)"
+            etiqueta="Sede superior"
             value={sedePadreId}
             onChange={(e) => setSedePadreId(e.target.value)}
+            ayuda={ayudaPadre}
             error={erroresCampo.sedePadreId}
-            disabled={isPending}
+            disabled={isPending || !necesitaPadre}
           >
-            <option value="">Ninguna</option>
-            {sedesExistentes.map((s) => (
+            <option value="">{necesitaPadre ? 'Selecciona una sede…' : 'Ninguna'}</option>
+            {padresDisponibles.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.nombre}
               </option>

@@ -57,6 +57,52 @@ export async function listarSedes() {
   return filas.map(aResumen);
 }
 
+// Construye { parroquias: [{ ..., capillas: [{ ..., comunidades: [] }], comunidades: [] }], comunidadesPasionistas: [] }
+// a partir de filas ya ordenadas por orden y nombre.
+export function armarArbolSedes(filas, formatear) {
+  const nodos = new Map();
+  const parroquias = [];
+  const comunidadesPasionistas = [];
+
+  for (const fila of filas) {
+    const tipoCodigo = TIPOS_SEDE.codigoDe(fila.tipo_nombre);
+    const nodo = formatear(fila);
+    if (tipoCodigo === 'PARROQUIA') {
+      nodo.capillas = [];
+      nodo.comunidades = [];
+      parroquias.push(nodo);
+    } else if (tipoCodigo === 'CAPILLA') {
+      nodo.comunidades = [];
+    } else if (tipoCodigo === 'COMUNIDAD_PASIONISTA') {
+      comunidadesPasionistas.push(nodo);
+    }
+    nodos.set(fila.id, { tipoCodigo, padreId: fila.sede_padre_id, nodo });
+  }
+
+  for (const { tipoCodigo, padreId, nodo } of nodos.values()) {
+    if (tipoCodigo === 'CAPILLA') {
+      const padre = nodos.get(padreId);
+      if (padre?.tipoCodigo === 'PARROQUIA') {
+        padre.nodo.capillas.push(nodo);
+      }
+    } else if (tipoCodigo === 'COMUNIDAD') {
+      const padre = nodos.get(padreId);
+      if (padre && (padre.tipoCodigo === 'PARROQUIA' || padre.tipoCodigo === 'CAPILLA')) {
+        padre.nodo.comunidades.push(nodo);
+      }
+    }
+  }
+
+  return { parroquias, comunidadesPasionistas };
+}
+
+// GET /api/sedes/arbol: sedes activas agrupadas como Parroquia -> Capilla -> Comunidad, y
+// comunidades pasionistas aparte.
+export async function obtenerArbolSedes() {
+  const filas = await modelo.listarActivasParaArbol();
+  return armarArbolSedes(filas, aResumen);
+}
+
 // Sede activa a partir del slug de la URL, o 404 con el mensaje del contrato.
 // Un slug con formato imposible (mayúsculas, espacios…) también es 404: no puede existir.
 export async function resolverSedeActiva(slug) {

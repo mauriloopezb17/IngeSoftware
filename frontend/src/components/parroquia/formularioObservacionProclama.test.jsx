@@ -19,17 +19,28 @@ describe('FormularioObservacionProclama', () => {
       screen.getByRole('heading', { name: '¿Conoces algún impedimento para este matrimonio?' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Tu mensaje es confidencial: solo lo lee el párroco y no se publica.'),
+      screen.getByText(
+        'Tu mensaje es confidencial: solo lo lee el párroco y no se publica. Tu correo o tu celular solo sirven para responderte.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Puedes dejarlo vacío: tu observación llega igual y nadie más la ve.'),
     ).toBeInTheDocument();
 
-    // Enviar vacío: enfoca el primer campo con error (Nombre completo)
-    await usuario.click(screen.getByRole('button', { name: 'Enviar al párroco' }));
-    const inputNombre = screen.getByLabelText('Nombre completo');
-    expect(inputNombre).toHaveFocus();
-    expect(inputNombre).toHaveAttribute('aria-invalid', 'true');
+    // Esperar a que llegue el token de verificación
+    await waitFor(() => {
+      expect(screen.getByLabelText('Tu nombre (opcional)')).toBeInTheDocument();
+    });
 
-    // Llenar nombre y mensaje pero sin correo ni teléfono -> enfoca correo por error en contacto
-    await usuario.type(inputNombre, 'María Elena Quispe');
+    // Enviar vacío: el nombre es opcional, así que enfoca Correo electrónico por falta de contacto
+    await usuario.click(screen.getByRole('button', { name: 'Enviar al párroco' }));
+    expect(
+      screen.getByText('Escribe tu correo o tu teléfono para que el párroco pueda responderte.'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Correo electrónico')).toHaveFocus();
+
+    // Llenar nombre y mensaje pero sin correo ni teléfono -> sigue pidiendo contacto
+    await usuario.type(screen.getByLabelText('Tu nombre (opcional)'), 'María Elena Quispe');
     await usuario.type(
       screen.getByLabelText('Mensaje'),
       'Mensaje confidencial de prueba para el párroco.',
@@ -76,7 +87,7 @@ describe('FormularioObservacionProclama', () => {
     const usuario = userEvent.setup();
     renderConRouterYQuery(<FormularioObservacionProclama proclamaId={1} />);
 
-    await usuario.type(screen.getByLabelText('Nombre completo'), 'Juan Pérez');
+    await usuario.type(screen.getByLabelText('Tu nombre (opcional)'), 'Juan Pérez');
     await usuario.type(screen.getByLabelText('Correo electrónico'), 'juan@ejemplo.com');
     await usuario.type(screen.getByLabelText('Mensaje'), 'Mensaje de prueba para validar 429.');
     await usuario.click(screen.getByRole('button', { name: 'Enviar al párroco' }));
@@ -86,6 +97,64 @@ describe('FormularioObservacionProclama', () => {
         screen.getByText('Has enviado demasiadas observaciones en poco tiempo. Inténtalo más tarde.'),
       ).toBeInTheDocument();
     });
+  });
+
+  it('permite enviar una observación anónima sin nombre y reintenta token si falla verificación', async () => {
+    let llamadasToken = 0;
+    let primerIntento = true;
+    server.use(
+      http.get(api('/sedes/:sede/proclamas/:id/observaciones/verificacion'), () => {
+        llamadasToken += 1;
+        return HttpResponse.json({ datos: { token: `token-${llamadasToken}` } });
+      }),
+      http.post(api('/sedes/:sede/proclamas/:id/observaciones'), async ({ request }) => {
+        const cuerpo = await request.json();
+        if (primerIntento) {
+          primerIntento = false;
+          return HttpResponse.json(
+            {
+              error: {
+                codigo: 'VALIDACION',
+                mensaje: 'Los datos enviados no son válidos.',
+                detalles: [
+                  {
+                    campo: 'verificacion',
+                    mensaje: 'No pudimos verificar el envío. Vuelve a cargar la página e inténtalo de nuevo.',
+                  },
+                ],
+              },
+            },
+            { status: 400 },
+          );
+        }
+        expect(cuerpo.nombreCompleto).toBeNull();
+        expect(cuerpo.verificacion).toBe('token-2');
+        return HttpResponse.json({ datos: { recibido: true } }, { status: 201 });
+      }),
+    );
+
+    const usuario = userEvent.setup();
+    renderConRouterYQuery(<FormularioObservacionProclama proclamaId={1} />);
+
+    await waitFor(() => {
+      expect(llamadasToken).toBe(1);
+    });
+
+    await usuario.type(screen.getByLabelText('Correo electrónico'), 'anonima@ejemplo.com');
+    await usuario.type(screen.getByLabelText('Mensaje'), 'Observación anónima de prueba.');
+    await usuario.click(screen.getByRole('button', { name: 'Enviar al párroco' }));
+
+    expect(
+      await screen.findByText(
+        'No pudimos verificar el envío. Vuelve a cargar la página e inténtalo de nuevo.',
+      ),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(llamadasToken).toBe(2);
+    });
+
+    await usuario.click(screen.getByRole('button', { name: 'Enviar al párroco' }));
+    expect(await screen.findByText('Gracias. Tu mensaje llegó al párroco.')).toBeInTheDocument();
   });
 
   it('oculta el formulario en ProclamaDetalle cuando aceptaObservaciones es false', async () => {

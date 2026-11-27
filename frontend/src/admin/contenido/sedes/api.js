@@ -14,6 +14,11 @@ export function listarSedesPaginadas(parametros = {}, senal) {
   return clienteHttp.get('/admin/sedes', { parametros, senal });
 }
 
+export async function obtenerArbolSedes() {
+  const { datos } = await clienteHttp.get('/admin/sedes/arbol');
+  return datos;
+}
+
 export async function crearSede(cuerpo) {
   const { datos } = await clienteHttp.post('/admin/sedes', cuerpo);
   return datos;
@@ -21,6 +26,11 @@ export async function crearSede(cuerpo) {
 
 export async function actualizarSede(id, cuerpo) {
   const { datos } = await clienteHttp.patch(`/admin/sedes/${id}`, cuerpo);
+  return datos;
+}
+
+export async function moverSede(id, cuerpo) {
+  const { datos } = await clienteHttp.post(`/admin/sedes/${id}/mover`, cuerpo);
   return datos;
 }
 

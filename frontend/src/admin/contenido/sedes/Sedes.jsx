@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Inbox, Pencil, Plus } from 'lucide-react';
 
 import { usePermisos } from '../../permisos/usePermisos.js';
@@ -17,22 +17,62 @@ import {
   useToast,
 } from '../../ui/index.js';
 import { CLAVE_CATALOGOS, obtenerCatalogos } from '../horarios/api.js';
-import { CLAVE_SEDES, listarSedes, listarSedesPaginadas } from './api.js';
+import {
+  CLAVE_SEDES,
+  listarSedes,
+  listarSedesPaginadas,
+  moverSede,
+  obtenerArbolSedes,
+} from './api.js';
+import ArbolSedes from './ArbolSedes.jsx';
+import DialogoMoverSede from './DialogoMoverSede.jsx';
 import FormularioNuevaSede from './FormularioNuevaSede.jsx';
 import FormularioSede from './FormularioSede.jsx';
+
+const TIPOS_VALIDOS = new Set([
+  'PARROQUIA',
+  'CAPILLA',
+  'COMUNIDAD',
+  'COMUNIDAD_PASIONISTA',
+]);
+
+function aplanarArbol(arbol) {
+  if (!arbol) return [];
+  const lista = [];
+  for (const parroquia of arbol.parroquias ?? []) {
+    lista.push(parroquia);
+    for (const capilla of parroquia.capillas ?? []) {
+      lista.push(capilla);
+      for (const comunidad of capilla.comunidades ?? []) {
+        lista.push(comunidad);
+      }
+    }
+    for (const comunidad of parroquia.comunidades ?? []) {
+      lista.push(comunidad);
+    }
+  }
+  for (const pasionista of arbol.comunidadesPasionistas ?? []) {
+    lista.push(pasionista);
+  }
+  return lista;
+}
 
 export default function Sedes() {
   const { puede } = usePermisos();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const puedeGestionarSedes = puede('sedes.gestionar');
   const puedeEditar = puede('sede.editar') || puedeGestionarSedes;
 
+  const [vista, setVista] = useState('listado');
   const [sedeSeleccionadaId, setSedeSeleccionadaId] = useState(null);
   const [creando, setCreando] = useState(false);
+  const [sedeParaMover, setSedeParaMover] = useState(null);
+  const [moviendoId, setMoviendoId] = useState(null);
 
   const configFiltros = useMemo(
     () => ({
-      tipo: { defecto: '', validar: (v) => v === 'PARROQUIA' || v === 'CAPILLA' },
+      tipo: { defecto: '', validar: (v) => TIPOS_VALIDOS.has(v) },
       activo: { defecto: '', validar: (v) => v === 'true' || v === 'false' },
     }),
     [],
@@ -65,16 +105,55 @@ export default function Sedes() {
     enabled: !puedeGestionarSedes,
   });
 
+  const sedesArbolQuery = useQuery({
+    queryKey: [...CLAVE_SEDES, 'arbol'],
+    queryFn: () => obtenerArbolSedes(),
+    enabled: puedeGestionarSedes,
+  });
+
   const catalogosQuery = useQuery({
     queryKey: CLAVE_CATALOGOS,
     queryFn: () => obtenerCatalogos(),
   });
 
-  const sedes = puedeGestionarSedes
-    ? (sedesListadoQuery.data?.datos ?? [])
-    : (sedesPropiaQuery.data ?? []);
+  const sedes = useMemo(
+    () =>
+      puedeGestionarSedes
+        ? (sedesListadoQuery.data?.datos ?? [])
+        : (sedesPropiaQuery.data ?? []),
+    [puedeGestionarSedes, sedesListadoQuery.data?.datos, sedesPropiaQuery.data],
+  );
+  const sedesParaPadres = useMemo(() => {
+    const delArbol = aplanarArbol(sedesArbolQuery.data);
+    return delArbol.length > 0 ? delArbol : sedes;
+  }, [sedesArbolQuery.data, sedes]);
   const sedeActiva =
-    sedes.find((s) => s.id === sedeSeleccionadaId) ?? sedes[0] ?? null;
+    sedesParaPadres.find((s) => s.id === sedeSeleccionadaId) ??
+    sedes.find((s) => s.id === sedeSeleccionadaId) ??
+    sedes[0] ??
+    null;
+
+  async function reordenarHermanas(hermanas, indiceActual, indiceDestino) {
+    if (indiceDestino < 0 || indiceDestino >= hermanas.length) return;
+    const reordenadas = [...hermanas];
+    const [movida] = reordenadas.splice(indiceActual, 1);
+    reordenadas.splice(indiceDestino, 0, movida);
+
+    setMoviendoId(movida.id);
+    try {
+      await Promise.all(
+        reordenadas.map((s, orden) =>
+          moverSede(s.id, { sedePadreId: s.sedePadre?.id ?? null, orden }),
+        ),
+      );
+      await queryClient.invalidateQueries({ queryKey: CLAVE_SEDES });
+      toast.exito(`Se actualizó el orden de «${movida.nombre}».`);
+    } catch (err) {
+      toast.error(err?.message || 'No se pudo actualizar el orden.');
+    } finally {
+      setMoviendoId(null);
+    }
+  }
 
   const columnas = [
     {
@@ -164,6 +243,37 @@ export default function Sedes() {
       )}
 
       {puedeGestionarSedes && (
+        <div role="tablist" aria-label="Vista de sedes" className="mt-6 flex gap-2 border-b border-sand">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={vista === 'listado'}
+            onClick={() => setVista('listado')}
+            className={`min-h-11 border-b-2 px-4 text-sm font-semibold transition-colors ${
+              vista === 'listado'
+                ? 'border-gold text-ink'
+                : 'border-transparent text-muted hover:text-ink'
+            }`}
+          >
+            Listado
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={vista === 'jerarquia'}
+            onClick={() => setVista('jerarquia')}
+            className={`min-h-11 border-b-2 px-4 text-sm font-semibold transition-colors ${
+              vista === 'jerarquia'
+                ? 'border-gold text-ink'
+                : 'border-transparent text-muted hover:text-ink'
+            }`}
+          >
+            Jerarquía
+          </button>
+        </div>
+      )}
+
+      {puedeGestionarSedes && vista === 'listado' && (
         <div className="mt-6">
           <TablaListado
             caption="Sedes"
@@ -194,6 +304,8 @@ export default function Sedes() {
                     <option value="">Todos los tipos</option>
                     <option value="PARROQUIA">Parroquia</option>
                     <option value="CAPILLA">Capilla</option>
+                    <option value="COMUNIDAD">Comunidad</option>
+                    <option value="COMUNIDAD_PASIONISTA">Comunidad pasionista</option>
                   </CampoSelect>
                 </div>
                 <div className="min-w-[140px]">
@@ -220,6 +332,35 @@ export default function Sedes() {
               titulo: 'No se encontraron sedes con estos filtros.',
             }}
           />
+        </div>
+      )}
+
+      {puedeGestionarSedes && vista === 'jerarquia' && (
+        <div className="mt-6" aria-busy={sedesArbolQuery.isPending}>
+          {sedesArbolQuery.isPending ? (
+            <EsqueletoFormulario campos={4} etiqueta="Cargando jerarquía de sedes…" />
+          ) : sedesArbolQuery.isError ? (
+            <Aviso
+              tipo="error"
+              accion={
+                <Boton variante="secundario" tamano="sm" onClick={() => sedesArbolQuery.refetch()}>
+                  Reintentar
+                </Boton>
+              }
+            >
+              <p>{sedesArbolQuery.error?.message || 'No se pudo cargar la jerarquía de sedes.'}</p>
+            </Aviso>
+          ) : (
+            <ArbolSedes
+              arbol={sedesArbolQuery.data}
+              sedeActivaId={sedeActiva?.id ?? null}
+              puedeGestionarSedes={puedeGestionarSedes}
+              moviendoId={moviendoId}
+              onReordenar={reordenarHermanas}
+              onMover={(sede) => setSedeParaMover(sede)}
+              onEditar={(id) => setSedeSeleccionadaId(id)}
+            />
+          )}
         </div>
       )}
 
@@ -277,7 +418,7 @@ export default function Sedes() {
 
       {creando && (
         <FormularioNuevaSede
-          sedesExistentes={sedes}
+          sedesExistentes={sedesParaPadres}
           tiposSede={catalogosQuery.data?.tiposSede ?? []}
           onCreada={(nueva) => {
             setCreando(false);
@@ -285,6 +426,18 @@ export default function Sedes() {
             toast.exito(`Se creó la sede «${nueva.nombre}».`);
           }}
           onCerrar={() => setCreando(false)}
+        />
+      )}
+
+      {sedeParaMover && (
+        <DialogoMoverSede
+          sede={sedeParaMover}
+          sedesExistentes={sedesParaPadres}
+          onMovida={(actualizada) => {
+            setSedeParaMover(null);
+            toast.exito(`Se actualizó la ubicación de «${actualizada.nombre}».`);
+          }}
+          onCerrar={() => setSedeParaMover(null)}
         />
       )}
     </section>

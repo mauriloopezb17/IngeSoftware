@@ -352,6 +352,104 @@ const controladorBitacora = crearControladorBitacora({
   errorValidacion,
 });
 
+function padresPermitidos(tipoCodigo) {
+  if (tipoCodigo === 'CAPILLA') return ['PARROQUIA'];
+  if (tipoCodigo === 'COMUNIDAD') return ['PARROQUIA', 'CAPILLA'];
+  return [];
+}
+
+function esDescendienteEnSedes(posiblePadreId, sedeId, lista) {
+  let actual = lista.find((s) => s.id === posiblePadreId);
+  const visitados = new Set();
+  while (actual?.sedePadre?.id) {
+    if (actual.sedePadre.id === sedeId) return true;
+    if (visitados.has(actual.id)) break;
+    visitados.add(actual.id);
+    actual = lista.find((s) => s.id === actual.sedePadre.id);
+  }
+  return false;
+}
+
+function validarJerarquiaMock(sedeId, tipoCodigo, sedePadreId, lista) {
+  const permitidos = padresPermitidos(tipoCodigo);
+  if (permitidos.length === 0) {
+    if (sedePadreId !== null && sedePadreId !== undefined) {
+      return { campo: 'sedePadreId', mensaje: 'Este tipo de sede no puede depender de otra sede.' };
+    }
+    return null;
+  }
+  if (sedePadreId === null || sedePadreId === undefined) {
+    return {
+      campo: 'sedePadreId',
+      mensaje:
+        tipoCodigo === 'CAPILLA'
+          ? 'Una capilla debe depender de una parroquia.'
+          : 'Una comunidad debe depender de una parroquia o una capilla.',
+    };
+  }
+  if (sedeId !== undefined && Number(sedePadreId) === sedeId) {
+    return { campo: 'sedePadreId', mensaje: 'Una sede no puede depender de sí misma.' };
+  }
+  const padre = lista.find((s) => s.id === Number(sedePadreId));
+  if (!padre) {
+    return { campo: 'sedePadreId', mensaje: 'La sede superior indicada no existe.' };
+  }
+  if (!permitidos.includes(padre.tipo?.codigo)) {
+    return {
+      campo: 'sedePadreId',
+      mensaje:
+        tipoCodigo === 'CAPILLA'
+          ? 'Una capilla solo puede depender de una parroquia.'
+          : 'Una comunidad solo puede depender de una parroquia o una capilla.',
+    };
+  }
+  if (sedeId !== undefined && esDescendienteEnSedes(padre.id, sedeId, lista)) {
+    return {
+      campo: 'sedePadreId',
+      mensaje: 'Una sede no puede depender de sí misma ni de una de sus descendientes.',
+    };
+  }
+  return null;
+}
+
+function armarArbolSedesMock(lista) {
+  const ordenadas = [...lista].sort(
+    (a, b) => (a.orden ?? 0) - (b.orden ?? 0) || a.nombre.localeCompare(b.nombre) || a.id - b.id,
+  );
+  const nodos = new Map();
+  const parroquias = [];
+  const comunidadesPasionistas = [];
+
+  for (const s of ordenadas) {
+    const codigo = s.tipo?.codigo;
+    const nodo = { ...s };
+    if (codigo === 'PARROQUIA') {
+      nodo.capillas = [];
+      nodo.comunidades = [];
+      parroquias.push(nodo);
+    } else if (codigo === 'CAPILLA') {
+      nodo.comunidades = [];
+    } else if (codigo === 'COMUNIDAD_PASIONISTA') {
+      comunidadesPasionistas.push(nodo);
+    }
+    nodos.set(s.id, { codigo, padreId: s.sedePadre?.id ?? null, nodo });
+  }
+
+  for (const { codigo, padreId, nodo } of nodos.values()) {
+    const padre = nodos.get(padreId);
+    if (codigo === 'CAPILLA' && padre?.codigo === 'PARROQUIA') {
+      padre.nodo.capillas.push(nodo);
+    } else if (
+      codigo === 'COMUNIDAD' &&
+      (padre?.codigo === 'PARROQUIA' || padre?.codigo === 'CAPILLA')
+    ) {
+      padre.nodo.comunidades.push(nodo);
+    }
+  }
+
+  return { parroquias, comunidadesPasionistas };
+}
+
 export const handlersContenido = [
   // ---- §1 Catálogos ----
   http.get(api('/admin/catalogos'), () => {
@@ -737,11 +835,26 @@ export const handlersContenido = [
     if (cuerpo.horarioReunion !== undefined && cuerpo.horarioReunion !== null && (typeof cuerpo.horarioReunion !== 'string' || cuerpo.horarioReunion.length > 100)) {
       detalles.push({ campo: 'horarioReunion', mensaje: 'El horario de reunión puede tener hasta 100 caracteres.' });
     }
-    if (cuerpo.contacto !== undefined && cuerpo.contacto !== null && (typeof cuerpo.contacto !== 'string' || cuerpo.contacto.length > 120)) {
-      detalles.push({ campo: 'contacto', mensaje: 'El contacto puede tener hasta 120 caracteres.' });
+    if (cuerpo.responsable !== undefined && cuerpo.responsable !== null && (typeof cuerpo.responsable !== 'string' || cuerpo.responsable.length > 120)) {
+      detalles.push({ campo: 'responsable', mensaje: 'El responsable puede tener hasta 120 caracteres.' });
+    }
+    if (cuerpo.whatsapp !== undefined && cuerpo.whatsapp !== null && cuerpo.whatsapp !== '') {
+      const wa = String(cuerpo.whatsapp).trim();
+      const digitos = wa.replace(/\D/g, '').length;
+      if (!/^\+?[\d\s-]+$/.test(wa) || digitos < 7 || digitos > 15) {
+        detalles.push({ campo: 'whatsapp', mensaje: 'Debe tener entre 7 y 15 dígitos válidos.' });
+      }
+    }
+    if (cuerpo.correo !== undefined && cuerpo.correo !== null && cuerpo.correo !== '') {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(cuerpo.correo).trim())) {
+        detalles.push({ campo: 'correo', mensaje: 'Escribe un correo electrónico válido.' });
+      }
     }
     if (cuerpo.icono !== undefined && cuerpo.icono !== null && (typeof cuerpo.icono !== 'string' || cuerpo.icono.length > 40)) {
       detalles.push({ campo: 'icono', mensaje: 'El ícono puede tener hasta 40 caracteres.' });
+    }
+    if (cuerpo.detalle?.galeria && cuerpo.detalle.galeria.length > 24) {
+      detalles.push({ campo: 'detalle.galeria', mensaje: 'La galería puede tener hasta 24 archivos.' });
     }
     let imagen = null;
     if (cuerpo.imagenId !== undefined && cuerpo.imagenId !== null) {
@@ -752,16 +865,29 @@ export const handlersContenido = [
 
     const deSede = grupos.filter((g) => g.sede.id === sedeRes.sede.id);
     const maxOrden = deSede.reduce((max, g) => Math.max(max, g.orden), 0);
+    const slugBase =
+      cuerpo.slug?.trim() ||
+      nombre
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') ||
+      'grupo';
 
     const nuevo = {
       id: sigGrupoId++,
       sede: sedeRes.sede,
+      slug: slugBase,
       nombre,
       descripcion: cuerpo.descripcion?.trim() || null,
       horarioReunion: cuerpo.horarioReunion?.trim() || null,
-      contacto: cuerpo.contacto?.trim() || null,
+      responsable: cuerpo.responsable?.trim() || null,
+      whatsapp: cuerpo.whatsapp?.trim() || null,
+      correo: cuerpo.correo?.trim() || null,
       icono: cuerpo.icono?.trim() || null,
       imagen,
+      detalle: cuerpo.detalle ?? null,
       orden: maxOrden + 1,
       visible: cuerpo.visible !== undefined ? Boolean(cuerpo.visible) : true,
     };
@@ -770,6 +896,63 @@ export const handlersContenido = [
       { datos: nuevo },
       { status: 201, headers: { Location: `/api/admin/grupos-pastorales/${nuevo.id}` } },
     );
+  }),
+
+  http.patch(api('/admin/grupos-pastorales/:id/detalle'), async ({ request, params }) => {
+    const auth = autenticar('grupos.detalle', 'Tu rol no tiene permiso para editar la página de los grupos pastorales.');
+    if (auth.respuesta) return auth.respuesta;
+
+    const { recurso, respuesta } = leerPorId(grupos, params.id, auth.usuario, 'El grupo pastoral no existe.');
+    if (respuesta) return respuesta;
+
+    const cuerpo = await request.json().catch(() => null);
+    if (!cuerpo) return errorValidacion([{ campo: 'cuerpo', mensaje: 'El cuerpo JSON no es válido.' }]);
+
+    const detalles = [];
+    if (cuerpo.descripcion !== undefined && cuerpo.descripcion !== null && (typeof cuerpo.descripcion !== 'string' || cuerpo.descripcion.length > 2000)) {
+      detalles.push({ campo: 'descripcion', mensaje: 'La descripción puede tener hasta 2000 caracteres.' });
+    }
+    if (cuerpo.horarioReunion !== undefined && cuerpo.horarioReunion !== null && (typeof cuerpo.horarioReunion !== 'string' || cuerpo.horarioReunion.length > 100)) {
+      detalles.push({ campo: 'horarioReunion', mensaje: 'El horario de reunión puede tener hasta 100 caracteres.' });
+    }
+    if (cuerpo.responsable !== undefined && cuerpo.responsable !== null && (typeof cuerpo.responsable !== 'string' || cuerpo.responsable.length > 120)) {
+      detalles.push({ campo: 'responsable', mensaje: 'El responsable puede tener hasta 120 caracteres.' });
+    }
+    if (cuerpo.whatsapp !== undefined && cuerpo.whatsapp !== null && cuerpo.whatsapp !== '') {
+      const wa = String(cuerpo.whatsapp).trim();
+      const digitos = wa.replace(/\D/g, '').length;
+      if (!/^\+?[\d\s-]+$/.test(wa) || digitos < 7 || digitos > 15) {
+        detalles.push({ campo: 'whatsapp', mensaje: 'Debe tener entre 7 y 15 dígitos válidos.' });
+      }
+    }
+    if (cuerpo.correo !== undefined && cuerpo.correo !== null && cuerpo.correo !== '') {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(cuerpo.correo).trim())) {
+        detalles.push({ campo: 'correo', mensaje: 'Escribe un correo electrónico válido.' });
+      }
+    }
+    if (cuerpo.detalle?.galeria && cuerpo.detalle.galeria.length > 24) {
+      detalles.push({ campo: 'detalle.galeria', mensaje: 'La galería puede tener hasta 24 archivos.' });
+    }
+    let imagen = recurso.imagen;
+    if (cuerpo.imagenId !== undefined) {
+      if (cuerpo.imagenId === null) {
+        imagen = null;
+      } else {
+        imagen = buscarImagenEnBiblioteca(Number(cuerpo.imagenId));
+        if (!imagen) detalles.push({ campo: 'imagenId', mensaje: 'La imagen indicada no existe.' });
+      }
+    }
+    if (detalles.length) return errorValidacion(detalles);
+
+    if (cuerpo.descripcion !== undefined) recurso.descripcion = cuerpo.descripcion?.trim() || null;
+    if (cuerpo.horarioReunion !== undefined) recurso.horarioReunion = cuerpo.horarioReunion?.trim() || null;
+    if (cuerpo.responsable !== undefined) recurso.responsable = cuerpo.responsable?.trim() || null;
+    if (cuerpo.whatsapp !== undefined) recurso.whatsapp = cuerpo.whatsapp?.trim() || null;
+    if (cuerpo.correo !== undefined) recurso.correo = cuerpo.correo?.trim() || null;
+    recurso.imagen = imagen;
+    if (cuerpo.detalle !== undefined) recurso.detalle = cuerpo.detalle ?? null;
+
+    return HttpResponse.json({ datos: recurso });
   }),
 
   http.patch(api('/admin/grupos-pastorales/:id'), async ({ request, params }) => {
@@ -793,8 +976,20 @@ export const handlersContenido = [
     if (cuerpo.horarioReunion !== undefined && cuerpo.horarioReunion !== null && (typeof cuerpo.horarioReunion !== 'string' || cuerpo.horarioReunion.length > 100)) {
       detalles.push({ campo: 'horarioReunion', mensaje: 'El horario de reunión puede tener hasta 100 caracteres.' });
     }
-    if (cuerpo.contacto !== undefined && cuerpo.contacto !== null && (typeof cuerpo.contacto !== 'string' || cuerpo.contacto.length > 120)) {
-      detalles.push({ campo: 'contacto', mensaje: 'El contacto puede tener hasta 120 caracteres.' });
+    if (cuerpo.responsable !== undefined && cuerpo.responsable !== null && (typeof cuerpo.responsable !== 'string' || cuerpo.responsable.length > 120)) {
+      detalles.push({ campo: 'responsable', mensaje: 'El responsable puede tener hasta 120 caracteres.' });
+    }
+    if (cuerpo.whatsapp !== undefined && cuerpo.whatsapp !== null && cuerpo.whatsapp !== '') {
+      const wa = String(cuerpo.whatsapp).trim();
+      const digitos = wa.replace(/\D/g, '').length;
+      if (!/^\+?[\d\s-]+$/.test(wa) || digitos < 7 || digitos > 15) {
+        detalles.push({ campo: 'whatsapp', mensaje: 'Debe tener entre 7 y 15 dígitos válidos.' });
+      }
+    }
+    if (cuerpo.correo !== undefined && cuerpo.correo !== null && cuerpo.correo !== '') {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(cuerpo.correo).trim())) {
+        detalles.push({ campo: 'correo', mensaje: 'Escribe un correo electrónico válido.' });
+      }
     }
     if (cuerpo.icono !== undefined && cuerpo.icono !== null && (typeof cuerpo.icono !== 'string' || cuerpo.icono.length > 40)) {
       detalles.push({ campo: 'icono', mensaje: 'El ícono puede tener hasta 40 caracteres.' });
@@ -811,11 +1006,15 @@ export const handlersContenido = [
     if (detalles.length) return errorValidacion(detalles);
 
     recurso.nombre = nombre;
+    if (cuerpo.slug !== undefined && cuerpo.slug) recurso.slug = cuerpo.slug.trim();
     if (cuerpo.descripcion !== undefined) recurso.descripcion = cuerpo.descripcion?.trim() || null;
     if (cuerpo.horarioReunion !== undefined) recurso.horarioReunion = cuerpo.horarioReunion?.trim() || null;
-    if (cuerpo.contacto !== undefined) recurso.contacto = cuerpo.contacto?.trim() || null;
+    if (cuerpo.responsable !== undefined) recurso.responsable = cuerpo.responsable?.trim() || null;
+    if (cuerpo.whatsapp !== undefined) recurso.whatsapp = cuerpo.whatsapp?.trim() || null;
+    if (cuerpo.correo !== undefined) recurso.correo = cuerpo.correo?.trim() || null;
     if (cuerpo.icono !== undefined) recurso.icono = cuerpo.icono?.trim() || null;
     recurso.imagen = imagen;
+    if (cuerpo.detalle !== undefined) recurso.detalle = cuerpo.detalle ?? null;
     if (cuerpo.visible !== undefined) recurso.visible = Boolean(cuerpo.visible);
 
     return HttpResponse.json({ datos: recurso });
@@ -976,6 +1175,17 @@ export const handlersContenido = [
     return HttpResponse.json({ datos: lista });
   }),
 
+  http.get(api('/admin/sedes/arbol'), () => {
+    const auth = autenticar();
+    if (auth.respuesta) return auth.respuesta;
+
+    const lista = esAdministrador(auth.usuario)
+      ? sedes
+      : sedes.filter((s) => s.id === auth.usuario.sede.id);
+
+    return HttpResponse.json({ datos: armarArbolSedesMock(lista) });
+  }),
+
   http.get(api('/admin/sedes/:id'), ({ params }) => {
     const auth = autenticar();
     if (auth.respuesta) return auth.respuesta;
@@ -1001,13 +1211,15 @@ export const handlersContenido = [
     }
     const tipoObj = CATALOGOS.tiposSede.find((t) => t.codigo === cuerpo.tipo);
     if (!tipoObj) {
-      detalles.push({ campo: 'tipo', mensaje: 'El tipo de sede debe ser PARROQUIA o CAPILLA.' });
+      detalles.push({ campo: 'tipo', mensaje: 'El tipo de sede indicado no existe.' });
+    } else {
+      const errJerarquia = validarJerarquiaMock(undefined, tipoObj.codigo, cuerpo.sedePadreId ?? null, sedes);
+      if (errJerarquia) detalles.push(errJerarquia);
     }
     let sedePadre = null;
     if (cuerpo.sedePadreId !== undefined && cuerpo.sedePadreId !== null) {
       const padre = sedes.find((s) => s.id === Number(cuerpo.sedePadreId));
-      if (!padre) detalles.push({ campo: 'sedePadreId', mensaje: 'La sede padre indicada no existe.' });
-      else sedePadre = resumenSede(padre);
+      if (padre) sedePadre = resumenSede(padre);
     }
     if (detalles.length) return errorValidacion(detalles);
 
@@ -1165,6 +1377,34 @@ export const handlersContenido = [
       if (tipoNuevo) sede.tipo = { codigo: tipoNuevo.codigo, nombre: tipoNuevo.nombre };
       if (padreNuevo !== undefined) sede.sedePadre = padreNuevo;
     }
+
+    return HttpResponse.json({ datos: sede });
+  }),
+
+  http.post(api('/admin/sedes/:id/mover'), async ({ request, params }) => {
+    const auth = autenticar('sedes.gestionar', 'Solo un administrador puede mover sedes.');
+    if (auth.respuesta) return auth.respuesta;
+
+    const sede = sedes.find((s) => s.id === Number(params.id));
+    if (!sede) return error(404, 'NO_ENCONTRADO', 'La sede no existe.');
+
+    const cuerpo = await request.json().catch(() => null);
+    if (!cuerpo) return errorValidacion([{ campo: 'cuerpo', mensaje: 'El cuerpo JSON no es válido.' }]);
+
+    const errJerarquia = validarJerarquiaMock(
+      sede.id,
+      sede.tipo.codigo,
+      cuerpo.sedePadreId ?? null,
+      sedes,
+    );
+    if (errJerarquia) return errorValidacion([errJerarquia]);
+
+    const padre =
+      cuerpo.sedePadreId !== null && cuerpo.sedePadreId !== undefined
+        ? sedes.find((s) => s.id === Number(cuerpo.sedePadreId))
+        : null;
+    sede.sedePadre = padre ? resumenSede(padre) : null;
+    if (cuerpo.orden !== undefined) sede.orden = Number(cuerpo.orden) || 0;
 
     return HttpResponse.json({ datos: sede });
   }),
