@@ -45,3 +45,11 @@ export async function eliminarGrupoAdmin(browser, id) {
     await api.delete(`/api/admin/grupos-pastorales/${id}`).catch(() => {});
   });
 }
+
+// Los usuarios no se borran (quedan en la bitácora): se desactivan.
+export async function desactivarUsuarioAdmin(browser, id) {
+  if (!id) return;
+  await conAdmin(browser, async (api) => {
+    await api.patch(`/api/admin/usuarios/${id}`, { data: { activo: false } }).catch(() => {});
+  });
+}
