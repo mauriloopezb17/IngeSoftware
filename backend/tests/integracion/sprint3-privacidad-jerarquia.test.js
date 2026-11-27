@@ -200,7 +200,7 @@ describe('privacidad de observaciones y alcance del coordinador (RNF-02, RF-11)'
     '/api/admin/sedes/arbol',
     '/api/admin/boletines',
     '/api/admin/videos',
-    '/api/admin/publicaciones',
+    '/api/admin/publicaciones/exportar',
   ];
 
   it.each(RUTAS_PROHIBIDAS_COORDINADOR)(
