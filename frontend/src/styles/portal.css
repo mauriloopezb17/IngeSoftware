@@ -76,9 +76,13 @@
   }
 }
 
-/* Margen izquierdo en escritorio (1024-1439 px) para que el menú flotante no tape el contenido */
+/* Margen izquierdo en escritorio (1024-1439 px) solo cuando el menú flotante es visible */
 @media (min-width: 1024px) and (max-width: 1439px) {
   .con-menu-flotante .mx-auto.max-w-7xl {
+    transition: padding-left 200ms var(--ease-salida);
+  }
+
+  .con-menu-flotante[data-menu-flotante-visible='true'] .mx-auto.max-w-7xl {
     padding-left: 7.5rem;
   }
 }

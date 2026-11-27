@@ -34,6 +34,8 @@ function Portada() {
             src={hero.url_poster}
             alt=""
             aria-hidden="true"
+            width={1878}
+            height={1057}
             fetchPriority="high"
             className="absolute inset-0 h-full w-full object-cover"
           />

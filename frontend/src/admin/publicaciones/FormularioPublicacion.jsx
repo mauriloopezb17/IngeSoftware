@@ -6,6 +6,7 @@ import { AlertCircle, Eye, ImagePlus, Loader2, Rocket, Save, Send, Trash2 } from
 import Dialogo from '../componentes/Dialogo.jsx';
 import { erroresDe, resumenDeErrores } from '../componentes/erroresFormulario.js';
 import SelectorImagenes from '../multimedia/SelectorImagenes.jsx';
+import { useSesion } from '../sesion/SesionContexto.js';
 import { Aviso, Boton, CampoArea, CampoCasilla, CampoSelect, CampoTexto, useToast } from '../ui/index.js';
 import {
   actualizarPublicacion,
@@ -31,7 +32,7 @@ const EditorContenido = lazy(() => import('./editor/EditorContenido.jsx'));
 const MAX_RESUMEN = 400;
 
 // Campos del formulario a partir de una publicación de la API (o vacíos, para una nueva).
-function camposDe(publicacion, tipoInicial = 'NOTICIA') {
+function camposDe(publicacion, tipoInicial = 'NOTICIA', gruposIniciales = []) {
   return {
     titulo: publicacion?.titulo ?? '',
     resumen: publicacion?.resumen ?? '',
@@ -44,7 +45,7 @@ function camposDe(publicacion, tipoInicial = 'NOTICIA') {
     urlExterna: publicacion?.urlExterna ?? '',
     abrirEnlaceDirecto: Boolean(publicacion?.urlExterna && publicacion?.abrirEnlaceDirecto),
     serviciosRelacionados: publicacion?.serviciosRelacionados ?? [],
-    gruposRelacionados: publicacion?.gruposRelacionados ?? [],
+    gruposRelacionados: publicacion?.gruposRelacionados ?? gruposIniciales,
   };
 }
 
@@ -111,11 +112,19 @@ function Grupo({ legend, error, children, ayuda }) {
 export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTICIA', errorInicial = '' }) {
   const navegar = useNavigate();
   const clienteConsultas = useQueryClient();
+  const { usuario } = useSesion();
   const toast = useToast();
   const avisos = useRef(null);
+  const editando = Boolean(publicacion);
+  const esCoordinador = usuario?.rol?.codigo === 'COORDINADOR';
+  const gruposPreseleccionados =
+    !editando && esCoordinador && usuario?.gruposAsignados?.length === 1
+      ? usuario.gruposAsignados.map((g) => ({ id: g.id, slug: g.slug, nombre: g.nombre }))
+      : [];
 
-  const [campos, setCampos] = useState(() => camposDe(publicacion, tipoInicial));
-  const [base, setBase] = useState(() => huella(camposDe(publicacion, tipoInicial)));
+  const [campos, setCampos] = useState(() => camposDe(publicacion, tipoInicial, gruposPreseleccionados));
+  const [base, setBase] = useState(() => huella(camposDe(publicacion, tipoInicial, gruposPreseleccionados)));
+  const [tocoGrupos, setTocoGrupos] = useState(false);
   // Documento del editor: `bloquesBase` es como quedó cargado (BlockNote lo normaliza) y `bloques` el actual.
   const [bloquesBase, setBloquesBase] = useState(null);
   const [bloques, setBloques] = useState(null);
@@ -126,17 +135,34 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
   const [verPrevia, setVerPrevia] = useState(false);
   const [confirmandoEnvio, setConfirmandoEnvio] = useState(false);
 
-  const editando = Boolean(publicacion);
   const esAviso = campos.tipo === TIPO_AVISO;
   const listadoVolver = esAviso ? '/admin/publicaciones/avisos' : '/admin/publicaciones';
-  const cambiar = (cambios) => setCampos((actuales) => ({ ...actuales, ...cambios }));
+  const gruposAsignados = usuario?.gruposAsignados ?? [];
+  const gruposEfectivos =
+    !editando &&
+    esCoordinador &&
+    !tocoGrupos &&
+    campos.gruposRelacionados.length === 0 &&
+    gruposAsignados.length === 1
+      ? [
+          {
+            id: gruposAsignados[0].id,
+            slug: gruposAsignados[0].slug,
+            nombre: gruposAsignados[0].nombre,
+          },
+        ]
+      : campos.gruposRelacionados;
+  const cambiar = (cambios) => {
+    if ('gruposRelacionados' in cambios) setTocoGrupos(true);
+    setCampos((actuales) => ({ ...actuales, ...cambios }));
+  };
 
   const catalogos = useQuery({ queryKey: CLAVE_CATALOGOS, queryFn: obtenerCatalogos, staleTime: 5 * 60 * 1000 });
   const categorias = catalogos.data?.categorias ?? [];
   const serviciosQuery = useQuery({
     queryKey: CLAVE_SERVICIOS,
     queryFn: () => listarServicios(),
-    enabled: !esAviso,
+    enabled: !esAviso && !esCoordinador,
     staleTime: 5 * 60 * 1000,
   });
   const gruposQuery = useQuery({
@@ -209,7 +235,7 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
       ? {}
       : {
           servicioIds: campos.serviciosRelacionados.map((s) => s.id),
-          grupoIds: campos.gruposRelacionados.map((g) => g.id),
+          grupoIds: gruposEfectivos.map((g) => g.id),
         }),
   });
 
@@ -282,7 +308,9 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
     onSuccess: () => {
       clienteConsultas.invalidateQueries({ queryKey: CLAVE_PUBLICACIONES });
       omitirAvisoRef.current = true;
-      const mensaje = `«${campos.titulo.trim()}» se envió a revisión.`;
+      const mensaje = esCoordinador
+        ? 'Se envió a revisión del párroco.'
+        : `«${campos.titulo.trim()}» se envió a revisión.`;
       toast.exito(mensaje);
       navegar('/admin/publicaciones', { state: { aviso: mensaje } });
     },
@@ -356,9 +384,15 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
             etiqueta="Tipo"
             value={campos.tipo}
             onChange={(e) => cambiar({ tipo: e.target.value })}
-            disabled={editando || esAviso}
-            ayuda={editando || esAviso ? 'El tipo no se puede cambiar.' : undefined}
-            opciones={Object.entries(esAviso ? { [TIPO_AVISO]: 'Aviso' } : TIPOS_DE_ESTA_PANTALLA)}
+            disabled={editando || esAviso || esCoordinador}
+            ayuda={editando || esAviso || esCoordinador ? 'El tipo no se puede cambiar.' : undefined}
+            opciones={Object.entries(
+              esAviso
+                ? { [TIPO_AVISO]: 'Aviso' }
+                : esCoordinador
+                  ? { NOTICIA: 'Noticia' }
+                  : TIPOS_DE_ESTA_PANTALLA,
+            )}
           />
 
           <CampoSelect
@@ -486,18 +520,23 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
 
         {!esAviso && (
           <Grupo
-            legend="Sacramentos y grupos relacionados"
+            legend={esCoordinador ? 'Grupos relacionados' : 'Sacramentos y grupos relacionados'}
             error={errores.relacionados}
-            ayuda="Opcional. La noticia aparecerá también en las páginas seleccionadas (máx. 10 de cada tipo)."
+            ayuda={
+              esCoordinador
+                ? 'Selecciona al menos uno de tus grupos pastorales.'
+                : 'Opcional. La noticia aparecerá también en las páginas seleccionadas (máx. 10 de cada tipo).'
+            }
           >
             <SelectorRelacionados
               servicios={serviciosQuery.data ?? []}
               grupos={gruposQuery.data ?? []}
               serviciosSeleccionados={campos.serviciosRelacionados}
-              gruposSeleccionados={campos.gruposRelacionados}
+              gruposSeleccionados={gruposEfectivos}
               alCambiarServicios={(serviciosRelacionados) => cambiar({ serviciosRelacionados })}
               alCambiarGrupos={(gruposRelacionados) => cambiar({ gruposRelacionados })}
-              cargando={serviciosQuery.isPending || gruposQuery.isPending}
+              cargando={(!esCoordinador && serviciosQuery.isPending) || gruposQuery.isPending}
+              soloGrupos={esCoordinador}
             />
           </Grupo>
         )}

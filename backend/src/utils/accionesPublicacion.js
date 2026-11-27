@@ -25,7 +25,10 @@ const permisoParaCrear = (tipo) =>
 const permisoParaPublicar = (tipo) =>
   tipo === 'AVISO' ? PERMISOS.AVISOS_GESTIONAR : PERMISOS.NOTICIAS_PUBLICAR;
 
-export const puedeCrear = (rol, tipo) => tienePermiso(rol, permisoParaCrear(tipo));
+export const puedeCrear = (rol, tipo) => {
+  if (rol === 'COORDINADOR' && tipo !== 'NOTICIA') return false;
+  return tienePermiso(rol, permisoParaCrear(tipo));
+};
 export const esPublicadorDelTipo = (rol, tipo) => tienePermiso(rol, permisoParaPublicar(tipo));
 
 const VERBO = {
@@ -115,7 +118,10 @@ export function evaluarAccion(accion, { tipo, estado, autorId }, usuario) {
       );
 
     case 'ENVIAR_REVISION':
-      if (!tienePermiso(usuario.rol, PERMISOS.NOTICIAS_REDACTAR)) {
+      if (
+        !tienePermiso(usuario.rol, PERMISOS.NOTICIAS_REDACTAR) ||
+        (usuario.rol === 'COORDINADOR' && tipo !== 'NOTICIA')
+      ) {
         return errorSinPermisoDeRol(accion, tipo);
       }
       if (tipo === 'AVISO') {

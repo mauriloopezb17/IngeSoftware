@@ -53,14 +53,14 @@ function GruposPastorales() {
                         {enRouter ? (
                           <Link
                             to={`/comunidad/grupos/${slug}`}
-                            className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+                            className="inline-flex min-h-11 items-center after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
                           >
                             {nombre}
                           </Link>
                         ) : (
                           <a
                             href={`/comunidad/grupos/${slug}`}
-                            className="after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+                            className="inline-flex min-h-11 items-center after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
                           >
                             {nombre}
                           </a>

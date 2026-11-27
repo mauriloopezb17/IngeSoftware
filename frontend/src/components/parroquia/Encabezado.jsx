@@ -2,7 +2,6 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { NavLink, useInRouterContext, useLocation } from 'react-router';
 import { ChevronDown, Clock3, Menu, MessageCircle, Phone, X } from 'lucide-react';
 
-import { BotonEnlace } from '../portal/Boton.jsx';
 import Contenedor from '../portal/Contenedor.jsx';
 import EnlacePortal from './EnlacePortal.jsx';
 import { BuscadorEncabezado, BuscadorMovil } from './buscador/BuscadorEncabezado.jsx';
@@ -299,7 +298,7 @@ function EncabezadoBase({ transparente, rutaActual }) {
                     rel="noopener noreferrer"
                     aria-label={`Visitar ${nombre}`}
                     title={nombre}
-                    className="inline-flex size-9 items-center justify-center rounded-sm text-white/80 transition-colors duration-150 hover:bg-white/10 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                    className="inline-flex size-11 items-center justify-center rounded-sm text-white/80 transition-colors duration-150 hover:bg-white/10 hover:text-gold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:size-9"
                   >
                     <IconoRedSocial nombre={icono} size={14} />
                   </a>
@@ -509,10 +508,6 @@ function EncabezadoBase({ transparente, rutaActual }) {
             </div>
 
             <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6">
-              <BotonEnlace to="/horarios" variante="primarioOscuro" onClick={cerrarTodo}>
-                Horarios de misa
-              </BotonEnlace>
-
               <div className="flex flex-wrap items-center gap-4 text-meta text-muted-on-dark">
                 {telefono && (
                   <a
