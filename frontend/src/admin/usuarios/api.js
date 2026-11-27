@@ -8,6 +8,7 @@ export const ROLES_USUARIO = [
   { codigo: 'PARROCO', nombre: 'Párroco' },
   { codigo: 'SECRETARIA', nombre: 'Secretaría' },
   { codigo: 'MARKETING', nombre: 'Marketing' },
+  { codigo: 'COORDINADOR', nombre: 'Coordinador de grupo' },
 ];
 
 export async function listarUsuarios(parametros = {}) {

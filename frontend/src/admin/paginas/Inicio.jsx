@@ -188,11 +188,56 @@ const ACCESOS_RAPIDOS = [
   { permiso: 'proclamas.gestionar', a: '/admin/proclamas/nueva', texto: 'Nueva proclama', icono: ScrollText },
 ];
 
+function TarjetaMisGrupos({ grupos = [] }) {
+  return (
+    <section
+      aria-labelledby="resumen-mis-grupos"
+      className="flex flex-col justify-between rounded-xl border border-sand bg-white p-5"
+    >
+      <div>
+        <div className="flex items-center justify-between gap-2">
+          <h3 id="resumen-mis-grupos" className="text-sm font-semibold text-ink">
+            Mis grupos
+          </h3>
+          <span className="text-xs font-medium text-muted">
+            {plural(grupos.length, 'grupo asignado', 'grupos asignados')}
+          </span>
+        </div>
+        {grupos.length === 0 ? (
+          <p className="mt-3 text-sm text-muted">No tienes grupos asignados por el momento.</p>
+        ) : (
+          <ul className="mt-3 divide-y divide-sand/70 text-sm text-ink">
+            {grupos.map((g) => (
+              <li key={g.id} className="py-2 first:pt-0 last:pb-0">
+                <Link
+                  to="/admin/grupos"
+                  className="font-medium underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-ink"
+                >
+                  {g.nombre}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className="mt-4 border-t border-sand/70 pt-3">
+        <Link
+          to="/admin/grupos"
+          className="text-sm font-semibold text-ink underline underline-offset-4 hover:text-muted"
+        >
+          Ir a Mis grupos →
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 // Pantalla de inicio del panel (se muestra dentro del layout): saludo y resumen de pendientes según el rol.
 // Solo usa endpoints que ya existen; las tarjetas de publicaciones salen de la matriz de permisos.
 export default function Inicio() {
   const { usuario } = useSesion();
   const { puede } = usePermisos();
+  const esCoordinador = usuario?.rol?.codigo === 'COORDINADOR';
   const apruebaNoticias = puede('noticias.publicar');
   const soloRedacta = puede('noticias.redactar') && !apruebaNoticias; // Marketing
   const accesos = ACCESOS_RAPIDOS.filter((item) => puede(item.permiso));
@@ -224,10 +269,16 @@ export default function Inicio() {
           Resumen de actividad
         </h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {apruebaNoticias && <TarjetaEnRevision />}
-          {soloRedacta && <TarjetasDeMarketing />}
-          <TarjetaProximosEventos />
-          <TarjetaProclamasVigentes />
+          {esCoordinador ? (
+            <TarjetaMisGrupos grupos={usuario?.gruposAsignados ?? []} />
+          ) : (
+            <>
+              {apruebaNoticias && <TarjetaEnRevision />}
+              {soloRedacta && <TarjetasDeMarketing />}
+              <TarjetaProximosEventos />
+              <TarjetaProclamasVigentes />
+            </>
+          )}
         </div>
       </section>
     </section>

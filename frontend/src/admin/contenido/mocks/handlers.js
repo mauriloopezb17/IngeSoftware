@@ -809,6 +809,10 @@ export const handlersContenido = [
 
     let lista = grupos;
     if (filtro.slugSede) lista = lista.filter((g) => g.sede.slug === filtro.slugSede);
+    if (auth.usuario.rol.codigo === 'COORDINADOR') {
+      const asignados = new Set((auth.usuario.gruposAsignados ?? []).map((g) => g.id));
+      lista = lista.filter((g) => asignados.has(g.id));
+    }
 
     const visible = filtro.parametros.get('visible');
     if (visible === 'true' || visible === 'false') {
@@ -831,7 +835,20 @@ export const handlersContenido = [
     const auth = autenticar();
     if (auth.respuesta) return auth.respuesta;
     const { recurso, respuesta } = leerPorId(grupos, params.id, auth.usuario, 'El grupo pastoral no existe.');
-    return respuesta ?? HttpResponse.json({ datos: recurso });
+    if (respuesta) return respuesta;
+    if (
+      auth.usuario.rol.codigo === 'COORDINADOR' &&
+      !(auth.usuario.gruposAsignados ?? []).some((g) => g.id === recurso.id)
+    ) {
+      return error(403, 'SIN_PERMISO', 'Solo puedes editar los grupos pastorales que tienes asignados.');
+    }
+    if (
+      auth.usuario.rol.codigo === 'COORDINADOR' &&
+      !(auth.usuario.gruposAsignados ?? []).some((g) => g.id === recurso.id)
+    ) {
+      return error(403, 'SIN_PERMISO', 'Solo puedes editar los grupos pastorales que tienes asignados.');
+    }
+    return HttpResponse.json({ datos: recurso });
   }),
 
   http.post(api('/admin/grupos-pastorales'), async ({ request }) => {
@@ -924,6 +941,12 @@ export const handlersContenido = [
 
     const { recurso, respuesta } = leerPorId(grupos, params.id, auth.usuario, 'El grupo pastoral no existe.');
     if (respuesta) return respuesta;
+    if (
+      auth.usuario.rol.codigo === 'COORDINADOR' &&
+      !(auth.usuario.gruposAsignados ?? []).some((g) => g.id === recurso.id)
+    ) {
+      return error(403, 'SIN_PERMISO', 'Solo puedes editar los grupos pastorales que tienes asignados.');
+    }
 
     const cuerpo = await request.json().catch(() => null);
     if (!cuerpo) return errorValidacion([{ campo: 'cuerpo', mensaje: 'El cuerpo JSON no es válido.' }]);
@@ -981,6 +1004,12 @@ export const handlersContenido = [
 
     const { recurso, respuesta } = leerPorId(grupos, params.id, auth.usuario, 'El grupo pastoral no existe.');
     if (respuesta) return respuesta;
+    if (
+      auth.usuario.rol.codigo === 'COORDINADOR' &&
+      !(auth.usuario.gruposAsignados ?? []).some((g) => g.id === recurso.id)
+    ) {
+      return error(403, 'SIN_PERMISO', 'Solo puedes editar los grupos pastorales que tienes asignados.');
+    }
 
     const cuerpo = await request.json().catch(() => null);
     if (!cuerpo) return errorValidacion([{ campo: 'cuerpo', mensaje: 'El cuerpo JSON no es válido.' }]);
@@ -1046,6 +1075,12 @@ export const handlersContenido = [
 
     const { recurso, respuesta } = leerPorId(grupos, params.id, auth.usuario, 'El grupo pastoral no existe.');
     if (respuesta) return respuesta;
+    if (
+      auth.usuario.rol.codigo === 'COORDINADOR' &&
+      !(auth.usuario.gruposAsignados ?? []).some((g) => g.id === recurso.id)
+    ) {
+      return error(403, 'SIN_PERMISO', 'Solo puedes editar los grupos pastorales que tienes asignados.');
+    }
 
     grupos = grupos.filter((g) => g.id !== recurso.id);
     return new HttpResponse(null, { status: 204 });

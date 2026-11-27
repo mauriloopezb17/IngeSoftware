@@ -9,6 +9,7 @@ export const CATALOGOS = {
     { id: 2, codigo: 'PARROCO', nombre: 'Párroco' },
     { id: 3, codigo: 'SECRETARIA', nombre: 'Secretaría' },
     { id: 4, codigo: 'MARKETING', nombre: 'Marketing' },
+    { id: 5, codigo: 'COORDINADOR', nombre: 'Coordinador de grupo' },
   ],
   tiposSede: [
     { id: 1, codigo: 'PARROQUIA', nombre: 'Parroquia' },

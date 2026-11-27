@@ -3,7 +3,12 @@ import * as servicio from '../services/adminGrupos.service.js';
 import { contextoDe } from '../services/bitacora.service.js';
 
 export async function listar(req, res) {
-  const resultado = await servicio.listarGrupos(req.sedeFiltro, req.validado.query);
+  const coordinadorUsuarioId = req.usuario.rol === 'COORDINADOR' ? req.usuario.id : undefined;
+  const resultado = await servicio.listarGrupos(
+    req.sedeFiltro,
+    req.validado.query,
+    coordinadorUsuarioId,
+  );
   res.json(resultado);
 }
 

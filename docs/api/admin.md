@@ -49,7 +49,8 @@ Todos los catálogos en una sola respuesta, para llenar los selectores de los fo
       { "id": 1, "codigo": "ADMINISTRADOR", "nombre": "Administrador" },
       { "id": 2, "codigo": "PARROCO", "nombre": "Párroco" },
       { "id": 3, "codigo": "SECRETARIA", "nombre": "Secretaría" },
-      { "id": 4, "codigo": "MARKETING", "nombre": "Marketing" }
+      { "id": 4, "codigo": "MARKETING", "nombre": "Marketing" },
+      { "id": 5, "codigo": "COORDINADOR", "nombre": "Coordinador de grupo" }
     ],
     "tiposSede": [
       { "id": 1, "codigo": "PARROQUIA", "nombre": "Parroquia" },
@@ -1286,6 +1287,7 @@ Solo el Administrador (`usuarios.gestionar`). Los usuarios no se eliminan, se **
     "nombre": "Parroquia Señor de la Exaltación",
     "slug": "senor-de-la-exaltacion"
   },
+  "gruposAsignados": [],
   "activo": true,
   "fechaUltimoAcceso": "2026-11-12T09:02:17-04:00",
   "fechaCreacion": "2026-10-26T10:12:37-04:00"
@@ -1319,5 +1321,6 @@ Reglas:
 
 - `correo` único, sin distinguir mayúsculas (`409 CONFLICTO`).
 - `sedeId` es obligatorio para todo rol que no sea `ADMINISTRADOR`.
+- `grupoIds` es obligatorio (al menos 1 grupo de la misma sede) cuando `rol` es `COORDINADOR`, y no se admite para otros roles (`400 VALIDACION`). Cambiar de `COORDINADOR` a otro rol borra sus asignaciones.
 - `contrasena`: mínimo 10 caracteres.
 - El Administrador no puede desactivarse ni quitarse el rol a sí mismo, y siempre debe quedar al menos un Administrador activo. Si no, `409 CONFLICTO`.

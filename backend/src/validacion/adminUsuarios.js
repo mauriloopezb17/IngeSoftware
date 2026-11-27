@@ -37,6 +37,11 @@ export const consultaUsuarios = esquemaListado({
   ordenPredeterminado: 'nombreCompleto',
 });
 
+const listaGrupoIds = z
+  .array(idEntero, { error: 'Debe ser una lista de identificadores.' })
+  .max(50, 'Se aceptan hasta 50 grupos.')
+  .transform((lista) => [...new Set(lista)]);
+
 export const cuerpoCrearUsuario = z.strictObject({
   nombreCompleto,
   correo: correoUsuario,
@@ -44,6 +49,7 @@ export const cuerpoCrearUsuario = z.strictObject({
   sedeId: idEntero.nullable().optional().default(null),
   contrasena: contrasenaNueva,
   activo: z.boolean().optional().default(true),
+  grupoIds: listaGrupoIds.optional(),
 });
 
 export const cuerpoEditarUsuario = z.strictObject({
@@ -52,6 +58,7 @@ export const cuerpoEditarUsuario = z.strictObject({
   rol: rolCodigo.optional(),
   sedeId: idEntero.nullable().optional(),
   activo: z.boolean().optional(),
+  grupoIds: listaGrupoIds.optional(),
 });
 
 export const cuerpoRestablecerContrasena = z.strictObject({

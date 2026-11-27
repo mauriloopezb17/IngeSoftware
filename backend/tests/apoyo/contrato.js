@@ -36,7 +36,7 @@ function seccionDeAutenticacion(numero) {
   return fin < 0 ? resto : resto.slice(0, fin);
 }
 
-const ROLES_EN_LA_MATRIZ = ['ADMINISTRADOR', 'PARROCO', 'SECRETARIA', 'MARKETING'];
+const ROLES_EN_LA_MATRIZ = ['ADMINISTRADOR', 'PARROCO', 'SECRETARIA', 'MARKETING', 'COORDINADOR'];
 
 // Matriz de permisos del contrato (sección 7): [{ permiso, roles: ['ADMINISTRADOR', ...] }],
 // en el orden de la tabla. Una celda con ✓ significa que el rol tiene el permiso.

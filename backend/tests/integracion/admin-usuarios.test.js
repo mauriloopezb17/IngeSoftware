@@ -110,6 +110,7 @@ describe('GET /api/admin/usuarios y GET /api/admin/usuarios/:id', () => {
           u.sede === null
             ? null
             : { id: expect.any(Number), nombre: expect.any(String), slug: expect.any(String) },
+        gruposAsignados: expect.any(Array),
         activo: expect.any(Boolean),
         fechaUltimoAcceso: u.fechaUltimoAcceso === null ? null : expect.any(String),
         fechaCreacion: expect.any(String),

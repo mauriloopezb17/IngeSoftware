@@ -4,6 +4,7 @@
 import { Router } from 'express';
 import { listarCatalogosDelPanel } from '../controllers/catalogos.controller.js';
 import { autenticar } from '../middlewares/autenticar.js';
+import { restringirRutasCoordinador } from '../middlewares/autorizar.js';
 import adminBoletinesRoutes from './adminBoletines.routes.js';
 import adminEventosRoutes from './adminEventos.routes.js';
 import adminPaginasRoutes from './adminPaginas.routes.js';
@@ -22,6 +23,7 @@ import multimediaRoutes from './multimedia.routes.js';
 const router = Router();
 
 router.use(autenticar);
+router.use(restringirRutasCoordinador);
 
 // Catálogos para los selectores del panel: los puede consultar todos los roles.
 router.get('/catalogos', listarCatalogosDelPanel);

@@ -119,7 +119,10 @@ export const PERMISOS_POR_ROL = {
     'multimedia.exportar',
     'videos.exportar',
   ],
+  COORDINADOR: ['multimedia.subir', 'multimedia.eliminar', 'grupos.detalle'],
 };
+
+const SECCIONES_COORDINADOR = new Set(['inicio', 'grupos', 'multimedia']);
 
 // Todos los roles pueden CONSULTAR los recursos de su sede, salvo estas dos secciones,
 // que además exigen un permiso para entrar (el contrato las excluye de la lectura general).
@@ -136,6 +139,9 @@ export function puede(usuario, permiso) {
 // `clave` es la de rutas.js (inicio, publicaciones, multimedia, usuarios...).
 export function puedeVerSeccion(usuario, clave) {
   if (!usuario) return false;
+  if (usuario.rol?.codigo === 'COORDINADOR') {
+    return SECCIONES_COORDINADOR.has(clave);
+  }
   const requerido = PERMISO_PARA_ENTRAR[clave];
   if (!requerido) return true;
   return Array.isArray(requerido)

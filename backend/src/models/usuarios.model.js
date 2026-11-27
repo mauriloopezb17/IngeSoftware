@@ -43,6 +43,67 @@ export async function actualizarContrasena(id, hashContrasena, db = { consultar 
   await db.consultar('UPDATE usuario SET hash_contrasena = $2 WHERE id = $1', [id, hashContrasena]);
 }
 
+export async function gruposAsignadosDe(usuarioId, db = { consultar }) {
+  const { rows } = await db.consultar(
+    `SELECT g.id, g.nombre, g.slug
+       FROM usuario_grupo_pastoral ugp
+       JOIN grupo_pastoral g ON g.id = ugp.grupo_pastoral_id
+      WHERE ugp.usuario_id = $1
+      ORDER BY g.orden ASC, g.id ASC`,
+    [usuarioId],
+  );
+  return rows;
+}
+
+export async function tieneGrupoAsignado(usuarioId, grupoId, db = { consultar }) {
+  const { rows } = await db.consultar(
+    `SELECT 1
+       FROM usuario_grupo_pastoral
+      WHERE usuario_id = $1 AND grupo_pastoral_id = $2`,
+    [usuarioId, grupoId],
+  );
+  return Boolean(rows[0]);
+}
+
+export async function gruposDeUsuarios(usuarioIds, db = { consultar }) {
+  if (!usuarioIds.length) return new Map();
+  const { rows } = await db.consultar(
+    `SELECT ugp.usuario_id, g.id, g.nombre, g.slug
+       FROM usuario_grupo_pastoral ugp
+       JOIN grupo_pastoral g ON g.id = ugp.grupo_pastoral_id
+      WHERE ugp.usuario_id = ANY($1::int[])
+      ORDER BY g.orden ASC, g.id ASC`,
+    [usuarioIds],
+  );
+  const mapa = new Map();
+  for (const fila of rows) {
+    if (!mapa.has(fila.usuario_id)) mapa.set(fila.usuario_id, []);
+    mapa.get(fila.usuario_id).push({ id: fila.id, nombre: fila.nombre, slug: fila.slug });
+  }
+  return mapa;
+}
+
+export async function gruposDeSedePorIds(sedeId, grupoIds, db = { consultar }) {
+  if (!grupoIds.length) return [];
+  const { rows } = await db.consultar(
+    `SELECT id
+       FROM grupo_pastoral
+      WHERE sede_id = $1 AND id = ANY($2::int[])`,
+    [sedeId, grupoIds],
+  );
+  return rows.map((r) => r.id);
+}
+
+export async function reemplazarGruposAsignados(usuarioId, grupoIds, db = { consultar }) {
+  await db.consultar('DELETE FROM usuario_grupo_pastoral WHERE usuario_id = $1', [usuarioId]);
+  if (!grupoIds.length) return;
+  await db.consultar(
+    `INSERT INTO usuario_grupo_pastoral (usuario_id, grupo_pastoral_id)
+     SELECT $1, unnest($2::int[])`,
+    [usuarioId, grupoIds],
+  );
+}
+
 // Anota el acceso y devuelve la fecha registrada (timestamptz como Date).
 export async function registrarAcceso(id) {
   const { rows } = await consultar(

@@ -109,6 +109,11 @@ export default function Usuarios() {
             Sede: {usuario.sede ? usuario.sede.nombre : 'Todas las sedes'} · Último acceso:{' '}
             {formatearFechaUsuario(usuario.fechaUltimoAcceso)}
           </p>
+          {usuario.gruposAsignados?.length > 0 && (
+            <p className="mt-1 text-xs text-ink">
+              Grupos: {usuario.gruposAsignados.map((g) => g.nombre).join(', ')}
+            </p>
+          )}
         </div>
       ),
     },

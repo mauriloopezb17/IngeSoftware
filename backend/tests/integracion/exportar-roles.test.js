@@ -73,12 +73,14 @@ beforeAll(async () => {
   const parroco = await crearUsuarioDePrueba({ rol: 'PARROCO' });
   const secretaria = await crearUsuarioDePrueba({ rol: 'SECRETARIA' });
   const marketing = await crearUsuarioDePrueba({ rol: 'MARKETING' });
-  usuarios.push(admin, parroco, secretaria, marketing);
+  const coordinador = await crearUsuarioDePrueba({ rol: 'COORDINADOR' });
+  usuarios.push(admin, parroco, secretaria, marketing, coordinador);
 
   sesiones.ADMINISTRADOR = await iniciarSesion(admin);
   sesiones.PARROCO = await iniciarSesion(parroco);
   sesiones.SECRETARIA = await iniciarSesion(secretaria);
   sesiones.MARKETING = await iniciarSesion(marketing);
+  sesiones.COORDINADOR = await iniciarSesion(coordinador);
 
   // Crear segunda sede para comprobar aislamiento por sede al exportar
   const resSedeB = await request(app)
