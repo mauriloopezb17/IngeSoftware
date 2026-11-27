@@ -279,7 +279,7 @@ Todos los roles pueden **consultar** (`GET`) todos los recursos de su sede en `/
 
 Reglas que la matriz no alcanza a mostrar (el detalle está en [estados-publicacion.md](estados-publicacion.md)):
 
-- **Coordinador de grupo** tiene alcance por grupo: `GET /api/admin/grupos-pastorales` le devuelve solo sus grupos asignados y `GET /api/admin/grupos-pastorales/:id` y `PATCH /api/admin/grupos-pastorales/:id/detalle` responden `403 SIN_PERMISO` si el grupo no está asignado en `usuario_grupo_pastoral`. En `/auth/login` y `/auth/yo` recibe `gruposAsignados: [{ id, nombre, slug }]`.
+- **Coordinador de grupo** tiene acceso restringido exclusivamente a sus grupos asignados y a multimedia: en `/api/admin` solo puede llamar a `GET /grupos-pastorales` (devuelve únicamente sus grupos), `GET /grupos-pastorales/:id`, `PATCH /grupos-pastorales/:id/detalle` (ambos validan asignación en `usuario_grupo_pastoral` y responden `403 SIN_PERMISO` si el grupo es ajeno), `GET /catalogos` y las rutas de multimedia del selector (`GET /multimedia`, `GET /multimedia/:id`, `POST /multimedia`, `PATCH /multimedia/:id` y `DELETE /multimedia/:id` solo sobre lo propio). Cualquier otra ruta bajo `/api/admin` —incluidos los `GET` del resto de secciones y exportaciones— responde `403 SIN_PERMISO`. En `/auth/login` y `/auth/yo` recibe `gruposAsignados: [{ id, nombre, slug }]`.
 
 - **Marketing** no publica: lo que redacta queda en `BORRADOR` y lo envía a revisión (`EN_REVISION`). Mientras está en revisión no puede editarlo. Si el Párroco lo rechaza, vuelve a `BORRADOR` con una observación.
 - **Párroco y Administrador** publican directamente, sin pasar por revisión.

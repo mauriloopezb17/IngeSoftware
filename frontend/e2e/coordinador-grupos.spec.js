@@ -60,6 +60,12 @@ test.describe('Coordinador de grupo', () => {
     try {
       const ctxCoord = await browser.newContext();
       const pageCoord = await ctxCoord.newPage();
+      const erroresApi = [];
+      pageCoord.on('response', (res) => {
+        if (res.url().includes('/api/admin/') && res.status() >= 400) {
+          erroresApi.push(`${res.request().method()} ${res.url()} -> ${res.status()}`);
+        }
+      });
       try {
         await pageCoord.goto('/admin/login');
         await pageCoord.getByLabel('Correo electrónico').fill(correoCoord);
@@ -89,6 +95,7 @@ test.describe('Coordinador de grupo', () => {
         await dialogo.getByRole('button', { name: 'Guardar cambios' }).click();
         await expect(dialogo).toBeHidden();
         await expect(pageCoord.getByText(`Se actualizó el grupo «${nombreGrupo}».`)).toBeVisible();
+        expect(erroresApi).toEqual([]);
 
         await pageCoord.goto('/admin/eventos');
         await expect(pageCoord.getByText(/no tiene acceso a esta sección/i)).toBeVisible();

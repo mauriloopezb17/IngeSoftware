@@ -227,6 +227,9 @@ describe('Coordinador de grupo (PAR-173)', () => {
       .get(`/api/admin/grupos-pastorales/${grupoAjenoMismaSede.id}`)
       .set('Cookie', cookieCoord);
     expect(verOtroMismaSede.status).toBe(403);
+    expect(verOtroMismaSede.body.error.mensaje).toBe(
+      'Solo puedes ver y editar los grupos pastorales que tienes asignados.',
+    );
 
     const editarOtroMismaSede = await request(app)
       .patch(`/api/admin/grupos-pastorales/${grupoAjenoMismaSede.id}/detalle`)
@@ -259,6 +262,24 @@ describe('Coordinador de grupo (PAR-173)', () => {
   });
 
   it.each([
+    ['publicaciones (listar)', 'get', '/api/admin/publicaciones', undefined],
+    ['publicaciones (detalle)', 'get', '/api/admin/publicaciones/1', undefined],
+    ['eventos (listar)', 'get', '/api/admin/eventos', undefined],
+    ['eventos (detalle)', 'get', '/api/admin/eventos/1', undefined],
+    ['proclamas (listar)', 'get', '/api/admin/proclamas', undefined],
+    ['proclamas (detalle)', 'get', '/api/admin/proclamas/1', undefined],
+    ['horarios (listar)', 'get', '/api/admin/horarios', undefined],
+    ['horarios (detalle)', 'get', '/api/admin/horarios/1', undefined],
+    ['servicios (listar)', 'get', '/api/admin/servicios', undefined],
+    ['servicios (detalle)', 'get', '/api/admin/servicios/1', undefined],
+    ['páginas (listar)', 'get', '/api/admin/paginas', undefined],
+    ['páginas (detalle)', 'get', '/api/admin/paginas/1', undefined],
+    ['sedes (listar)', 'get', '/api/admin/sedes', undefined],
+    ['sedes (detalle)', 'get', '/api/admin/sedes/1', undefined],
+    ['boletines (listar)', 'get', '/api/admin/boletines', undefined],
+    ['boletines (detalle)', 'get', '/api/admin/boletines/1', undefined],
+    ['videos (listar)', 'get', '/api/admin/videos', undefined],
+    ['videos (detalle)', 'get', '/api/admin/videos/1', undefined],
     ['noticias', 'post', '/api/admin/publicaciones/1/aprobar', undefined],
     ['eventos', 'post', '/api/admin/eventos', {}],
     ['horarios', 'post', '/api/admin/horarios', {}],

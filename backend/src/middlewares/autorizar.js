@@ -67,7 +67,9 @@ export function exigirGrupoAsignado(parametroId = 'id') {
       const grupoId = Number(req.validado?.params?.[parametroId] ?? req.params?.[parametroId]);
       if (!Number.isInteger(grupoId) || !(await tieneGrupoAsignado(usuario.id, grupoId))) {
         return next(
-          ErrorApp.sinPermiso('Solo puedes editar los grupos pastorales que tienes asignados.'),
+          ErrorApp.sinPermiso(
+            'Solo puedes ver y editar los grupos pastorales que tienes asignados.',
+          ),
         );
       }
       return next();
@@ -75,4 +77,33 @@ export function exigirGrupoAsignado(parametroId = 'id') {
       return next(error);
     }
   };
+}
+
+const RUTAS_COORDINADOR = [
+  ['GET', /^\/catalogos$/],
+  ['GET', /^\/grupos-pastorales$/],
+  ['GET', /^\/grupos-pastorales\/\d+$/],
+  ['PATCH', /^\/grupos-pastorales\/\d+\/detalle$/],
+  ['GET', /^\/multimedia$/],
+  ['GET', /^\/multimedia\/\d+$/],
+  ['POST', /^\/multimedia$/],
+  ['PATCH', /^\/multimedia\/\d+$/],
+  ['DELETE', /^\/multimedia\/\d+$/],
+];
+
+// El Coordinador de grupo solo puede acceder a sus grupos asignados y a multimedia;
+// cualquier otra ruta de /api/admin (incluidos los GET de otras secciones) responde 403.
+export function restringirRutasCoordinador(req, _res, next) {
+  const { rol } = usuarioDeLaSesion(req);
+  if (rol !== 'COORDINADOR') return next();
+  const ruta = req.path.length > 1 ? req.path.replace(/\/+$/, '') : req.path;
+  const permitida = RUTAS_COORDINADOR.some(
+    ([metodo, patron]) => req.method === metodo && patron.test(ruta),
+  );
+  if (!permitida) {
+    return next(
+      ErrorApp.sinPermiso('Tu rol solo tiene acceso a sus grupos pastorales y multimedia.'),
+    );
+  }
+  return next();
 }
