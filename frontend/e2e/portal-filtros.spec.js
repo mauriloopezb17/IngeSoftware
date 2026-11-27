@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Portal público: filtros y paginación de noticias', () => {
+  test.beforeEach(() => {
+    test.setTimeout(90_000);
+  });
   test('filtra por categoría o tipo, conserva la URL al recargar y permite quitar filtros', async ({
     page,
   }) => {

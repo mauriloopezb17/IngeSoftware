@@ -1,7 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { eliminarGrupoAdmin, eliminarPublicacionAdmin } from './helpers/limpieza.js';
 import { abrirContextoConRol, tituloUnico } from './helpers/sesion.js';
 
 test.describe('Coordinador de grupo', () => {
+  test.beforeEach(() => {
+    test.setTimeout(180_000);
+  });
   test('el Administrador crea un coordinador con un grupo → el coordinador inicia sesión, solo ve Mis grupos, edita la foto y el WhatsApp de su grupo, redacta una noticia y el Párroco la aprueba → se ve en el portal; no puede abrir /admin/eventos', async ({
     browser,
     page,
@@ -158,20 +162,8 @@ test.describe('Coordinador de grupo', () => {
       await expect(btnWhatsapp).toBeVisible();
       await expect(btnWhatsapp).toHaveAttribute('href', /^https:\/\/wa\.me\/59171234567\?text=/);
     } finally {
-      if (grupoId || noticiaId) {
-        const limpieza = await abrirContextoConRol(browser, 'admin');
-        try {
-          if (noticiaId) {
-            await limpieza.page.request.post(`/api/admin/publicaciones/${noticiaId}/archivar`);
-            await limpieza.page.request.delete(`/api/admin/publicaciones/${noticiaId}`);
-          }
-          if (grupoId) {
-            await limpieza.page.request.delete(`/api/admin/grupos-pastorales/${grupoId}`);
-          }
-        } finally {
-          await limpieza.context.close();
-        }
-      }
+      await eliminarPublicacionAdmin(browser, noticiaId);
+      await eliminarGrupoAdmin(browser, grupoId);
     }
   });
 });

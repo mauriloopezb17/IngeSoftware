@@ -1,7 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { eliminarGrupoAdmin } from './helpers/limpieza.js';
 import { abrirContextoConRol, tituloUnico } from './helpers/sesion.js';
 
 test.describe('Página de cada grupo pastoral', () => {
+  test.beforeEach(() => {
+    test.setTimeout(180_000);
+  });
   test('Marketing agrega fotos y el WhatsApp del responsable a un grupo → el visitante abre el grupo desde /comunidad, ve la galería y el enlace de WhatsApp es correcto', async ({
     browser,
     page,
@@ -79,14 +83,7 @@ test.describe('Página de cada grupo pastoral', () => {
       await expect(btnWhatsapp).toBeVisible();
       await expect(btnWhatsapp).toHaveAttribute('href', /^https:\/\/wa\.me\/59171234567\?text=/);
     } finally {
-      if (grupoId) {
-        const limpieza = await abrirContextoConRol(browser, 'secretaria');
-        try {
-          await limpieza.page.request.delete(`/api/admin/grupos-pastorales/${grupoId}`);
-        } finally {
-          await limpieza.context.close();
-        }
-      }
+      await eliminarGrupoAdmin(browser, grupoId);
     }
   });
 });

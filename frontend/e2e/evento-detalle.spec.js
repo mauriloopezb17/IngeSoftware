@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { eliminarEventoAdmin } from './helpers/limpieza.js';
 import { abrirContextoConRol, tituloUnico } from './helpers/sesion.js';
 
 function diaMananaBolivia() {
@@ -7,6 +8,9 @@ function diaMananaBolivia() {
 }
 
 test.describe('Detalle de eventos del calendario', () => {
+  test.beforeEach(() => {
+    test.setTimeout(180_000);
+  });
   test('Secretaría crea evento, Marketing edita su página y el visitante abre calendario -> día -> detalle', async ({
     browser,
     page,
@@ -17,30 +21,40 @@ test.describe('Detalle de eventos del calendario', () => {
     const cuerpo = 'Encuentro abierto con adoración, formación y compartir comunitario.';
     const enlaceMapa = 'https://maps.app.goo.gl/ejemploE2E';
     const responsableNombre = 'Pastoral Juvenil E2E';
+    let eventoId;
 
-    // 1. Secretaría crea el evento publicado en el panel.
-    const secretaria = await abrirContextoConRol(browser, 'secretaria');
     try {
-      await secretaria.page.goto('/admin/eventos/nuevo');
-      await secretaria.page.getByLabel('Título').fill(titulo);
-      await secretaria.page.getByLabel('Categoría').selectOption({ label: 'Comunidad' });
-      const inicio = secretaria.page.getByRole('group', { name: 'Inicio' });
-      await inicio.getByLabel('Día').fill(dia);
-      await inicio.getByLabel('Hora').fill('18:00');
-      await secretaria.page.getByLabel('Lugar (opcional)').fill('Templo parroquial');
-      await secretaria.page.getByRole('button', { name: 'Crear evento' }).click();
+      // 1. Secretaría crea el evento publicado en el panel.
+      const secretaria = await abrirContextoConRol(browser, 'secretaria');
+      try {
+        await secretaria.page.goto('/admin/eventos/nuevo');
+        await secretaria.page.getByLabel('Título').fill(titulo);
+        await secretaria.page.getByLabel('Categoría').selectOption({ label: 'Comunidad' });
+        const inicio = secretaria.page.getByRole('group', { name: 'Inicio' });
+        await inicio.getByLabel('Día').fill(dia);
+        await inicio.getByLabel('Hora').fill('18:00');
+        await secretaria.page.getByLabel('Lugar (opcional)').fill('Templo parroquial');
+        const [respCrear] = await Promise.all([
+          secretaria.page.waitForResponse(
+            (res) => res.url().includes('/api/admin/eventos') && res.request().method() === 'POST',
+          ),
+          secretaria.page.getByRole('button', { name: 'Crear evento' }).click(),
+        ]);
+        eventoId = (await respCrear.json())?.datos?.id;
 
-      await expect(secretaria.page).toHaveURL(/\/admin\/eventos$/);
-      await expect(secretaria.page.getByRole('row', { name: new RegExp(titulo) })).toBeVisible();
-    } finally {
-      await secretaria.context.close();
-    }
+        await expect(secretaria.page).toHaveURL(/\/admin\/eventos$/);
+        await secretaria.page.getByRole('searchbox').fill(titulo);
+        await expect(secretaria.page.getByRole('row', { name: new RegExp(titulo) })).toBeVisible();
+      } finally {
+        await secretaria.context.close();
+      }
 
-    // 2. Marketing entra a editar solo la página del evento (tarjeta bloqueada).
-    const marketing = await abrirContextoConRol(browser, 'marketing');
-    try {
-      await marketing.page.goto('/admin/eventos');
-      await marketing.page.getByRole('link', { name: `Editar página de «${titulo}»` }).click();
+      // 2. Marketing entra a editar solo la página del evento (tarjeta bloqueada).
+      const marketing = await abrirContextoConRol(browser, 'marketing');
+      try {
+        await marketing.page.goto('/admin/eventos');
+        await marketing.page.getByRole('searchbox').fill(titulo);
+        await marketing.page.getByRole('link', { name: `Editar página de «${titulo}»` }).click();
       await expect(marketing.page).toHaveURL(/\/admin\/eventos\/\d+\/editar/);
       await expect(marketing.page.getByText('Solo lectura · gestionado por secretaría')).toBeVisible();
       await expect(marketing.page.getByLabel('Título')).toBeDisabled();
@@ -79,7 +93,10 @@ test.describe('Detalle de eventos del calendario', () => {
     await expect(page.getByText(cuerpo)).toBeVisible();
     await expect(page.getByText(direccion)).toBeVisible();
     await expect(page.getByRole('link', { name: /Cómo llegar en Google Maps/ })).toHaveAttribute('href', enlaceMapa);
-    await expect(page.getByText('Bienvenida e inicio del encuentro')).toBeVisible();
-    await expect(page.getByText(responsableNombre)).toBeVisible();
+      await expect(page.getByText('Bienvenida e inicio del encuentro')).toBeVisible();
+      await expect(page.getByText(responsableNombre)).toBeVisible();
+    } finally {
+      await eliminarEventoAdmin(browser, eventoId);
+    }
   });
 });

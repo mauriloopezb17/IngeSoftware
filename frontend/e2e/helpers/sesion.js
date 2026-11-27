@@ -31,8 +31,15 @@ export async function iniciarSesion(page, rol) {
 
 // Abre un contexto de navegador aislado ya autenticado con el rol indicado.
 export async function abrirContextoConRol(browser, rol) {
+  const correo = USUARIOS_POR_ROL[rol];
+  if (!correo) throw new Error(`Rol desconocido en helper E2E: ${rol}`);
+
   const context = await browser.newContext();
+  const respuesta = await context.request.post('/api/auth/login', {
+    data: { correo, contrasena: CONTRASENA_DEV },
+  });
+  expect(respuesta.ok()).toBe(true);
+
   const page = await context.newPage();
-  await iniciarSesion(page, rol);
   return { context, page };
 }
