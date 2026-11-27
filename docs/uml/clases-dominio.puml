@@ -1,0 +1,339 @@
+@startuml clases-dominio
+' Diagrama de clases del dominio (v2.0), derivado de las tablas reales:
+' database/db_portal_cms.sql + database/migrations/001..016, y de backend/src/models/*.model.js.
+' Cada clase es una tabla; cada asociación, una clave foránea (FK) real. Se muestran los atributos principales.
+' No se incluyen las tablas conversacion_bot y mensaje_bot (bot pospuesto: existen en el esquema pero
+' ningún código las usa) ni la columna evento.id_externo_m365 (integración con Microsoft 365 pospuesta).
+' Exportar: java -jar plantuml.jar -charset UTF-8 -tpng clases-dominio.puml
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+hide empty methods
+left to right direction
+
+title Diagrama de clases del dominio - Plataforma Web y Sistema de Gestión Parroquial v2.0
+
+package "Seguridad" {
+  class Rol <<catálogo>> {
+    id : serial
+    {field} nombre : varchar(40)
+    {field} descripcion : varchar(200)
+  }
+  class Usuario {
+    id : serial
+    {field} nombre_completo : varchar(120)
+    {field} correo : varchar(120)
+    {field} hash_contrasena : varchar(255) «argon2»
+    activo : boolean
+    fecha_ultimo_acceso : timestamptz
+    fecha_creacion : timestamptz
+  }
+  class UsuarioGrupoPastoral <<asignación>> {
+    usuario_id : int «PK, FK»
+    grupo_pastoral_id : int «PK, FK»
+  }
+  enum Permiso <<código: constantes/permisos.js>> {
+    noticias.redactar
+    noticias.publicar
+    proclamas.observaciones
+    *.gestionar / *.detalle / *.exportar
+    bitacora.ver
+    usuarios.gestionar
+    ...
+  }
+}
+
+package "Comunidad" {
+  class TipoSede <<catálogo>> {
+    id : serial
+    {field} nombre : varchar(40)
+  }
+  class Sede {
+    id : serial
+    {field} nombre : varchar(120)
+    {field} slug : varchar(80)
+    {field} direccion : varchar(200)
+    {field} telefono : varchar(30)
+    {field} whatsapp : varchar(30)
+    {field} correo : varchar(120)
+    {field} latitud : numeric(9,6)
+    {field} longitud : numeric(9,6)
+    configuracion : jsonb
+    orden : smallint
+    activo : boolean
+  }
+  class RedSocial <<catálogo>> {
+    id : serial
+    {field} nombre : varchar(40)
+    {field} icono : varchar(40)
+  }
+  class SedeRedSocial {
+    {field} url : varchar(300)
+  }
+  class GrupoPastoral {
+    id : serial
+    {field} nombre : varchar(100)
+    {field} slug : varchar(120)
+    descripcion : text
+    {field} horario_reunion : varchar(100)
+    {field} responsable : varchar(120)
+    {field} whatsapp : varchar(30)
+    {field} correo : varchar(120)
+    detalle : jsonb
+    orden : smallint
+    visible : boolean
+  }
+  class Servicio <<sacramento / servicio>> {
+    id : serial
+    {field} nombre : varchar(100)
+    {field} slug : varchar(80)
+    {field} descripcion_corta : varchar(300)
+    contenido : jsonb
+    detalle : jsonb
+    orden : smallint
+    visible : boolean
+  }
+  class PreguntaFrecuente {
+    id : serial
+    {field} pregunta : varchar(300)
+    respuesta : text
+    orden : smallint
+    activa : boolean
+  }
+}
+
+package "Contenido" {
+  class TipoPublicacion <<catálogo>> {
+    id : serial
+    {field} nombre : varchar(40)
+    ..
+    Aviso | Noticia | Nota de prensa
+  }
+  class EstadoPublicacion <<catálogo>> {
+    id : serial
+    {field} nombre : varchar(30)
+    ..
+    Borrador | En revisión | Publicado | Archivado
+  }
+  class Categoria <<catálogo>> {
+    id : serial
+    {field} nombre : varchar(60)
+    {field} slug : varchar(60)
+  }
+  class Publicacion {
+    id : serial
+    {field} titulo : varchar(200)
+    {field} slug : varchar(200)
+    {field} resumen : varchar(400)
+    contenido : jsonb «BlockNote»
+    {field} url_externa : varchar(500)
+    abrir_enlace_directo : boolean
+    destacada : boolean
+    fecha_publicacion : timestamptz
+    fecha_expiracion : timestamptz
+    fecha_revision : timestamptz
+    {field} observacion_revision : varchar(500)
+    fecha_creacion : timestamptz
+  }
+  class PublicacionServicio <<relación>> {
+    publicacion_id : int «PK, FK»
+    servicio_id : int «PK, FK»
+  }
+  class PublicacionGrupoPastoral <<relación>> {
+    publicacion_id : int «PK, FK»
+    grupo_pastoral_id : int «PK, FK»
+  }
+  class Pagina {
+    id : serial
+    {field} slug : varchar(120)
+    {field} titulo : varchar(160)
+    {field} descripcion_seo : varchar(300)
+    mostrar_en_menu : boolean
+    orden_menu : smallint
+    fecha_creacion : timestamptz
+  }
+  class TipoBloque <<catálogo>> {
+    id : serial
+    {field} codigo : varchar(40)
+    {field} nombre : varchar(80)
+    esquema_validacion : jsonb
+  }
+  class Bloque {
+    id : serial
+    orden : smallint
+    contenido : jsonb
+    visible : boolean
+  }
+}
+
+package "Agenda" {
+  class CategoriaEvento <<catálogo>> {
+    id : serial
+    {field} nombre : varchar(60)
+    {field} color_hex : char(7)
+  }
+  class Evento {
+    id : serial
+    {field} titulo : varchar(200)
+    descripcion : text
+    {field} lugar : varchar(150)
+    fecha_inicio : timestamptz
+    fecha_fin : timestamptz
+    todo_el_dia : boolean
+    detalle : jsonb
+  }
+  class TipoHorario <<catálogo>> {
+    id : serial
+    {field} nombre : varchar(60)
+  }
+  class Horario {
+    id : serial
+    dia_semana : smallint
+    hora_inicio : time
+    hora_fin : time
+    {field} descripcion : varchar(150)
+    activo : boolean
+  }
+  note "Los avisos son publicaciones\nde tipo «Aviso» (paquete Contenido)." as NotaAvisos
+}
+
+package "Proclamas" {
+  class Proclama {
+    id : serial
+    {field} nombre_contrayente_1 : varchar(150)
+    {field} nombre_contrayente_2 : varchar(150)
+    fecha_matrimonio : timestamptz
+    fecha_registro : timestamptz
+    detalle : jsonb
+    tramite_origen_id : int «sin FK»
+  }
+  class ProclamaPublicacion {
+    proclama_id : int «PK, FK»
+    numero_proclama : smallint
+    fecha_publicacion : date
+  }
+  class ObservacionProclama <<confidencial>> {
+    id : serial
+    {field} nombre_completo : varchar(120) «opcional»
+    {field} correo : varchar(120)
+    {field} telefono : varchar(30)
+    mensaje : text
+    fecha_envio : timestamptz
+    leido_en : timestamptz
+    ..
+    CHECK correo IS NOT NULL OR telefono IS NOT NULL
+  }
+}
+
+package "Medios" {
+  class ArchivoMultimedia {
+    id : serial
+    {field} nombre_original : varchar(255)
+    {field} url : varchar(500) «clave en OCI»
+    {field} tipo_mime : varchar(100)
+    tamano_bytes : bigint
+    ancho_px : int
+    alto_px : int
+    {field} texto_alternativo : varchar(255)
+    fecha_subida : timestamptz
+  }
+  class Boletin {
+    id : serial
+    {field} titulo : varchar(150)
+    periodo : date
+    fecha_publicacion : timestamptz
+  }
+  class Video {
+    id : serial
+    {field} titulo : varchar(160)
+    descripcion : text
+    {field} youtube_video_id : varchar(20)
+    duracion_segundos : int
+    destacado : boolean
+    orden : smallint
+    fecha_publicacion : date
+  }
+}
+
+package "Auditoría" {
+  class BitacoraCambio {
+    id : bigserial
+    {field} entidad : varchar(60)
+    {field} entidad_id : varchar(40)
+    {field} accion : varchar(10)
+    datos_anteriores : jsonb
+    datos_nuevos : jsonb
+    direccion_ip : inet
+    fecha : timestamptz
+    ..
+    {field} accion IN (INSERT, UPDATE, DELETE, EXPORT, VIEW)
+  }
+}
+
+' ---- Seguridad
+Rol "1" -- "0..*" Usuario : rol_id
+Rol ..> Permiso : «permisos por rol»
+Sede "0..1" -- "0..*" Usuario : sede_id
+Usuario "1" -- "0..*" UsuarioGrupoPastoral : usuario_id
+GrupoPastoral "1" -- "0..*" UsuarioGrupoPastoral : grupo_pastoral_id
+
+' ---- Comunidad
+TipoSede "1" -- "0..*" Sede : tipo_sede_id
+Sede "0..1" -- "0..*" Sede : sede_padre_id\n(Parroquia > Capilla > Comunidad)
+Sede "1" -- "0..*" SedeRedSocial : sede_id
+RedSocial "1" -- "0..*" SedeRedSocial : red_social_id
+Sede "1" -- "0..*" GrupoPastoral : sede_id
+Sede "1" -- "0..*" Servicio : sede_id
+Servicio "0..1" -- "0..*" PreguntaFrecuente : servicio_id
+Sede "1" -- "0..*" PreguntaFrecuente : sede_id
+ArchivoMultimedia "0..1" -- "0..*" GrupoPastoral : imagen_id
+ArchivoMultimedia "0..1" -- "0..*" Servicio : imagen_id
+
+' ---- Contenido
+Sede "1" -- "0..*" Publicacion : sede_id
+TipoPublicacion "1" -- "0..*" Publicacion : tipo_publicacion_id
+EstadoPublicacion "1" -- "0..*" Publicacion : estado_publicacion_id
+Categoria "0..1" -- "0..*" Publicacion : categoria_id
+Usuario "1" -- "0..*" Publicacion : autor_id
+Usuario "0..1" -- "0..*" Publicacion : revisado_por
+ArchivoMultimedia "0..1" -- "0..*" Publicacion : imagen_portada_id
+Publicacion "1" -- "0..*" PublicacionServicio
+Servicio "1" -- "0..*" PublicacionServicio
+Publicacion "1" -- "0..*" PublicacionGrupoPastoral
+GrupoPastoral "1" -- "0..*" PublicacionGrupoPastoral
+Sede "1" -- "0..*" Pagina : sede_id
+Pagina "0..1" -- "0..*" Pagina : pagina_padre_id
+EstadoPublicacion "1" -- "0..*" Pagina : estado_publicacion_id
+Usuario "1" -- "0..*" Pagina : creado_por / actualizado_por
+Pagina "1" -- "0..*" Bloque : pagina_id
+TipoBloque "1" -- "0..*" Bloque : tipo_bloque_id
+
+' ---- Agenda
+Sede "1" -- "0..*" Evento : sede_id
+CategoriaEvento "1" -- "0..*" Evento : categoria_evento_id
+EstadoPublicacion "1" -- "0..*" Evento : estado_publicacion_id
+Usuario "1" -- "0..*" Evento : creado_por
+ArchivoMultimedia "0..1" -- "0..*" Evento : imagen_id
+Sede "1" -- "0..*" Horario : sede_id
+TipoHorario "1" -- "0..*" Horario : tipo_horario_id
+
+' ---- Proclamas
+Sede "1" -- "0..*" Proclama : sede_id
+ArchivoMultimedia "0..1" -- "0..*" Proclama : imagen_id
+Proclama "1" -- "0..*" ProclamaPublicacion : proclama_id
+Proclama "1" *-- "0..*" ObservacionProclama : proclama_id\n(ON DELETE CASCADE)
+Usuario "0..1" -- "0..*" ObservacionProclama : leido_por
+
+' ---- Medios
+Sede "1" -- "0..*" ArchivoMultimedia : sede_id
+Usuario "1" -- "0..*" ArchivoMultimedia : subido_por
+Sede "1" -- "0..*" Boletin : sede_id
+ArchivoMultimedia "1" -- "0..*" Boletin : archivo_id (PDF)
+ArchivoMultimedia "0..1" -- "0..*" Boletin : portada_id
+Usuario "1" -- "0..*" Boletin : publicado_por
+Sede "1" -- "0..*" Video : sede_id
+
+' ---- Auditoría
+Usuario "0..1" -- "0..*" BitacoraCambio : usuario_id
+@enduml
