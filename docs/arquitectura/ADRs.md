@@ -150,10 +150,10 @@ Guardar archivos binarios en PostgreSQL inflaría la base y sus respaldos, y ser
   * *Desventajas:* El espacio depende del servidor que se elija (aún no definido); los archivos se pierden si el contenedor o el servidor se reemplaza; no escala a varias instancias; la API tendría que servir los archivos ella misma.
 * **Alternativa B: Otro proveedor compatible con S3 (por ejemplo Amazon S3):**
   * *Ventajas:* Mismo código, porque el cliente usa la API S3.
-  * *Desventajas:* [COMPLETAR: costos o límites de la capa gratuita de los proveedores evaluados, si el equipo los comparó].
+  * *Desventajas:* no aporta ninguna ventaja técnica frente a OCI, porque el código sería el mismo, y obligaría a abrir y pagar otra cuenta cuando la de OCI ya estaba en uso desde el Sprint 2 (PR #22, multimedia en Oracle Cloud). Sigue disponible como plan de salida: basta con cambiar las variables de entorno.
 * **Alternativa C: Almacenamiento de la UCB:**
   * *Ventajas:* Sin costo para la parroquia.
-  * *Desventajas:* [COMPLETAR: disponibilidad y condiciones del almacenamiento de la UCB; el hosting definitivo aún no está decidido].
+  * *Desventajas:* al cierre de la versión 2.0 no existe un acuerdo de alojamiento con la UCB; el hosting definitivo sigue pendiente de decisión de la parroquia (Segundo Informe de Avance, sección 11), y el sistema no podía esperar esa decisión para guardar archivos.
 * **Alternativa D: Oracle Cloud Infrastructure (OCI) Object Storage, con la API compatible con S3 (elegida).**
 
 ### Decisión
@@ -174,6 +174,6 @@ Se adopta **OCI Object Storage** con su API compatible con S3. La implementació
   * **Menos carga en el servidor:** los archivos no pasan por PostgreSQL ni la API los sirve; el navegador los descarga del bucket o del CDN, con caché de un año.
   * **Privacidad y rendimiento:** las fotos publicadas no conservan la ubicación GPS, y las variantes WebP reducen lo que descargan los celulares.
 * **Negativas / Mitigaciones:**
-  * **Capacidad configurada por debajo del RNF-05:** el código limita el almacenamiento a 20 GB y el requisito pide 50 GB. Se mitiga con el control de capacidad, que avisa y rechaza subidas antes de llenarse, con la recomendación de publicar los videos en YouTube y con la posibilidad de ampliar el plan de OCI y subir la constante `CAPACIDAD_ALMACENAMIENTO_BYTES` sin cambiar la arquitectura. [COMPLETAR: plan de OCI que contratará la parroquia y capacidad final].
+  * **Capacidad configurada por debajo del RNF-05:** el código limita el almacenamiento a 20 GB y el requisito pide 50 GB. Se mitiga con el control de capacidad, que avisa y rechaza subidas antes de llenarse, con la recomendación de publicar los videos en YouTube y con la posibilidad de ampliar el plan de OCI y subir la constante `CAPACIDAD_ALMACENAMIENTO_BYTES` sin cambiar la arquitectura. El plan definitivo de OCI y su capacidad los decide la parroquia junto con el hosting definitivo, que sigue pendiente al cierre de la versión 2.0; mientras tanto rige el límite de 20 GB.
   * **Dependencia de un proveedor externo y de credenciales:** si OCI no responde, la subida y el borrado de archivos devuelven 503, pero el resto de la API sigue funcionando. Las credenciales se cargan solo desde el entorno y nunca se registran en los logs.
   * **Cuenta a nombre de un integrante:** hoy la cuenta de OCI es de Mauricio López. Se mitiga con el plan de transferencia de cuentas a la parroquia al cierre del proyecto.
