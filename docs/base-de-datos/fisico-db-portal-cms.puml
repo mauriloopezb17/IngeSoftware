@@ -1,0 +1,432 @@
+@startuml
+!pragma layout smetana
+hide circle
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #4A4A4A
+  HeaderBackgroundColor #E7E6E6
+}
+title Diagrama físico · db_portal_cms (database/db_portal_cms.sql + migraciones 001 a 016)
+
+legend right
+  Asterisco (*) antes de la columna = NOT NULL · PK = clave primaria · FK = clave foránea · UQ = único
+  «m0xx» = agregado por la migración 0xx · tablas en verde = creadas por migraciones
+endlegend
+
+entity "archivo_multimedia" as archivo_multimedia {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field} * subido_por : int <<FK>>
+  {field} * nombre_original : varchar(255)
+  {field} * url : varchar(500) <<UQ>>
+  {field} * tipo_mime : varchar(100)
+  {field} * tamano_bytes : bigint
+  {field}   ancho_px : int
+  {field}   alto_px : int
+  {field}   texto_alternativo : varchar(255)
+  {field} * fecha_subida : timestamptz
+}
+
+entity "bitacora_cambio" as bitacora_cambio {
+  {field} * id : bigserial <<PK>>
+  --
+  {field}   usuario_id : int <<FK>>
+  {field} * entidad : varchar(60)
+  {field} * entidad_id : varchar(40)
+  {field} * accion : varchar(10)
+  {field}   datos_anteriores : jsonb
+  {field}   datos_nuevos : jsonb
+  {field}   direccion_ip : inet
+  {field} * fecha : timestamptz
+}
+
+entity "bloque" as bloque {
+  {field} * id : serial <<PK>>
+  --
+  {field} * pagina_id : int <<FK>>
+  {field} * tipo_bloque_id : int <<FK>>
+  {field} * orden : smallint
+  {field} * contenido : jsonb
+  {field} * visible : boolean
+  {field} * fecha_actualizacion : timestamptz
+}
+
+entity "boletin" as boletin {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field} * archivo_id : int <<FK>>
+  {field} * publicado_por : int <<FK>>
+  {field} * titulo : varchar(150)
+  {field} * periodo : date
+  {field} * fecha_publicacion : timestamptz
+  {field}   portada_id : int <<FK>> «m006»
+  .. UQ (sede_id, periodo) ..
+}
+
+entity "categoria" as categoria {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre : varchar(60) <<UQ>>
+  {field} * slug : varchar(60) <<UQ>>
+}
+
+entity "categoria_evento" as categoria_evento {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre : varchar(60) <<UQ>>
+  {field}   color_hex : char(7)
+}
+
+entity "conversacion_bot" as conversacion_bot {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field}   atendida_por : int <<FK>>
+  {field} * canal : varchar(10)
+  {field} * identificador_contacto : varchar(120)
+  {field}   nombre_contacto : varchar(120)
+  {field} * fecha_inicio : timestamptz
+  {field} * requiere_atencion : boolean
+  {field}   fecha_atencion : timestamptz
+}
+
+entity "estado_publicacion" as estado_publicacion {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre : varchar(30) <<UQ>>
+}
+
+entity "evento" as evento {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field} * categoria_evento_id : int <<FK>>
+  {field} * estado_publicacion_id : int <<FK>>
+  {field} * creado_por : int <<FK>>
+  {field}   imagen_id : int <<FK>>
+  {field} * titulo : varchar(200)
+  {field}   descripcion : text
+  {field}   lugar : varchar(150)
+  {field} * fecha_inicio : timestamptz
+  {field}   fecha_fin : timestamptz
+  {field} * todo_el_dia : boolean
+  {field}   id_externo_m365 : varchar(255) <<UQ>>
+  {field}   detalle : jsonb «m004»
+}
+
+entity "grupo_pastoral" as grupo_pastoral {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field}   imagen_id : int <<FK>>
+  {field} * nombre : varchar(100)
+  {field}   descripcion : text
+  {field}   horario_reunion : varchar(100)
+  {field}   responsable : varchar(120) «m011»
+  {field}   icono : varchar(40)
+  {field} * orden : smallint
+  {field} * visible : boolean
+  {field} * slug : varchar(120) «m011»
+  {field}   whatsapp : varchar(30) «m011»
+  {field}   correo : varchar(120) «m011»
+  {field}   detalle : jsonb «m011»
+  .. UQ (sede_id, slug) ..
+}
+
+entity "horario" as horario {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field} * tipo_horario_id : int <<FK>>
+  {field} * dia_semana : smallint
+  {field} * hora_inicio : time
+  {field}   hora_fin : time
+  {field}   descripcion : varchar(150)
+  {field} * activo : boolean
+}
+
+entity "mensaje_bot" as mensaje_bot {
+  {field} * id : bigserial <<PK>>
+  --
+  {field} * conversacion_id : int <<FK>>
+  {field}   pregunta_frecuente_id : int <<FK>>
+  {field} * emisor : varchar(10)
+  {field} * contenido : text
+  {field} * fecha_envio : timestamptz
+}
+
+entity "observacion_proclama «m007»" as observacion_proclama #E8F5E9 {
+  {field} * id : serial <<PK>>
+  --
+  {field} * proclama_id : int <<FK>>
+  {field}   nombre_completo : varchar(120)
+  {field}   correo : varchar(120)
+  {field}   telefono : varchar(30)
+  {field} * mensaje : text
+  {field} * fecha_envio : timestamptz
+  {field}   leido_en : timestamptz
+  {field}   leido_por : int <<FK>>
+}
+
+entity "pagina" as pagina {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field}   pagina_padre_id : int <<FK>>
+  {field} * estado_publicacion_id : int <<FK>>
+  {field} * creado_por : int <<FK>>
+  {field}   actualizado_por : int <<FK>>
+  {field} * slug : varchar(120)
+  {field} * titulo : varchar(160)
+  {field}   descripcion_seo : varchar(300)
+  {field} * mostrar_en_menu : boolean
+  {field} * orden_menu : smallint
+  {field} * fecha_creacion : timestamptz
+  {field}   fecha_actualizacion : timestamptz
+  .. UQ (sede_id, slug) ..
+}
+
+entity "pregunta_frecuente" as pregunta_frecuente {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field}   servicio_id : int <<FK>>
+  {field} * pregunta : varchar(300)
+  {field} * respuesta : text
+  {field} * orden : smallint
+  {field} * activa : boolean
+}
+
+entity "proclama" as proclama {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field}   tramite_origen_id : int <<UQ>>
+  {field} * nombre_contrayente_1 : varchar(150)
+  {field} * nombre_contrayente_2 : varchar(150)
+  {field} * fecha_matrimonio : timestamptz
+  {field} * fecha_registro : timestamptz
+  {field}   imagen_id : int <<FK>> «m005»
+  {field}   detalle : jsonb «m005»
+}
+
+entity "proclama_publicacion" as proclama_publicacion {
+  {field} * proclama_id : int <<PK, FK>>
+  {field} * numero_proclama : smallint <<PK>>
+  --
+  {field} * fecha_publicacion : date
+}
+
+entity "publicacion" as publicacion {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field} * tipo_publicacion_id : int <<FK>>
+  {field}   categoria_id : int <<FK>>
+  {field} * estado_publicacion_id : int <<FK>>
+  {field} * autor_id : int <<FK>>
+  {field}   imagen_portada_id : int <<FK>>
+  {field} * titulo : varchar(200)
+  {field} * slug : varchar(200)
+  {field}   resumen : varchar(400)
+  {field} * contenido : jsonb
+  {field}   url_externa : varchar(500)
+  {field} * destacada : boolean
+  {field}   fecha_publicacion : timestamptz
+  {field}   fecha_expiracion : timestamptz
+  {field} * fecha_creacion : timestamptz
+  {field}   revisado_por : int <<FK>> «m001»
+  {field}   fecha_revision : timestamptz «m001»
+  {field}   observacion_revision : varchar(500) «m001»
+  {field} * abrir_enlace_directo : boolean «m003»
+  .. UQ (sede_id, slug) ..
+}
+
+entity "publicacion_grupo_pastoral «m013»" as publicacion_grupo_pastoral #E8F5E9 {
+  {field} * publicacion_id : int <<PK, FK>>
+  {field} * grupo_pastoral_id : int <<PK, FK>>
+  --
+}
+
+entity "publicacion_servicio «m013»" as publicacion_servicio #E8F5E9 {
+  {field} * publicacion_id : int <<PK, FK>>
+  {field} * servicio_id : int <<PK, FK>>
+  --
+}
+
+entity "red_social" as red_social {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre : varchar(40) <<UQ>>
+  {field} * icono : varchar(40)
+}
+
+entity "rol" as rol {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre : varchar(40) <<UQ>>
+  {field}   descripcion : varchar(200)
+}
+
+entity "sede" as sede {
+  {field} * id : serial <<PK>>
+  --
+  {field} * tipo_sede_id : int <<FK>>
+  {field}   sede_padre_id : int <<FK>>
+  {field} * nombre : varchar(120)
+  {field} * slug : varchar(80) <<UQ>>
+  {field}   direccion : varchar(200)
+  {field}   telefono : varchar(30)
+  {field}   whatsapp : varchar(30)
+  {field}   correo : varchar(120)
+  {field}   latitud : numeric(9,6)
+  {field}   longitud : numeric(9,6)
+  {field}   url_imagen_portada : varchar(500)
+  {field} * configuracion : jsonb
+  {field} * activo : boolean
+  {field} * orden : smallint «m009»
+}
+
+entity "sede_red_social" as sede_red_social {
+  {field} * sede_id : int <<PK, FK>>
+  {field} * red_social_id : int <<PK, FK>>
+  --
+  {field} * url : varchar(300)
+}
+
+entity "servicio" as servicio {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field} * slug : varchar(80)
+  {field} * nombre : varchar(100)
+  {field} * descripcion_corta : varchar(300)
+  {field}   icono : varchar(40)
+  {field} * contenido : jsonb
+  {field} * orden : smallint
+  {field} * visible : boolean
+  {field}   imagen_id : int <<FK>> «m012»
+  {field}   detalle : jsonb «m012»
+  .. UQ (sede_id, slug) ..
+}
+
+entity "tipo_bloque" as tipo_bloque {
+  {field} * id : serial <<PK>>
+  --
+  {field} * codigo : varchar(40) <<UQ>>
+  {field} * nombre : varchar(80)
+  {field} * esquema_validacion : jsonb
+}
+
+entity "tipo_horario" as tipo_horario {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre : varchar(60) <<UQ>>
+}
+
+entity "tipo_publicacion" as tipo_publicacion {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre : varchar(40) <<UQ>>
+}
+
+entity "tipo_sede" as tipo_sede {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre : varchar(40) <<UQ>>
+}
+
+entity "usuario" as usuario {
+  {field} * id : serial <<PK>>
+  --
+  {field} * rol_id : int <<FK>>
+  {field}   sede_id : int <<FK>>
+  {field} * nombre_completo : varchar(120)
+  {field} * correo : varchar(120) <<UQ>>
+  {field} * hash_contrasena : varchar(255)
+  {field} * activo : boolean
+  {field}   fecha_ultimo_acceso : timestamptz
+  {field} * fecha_creacion : timestamptz
+}
+
+entity "usuario_grupo_pastoral «m015»" as usuario_grupo_pastoral #E8F5E9 {
+  {field} * usuario_id : int <<PK, FK>>
+  {field} * grupo_pastoral_id : int <<PK, FK>>
+  --
+}
+
+entity "video" as video {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field} * titulo : varchar(160)
+  {field}   descripcion : text
+  {field} * youtube_video_id : varchar(20) <<UQ>>
+  {field}   duracion_segundos : int
+  {field} * destacado : boolean
+  {field} * orden : smallint
+  {field}   fecha_publicacion : date
+}
+
+sede ||--|{ archivo_multimedia : sede_id
+usuario ||--|{ archivo_multimedia : subido_por
+usuario |o--o{ bitacora_cambio : usuario_id
+pagina ||--|{ bloque : pagina_id
+tipo_bloque ||--|{ bloque : tipo_bloque_id
+archivo_multimedia ||--|{ boletin : archivo_id
+sede ||--|{ boletin : sede_id
+usuario ||--|{ boletin : publicado_por
+sede ||--|{ conversacion_bot : sede_id
+usuario |o--o{ conversacion_bot : atendida_por
+archivo_multimedia |o--o{ evento : imagen_id
+categoria_evento ||--|{ evento : categoria_evento_id
+estado_publicacion ||--|{ evento : estado_publicacion_id
+sede ||--|{ evento : sede_id
+usuario ||--|{ evento : creado_por
+archivo_multimedia |o--o{ grupo_pastoral : imagen_id
+sede ||--|{ grupo_pastoral : sede_id
+sede ||--|{ horario : sede_id
+tipo_horario ||--|{ horario : tipo_horario_id
+conversacion_bot ||--|{ mensaje_bot : conversacion_id
+pregunta_frecuente |o--o{ mensaje_bot : pregunta_frecuente_id
+usuario |o--o{ pagina : actualizado_por
+usuario ||--|{ pagina : creado_por
+estado_publicacion ||--|{ pagina : estado_publicacion_id
+pagina |o--o{ pagina : pagina_padre_id
+sede ||--|{ pagina : sede_id
+sede ||--|{ pregunta_frecuente : sede_id
+servicio |o--o{ pregunta_frecuente : servicio_id
+proclama ||--|{ proclama_publicacion : proclama_id
+sede ||--|{ proclama : sede_id
+archivo_multimedia |o--o{ publicacion : imagen_portada_id
+categoria |o--o{ publicacion : categoria_id
+estado_publicacion ||--|{ publicacion : estado_publicacion_id
+sede ||--|{ publicacion : sede_id
+tipo_publicacion ||--|{ publicacion : tipo_publicacion_id
+usuario ||--|{ publicacion : autor_id
+red_social ||--|{ sede_red_social : red_social_id
+sede ||--|{ sede_red_social : sede_id
+sede |o--o{ sede : sede_padre_id
+tipo_sede ||--|{ sede : tipo_sede_id
+sede ||--|{ servicio : sede_id
+rol ||--|{ usuario : rol_id
+sede |o--o{ usuario : sede_id
+sede ||--|{ video : sede_id
+usuario |o--o{ publicacion : revisado_por
+archivo_multimedia |o--o{ proclama : imagen_id
+archivo_multimedia |o--o{ boletin : portada_id
+proclama ||--|{ observacion_proclama : proclama_id
+usuario |o--o{ observacion_proclama : leido_por
+archivo_multimedia |o--o{ servicio : imagen_id
+publicacion ||--|{ publicacion_servicio : publicacion_id
+servicio ||--|{ publicacion_servicio : servicio_id
+publicacion ||--|{ publicacion_grupo_pastoral : publicacion_id
+grupo_pastoral ||--|{ publicacion_grupo_pastoral : grupo_pastoral_id
+usuario ||--|{ usuario_grupo_pastoral : usuario_id
+grupo_pastoral ||--|{ usuario_grupo_pastoral : grupo_pastoral_id
+@enduml
