@@ -68,13 +68,13 @@ describe('matriz de permisos', () => {
       'paginas',
     ];
 
-    it('todos los roles generales ven las secciones generales y el coordinador solo inicio, grupos y multimedia', () => {
+    it('todos los roles generales ven las secciones generales y el coordinador solo inicio, publicaciones, grupos y multimedia', () => {
       for (const usuario of usuariosSeed) {
         if (usuario.rol.codigo === 'COORDINADOR') {
           expect(puedeVerSeccion(usuario, 'inicio')).toBe(true);
+          expect(puedeVerSeccion(usuario, 'publicaciones')).toBe(true);
           expect(puedeVerSeccion(usuario, 'grupos')).toBe(true);
           expect(puedeVerSeccion(usuario, 'multimedia')).toBe(true);
-          expect(puedeVerSeccion(usuario, 'publicaciones')).toBe(false);
           expect(puedeVerSeccion(usuario, 'eventos')).toBe(false);
           continue;
         }

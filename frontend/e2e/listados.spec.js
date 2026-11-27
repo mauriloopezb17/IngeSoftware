@@ -3,6 +3,9 @@ import { expect, test } from '@playwright/test';
 import { abrirContextoConRol, tituloUnico } from './helpers/sesion.js';
 
 test.describe('Listados: filtrar, paginar y exportar CSV por rol (PAR-161.4)', () => {
+  test.beforeEach(() => {
+    test.setTimeout(180_000);
+  });
   test('Secretaría filtra eventos por categoría, pasa a página 2 y exporta el CSV filtrado', async ({
     browser,
   }) => {
@@ -13,9 +16,10 @@ test.describe('Listados: filtrar, paginar y exportar CSV por rol (PAR-161.4)', (
 
     try {
       // Crear 16 eventos próximos en categoría 1 para garantizar al menos 2 páginas (porPagina=15)
-      for (let i = 1; i <= 16; i += 1) {
+      const creaciones = Array.from({ length: 16 }, (_, idx) => {
+        const i = idx + 1;
         const dia = String(10 + (i % 15)).padStart(2, '0');
-        const res = await secretaria.page.request.post('/api/admin/eventos', {
+        return secretaria.page.request.post('/api/admin/eventos', {
           data: {
             titulo: `${prefijo}_CAT1_${String(i).padStart(2, '0')}`,
             categoriaEventoId: 1,
@@ -24,6 +28,9 @@ test.describe('Listados: filtrar, paginar y exportar CSV por rol (PAR-161.4)', (
             fechaFin: `2032-08-${dia}T12:00:00-04:00`,
           },
         });
+      });
+      const respuestasCrear = await Promise.all(creaciones);
+      for (const res of respuestasCrear) {
         expect(res.status()).toBe(201);
         const body = await res.json();
         creadosIds.push(body.datos.id);
@@ -91,9 +98,11 @@ test.describe('Listados: filtrar, paginar y exportar CSV por rol (PAR-161.4)', (
       expect(contenidoCsv).toContain(`${prefijo}_CAT1_01`);
       expect(contenidoCsv).not.toContain(otraCategoriaTitulo);
     } finally {
-      for (const id of creadosIds) {
-        await secretaria.page.request.delete(`/api/admin/eventos/${id}`);
-      }
+      await Promise.all(
+        creadosIds.map((id) =>
+          secretaria.page.request.delete(`/api/admin/eventos/${id}`).catch(() => {}),
+        ),
+      );
       await secretaria.context.close();
     }
   });

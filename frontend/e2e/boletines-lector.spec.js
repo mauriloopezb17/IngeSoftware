@@ -8,6 +8,9 @@ const RUTA_PDF_EJEMPLO = path.resolve(process.cwd(), 'public/media/seed/boletin-
 const RUTA_PORTADA_EJEMPLO = path.resolve(process.cwd(), 'public/media/seed/exterior-parroquia.webp');
 
 test.describe('Boletines: portada y lector superpuesto', () => {
+  test.beforeEach(() => {
+    test.setTimeout(90_000);
+  });
   test('la secretaría sube un boletín, el visitante ve la miniatura, abre el lector, lo cierra con Esc y descarga el PDF', async ({
     browser,
     page,

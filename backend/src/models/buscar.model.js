@@ -20,7 +20,8 @@ const VECTOR_EVENTO = `(
 
 const VECTOR_SERVICIO = `(
   setweight(to_tsvector('es_sin_tildes', coalesce(s.nombre, '')), 'A') ||
-  setweight(to_tsvector('es_sin_tildes', coalesce(s.descripcion_corta, '')), 'B')
+  setweight(to_tsvector('es_sin_tildes', coalesce(s.descripcion_corta, '')), 'B') ||
+  setweight(to_tsvector('es_sin_tildes', coalesce(extraer_texto_blocknote(s.detalle->'contenido'), '')), 'C')
 )`;
 
 const VECTOR_GRUPO = `(
@@ -32,6 +33,8 @@ const VECTOR_GRUPO = `(
 const VECTOR_BOLETIN = `(
   setweight(to_tsvector('es_sin_tildes', coalesce(b.titulo, '')), 'A')
 )`;
+
+const VECTOR_BLOQUE = `to_tsvector('es_sin_tildes', coalesce(extraer_texto_bloque(b.contenido), ''))`;
 
 const VECTOR_PAGINA = `(
   setweight(to_tsvector('es_sin_tildes', coalesce(pg.titulo, '')), 'A') ||
@@ -131,8 +134,12 @@ export async function buscarEnContenido(
              s.nombre AS titulo,
              '/sacramentos/' || s.slug AS url,
              NULL::timestamptz AS fecha,
-             NULL::int AS imagen_id,
-             coalesce(nullif(s.descripcion_corta, ''), s.nombre) AS texto_resumen,
+             s.imagen_id,
+             coalesce(
+               nullif(s.descripcion_corta, ''),
+               nullif(extraer_texto_blocknote(s.detalle->'contenido'), ''),
+               s.nombre
+             ) AS texto_resumen,
              ts_rank_cd(${VECTOR_SERVICIO}, consulta.q) AS relevancia
         FROM servicio s
         CROSS JOIN consulta
@@ -184,14 +191,42 @@ export async function buscarEnContenido(
              '/paginas/' || pg.slug AS url,
              NULL::timestamptz AS fecha,
              NULL::int AS imagen_id,
-             coalesce(nullif(pg.descripcion_seo, ''), pg.titulo) AS texto_resumen,
-             ts_rank_cd(${VECTOR_PAGINA}, consulta.q) AS relevancia
+             coalesce(
+               nullif(pg.descripcion_seo, ''),
+               nullif((
+                 SELECT string_agg(extraer_texto_bloque(b.contenido), ' ' ORDER BY b.orden, b.id)
+                   FROM bloque b
+                  WHERE b.pagina_id = pg.id AND b.visible
+               ), ''),
+               pg.titulo
+             ) AS texto_resumen,
+             ts_rank_cd(
+               ${VECTOR_PAGINA} ||
+               setweight(
+                 to_tsvector('es_sin_tildes', coalesce((
+                   SELECT string_agg(extraer_texto_bloque(b.contenido), ' ')
+                     FROM bloque b
+                    WHERE b.pagina_id = pg.id AND b.visible
+                 ), '')),
+                 'C'
+               ),
+               consulta.q
+             ) AS relevancia
         FROM pagina pg
         JOIN estado_publicacion ep ON ep.id = pg.estado_publicacion_id
         CROSS JOIN consulta
        WHERE pg.sede_id = $1
          AND ep.nombre = $3
-         AND ${VECTOR_PAGINA} @@ consulta.q
+         AND (
+           ${VECTOR_PAGINA} @@ consulta.q
+           OR EXISTS (
+             SELECT 1
+               FROM bloque b
+              WHERE b.pagina_id = pg.id
+                AND b.visible
+                AND ${VECTOR_BLOQUE} @@ consulta.q
+           )
+         )
     ),
     con_fechas AS (
       SELECT * FROM universo ${dondeFecha}

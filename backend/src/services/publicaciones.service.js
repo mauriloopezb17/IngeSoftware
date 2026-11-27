@@ -88,6 +88,10 @@ const TIPOS_NOTICIAS = () => [
 ];
 
 async function listarNoticiasRelacionadas(opciones, consulta = {}) {
+  // Un slug con formato imposible responde 404 sin consultar la base.
+  if (!esquemaSlug.safeParse(opciones.slugDestino).success) {
+    throw ErrorApp.noEncontrado(opciones.mensajeNoEncontrado);
+  }
   const pagina = consulta.pagina ?? 1;
   const porPagina = consulta.porPagina ?? 10;
   const resultado = await modelo.listarVigentesPorRelacion({

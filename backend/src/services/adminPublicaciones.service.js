@@ -6,6 +6,7 @@ import { transaccion } from '../db/index.js';
 import { ErrorApp } from '../errores/ErrorApp.js';
 import * as modelo from '../models/adminPublicaciones.model.js';
 import { actualizarFila, eliminarFila, slugsOcupados } from '../models/comunes.model.js';
+import { gruposAsignadosDe } from '../models/usuarios.model.js';
 import {
   accionesDisponibles,
   errorSinPermisoParaCrear,
@@ -101,6 +102,8 @@ export async function listarPublicaciones(usuario, sedeFiltro, consulta) {
       categoria: consulta.categoria,
       autorId: consulta.autor === 'yo' ? usuario.id : consulta.autor,
       patron: consulta.buscar ? patronBusqueda(consulta.buscar) : undefined,
+      coordinadorUsuarioId: usuario.rol === 'COORDINADOR' ? usuario.id : undefined,
+      tipoNoticia: TIPOS_PUBLICACION.nombreDe('NOTICIA'),
     },
     {
       limite: porPagina,
@@ -116,11 +119,62 @@ export async function listarPublicaciones(usuario, sedeFiltro, consulta) {
   };
 }
 
+async function exigirAlcanceCoordinadorPublicacion(usuario, tipo, publicacionId, db) {
+  if (usuario.rol !== 'COORDINADOR') return;
+  if (tipo !== 'NOTICIA') {
+    throw ErrorApp.sinPermiso(
+      'El coordinador de grupo solo puede acceder a noticias de sus grupos.',
+    );
+  }
+  const [asignados, gruposPub] = await Promise.all([
+    gruposAsignadosDe(usuario.id, db),
+    modelo.gruposDePublicacion(publicacionId, db),
+  ]);
+  const idsAsignados = new Set(asignados.map((g) => g.id));
+  if (gruposPub.length === 0 || gruposPub.some((gid) => !idsAsignados.has(gid))) {
+    throw ErrorApp.sinPermiso(
+      'Solo puedes ver y editar noticias de tus grupos pastorales asignados.',
+    );
+  }
+}
+
+async function validarRelacionesCoordinador(usuario, { servicioIds, grupoIds, esCreacion }, db) {
+  if (usuario.rol !== 'COORDINADOR') return;
+  const detalles = [];
+  if (servicioIds?.length) {
+    detalles.push({
+      campo: 'servicioIds',
+      mensaje: 'El coordinador de grupo no puede relacionar noticias con sacramentos ni servicios.',
+    });
+  }
+  if (esCreacion || grupoIds !== undefined) {
+    const asignados = await gruposAsignadosDe(usuario.id, db);
+    const idsAsignados = new Set(asignados.map((g) => g.id));
+    if (!grupoIds?.length) {
+      detalles.push({
+        campo: 'grupoIds',
+        mensaje: 'Debes seleccionar al menos uno de tus grupos pastorales.',
+      });
+    } else if (grupoIds.some((gid) => !idsAsignados.has(gid))) {
+      detalles.push({
+        campo: 'grupoIds',
+        mensaje: 'Solo puedes etiquetar los grupos pastorales que tienes asignados.',
+      });
+    }
+  }
+  if (detalles.length > 0) throw ErrorApp.validacion(undefined, detalles);
+}
+
 // GET /api/admin/publicaciones/:id (404 si no existe, 403 si es de otra sede).
 export async function obtenerPublicacion(usuario, id) {
   const fila = await modelo.buscarPorId(id, publicado());
   if (!fila) throw ErrorApp.noEncontrado('La publicación no existe.');
   exigirSedeDelRecurso(usuario, fila.sede_id);
+  await exigirAlcanceCoordinadorPublicacion(
+    usuario,
+    TIPOS_PUBLICACION.codigoDe(fila.tipo_nombre),
+    id,
+  );
   const relacionados = await modelo.obtenerRelacionados(id);
   return aPublicacion(fila, usuario, { conContenido: true, relacionados });
 }
@@ -135,7 +189,9 @@ export async function publicacionParaModificar(usuario, id, db) {
   exigirSedeDelRecurso(usuario, bloqueada.fila.sede_id);
 
   const { fila, tipoNombre, estadoNombre } = bloqueada;
-  return { fila, situacion: situacionDe(tipoNombre, estadoNombre, fila.autor_id) };
+  const situacion = situacionDe(tipoNombre, estadoNombre, fila.autor_id);
+  await exigirAlcanceCoordinadorPublicacion(usuario, situacion.tipo, id, db);
+  return { fila, situacion };
 }
 
 const errorSlugOcupado = (slug) =>
@@ -241,6 +297,11 @@ export async function crearPublicacion(usuario, cuerpo, contexto) {
   const id = await transaccion(async (db) => {
     const sedeId = await sedeDelRecursoNuevo(usuario, cuerpo.sedeId, db);
     await verificarReferencias(db, sedeId, cuerpo);
+    await validarRelacionesCoordinador(
+      usuario,
+      { servicioIds: cuerpo.servicioIds, grupoIds: cuerpo.grupoIds, esCreacion: true },
+      db,
+    );
     const slug = await elegirSlug(db, { sedeId, slugPedido: cuerpo.slug, titulo: cuerpo.titulo });
 
     const fila = await conSlugUnico(slug, () =>
@@ -376,6 +437,11 @@ export async function editarPublicacion(usuario, id, cambios, contexto) {
     }
 
     await verificarReferencias(db, fila.sede_id, { ...cambios, tipo: situacion.tipo });
+    await validarRelacionesCoordinador(
+      usuario,
+      { servicioIds: cambios.servicioIds, grupoIds: cambios.grupoIds, esCreacion: false },
+      db,
+    );
     exigirFechasEnOrden(fila, cambios);
     resolverEnlaceDirecto(fila, cambios, columnas);
 
