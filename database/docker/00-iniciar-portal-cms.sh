@@ -1,6 +1,7 @@
 #!/bin/bash
 # Inicializa la base db_portal_cms la primera vez que arranca el contenedor.
-# Orden: esquema -> migraciones numeradas -> datos iniciales (si CARGAR_SEED=true).
+# Orden: esquema -> migraciones numeradas -> datos iniciales (si CARGAR_SEED=true)
+# -> datos de demostración (si además CARGAR_DEMO=true; nunca en producción).
 set -euo pipefail
 shopt -s nullglob
 
@@ -20,6 +21,9 @@ done
 
 if [ "${CARGAR_SEED:-true}" = "true" ]; then
   ejecutar "$DB_DIR/seed/db_portal_cms_datos_iniciales.sql"
+  if [ "${CARGAR_DEMO:-false}" = "true" ]; then
+    ejecutar "$DB_DIR/seed/db_portal_cms_datos_demo.sql"
+  fi
 else
   echo ">> CARGAR_SEED=false: se omiten los datos iniciales"
 fi

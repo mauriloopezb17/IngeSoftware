@@ -12,6 +12,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-parroquia_dev}
       POSTGRES_DB: ${POSTGRES_DB:-db_portal_cms}
       CARGAR_SEED: ${CARGAR_SEED:-true}
+      # true: carga también database/seed/db_portal_cms_datos_demo.sql (solo para demostraciones).
+      CARGAR_DEMO: ${CARGAR_DEMO:-false}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
