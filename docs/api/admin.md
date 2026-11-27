@@ -770,7 +770,7 @@ Reglas: `nombre` obligatorio (hasta 100 caracteres); `descripcionCorta` obligato
 
 ## 7. Grupos pastorales
 
-Permiso de escritura: `grupos.gestionar`.
+Permisos de escritura: `grupos.gestionar` (CRUD completo, orden y visibilidad) y `grupos.detalle` (descripción, horario, contacto, imagen y detalle de la página, incluyendo Marketing).
 
 ### Objeto grupo pastoral
 
@@ -782,41 +782,54 @@ Permiso de escritura: `grupos.gestionar`.
     "nombre": "Parroquia Señor de la Exaltación",
     "slug": "senor-de-la-exaltacion"
   },
+  "slug": "pastoral-juvenil",
   "nombre": "Pastoral Juvenil",
   "descripcion": null,
   "horarioReunion": "Viernes · 18:30",
-  "contacto": null,
+  "responsable": null,
+  "whatsapp": null,
+  "correo": null,
   "icono": "users",
   "imagen": null,
+  "detalle": null,
   "orden": 4,
   "visible": true
 }
 ```
 
-| Método y ruta                                 | Descripción                                           |
-| --------------------------------------------- | ----------------------------------------------------- |
-| `GET /api/admin/grupos-pastorales`            | Paginado (`porPagina` hasta 100). Filtros: `sede`, `visible`, `buscar`. Orden: `orden` (defecto), `-orden`, `nombre`, `-nombre`. |
-| `GET /api/admin/grupos-pastorales/:id`        | Un grupo.                                             |
-| `POST /api/admin/grupos-pastorales`           | Crea. `201`.                                          |
-| `PATCH /api/admin/grupos-pastorales/:id`      | Edita.                                                |
-| `DELETE /api/admin/grupos-pastorales/:id`     | Elimina.                                              |
-| `POST /api/admin/grupos-pastorales/reordenar` | `{ "ids": [1, 2, 3, 4, 5, 6] }`.                      |
+| Método y ruta                                    | Descripción                                                                                                               |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/admin/grupos-pastorales`               | Paginado (`porPagina` hasta 100). Filtros: `sede`, `visible`, `buscar`. Orden: `orden` (defecto), `-orden`, `nombre`, `-nombre`. |
+| `GET /api/admin/grupos-pastorales/:id`           | Un grupo.                                                                                                                 |
+| `POST /api/admin/grupos-pastorales`              | Crea (`grupos.gestionar`). `201`.                                                                                         |
+| `PATCH /api/admin/grupos-pastorales/:id`         | Edita (`grupos.gestionar`).                                                                                               |
+| `PATCH /api/admin/grupos-pastorales/:id/detalle` | Edita solo descripción, horario, responsable, WhatsApp, correo, foto principal y `detalle` (`grupos.detalle`).            |
+| `DELETE /api/admin/grupos-pastorales/:id`        | Elimina (`grupos.gestionar`).                                                                                             |
+| `POST /api/admin/grupos-pastorales/reordenar`    | `{ "ids": [1, 2, 3, 4, 5, 6] }` (`grupos.gestionar`).                                                                     |
 
 **Cuerpo de `POST`:**
 
 ```json
 {
   "nombre": "Pastoral Juvenil",
+  "slug": "pastoral-juvenil",
   "descripcion": "Jóvenes de 15 a 25 años que se reúnen a compartir, rezar y servir.",
   "horarioReunion": "Viernes · 18:30",
-  "contacto": "Coordinación juvenil: escribir por Messenger",
+  "responsable": "Coordinación juvenil",
+  "whatsapp": "+591 71234567",
+  "correo": "juvenil@parroquia.test",
   "icono": "users",
   "imagenId": null,
+  "detalle": {
+    "contenido": null,
+    "galeria": [],
+    "videoYoutubeId": null
+  },
   "visible": true
 }
 ```
 
-Reglas: `nombre` obligatorio (hasta 100); `horarioReunion` texto libre (hasta 100); `contacto` hasta 120; `descripcion` texto plano hasta 2000.
+Reglas: `nombre` obligatorio (hasta 100); `slug` opcional (se genera desde el nombre si no se envía; único por sede, hasta 120); `horarioReunion` texto libre (hasta 100); `responsable` hasta 120; `whatsapp` teléfono válido (7–15 dígitos con `+`, dígitos, espacios o guiones); `correo` email válido (hasta 120); `descripcion` texto plano hasta 2000; `detalle` acepta `contenido` (BlockNote), `galeria` (hasta 24 ids de imágenes o videos de la misma sede) y `videoYoutubeId` (id o URL de YouTube).
 
 ---
 

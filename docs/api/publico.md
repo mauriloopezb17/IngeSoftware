@@ -443,7 +443,7 @@ Detalle de un servicio para la vista «Ver requisitos». Incluye el `contenido` 
 
 ## `GET /api/sedes/:sede/grupos-pastorales`
 
-Grupos y pastorales visibles, ordenados por `orden`. Sin paginación.
+Grupos y pastorales visibles, ordenados por `orden`.
 
 **Respuesta `200`:**
 
@@ -452,62 +452,86 @@ Grupos y pastorales visibles, ordenados por `orden`. Sin paginación.
   "datos": [
     {
       "id": 1,
+      "slug": "monaguillos",
       "nombre": "Monaguillos",
       "descripcion": null,
       "horarioReunion": "Sábados · 10:00",
-      "contacto": null,
+      "responsable": null,
+      "whatsapp": null,
+      "correo": null,
       "icono": "star",
       "imagen": null,
+      "tieneDetalle": false,
       "orden": 1
     },
     {
       "id": 2,
+      "slug": "coro-parroquial",
       "nombre": "Coro parroquial",
       "descripcion": null,
       "horarioReunion": "Jueves · 19:00",
-      "contacto": null,
+      "responsable": null,
+      "whatsapp": null,
+      "correo": null,
       "icono": "music-2",
       "imagen": null,
+      "tieneDetalle": false,
       "orden": 2
     },
     {
       "id": 3,
+      "slug": "catequistas",
       "nombre": "Catequistas",
       "descripcion": null,
       "horarioReunion": "Formación mensual",
-      "contacto": null,
+      "responsable": null,
+      "whatsapp": null,
+      "correo": null,
       "icono": "book-open",
       "imagen": null,
+      "tieneDetalle": false,
       "orden": 3
     },
     {
       "id": 4,
+      "slug": "pastoral-juvenil",
       "nombre": "Pastoral Juvenil",
       "descripcion": null,
       "horarioReunion": "Viernes · 18:30",
-      "contacto": null,
+      "responsable": null,
+      "whatsapp": null,
+      "correo": null,
       "icono": "users",
       "imagen": null,
+      "tieneDetalle": false,
       "orden": 4
     },
     {
       "id": 5,
+      "slug": "legion-de-maria",
       "nombre": "Legión de María",
       "descripcion": null,
       "horarioReunion": "Martes · 16:00",
-      "contacto": null,
+      "responsable": null,
+      "whatsapp": null,
+      "correo": null,
       "icono": "cross",
       "imagen": null,
+      "tieneDetalle": false,
       "orden": 5
     },
     {
       "id": 6,
+      "slug": "pastoral-social",
       "nombre": "Pastoral social",
       "descripcion": null,
       "horarioReunion": "Cáritas parroquial",
-      "contacto": null,
+      "responsable": null,
+      "whatsapp": null,
+      "correo": null,
       "icono": "heart-handshake",
       "imagen": null,
+      "tieneDetalle": false,
       "orden": 6
     }
   ],
@@ -521,6 +545,12 @@ Grupos y pastorales visibles, ordenados por `orden`. Sin paginación.
 ```
 
 `horarioReunion` es texto libre (ej. «Formación mensual»), no un horario estructurado.
+
+## `GET /api/sedes/:sede/grupos-pastorales/:slug`
+
+Detalle completo de un grupo pastoral visible, incluyendo galería hidratada y contenido BlockNote.
+
+**Errores:** `404 NO_ENCONTRADO` si el slug no existe en la sede o el grupo no está visible.
 
 ---
 

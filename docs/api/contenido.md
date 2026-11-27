@@ -6,6 +6,7 @@ Formato de los tres documentos JSONB que la API guarda y devuelve **sin traducir
 | --------------------------------------------------------------------------- | ----------------------- | ---------------------------------- |
 | [Contenido de las publicaciones y eventos](#contenido-de-las-publicaciones-blocknote) | `publicacion.contenido`, `evento.detalle.contenido` | Editor BlockNote del panel |
 | [Detalle de las proclamas](#contenido-de-las-publicaciones-blocknote)       | `proclama.detalle`      | Editor BlockNote + galería + lugar |
+| [Detalle de los grupos pastorales](#contenido-de-las-publicaciones-blocknote) | `grupo_pastoral.detalle` | Editor BlockNote + galería + YouTube |
 | [Contenido de los servicios](#contenido-de-los-servicios)                   | `servicio.contenido`    | Formulario de etiqueta y valor     |
 | [Bloques de página](#bloques-de-página)                                     | `bloque.contenido`      | Formulario según el tipo de bloque |
 

@@ -63,6 +63,7 @@ deSede.get(
   validar({ query: consultaPastoralPortal }),
   pastoral.listarGruposPastorales,
 );
+deSede.get('/grupos-pastorales/:slug', pastoral.detalleGrupoPastoral);
 deSede.get('/videos', validar({ query: consultaVideosPortal }), pastoral.listarVideos);
 deSede.use('/publicaciones', publicacionesRoutes);
 deSede.use('/eventos', eventosRoutes);

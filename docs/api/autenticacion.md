@@ -86,6 +86,7 @@ Abre la sesión. Tiene límite de intentos (ver [sección 4](#4-límite-de-inten
       "horarios.gestionar",
       "servicios.gestionar",
       "grupos.gestionar",
+      "grupos.detalle",
       "videos.gestionar",
       "sede.editar",
       "proclamas.gestionar",
@@ -249,6 +250,7 @@ Todos los roles pueden **consultar** (`GET`) todos los recursos de su sede en `/
 | `horarios.gestionar`  | CRUD de horarios.                                                                                                                                             |       ✓       |    ✓    |     ✓      |     —     |
 | `servicios.gestionar` | CRUD de servicios y sacramentos, y de sus preguntas frecuentes.                                                                                               |       ✓       |    ✓    |     ✓      |     —     |
 | `grupos.gestionar`    | CRUD de grupos pastorales.                                                                                                                                    |       ✓       |    ✓    |     ✓      |     —     |
+| `grupos.detalle`      | Editar la página, galería y contacto de cada grupo pastoral (`PATCH /api/admin/grupos-pastorales/:id/detalle`).                                               |       ✓       |    ✓    |     ✓      |     ✓     |
 | `videos.gestionar`    | CRUD de videos de YouTube.                                                                                                                                    |       ✓       |    ✓    |     ✓      |     ✓     |
 | `sede.editar`         | Editar datos, contacto, configuración y redes sociales de la propia sede.                                                                                     |       ✓       |    ✓    |     ✓      |     —     |
 | `sedes.gestionar`     | Crear sedes, activarlas y desactivarlas.                                                                                                                      |       ✓       |    —    |     —      |     —     |

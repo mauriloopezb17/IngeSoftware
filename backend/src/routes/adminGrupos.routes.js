@@ -10,6 +10,7 @@ import { esquemaExportacion } from '../validacion/comunes.js';
 import {
   consultaGrupos,
   cuerpoCrearGrupo,
+  cuerpoEditarDetalleGrupo,
   cuerpoEditarGrupo,
   cuerpoReordenarGrupos,
   paramsGrupo,
@@ -19,6 +20,10 @@ const router = Router();
 const exigirPermiso = requerirPermiso(
   PERMISOS.GRUPOS_GESTIONAR,
   'Tu rol no tiene permiso para gestionar grupos pastorales.',
+);
+const exigirEditarDetalle = requerirPermiso(
+  PERMISOS.GRUPOS_DETALLE,
+  'Tu rol no tiene permiso para editar la página de los grupos pastorales.',
 );
 
 router.get('/', validar({ query: consultaGrupos }), filtrarPorSede, controlador.listar);
@@ -44,6 +49,12 @@ router.patch(
   exigirPermiso,
   validar({ params: paramsGrupo, body: cuerpoEditarGrupo }),
   controlador.editar,
+);
+router.patch(
+  '/:id/detalle',
+  exigirEditarDetalle,
+  validar({ params: paramsGrupo, body: cuerpoEditarDetalleGrupo }),
+  controlador.editarDetalle,
 );
 router.delete('/:id', exigirPermiso, validar({ params: paramsGrupo }), controlador.eliminar);
 
