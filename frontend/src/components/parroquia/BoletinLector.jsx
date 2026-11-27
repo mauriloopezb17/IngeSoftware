@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Download, ExternalLink, Maximize2, Minus, Plus, RotateCw, X } from 'lucide-react';
+import { Download, ExternalLink, Minus, Plus, RotateCw, X } from 'lucide-react';
 import 'pdfjs-dist/web/pdf_viewer.css';
 
 import { descargarBoletinPdf } from '../../utils/boletines.js';
@@ -8,10 +8,17 @@ import { formatearPeriodoMes } from '../../utils/formatoPortal.js';
 import { cargarPdfJs } from '../../utils/pdfJs.js';
 import { prefiereMovimientoReducido } from '../portal/observadorCompartido.js';
 
-const ZOOM_MIN = 0.5;
-const ZOOM_MAX = 2.5;
-const ZOOM_PASO = 0.25;
-const ANCHO_MAXIMO_HOJA = 900;
+// Tamaño de la página respecto del ancho disponible del lector: 100 % = la hoja ocupa todo el ancho.
+const NIVELES_ZOOM = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
+const ZOOM_MIN = NIVELES_ZOOM[0];
+const ZOOM_MAX = NIVELES_ZOOM[NIVELES_ZOOM.length - 1];
+const ANCHO_INICIAL = 640;
+// Tope de píxeles por lienzo: los celulares fallan al dibujar lienzos más grandes (~16 MP).
+const PIXELES_MAXIMOS_LIENZO = 16_000_000;
+
+function etiquetaZoom(nivel) {
+  return `${Math.round(nivel * 100)} %`;
+}
 
 function obtenerElementosFocables(contenedor) {
   if (!contenedor) return [];
@@ -29,13 +36,16 @@ function HojaPdf({
   debeRenderizar,
   anchoBase,
   zoom,
-  ajusteAncho,
   registrarNodo,
 }) {
   const hojaRef = useRef(null);
   const canvasRef = useRef(null);
   const textoRef = useRef(null);
-  const [dimensiones, setDimensiones] = useState({ ancho: 640, alto: 830 });
+  // El ancho de la hoja siempre es "ancho disponible × zoom"; el alto sale de la proporción de la
+  // página (A4 hasta conocerla). Así las hojas aún no dibujadas no ensanchan el visor.
+  const [proporcion, setProporcion] = useState(297 / 210);
+  const anchoHoja = Math.round((anchoBase || ANCHO_INICIAL) * zoom);
+  const altoHoja = Math.round(anchoHoja * proporcion);
   const [dibujada, setDibujada] = useState(false);
   const [enlaces, setEnlaces] = useState([]);
 
@@ -71,14 +81,16 @@ function HojaPdf({
         if (cancelado) return;
 
         const viewportBase = pagina.getViewport({ scale: 1 });
-        const anchoDisponible = Math.min(anchoBase || ANCHO_MAXIMO_HOJA, ANCHO_MAXIMO_HOJA);
-        const escalaBase = ajusteAncho ? anchoDisponible / viewportBase.width : 1.25;
-        const escalaFinal = Math.max(0.25, escalaBase * (ajusteAncho ? 1 : zoom));
+        const anchoDisponible = anchoBase || ANCHO_INICIAL;
+        const escalaFinal = Math.max(0.1, (anchoDisponible / viewportBase.width) * zoom);
         const viewport = pagina.getViewport({ scale: escalaFinal });
 
-        setDimensiones({ ancho: Math.round(viewport.width), alto: Math.round(viewport.height) });
+        setProporcion(viewportBase.height / viewportBase.width);
 
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        // Nitidez según la pantalla, sin pasar el tope de píxeles del lienzo al acercar mucho.
+        const dprPantalla = Math.min(window.devicePixelRatio || 1, 2);
+        const dprMaximo = Math.sqrt(PIXELES_MAXIMOS_LIENZO / (viewport.width * viewport.height));
+        const dpr = Math.max(0.5, Math.min(dprPantalla, dprMaximo));
         canvas.width = Math.floor(viewport.width * dpr);
         canvas.height = Math.floor(viewport.height * dpr);
         canvas.style.width = `${Math.round(viewport.width)}px`;
@@ -148,7 +160,7 @@ function HojaPdf({
       tareaRender?.cancel?.();
       capaTextoInstancia?.cancel?.();
     };
-  }, [debeRenderizar, pdfDoc, pdfjs, numeroPagina, anchoBase, zoom, ajusteAncho]);
+  }, [debeRenderizar, pdfDoc, pdfjs, numeroPagina, anchoBase, zoom]);
 
   return (
     <div
@@ -156,7 +168,7 @@ function HojaPdf({
       data-pagina={numeroPagina}
       aria-label={`Página ${numeroPagina}`}
       className="relative mx-auto shrink-0 overflow-hidden bg-white shadow-md"
-      style={{ width: dimensiones.ancho, height: dimensiones.alto }}
+      style={{ width: anchoHoja, height: altoHoja }}
     >
       {!dibujada && (
         <div
@@ -206,9 +218,8 @@ function BoletinLector({ boletin, alCerrar }) {
   const [pdfjsLib, setPdfjsLib] = useState(null);
   const [numPaginas, setNumPaginas] = useState(0);
   const [paginaActual, setPaginaActual] = useState(1);
-  const [ajusteAncho, setAjusteAncho] = useState(true);
   const [zoom, setZoom] = useState(1);
-  const [anchoContenedor, setAnchoContenedor] = useState(ANCHO_MAXIMO_HOJA);
+  const [anchoContenedor, setAnchoContenedor] = useState(ANCHO_INICIAL);
   const [descargando, setDescargando] = useState(false);
   const [visible, setVisible] = useState(() => prefiereMovimientoReducido());
 
@@ -235,14 +246,16 @@ function BoletinLector({ boletin, alCerrar }) {
     };
   }, []);
 
-  // Medir ancho disponible del visor para "Ajustar al ancho"
+  // Medir el ancho disponible del visor (sin su relleno): es el 100 % del zoom.
   useEffect(() => {
     const contenedor = scrollRef.current;
     if (!contenedor) return undefined;
 
     const actualizarAncho = () => {
-      const ancho = Math.max(260, contenedor.clientWidth - 48);
-      setAnchoContenedor(Math.min(ancho, ANCHO_MAXIMO_HOJA));
+      const estilos = window.getComputedStyle(contenedor);
+      const relleno =
+        (parseFloat(estilos.paddingLeft) || 0) + (parseFloat(estilos.paddingRight) || 0);
+      setAnchoContenedor(Math.max(240, contenedor.clientWidth - relleno));
     };
 
     actualizarAncho();
@@ -351,18 +364,11 @@ function BoletinLector({ boletin, alCerrar }) {
   );
 
   const acercar = useCallback(() => {
-    setAjusteAncho(false);
-    setZoom((z) => Math.min(ZOOM_MAX, Number((z + ZOOM_PASO).toFixed(2))));
+    setZoom((z) => NIVELES_ZOOM.find((nivel) => nivel > z) ?? ZOOM_MAX);
   }, []);
 
   const alejar = useCallback(() => {
-    setAjusteAncho(false);
-    setZoom((z) => Math.max(ZOOM_MIN, Number((z - ZOOM_PASO).toFixed(2))));
-  }, []);
-
-  const ajustarAlAncho = useCallback(() => {
-    setAjusteAncho(true);
-    setZoom(1);
+    setZoom((z) => [...NIVELES_ZOOM].reverse().find((nivel) => nivel < z) ?? ZOOM_MIN);
   }, []);
 
   // Atajos de teclado y trampa de foco
@@ -477,45 +483,48 @@ function BoletinLector({ boletin, alCerrar }) {
                 </span>
               )}
 
-              <div className="hidden items-center gap-1 rounded-sm border border-sand bg-cream px-1 py-0.5 sm:inline-flex">
+              <div
+                role="group"
+                aria-label="Tamaño de la página"
+                className="inline-flex items-center gap-0.5 rounded-sm border border-sand bg-cream p-0.5"
+              >
                 <button
                   type="button"
                   onClick={alejar}
-                  disabled={!ajusteAncho && zoom <= ZOOM_MIN}
+                  disabled={zoom <= ZOOM_MIN}
                   aria-label="Alejar"
-                  className="inline-flex size-9 cursor-pointer items-center justify-center rounded-sm text-ink hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-gold"
+                  className="inline-flex size-11 cursor-pointer items-center justify-center rounded-sm text-ink hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-gold lg:size-9"
                 >
                   <Minus size={16} aria-hidden="true" />
                 </button>
 
-                <span className="min-w-12 text-center font-body text-meta tabular-nums text-ink">
-                  {ajusteAncho ? '100 %' : `${Math.round(zoom * 100)} %`}
-                </span>
+                <label htmlFor="zoom-lector-boletin" className="sr-only">
+                  Tamaño de la página (100 % es el ancho de la pantalla)
+                </label>
+                <select
+                  id="zoom-lector-boletin"
+                  value={String(zoom)}
+                  onChange={(evento) => setZoom(Number(evento.target.value))}
+                  title="100 % es el ancho de la pantalla"
+                  className="min-h-11 cursor-pointer rounded-sm border border-transparent bg-white px-2 text-center font-body text-meta font-semibold tabular-nums text-ink hover:border-sand focus-visible:outline-2 focus-visible:outline-gold lg:min-h-9"
+                >
+                  {NIVELES_ZOOM.map((nivel) => (
+                    <option key={nivel} value={String(nivel)}>
+                      {etiquetaZoom(nivel)}
+                    </option>
+                  ))}
+                </select>
 
                 <button
                   type="button"
                   onClick={acercar}
-                  disabled={!ajusteAncho && zoom >= ZOOM_MAX}
+                  disabled={zoom >= ZOOM_MAX}
                   aria-label="Acercar"
-                  className="inline-flex size-9 cursor-pointer items-center justify-center rounded-sm text-ink hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-gold"
+                  className="inline-flex size-11 cursor-pointer items-center justify-center rounded-sm text-ink hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-gold lg:size-9"
                 >
                   <Plus size={16} aria-hidden="true" />
                 </button>
               </div>
-
-              <button
-                type="button"
-                onClick={ajustarAlAncho}
-                aria-pressed={ajusteAncho}
-                className={`inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-sm border px-3 font-body text-meta font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold ${
-                  ajusteAncho
-                    ? 'border-ink bg-cream text-ink'
-                    : 'border-sand bg-white text-ink hover:bg-cream'
-                }`}
-              >
-                <Maximize2 size={14} aria-hidden="true" />
-                <span>Ajustar al ancho</span>
-              </button>
 
               <button
                 type="button"
@@ -532,7 +541,7 @@ function BoletinLector({ boletin, alCerrar }) {
           {/* Contenido del lector */}
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto bg-cream px-4 py-6 md:px-8"
+            className="flex-1 overflow-auto bg-cream px-4 py-6 md:px-8"
           >
             {estadoVisible === 'cargando' && (
               <div className="mx-auto flex max-w-[900px] flex-col items-center gap-6" aria-busy="true">
@@ -594,7 +603,9 @@ function BoletinLector({ boletin, alCerrar }) {
             )}
 
             {estadoVisible === 'listo' && pdfDoc && (
-              <div className="flex flex-col items-center gap-6">
+              // w-max + min-w-full: al acercar, las hojas más anchas que la pantalla se recorren con
+              // desplazamiento horizontal (centradas, sin cortar su lado izquierdo).
+              <div className="flex w-max min-w-full flex-col items-center gap-6">
                 {paginas.map((numero) => (
                   <HojaPdf
                     key={numero}
@@ -604,7 +615,6 @@ function BoletinLector({ boletin, alCerrar }) {
                     debeRenderizar={Math.abs(numero - paginaActual) <= 2}
                     anchoBase={anchoContenedor}
                     zoom={zoom}
-                    ajusteAncho={ajusteAncho}
                     registrarNodo={registrarNodo}
                   />
                 ))}

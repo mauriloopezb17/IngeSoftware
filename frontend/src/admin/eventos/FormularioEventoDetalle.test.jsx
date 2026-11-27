@@ -53,6 +53,10 @@ function montarConRouter(entrada = '/admin/eventos/2/editar') {
   return router;
 }
 
+// El formulario carga el evento y, en paralelo, el editor de contenido (carga diferida). Con la
+// máquina ocupada tarda más de 1 s (la espera por defecto) y la prueba fallaba de forma intermitente.
+const ESPERA_CARGA_EVENTO = { timeout: 5000 };
+
 async function esperarEditorListo() {
   await waitFor(
     () => {
@@ -71,7 +75,7 @@ describe('detalle de página en el formulario de eventos', () => {
     montarConRouter('/admin/eventos/2/editar');
     const usuario = userEvent.setup();
 
-    expect(await screen.findByLabelText('Dirección')).toHaveValue('Av. Héctor Ormachea N.º 167, Obrajes, La Paz');
+    expect(await screen.findByLabelText('Dirección', {}, ESPERA_CARGA_EVENTO)).toHaveValue('Av. Héctor Ormachea N.º 167, Obrajes, La Paz');
     expect(screen.getByLabelText('Enlace de Google Maps')).toHaveValue(
       'https://www.google.com/maps/search/?api=1&query=-16.5267952%2C-68.1082157',
     );
@@ -157,7 +161,7 @@ describe('detalle de página en el formulario de eventos', () => {
     montarConRouter('/admin/eventos/2/editar');
     const usuario = userEvent.setup();
 
-    await screen.findByLabelText('Dirección');
+    await screen.findByLabelText('Dirección', {}, ESPERA_CARGA_EVENTO);
     await esperarEditorListo();
 
     const enlacePublico = screen.getByRole('link', { name: /Ver cómo queda/ });
@@ -221,7 +225,7 @@ describe('detalle de página en el formulario de eventos', () => {
     const router = montarConRouter('/admin/eventos/2/editar');
     const usuario = userEvent.setup();
 
-    const direccion = await screen.findByLabelText('Dirección');
+    const direccion = await screen.findByLabelText('Dirección', {}, ESPERA_CARGA_EVENTO);
     await esperarEditorListo();
     await usuario.type(direccion, ' - Puerta lateral');
 
