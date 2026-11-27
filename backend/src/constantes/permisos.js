@@ -13,7 +13,7 @@ const MATRIZ = [
   ['multimedia.subir', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING, COORDINADOR]],
   ['multimedia.eliminar', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING, COORDINADOR]],
   ['avisos.gestionar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
-  ['noticias.redactar', [ADMINISTRADOR, PARROCO, MARKETING]],
+  ['noticias.redactar', [ADMINISTRADOR, PARROCO, MARKETING, COORDINADOR]],
   ['noticias.publicar', [ADMINISTRADOR, PARROCO]],
   ['eventos.gestionar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
   ['eventos.detalle', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING]],

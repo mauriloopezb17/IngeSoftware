@@ -1,19 +1,22 @@
 import { expect, test } from '@playwright/test';
-import { eliminarGrupoAdmin } from './helpers/limpieza.js';
+import { eliminarGrupoAdmin, eliminarPublicacionAdmin } from './helpers/limpieza.js';
 import { abrirContextoConRol, tituloUnico } from './helpers/sesion.js';
 
 test.describe('Coordinador de grupo', () => {
   test.beforeEach(() => {
     test.setTimeout(180_000);
   });
-  test('el Administrador crea un coordinador con un grupo → el coordinador inicia sesión, solo ve Mis grupos, edita la foto y el WhatsApp de su grupo → se ve en el portal; no puede abrir /admin/eventos', async ({
+  test('el Administrador crea un coordinador con un grupo → el coordinador inicia sesión, solo ve Mis grupos, edita la foto y el WhatsApp de su grupo, redacta una noticia y el Párroco la aprueba → se ve en el portal; no puede abrir /admin/eventos', async ({
     browser,
     page,
   }) => {
+    test.slow();
     const nombreGrupo = tituloUnico('Grupo Coord E2E');
-    const correoCoord = `${tituloUnico('coord-e2e').replace(/\s+/g, '-').toLowerCase()}@parroquia.test`;
+    const tituloNoticia = tituloUnico('Noticia Coord');
+    const correoCoord = `${tituloUnico('coord-ee').replace(/\s+/g, '-').toLowerCase()}@parroquia.test`;
     const claveCoord = 'Clave-Coord-2026!';
     let grupoId;
+    let noticiaId;
 
     const secretaria = await abrirContextoConRol(browser, 'secretaria');
     try {
@@ -78,10 +81,10 @@ test.describe('Coordinador de grupo', () => {
         await expect(pageCoord).toHaveURL(/\/admin\/inicio/);
 
         const menu = pageCoord.getByRole('navigation', { name: 'Menú principal' });
-        await expect(menu.getByRole('link', { name: 'Mis grupos' })).toBeVisible();
+        await expect(menu.getByRole('link', { name: 'Mis grupos', exact: true })).toBeVisible();
         await expect(menu.getByRole('link', { name: 'Eventos' })).toHaveCount(0);
 
-        await menu.getByRole('link', { name: 'Mis grupos' }).click();
+        await menu.getByRole('link', { name: 'Mis grupos', exact: true }).click();
         await expect(pageCoord.getByRole('heading', { name: 'Mis grupos' })).toBeVisible();
 
         const btnEditar = pageCoord.getByRole('button', { name: `Editar página de «${nombreGrupo}»` });
@@ -99,6 +102,36 @@ test.describe('Coordinador de grupo', () => {
         await dialogo.getByRole('button', { name: 'Guardar cambios' }).click();
         await expect(dialogo).toBeHidden();
         await expect(pageCoord.getByText(`Se actualizó el grupo «${nombreGrupo}».`)).toBeVisible();
+
+        await menu.getByRole('link', { name: 'Noticias de mis grupos' }).click();
+        await expect(
+          pageCoord.getByRole('heading', { name: 'Noticias de mis grupos' }),
+        ).toBeVisible();
+        await pageCoord.getByRole('link', { name: 'Nueva noticia' }).click();
+        await pageCoord.getByLabel('Título').fill(tituloNoticia);
+        const editor = pageCoord
+          .getByRole('group', { name: 'Contenido de la publicación' })
+          .locator('[contenteditable="true"]')
+          .first();
+        await expect(editor).toBeVisible();
+        await editor.click();
+        await pageCoord.keyboard.type('Noticia redactada por el coordinador para su grupo.');
+        await expect(
+          pageCoord.getByRole('button', { name: `Quitar ${nombreGrupo}` }),
+        ).toBeVisible();
+        const [respCrearNoticia] = await Promise.all([
+          pageCoord.waitForResponse(
+            (res) =>
+              res.url().includes('/api/admin/publicaciones') && res.request().method() === 'POST',
+          ),
+          pageCoord.getByRole('button', { name: 'Guardar borrador' }).click(),
+        ]);
+        noticiaId = (await respCrearNoticia.json())?.datos?.id;
+        await expect(pageCoord.getByRole('button', { name: 'Enviar a revisión' })).toBeVisible();
+        await pageCoord.getByRole('button', { name: 'Enviar a revisión' }).click();
+        const dialogoRevision = pageCoord.getByRole('dialog', { name: 'Enviar a revisión' });
+        await dialogoRevision.getByRole('button', { name: 'Enviar a revisión' }).click();
+        await expect(pageCoord.getByText('Se envió a revisión del párroco.')).toBeVisible();
         expect(erroresApi).toEqual([]);
 
         await pageCoord.goto('/admin/eventos');
@@ -107,13 +140,29 @@ test.describe('Coordinador de grupo', () => {
         await ctxCoord.close();
       }
 
+      const parroco = await abrirContextoConRol(browser, 'parroco');
+      try {
+        await parroco.page.goto('/admin/publicaciones/revision');
+        const fila = parroco.page.getByRole('row', { name: new RegExp(tituloNoticia) });
+        await expect(fila).toBeVisible();
+        await fila.getByRole('button', { name: `Aprobar «${tituloNoticia}»` }).click();
+        const dialogoAprobar = parroco.page.getByRole('dialog', { name: 'Aprobar publicación' });
+        await expect(dialogoAprobar).toBeVisible();
+        await dialogoAprobar.getByRole('button', { name: 'Aprobar y publicar' }).click();
+        await expect(dialogoAprobar).toBeHidden();
+      } finally {
+        await parroco.context.close();
+      }
+
       await page.goto('/comunidad');
       await page.getByRole('link', { name: nombreGrupo }).click();
       await expect(page.getByRole('heading', { level: 1, name: nombreGrupo })).toBeVisible();
+      await expect(page.getByRole('link', { name: new RegExp(tituloNoticia) })).toBeVisible();
       const btnWhatsapp = page.getByRole('link', { name: 'Escribir por WhatsApp' });
       await expect(btnWhatsapp).toBeVisible();
       await expect(btnWhatsapp).toHaveAttribute('href', /^https:\/\/wa\.me\/59171234567\?text=/);
     } finally {
+      await eliminarPublicacionAdmin(browser, noticiaId);
       await eliminarGrupoAdmin(browser, grupoId);
     }
   });
