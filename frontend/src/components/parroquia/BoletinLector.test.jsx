@@ -102,19 +102,26 @@ describe('BoletinLector', () => {
 
     expect(await screen.findByText('Página 1 de 4')).toBeInTheDocument();
 
-    // Controles de zoom
-    const btnAcercar = screen.getByRole('button', { name: 'Acercar' });
-    await usuario.click(btnAcercar);
-    expect(screen.getByText('125 %')).toBeInTheDocument();
+    // Zoom en porcentajes: 100 % es el ancho de la pantalla; se puede achicar y agrandar.
+    const selectorZoom = screen.getByRole('combobox', { name: /Tamaño de la página/ });
+    expect(selectorZoom).toHaveDisplayValue('100 %');
+    expect(screen.queryByRole('button', { name: 'Ajustar al ancho' })).not.toBeInTheDocument();
+
+    await usuario.click(screen.getByRole('button', { name: 'Acercar' }));
+    expect(selectorZoom).toHaveDisplayValue('125 %');
 
     await usuario.click(screen.getByRole('button', { name: 'Alejar' }));
-    expect(screen.getByText('100 %')).toBeInTheDocument();
+    await usuario.click(screen.getByRole('button', { name: 'Alejar' }));
+    expect(selectorZoom).toHaveDisplayValue('75 %');
 
-    await usuario.click(screen.getByRole('button', { name: 'Ajustar al ancho' }));
-    expect(screen.getByRole('button', { name: 'Ajustar al ancho' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await usuario.selectOptions(selectorZoom, '50 %');
+    expect(selectorZoom).toHaveDisplayValue('50 %');
+    expect(screen.getByRole('button', { name: 'Alejar' })).toBeDisabled();
+
+    await usuario.selectOptions(selectorZoom, '300 %');
+    expect(screen.getByRole('button', { name: 'Acercar' })).toBeDisabled();
+
+    await usuario.selectOptions(selectorZoom, '100 %');
 
     // Cierre por Escape
     await usuario.keyboard('{Escape}');
