@@ -47,7 +47,7 @@ const ENDPOINTS_PANEL = [
     rol: 'parroco',
     filtros: ['estado', 'proclamaId'],
     porPaginaMax: 50,
-    tieneBuscarEnModelo: false,
+    tieneBuscarEnModelo: true,
   },
   {
     nombre: 'boletines',
@@ -233,12 +233,16 @@ describe('saneamiento de parámetros en listados del panel (PAR-161.3)', () => {
         esperarValidacion(await getConRol(rol, `${ruta}?buscar=${control}`), 'buscar');
       }
 
-      // 5. buscar con cadenas SQL legales devuelve 200 sin fugas ni devolver toda la tabla
+      // 5. buscar con cadenas SQL legales: 400 si el listado no implementa buscar, 200 y total 0 si sí
       for (const payload of PAYLOADS_BUSCAR) {
         const resp = await getConRol(rol, `${ruta}?buscar=${encodeURIComponent(payload)}`);
+        if (!tieneBuscarEnModelo) {
+          esperarValidacion(resp, 'buscar');
+          continue;
+        }
         expect(resp.status).toBe(200);
         sinFugasInternas(resp);
-        if (tieneBuscarEnModelo && payload === "' OR '1'='1") {
+        if (payload === "' OR '1'='1") {
           expect(resp.body.paginacion.total).toBe(0);
           expect(resp.body.datos).toEqual([]);
         }

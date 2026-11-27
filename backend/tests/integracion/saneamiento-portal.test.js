@@ -84,7 +84,7 @@ const ENDPOINTS_PORTAL = [
     filtros: ['anio'],
     porPaginaMax: 100,
     tieneOrden: false,
-    tieneBuscarEnModelo: true,
+    tieneBuscarEnModelo: false,
   },
   {
     nombre: 'horarios',
@@ -187,6 +187,10 @@ describe('saneamiento de parámetros en listados del portal (PAR-161.3)', () => 
 
       for (const payload of PAYLOADS_BUSCAR) {
         const resp = await request(app).get(`${ruta}?buscar=${encodeURIComponent(payload)}`);
+        if (!tieneBuscarEnModelo) {
+          esperarValidacion(resp, 'buscar');
+          continue;
+        }
         // En /sedes/:sede/publicaciones buscar exige mín. 2 caracteres ('%' y '_' tienen 1 -> 400).
         if (ruta.endsWith('/publicaciones') && payload.length < 2) {
           esperarValidacion(resp, 'buscar');
@@ -194,7 +198,7 @@ describe('saneamiento de parámetros en listados del portal (PAR-161.3)', () => 
         }
         expect(resp.status).toBe(200);
         sinFugasInternas(resp);
-        if (tieneBuscarEnModelo && payload === "' OR '1'='1") {
+        if (payload === "' OR '1'='1") {
           expect(resp.body.paginacion.total).toBe(0);
           expect(resp.body.datos).toEqual([]);
         }
