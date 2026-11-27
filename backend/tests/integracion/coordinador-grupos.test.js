@@ -37,6 +37,7 @@ let archivoAjenoId;
 const gruposCreados = [];
 const usuariosApiCreados = [];
 const archivosCreados = [];
+const publicacionesCreadas = [];
 
 async function iniciarSesion(correo, contrasena) {
   const res = await request(app).post('/api/auth/login').send({ correo, contrasena });
@@ -103,6 +104,13 @@ beforeEach(() => {
 });
 
 afterAll(async () => {
+  if (publicacionesCreadas.length > 0) {
+    await consultar(
+      "DELETE FROM bitacora_cambio WHERE entidad = 'publicacion' AND entidad_id = ANY($1::text[])",
+      [publicacionesCreadas],
+    );
+    await consultar('DELETE FROM publicacion WHERE id = ANY($1)', [publicacionesCreadas]);
+  }
   if (gruposCreados.length > 0) {
     await consultar(
       "DELETE FROM bitacora_cambio WHERE entidad = 'grupo_pastoral' AND entidad_id = ANY($1::text[])",
@@ -262,8 +270,6 @@ describe('Coordinador de grupo (PAR-173)', () => {
   });
 
   it.each([
-    ['publicaciones (listar)', 'get', '/api/admin/publicaciones', undefined],
-    ['publicaciones (detalle)', 'get', '/api/admin/publicaciones/1', undefined],
     ['eventos (listar)', 'get', '/api/admin/eventos', undefined],
     ['eventos (detalle)', 'get', '/api/admin/eventos/1', undefined],
     ['proclamas (listar)', 'get', '/api/admin/proclamas', undefined],
@@ -327,6 +333,161 @@ describe('Coordinador de grupo (PAR-173)', () => {
       .delete(`/api/admin/multimedia/${idSubido}`)
       .set('Cookie', cookieCoord);
     expect(borraPropio.status).toBe(204);
+  });
+
+  it('redacta noticias solo de sus grupos, las envía a revisión y no ve avisos ni noticias ajenas', async () => {
+    const contenido = {
+      formato: 'blocknote',
+      version: 1,
+      bloques: [
+        {
+          id: 'p1',
+          type: 'paragraph',
+          props: { textColor: 'default', backgroundColor: 'default', textAlignment: 'left' },
+          content: [{ type: 'text', text: 'Texto de ejemplo de noticia', styles: {} }],
+          children: [],
+        },
+      ],
+    };
+
+    const avisoAdmin = await request(app)
+      .post('/api/admin/publicaciones')
+      .set('Cookie', cookieSecretaria)
+      .send({ tipo: 'AVISO', titulo: 'Aviso ajeno para probar alcance', contenido });
+    expect(avisoAdmin.status).toBe(201);
+    publicacionesCreadas.push(avisoAdmin.body.datos.id);
+
+    const noticiaSinGrupo = await request(app)
+      .post('/api/admin/publicaciones')
+      .set('Cookie', cookieAdmin)
+      .send({
+        sedeId: sedePrincipalId,
+        tipo: 'NOTICIA',
+        titulo: 'Noticia general sin grupo',
+        contenido,
+      });
+    expect(noticiaSinGrupo.status).toBe(201);
+    publicacionesCreadas.push(noticiaSinGrupo.body.datos.id);
+
+    const noticiaOtroGrupo = await request(app)
+      .post('/api/admin/publicaciones')
+      .set('Cookie', cookieAdmin)
+      .send({
+        sedeId: sedePrincipalId,
+        tipo: 'NOTICIA',
+        titulo: 'Noticia de otro grupo',
+        contenido,
+        grupoIds: [grupoAjenoMismaSede.id],
+      });
+    expect(noticiaOtroGrupo.status).toBe(201);
+    publicacionesCreadas.push(noticiaOtroGrupo.body.datos.id);
+
+    const creada = await request(app)
+      .post('/api/admin/publicaciones')
+      .set('Cookie', cookieCoord)
+      .send({
+        tipo: 'NOTICIA',
+        titulo: 'Noticia del grupo asignado',
+        contenido,
+        grupoIds: [grupoAsignado.id],
+      });
+    expect(creada.status).toBe(201);
+    const noticiaPropiaId = creada.body.datos.id;
+    publicacionesCreadas.push(noticiaPropiaId);
+    expect(creada.body.datos.estado.codigo).toBe('BORRADOR');
+
+    const editada = await request(app)
+      .patch(`/api/admin/publicaciones/${noticiaPropiaId}`)
+      .set('Cookie', cookieCoord)
+      .send({ titulo: 'Noticia del grupo editada' });
+    expect(editada.status).toBe(200);
+
+    const enviada = await request(app)
+      .post(`/api/admin/publicaciones/${noticiaPropiaId}/enviar-revision`)
+      .set('Cookie', cookieCoord);
+    expect(enviada.status).toBe(200);
+    expect(enviada.body.datos.estado.codigo).toBe('EN_REVISION');
+
+    const listado = await request(app).get('/api/admin/publicaciones').set('Cookie', cookieCoord);
+    expect(listado.status).toBe(200);
+    expect(listado.body.datos.map((p) => p.id)).toEqual([noticiaPropiaId]);
+
+    for (const [nombre, metodo, ruta, cuerpo] of [
+      [
+        'crear aviso',
+        'post',
+        '/api/admin/publicaciones',
+        { tipo: 'AVISO', titulo: 'Aviso no permitido', contenido },
+      ],
+      [
+        'crear nota de prensa',
+        'post',
+        '/api/admin/publicaciones',
+        {
+          tipo: 'NOTA_DE_PRENSA',
+          titulo: 'Nota de prensa no permitida',
+          contenido,
+          grupoIds: [grupoAsignado.id],
+        },
+      ],
+      ['publicar directo', 'post', `/api/admin/publicaciones/${noticiaPropiaId}/publicar`, {}],
+      ['archivar', 'post', `/api/admin/publicaciones/${noticiaPropiaId}/archivar`, {}],
+      ['ver aviso ajeno (GET)', 'get', `/api/admin/publicaciones/${avisoAdmin.body.datos.id}`],
+      [
+        'ver noticia sin grupo (GET)',
+        'get',
+        `/api/admin/publicaciones/${noticiaSinGrupo.body.datos.id}`,
+      ],
+      [
+        'ver noticia de otro grupo (GET)',
+        'get',
+        `/api/admin/publicaciones/${noticiaOtroGrupo.body.datos.id}`,
+      ],
+      [
+        'editar noticia de otro grupo',
+        'patch',
+        `/api/admin/publicaciones/${noticiaOtroGrupo.body.datos.id}`,
+        { titulo: 'Intruso' },
+      ],
+    ]) {
+      let req = request(app)[metodo](ruta).set('Cookie', cookieCoord);
+      if (cuerpo !== undefined) req = req.send(cuerpo);
+      const res = await req;
+      expect(res.status, nombre).toBe(403);
+    }
+
+    for (const [nombre, cuerpo] of [
+      ['sin grupoIds', { tipo: 'NOTICIA', titulo: 'Sin grupo', contenido }],
+      [
+        'con grupo ajeno',
+        { tipo: 'NOTICIA', titulo: 'Ajeno', contenido, grupoIds: [grupoAjenoMismaSede.id] },
+      ],
+      [
+        'con grupo mixto (suyo + ajeno)',
+        {
+          tipo: 'NOTICIA',
+          titulo: 'Mixto',
+          contenido,
+          grupoIds: [grupoAsignado.id, grupoAjenoMismaSede.id],
+        },
+      ],
+      [
+        'con servicioIds',
+        {
+          tipo: 'NOTICIA',
+          titulo: 'Con sacramento',
+          contenido,
+          grupoIds: [grupoAsignado.id],
+          servicioIds: [1],
+        },
+      ],
+    ]) {
+      const res = await request(app)
+        .post('/api/admin/publicaciones')
+        .set('Cookie', cookieCoord)
+        .send(cuerpo);
+      expect(res.status, nombre).toBe(400);
+    }
   });
 
   it('quitarle el grupo lo deja sin acceso al instante y cambiar de rol borra sus asignaciones', async () => {

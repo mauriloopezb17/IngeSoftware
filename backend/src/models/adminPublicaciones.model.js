@@ -66,6 +66,24 @@ export async function listar(filtros, { limite, desplazamiento, campo, ascendent
   if (filtros.estados) condiciones.push(`ep.nombre = ANY(${agregar(filtros.estados)}::text[])`);
   if (filtros.categoria) condiciones.push(`c.slug = ${agregar(filtros.categoria)}`);
   if (filtros.autorId !== undefined) condiciones.push(`p.autor_id = ${agregar(filtros.autorId)}`);
+  if (filtros.coordinadorUsuarioId !== undefined) {
+    const coordId = agregar(filtros.coordinadorUsuarioId);
+    const tipoNoticia = agregar(filtros.tipoNoticia);
+    condiciones.push(`tp.nombre = ${tipoNoticia}`);
+    condiciones.push(`EXISTS (
+      SELECT 1 FROM publicacion_grupo_pastoral pg
+      JOIN usuario_grupo_pastoral ugp ON ugp.grupo_pastoral_id = pg.grupo_pastoral_id
+      WHERE pg.publicacion_id = p.id AND ugp.usuario_id = ${coordId}
+    )`);
+    condiciones.push(`NOT EXISTS (
+      SELECT 1 FROM publicacion_grupo_pastoral pg
+      WHERE pg.publicacion_id = p.id
+        AND NOT EXISTS (
+          SELECT 1 FROM usuario_grupo_pastoral ugp
+          WHERE ugp.grupo_pastoral_id = pg.grupo_pastoral_id AND ugp.usuario_id = ${coordId}
+        )
+    )`);
+  }
   if (filtros.patron) {
     const patron = agregar(filtros.patron);
     condiciones.push(
@@ -214,6 +232,14 @@ export async function reemplazarGruposRelacionados(publicacionId, ids, db) {
      SELECT $1, unnest($2::int[])`,
     [publicacionId, unicos],
   );
+}
+
+export async function gruposDePublicacion(publicacionId, db = { consultar }) {
+  const { rows } = await db.consultar(
+    'SELECT grupo_pastoral_id FROM publicacion_grupo_pastoral WHERE publicacion_id = $1',
+    [publicacionId],
+  );
+  return rows.map((r) => r.grupo_pastoral_id);
 }
 
 export async function obtenerRelacionados(
