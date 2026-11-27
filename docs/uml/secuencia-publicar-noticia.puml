@@ -1,0 +1,116 @@
+@startuml secuencia-publicar-noticia
+' Secuencia: el párroco inicia sesión, crea una noticia en borrador y la publica; la caché del portal
+' se invalida al confirmar la transacción. Sigue el código real de backend/src (RF-04, RF-11).
+' Exportar: java -jar plantuml.jar -charset UTF-8 -tpng secuencia-publicar-noticia.puml
+!pragma teoz true
+skinparam sequenceMessageAlign left
+autonumber "<b>0."
+
+title Publicar una noticia desde el panel (RF-04, RF-11)
+
+actor "Párroco" as U
+participant "Panel CMS\n(SPA /admin)" as SPA
+participant "app.js\nprotegerCsrf" as App
+participant "auth.routes\nvalidar(cuerpoLogin)" as RAuth
+participant "auth.controller\nlogin" as CAuth
+participant "limiteIntentos.service\nconLimiteDeIntentos" as Lim
+participant "auth.service\niniciarSesion" as SAuth
+participant "admin.routes\nautenticar\nrestringirRutasCoordinador" as RAdm
+participant "adminPublicaciones.routes\nvalidar(cuerpo...)" as RPub
+participant "adminPublicaciones.controller\n/ estadoPublicaciones.controller" as C
+participant "adminPublicaciones.service\n/ estadoPublicaciones.service" as S
+participant "bitacora.service\n+ invalidacionCache.service" as Bit
+database "PostgreSQL 16\n(db/index.js)" as PG
+database "Redis 7\n(cache.service)" as RD
+
+== 1. Inicio de sesión ==
+U -> SPA : correo y contraseña
+SPA -> App : POST /api/auth/login
+App -> RAuth : origen permitido (si no, 403 SIN_PERMISO)
+alt cuerpo inválido
+  RAuth --> SPA : 400 VALIDACION
+else válido
+  RAuth -> CAuth : req.validado.body
+  CAuth -> Lim : conLimiteDeIntentos(ip, correo)
+  Lim -> RD : leer contadores (IP+correo, IP)
+  alt más de 5 fallos por IP+correo o 20 por IP en 15 min
+    Lim --> SPA : 429 + Retry-After
+  else intentos disponibles
+    Lim -> SAuth : iniciarSesion(correo, contrasena)
+    SAuth -> PG : usuarios.buscarPorCorreo
+    SAuth -> SAuth : verificarContrasena (argon2)
+    alt credenciales incorrectas o usuario inactivo
+      SAuth --> Lim : 401 NO_AUTENTICADO
+      Lim -> RD : registrarIntentoFallido
+      Lim --> SPA : 401
+    else correctas
+      SAuth -> PG : registrarAcceso
+      SAuth -> SAuth : firmarToken(id, rol, sede) (JWT)
+      SAuth --> CAuth : token, usuario
+      CAuth --> SPA : 200 + Set-Cookie de sesión (httpOnly)
+    end
+  end
+end
+
+== 2. Crear la noticia en borrador ==
+U -> SPA : redacta en el editor BlockNote
+SPA -> App : POST /api/admin/publicaciones (cookie)
+App -> RAdm
+RAdm -> PG : autenticar: verificarToken + usuario activo
+alt sin cookie, token inválido o expirado
+  RAdm --> SPA : 401 NO_AUTENTICADO
+else sesión válida
+  RAdm -> RPub : req.usuario
+  alt cuerpo inválido (Zod + validacion/blocknote.js)
+    RPub --> SPA : 400 VALIDACION con detalles por campo
+  else válido
+    RPub -> C : crear(req)
+    C -> S : crearPublicacion(usuario, cuerpo, contexto)
+    alt el rol no puede crear ese tipo (puedeCrear)
+      S --> SPA : 403 SIN_PERMISO
+    else permitido
+      S -> PG : BEGIN
+      S -> PG : sedeDelRecursoNuevo, verificarReferencias\n(archivos e imágenes de la sede; si no: 400)
+      S -> PG : slug único + insertar(estado Borrador,\ncontenido JSONB)
+      S -> Bit : registrarCambio(INSERT)
+      Bit -> PG : INSERT bitacora_cambio
+      Bit -> Bit : programarInvalidacion → alConfirmar
+      S -> PG : COMMIT
+      S -> RD : invalidarRecursos (INCR de la generación)
+      C --> SPA : 201 Created + Location
+    end
+  end
+end
+
+== 3. Publicar ==
+U -> SPA : «Publicar»
+SPA -> App : POST /api/admin/publicaciones/:id/publicar
+App -> RAdm
+RAdm -> RPub : autenticar (401 si no hay sesión)
+RPub -> C : publicar(req) (400 si fechas inválidas)
+C -> S : cambiarEstado(usuario, id, PUBLICAR, cuerpo, contexto)
+S -> PG : BEGIN
+S -> PG : publicacionParaModificar\n(SELECT … FOR UPDATE, alcance por sede)
+S -> S : exigirAccion(PUBLICAR)
+alt el rol no publica noticias (p. ej. Marketing)
+  S --> SPA : 403 SIN_PERMISO (debe enviarla a revisión)
+else no está en Borrador
+  S --> SPA : 409 CONFLICTO
+else incompleta (requisitosFaltantes)
+  S --> SPA : 400 VALIDACION
+else puede publicar
+  S -> PG : actualizarFila(estado Publicado,\nfecha_publicacion)
+  S -> Bit : registrarCambio(UPDATE)
+  Bit -> PG : INSERT bitacora_cambio
+  Bit -> Bit : alConfirmar(invalidar publicaciones de la sede)
+  S -> PG : COMMIT
+  S -> RD : INCR cache:v1:g:<sede>:publicaciones
+  C --> SPA : 200 publicación en estado Publicado
+end
+
+note over RD
+  Las lecturas del portal (publicaciones.controller → responderConCache)
+  usan la nueva generación: la primera vez leen PostgreSQL y guardan
+  la respuesta con TTL; así nunca se sirve la versión anterior.
+end note
+@enduml
