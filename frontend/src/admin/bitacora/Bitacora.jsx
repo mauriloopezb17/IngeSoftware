@@ -28,6 +28,7 @@ const VARIANTE_ACCION = {
   UPDATE: 'programado',
   DELETE: 'rechazado',
   EXPORT: 'borrador',
+  VIEW: 'borrador',
 };
 
 export default function Bitacora() {

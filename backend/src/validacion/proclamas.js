@@ -102,18 +102,26 @@ const vacioANull = (valor) => {
   return limpio === '' ? null : limpio;
 };
 
+const nombreOpcional = (valor) => {
+  if (typeof valor !== 'string') return valor;
+  const limpio = valor.trim().replace(/\s+/g, ' ');
+  return limpio === '' ? null : limpio;
+};
+
+const MENSAJE_VERIFICACION =
+  'No pudimos verificar el envío. Vuelve a cargar la página e inténtalo de nuevo.';
+
 export const cuerpoCrearObservacion = z
   .strictObject({
-    nombreCompleto: z
-      .string({ error: 'Debe ser un texto.' })
-      .trim()
-      .transform((valor) => valor.replace(/\s+/g, ' '))
-      .pipe(
-        z
-          .string()
-          .min(3, 'Debe tener al menos 3 caracteres.')
-          .max(120, 'Puede tener hasta 120 caracteres.'),
-      ),
+    nombreCompleto: z.preprocess(
+      nombreOpcional,
+      z
+        .string({ error: 'Debe ser un texto.' })
+        .min(3, 'Debe tener al menos 3 caracteres.')
+        .max(120, 'Puede tener hasta 120 caracteres.')
+        .nullable()
+        .optional(),
+    ),
     correo: z.preprocess(
       vacioANull,
       z
@@ -142,6 +150,7 @@ export const cuerpoCrearObservacion = z
       .min(10, 'Debe tener al menos 10 caracteres.')
       .max(2000, 'Puede tener hasta 2000 caracteres.'),
     sitioWeb: z.string({ error: 'Debe ser un texto.' }).max(200, 'Es demasiado largo.').optional(),
+    verificacion: z.string({ error: MENSAJE_VERIFICACION }).trim().min(1, MENSAJE_VERIFICACION),
   })
   .superRefine((datos, ctx) => {
     if (!datos.correo && !datos.telefono) {

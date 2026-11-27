@@ -132,7 +132,7 @@ const RECURSOS = {
         encabezado: 'Proclama',
         valor: (f) => (f.proclama ? `${f.proclama.contrayente1} y ${f.proclama.contrayente2}` : ''),
       },
-      { encabezado: 'Remitente', valor: (f) => f.nombreCompleto },
+      { encabezado: 'Remitente', valor: (f) => f.nombreCompleto ?? 'Anónima' },
       { encabezado: 'Correo', valor: (f) => f.correo ?? '' },
       { encabezado: 'Teléfono', valor: (f) => f.telefono ?? '' },
       { encabezado: 'Mensaje', valor: (f) => f.mensaje },

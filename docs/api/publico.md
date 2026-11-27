@@ -1118,9 +1118,25 @@ Detalle de una proclama visible (al menos una publicación cuya fecha ya llegó)
 - `detalle` es `null` si no se cargó información adicional. Si `detalle.lugar` es `null`, la boda se celebra en la propia parroquia.
 - `aceptaObservaciones` es `true` desde la primera publicación hasta la fecha y hora del matrimonio.
 
+## `GET /api/sedes/:sede/proclamas/:id/observaciones/verificacion`
+
+Emite un token HMAC de verificación de corto plazo para el formulario de observaciones (`Cache-Control: no-store`).
+
+**Respuesta `200`:**
+
+```json
+{
+  "datos": {
+    "token": "1.1764200000000.firmahmac"
+  }
+}
+```
+
+- Proclama inexistente o no visible → `404 NO_ENCONTRADO`.
+
 ## `POST /api/sedes/:sede/proclamas/:id/observaciones`
 
-Envía una observación confidencial al párroco sobre una proclama (sin sesión, con protección CSRF y límite de 5 peticiones por hora por IP).
+Envía una observación confidencial al párroco sobre una proclama (sin sesión, con protección CSRF, verificación temporal y límite de 5 peticiones por hora por IP).
 
 **Cuerpo:**
 
@@ -1130,11 +1146,14 @@ Envía una observación confidencial al párroco sobre una proclama (sin sesión
   "correo": "maria@ejemplo.com",
   "telefono": "+591 71234567",
   "mensaje": "Deseo comunicar una observación sobre esta proclama.",
-  "sitioWeb": ""
+  "sitioWeb": "",
+  "verificacion": "1.1764200000000.firmahmac"
 }
 ```
 
+- `nombreCompleto` es opcional (`null` o vacío = observación anónima).
 - Es obligatorio al menos uno entre `correo` o `telefono` (si faltan ambos, `400 VALIDACION` en `contacto`).
+- `verificacion` es obligatorio: si falta, es inválido, corresponde a otra proclama, tiene más de 2 horas o se envía antes de 3 segundos desde su emisión, responde `400 VALIDACION` en el campo `verificacion`.
 - Responde `201 { "datos": { "recibido": true } }` sin devolver los datos enviados y sin caché (`Cache-Control: no-store`).
 - Proclama inexistente o no visible → `404 NO_ENCONTRADO`; proclama cuya boda ya pasó → `409 CONFLICTO`; límite superado → `429 DEMASIADAS_SOLICITUDES`.
 

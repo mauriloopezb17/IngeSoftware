@@ -71,13 +71,15 @@ describe('BandejaObservaciones (bandeja del párroco)', () => {
     );
     expect(within(detalle).getByRole('link', { name: 'Llamar' })).toHaveAttribute('href', 'tel:71234567');
 
-    // Al abrirla quedó leída: la insignia baja a 1
+    // Al abrirla quedó revisada: la insignia baja a 1 y se muestra el botón "Marcar como nueva"
     await waitFor(() => {
       expect(within(tabObs).getByText('1')).toBeInTheDocument();
     });
+    expect(await within(detalle).findByRole('button', { name: 'Marcar como nueva' })).toBeInTheDocument();
 
-    // Cambiar a "Todas" y abrir la de Carlos Mamani (solo correo, sin teléfono)
+    // Cambiar a "Todas", verificar una observación anónima ("Anónima") y abrir la de Carlos Mamani (solo correo, sin teléfono)
     await usuario.click(screen.getByRole('button', { name: 'Todas' }));
+    expect(await screen.findByRole('button', { name: /Anónima/ })).toBeInTheDocument();
     await usuario.click(await screen.findByRole('button', { name: /Carlos Mamani/ }));
     const detalleCarlos = await screen.findByRole('article', { name: /Observación de Carlos Mamani/ });
     expect(within(detalleCarlos).getByRole('link', { name: 'Enviar correo' })).toBeInTheDocument();

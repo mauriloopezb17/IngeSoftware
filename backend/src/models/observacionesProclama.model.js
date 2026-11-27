@@ -49,7 +49,7 @@ export async function listar(
   if (buscar) {
     const p = agregar(patronBusqueda(buscar));
     condiciones.push(
-      `(${sinAcentosSql('o.nombre_completo')} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql('o.mensaje')} LIKE ${p} ESCAPE '\\')`,
+      `(${sinAcentosSql("COALESCE(o.nombre_completo, '')")} LIKE ${p} ESCAPE '\\' OR ${sinAcentosSql('o.mensaje')} LIKE ${p} ESCAPE '\\')`,
     );
   }
 

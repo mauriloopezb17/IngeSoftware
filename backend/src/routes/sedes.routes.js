@@ -82,6 +82,11 @@ deSede.get(
   validar({ params: z.object({ id }) }),
   proclamasBoletines.detalleProclama,
 );
+deSede.get(
+  '/proclamas/:id/observaciones/verificacion',
+  validar({ params: z.object({ id }) }),
+  proclamasBoletines.verificacionObservacion,
+);
 deSede.post(
   '/proclamas/:id/observaciones',
   limitarObservaciones,
