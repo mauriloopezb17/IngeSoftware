@@ -82,6 +82,12 @@ const redesSociales = z
 
 const configuracion = z.record(z.string().min(1), z.unknown());
 
+const ordenSede = z
+  .number({ error: 'El orden debe ser un número entero.' })
+  .int('El orden debe ser un número entero.')
+  .min(0, 'El orden no puede ser negativo.')
+  .max(32_767, 'El orden es demasiado grande.');
+
 export const paramsSede = z.object({ id });
 
 export const consultaSedes = esquemaListado({
@@ -90,7 +96,7 @@ export const consultaSedes = esquemaListado({
     tipo: listaCodigos(TIPOS_SEDE.codigos).optional(),
     activo: booleanoQuery.optional(),
   },
-  ordenes: ['id', '-id', 'nombre', '-nombre'],
+  ordenes: ['id', '-id', 'nombre', '-nombre', 'orden', '-orden'],
   ordenPredeterminado: 'id',
   porPaginaMaximo: 100,
 });
@@ -101,6 +107,7 @@ export const cuerpoCrearSede = z
     slug: slugSede.optional().default(null),
     tipo: tipoSede,
     sedePadreId: idEntero.nullable().optional().default(null),
+    orden: ordenSede.optional().default(0),
     direccion: textoOpcional(200, 'La dirección').optional().default(null),
     telefono: textoOpcional(30, 'El teléfono').optional().default(null),
     whatsapp: textoOpcional(30, 'El WhatsApp').optional().default(null),
@@ -121,6 +128,7 @@ export const cuerpoEditarSede = z.strictObject({
   slug: slugSede.optional(),
   tipo: tipoSede.optional(),
   sedePadreId: idEntero.nullable().optional(),
+  orden: ordenSede.optional(),
   direccion: textoOpcional(200, 'La dirección').optional(),
   telefono: textoOpcional(30, 'El teléfono').optional(),
   whatsapp: textoOpcional(30, 'El WhatsApp').optional(),
@@ -131,4 +139,9 @@ export const cuerpoEditarSede = z.strictObject({
   configuracion: configuracion.optional(),
   redesSociales: redesSociales.optional(),
   activo: z.boolean().optional(),
+});
+
+export const cuerpoMoverSede = z.strictObject({
+  sedePadreId: idEntero.nullable(),
+  orden: ordenSede.optional(),
 });

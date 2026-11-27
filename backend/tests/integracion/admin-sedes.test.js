@@ -207,7 +207,12 @@ describe('POST /api/admin/sedes', () => {
     const duplicado = await request(app)
       .post('/api/admin/sedes')
       .set('Cookie', sesiones.admin)
-      .send({ nombre: 'Repetida', slug: slugCapilla, tipo: 'CAPILLA' });
+      .send({
+        nombre: 'Repetida',
+        slug: slugCapilla,
+        tipo: 'CAPILLA',
+        sedePadreId: sedePrincipalId,
+      });
     expect(duplicado.status).toBe(409);
 
     // El Administrador ve también las sedes inactivas.

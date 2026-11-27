@@ -9,8 +9,84 @@ import { generarSlug, validarImagenDeSede } from '../utils/adminContenido.js';
 import { esAdministrador, exigirSedeDelRecurso } from '../utils/alcanceSede.js';
 import { aCamelCase, imagen } from '../utils/formato.js';
 import { registrarCambio } from './bitacora.service.js';
+import { armarArbolSedes } from './sedes.service.js';
 
-const CAMPOS_SOLO_ADMIN = ['slug', 'tipo', 'sedePadreId', 'activo'];
+const CAMPOS_SOLO_ADMIN = ['slug', 'tipo', 'sedePadreId', 'orden', 'activo'];
+
+// Tipos de sede superior permitidos para cada tipo de sede (null = raíz sin padre).
+const PADRES_PERMITIDOS = Object.freeze({
+  PARROQUIA: null,
+  COMUNIDAD_PASIONISTA: null,
+  CAPILLA: ['PARROQUIA'],
+  COMUNIDAD: ['PARROQUIA', 'CAPILLA'],
+});
+
+function mensajePadreRequerido(tipoCodigo) {
+  if (tipoCodigo === 'CAPILLA') return 'Una capilla debe depender de una parroquia.';
+  return 'Una comunidad debe depender de una parroquia o una capilla.';
+}
+
+function mensajePadreNoPermitido(tipoCodigo) {
+  if (tipoCodigo === 'PARROQUIA') return 'Una parroquia no puede depender de otra sede.';
+  if (tipoCodigo === 'COMUNIDAD_PASIONISTA') {
+    return 'Una comunidad pasionista es una entidad aparte y no depende de otra sede.';
+  }
+  if (tipoCodigo === 'CAPILLA') return 'Una capilla solo puede depender de una parroquia.';
+  return 'Una comunidad solo puede depender de una parroquia o una capilla.';
+}
+
+async function validarJerarquia({ id, tipoCodigo, sedePadreId, db }) {
+  const permitidos = PADRES_PERMITIDOS[tipoCodigo];
+
+  if (permitidos === null) {
+    if (sedePadreId !== null) {
+      throw ErrorApp.validacion(undefined, [
+        { campo: 'sedePadreId', mensaje: mensajePadreNoPermitido(tipoCodigo) },
+      ]);
+    }
+    return;
+  }
+
+  if (sedePadreId === null) {
+    throw ErrorApp.validacion(undefined, [
+      { campo: 'sedePadreId', mensaje: mensajePadreRequerido(tipoCodigo) },
+    ]);
+  }
+
+  if (id !== undefined && sedePadreId === id) {
+    throw ErrorApp.validacion(undefined, [
+      { campo: 'sedePadreId', mensaje: 'Una sede no puede depender de sí misma.' },
+    ]);
+  }
+
+  const padre = await modelo.buscarTipoDeSede(sedePadreId, db);
+  if (!padre) {
+    throw ErrorApp.validacion(undefined, [
+      { campo: 'sedePadreId', mensaje: 'La sede superior indicada no existe.' },
+    ]);
+  }
+
+  const padreTipoCodigo = TIPOS_SEDE.codigoDe(padre.tipo_nombre);
+  if (!permitidos.includes(padreTipoCodigo)) {
+    throw ErrorApp.validacion(undefined, [
+      { campo: 'sedePadreId', mensaje: mensajePadreNoPermitido(tipoCodigo) },
+    ]);
+  }
+
+  if (id !== undefined && (await modelo.tieneDescendiente(sedePadreId, id, db))) {
+    throw ErrorApp.validacion(undefined, [
+      {
+        campo: 'sedePadreId',
+        mensaje: 'Una sede no puede depender de sí misma ni de una de sus descendientes.',
+      },
+    ]);
+  }
+}
+
+function hijaCompatibleConPadre(tipoHijaCodigo, tipoPadreCodigo) {
+  const permitidos = PADRES_PERMITIDOS[tipoHijaCodigo];
+  return Array.isArray(permitidos) && permitidos.includes(tipoPadreCodigo);
+}
 
 function esObjetoPlano(valor) {
   return valor !== null && typeof valor === 'object' && !Array.isArray(valor);
@@ -49,6 +125,7 @@ function aSedeAdmin(fila) {
     slug: fila.slug,
     tipo: TIPOS_SEDE.aEnumeracion(fila.tipo_nombre),
     sedePadre: fila.sede_padre,
+    orden: fila.orden ?? 0,
     direccion: fila.direccion,
     telefono: fila.telefono,
     whatsapp: fila.whatsapp,
@@ -138,11 +215,7 @@ export async function crearSede(datos, contexto) {
     ]);
   }
 
-  if (datos.sedePadreId !== null && !(await modelo.existeSede(datos.sedePadreId))) {
-    throw ErrorApp.validacion(undefined, [
-      { campo: 'sedePadreId', mensaje: 'La sede padre indicada no existe.' },
-    ]);
-  }
+  await validarJerarquia({ tipoCodigo: datos.tipo, sedePadreId: datos.sedePadreId });
 
   await validarRedes(datos.redesSociales);
   const configuracionFinal = fusionarConfiguracion({}, datos.configuracion);
@@ -154,6 +227,7 @@ export async function crearSede(datos, contexto) {
         {
           tipoSedeId,
           sedePadreId: datos.sedePadreId,
+          orden: datos.orden,
           nombre: datos.nombre,
           slug: slugFinal,
           direccion: datos.direccion,
@@ -232,19 +306,6 @@ export async function actualizarSede(usuario, id, datos, contexto) {
     }
   }
 
-  if (datos.sedePadreId !== undefined && datos.sedePadreId !== null) {
-    if (datos.sedePadreId === id) {
-      throw ErrorApp.validacion(undefined, [
-        { campo: 'sedePadreId', mensaje: 'Una sede no puede ser su propia sede padre.' },
-      ]);
-    }
-    if (!(await modelo.existeSede(datos.sedePadreId))) {
-      throw ErrorApp.validacion(undefined, [
-        { campo: 'sedePadreId', mensaje: 'La sede padre indicada no existe.' },
-      ]);
-    }
-  }
-
   if (datos.redesSociales !== undefined) {
     await validarRedes(datos.redesSociales);
   }
@@ -254,6 +315,42 @@ export async function actualizarSede(usuario, id, datos, contexto) {
     await transaccion(async (db) => {
       const anterior = await modelo.filaParaModificar(id, db);
       if (!anterior) throw ErrorApp.noEncontrado('La sede no existe.');
+
+      const tipoAnteriorRow = await modelo.obtenerTipoSedePorId(anterior.tipo_sede_id, db);
+      const tipoAnteriorCodigo = TIPOS_SEDE.codigoDe(tipoAnteriorRow.nombre);
+      const tipoFinalCodigo = datos.tipo ?? tipoAnteriorCodigo;
+      const sedePadreFinal =
+        datos.sedePadreId !== undefined ? datos.sedePadreId : anterior.sede_padre_id;
+
+      if (datos.tipo !== undefined || datos.sedePadreId !== undefined) {
+        await validarJerarquia({
+          id,
+          tipoCodigo: tipoFinalCodigo,
+          sedePadreId: sedePadreFinal,
+          db,
+        });
+      }
+
+      if (datos.tipo !== undefined && tipoFinalCodigo !== tipoAnteriorCodigo) {
+        const hijas = await modelo.listarHijas(id, db);
+        const incompatible = hijas.some(
+          (h) => !hijaCompatibleConPadre(TIPOS_SEDE.codigoDe(h.tipo_nombre), tipoFinalCodigo),
+        );
+        if (incompatible) {
+          throw ErrorApp.conflicto(
+            'No se puede cambiar el tipo porque tiene sedes dependientes que dejarían de cumplir la jerarquía.',
+          );
+        }
+      }
+
+      if (datos.activo === false && anterior.activo) {
+        const hijas = await modelo.listarHijas(id, db);
+        if (hijas.some((h) => h.activo)) {
+          throw ErrorApp.conflicto(
+            'No se puede desactivar una sede que tiene sedes dependientes activas. Muévelas o desactívalas primero.',
+          );
+        }
+      }
 
       const latFinal = datos.latitud !== undefined ? datos.latitud : anterior.latitud;
       const lonFinal = datos.longitud !== undefined ? datos.longitud : anterior.longitud;
@@ -283,6 +380,7 @@ export async function actualizarSede(usuario, id, datos, contexto) {
       const cambiosSede = {
         tipoSedeId,
         sedePadreId: datos.sedePadreId,
+        orden: datos.orden,
         nombre: datos.nombre,
         slug: slugObjetivo,
         direccion: datos.direccion,
@@ -323,6 +421,48 @@ export async function actualizarSede(usuario, id, datos, contexto) {
   } catch (err) {
     traducirErrorSlugUnico(err, slugObjetivo ?? '');
   }
+
+  return aSedeAdmin(await modelo.buscarDetalleAdminPorId(id));
+}
+
+export async function obtenerArbolSedesAdmin(usuario) {
+  const sedeId = esAdministrador(usuario) ? undefined : usuario.sedeId;
+  if (!esAdministrador(usuario) && (sedeId === null || sedeId === undefined)) {
+    throw ErrorApp.sinPermiso('Tu usuario no tiene una sede asignada.');
+  }
+  const filas = await modelo.listarAdminParaArbol({ sedeId });
+  return armarArbolSedes(filas, aSedeAdmin);
+}
+
+export async function moverSede(id, datos, contexto) {
+  await transaccion(async (db) => {
+    const anterior = await modelo.filaParaModificar(id, db);
+    if (!anterior) throw ErrorApp.noEncontrado('La sede no existe.');
+
+    const tipoRow = await modelo.obtenerTipoSedePorId(anterior.tipo_sede_id, db);
+    const tipoCodigo = TIPOS_SEDE.codigoDe(tipoRow.nombre);
+
+    await validarJerarquia({
+      id,
+      tipoCodigo,
+      sedePadreId: datos.sedePadreId,
+      db,
+    });
+
+    const cambios = { sedePadreId: datos.sedePadreId };
+    if (datos.orden !== undefined) {
+      cambios.orden = datos.orden;
+    }
+
+    const nuevo = await modelo.actualizar(id, cambios, db);
+    await registrarCambio(db, contexto, {
+      entidad: 'sede',
+      entidadId: id,
+      accion: 'UPDATE',
+      anterior,
+      nuevo,
+    });
+  });
 
   return aSedeAdmin(await modelo.buscarDetalleAdminPorId(id));
 }

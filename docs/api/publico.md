@@ -125,9 +125,62 @@ Sedes activas, para la sección «Nuestras comunidades». Sin paginación. Orden
 }
 ```
 
-- `tipo.codigo`: `PARROQUIA` o `CAPILLA`.
+- `tipo.codigo`: `PARROQUIA`, `CAPILLA`, `COMUNIDAD` o `COMUNIDAD_PASIONISTA`.
 - `imagenPortada` sale de `sede.url_imagen_portada`. Si esa URL coincide con un archivo de `archivo_multimedia`, se completan `id`, `ancho`, `alto` y `textoAlternativo`; si no, esos campos van en `null`.
 - `enlaceComoLlegar` sale de `configuracion.enlace_como_llegar`.
+
+---
+
+## `GET /api/sedes/arbol`
+
+Sedes activas ordenadas jerárquicamente (`Parroquia → Capilla → Comunidad`) y con las comunidades pasionistas como entidad aparte. Dentro de cada nivel se ordenan por `orden` ascendente y `nombre` ascendente.
+
+**Respuesta `200`:**
+
+```json
+{
+  "datos": {
+    "parroquias": [
+      {
+        "id": 1,
+        "nombre": "Parroquia Señor de la Exaltación",
+        "slug": "senor-de-la-exaltacion",
+        "tipo": { "codigo": "PARROQUIA", "nombre": "Parroquia" },
+        "sedePadre": null,
+        "direccion": "Av. Héctor Ormachea N.º 167, Obrajes, La Paz",
+        "imagenPortada": {
+          "id": 1,
+          "url": "/media/seed/exterior-parroquia.webp",
+          "textoAlternativo": "Vista exterior de la Parroquia Señor de la Exaltación",
+          "ancho": 1878,
+          "alto": 1057,
+          "variantes": []
+        },
+        "enlaceComoLlegar": "https://www.google.com/maps/dir/?api=1&destination=-16.5267952%2C-68.1082157",
+        "capillas": [
+          {
+            "id": 3,
+            "nombre": "Capilla San Pablo de la Cruz",
+            "slug": "capilla-san-pablo-de-la-cruz",
+            "tipo": { "codigo": "CAPILLA", "nombre": "Capilla" },
+            "sedePadre": {
+              "id": 1,
+              "nombre": "Parroquia Señor de la Exaltación",
+              "slug": "senor-de-la-exaltacion"
+            },
+            "direccion": "La Paz",
+            "imagenPortada": null,
+            "enlaceComoLlegar": null,
+            "comunidades": []
+          }
+        ],
+        "comunidades": []
+      }
+    ],
+    "comunidadesPasionistas": []
+  }
+}
+```
 
 ---
 
