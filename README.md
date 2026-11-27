@@ -3,13 +3,17 @@
 ## Visión General del Proyecto
 El proyecto tiene como objetivo desarrollar una plataforma web e integral de gestión para la congregación pasionista en Bolivia, bajo el dominio institucional pasionistas.org.bo. Inicialmente, el sistema abarcará a la Parroquia Señor de la Exaltación, la Parroquia de la Resurrección y sus capillas dependientes, como la de San Pablo de la Cruz.
 
-La plataforma está estructurada en los siguientes componentes principales:
-* **Portal Web Público:** Una interfaz amigable e informativa para la comunidad que muestra horarios de misas, requisitos para los sacramentos, detalles de los grupos parroquiales y enlaces a redes sociales.
-* **Gestor de Contenidos (CMS):** Un panel de administración interno diseñado para que el personal de secretaría pueda publicar y actualizar dinámicamente el calendario de eventos, avisos y las proclamas matrimoniales sin requerir conocimientos técnicos.
-* **Sistema de Sacramentos:** La modernización del sistema de registros actual, incorporando como requisito crítico la capacidad de añadir y auditar "Notas Marginales" en las partidas de bautismo (ej. para matrimonios posteriores o nulidades).
-* **Integraciones y Asistente Virtual:** La plataforma contempla la integración de un bot de atención 24/7 para consultas frecuentes, visualización de videos institucionales de YouTube y sincronización con el tenant de Microsoft 365.
+### Implementado en la versión 2.0
+* **Portal Web Público:** contenido por sede con la jerarquía Parroquia → Capilla → Comunidad; horarios de misas y de atención; sacramentos y grupos pastorales con página propia, galería, contacto y noticias relacionadas; noticias con filtros y paginación; calendario con vista por día y detalle de cada evento; proclamas matrimoniales con historial público y observaciones anónimas (con celular o correo obligatorio); boletines en visor superpuesto con descarga; videos institucionales de YouTube incrustados; buscador global; menú flotante en móvil; mapa y enlaces a redes sociales y WhatsApp.
+* **Gestor de Contenidos (CMS):** panel en `/admin` con roles (Administrador, Párroco, Secretaría, Marketing y Coordinador de grupo) y permisos por rol; publicaciones con editor de bloques y estados (Borrador, En revisión, Publicado, Archivado); eventos, horarios, servicios, grupos, videos, sedes, proclamas, boletines, páginas, multimedia y usuarios; bandeja de observaciones a proclamas para el párroco; exportación CSV por pantalla con permiso por rol; bitácora de cambios y registro de consultas sin datos sensibles.
+* **Infraestructura:** SPA en React, API REST en Node.js y Express, PostgreSQL 16, caché en Redis 7, archivos en Oracle Cloud Object Storage con CDN, e integración continua en GitHub Actions. La arquitectura vigente está en el [modelo C4 v2](docs/arquitectura/Arquitectura%20C4.md).
 
-El sistema busca ser una solución escalable y centralizada, contemplando su posible alojamiento en los servidores de la Universidad Católica Boliviana (UCB) o en una infraestructura en la nube alternativa.
+### Pospuesto (fuera de la versión 2.0)
+* **Asistente virtual:** bot de atención 24/7 por WhatsApp o web y registro de consultas fuera de horario.
+* **Integración con Microsoft 365:** sincronización del calendario con el tenant de la parroquia.
+* **Sistema de Sacramentos:** registros sacramentales con "Notas Marginales" auditadas en las partidas de bautismo (ej. matrimonios posteriores o nulidades).
+
+El alojamiento definitivo (servidores de la Universidad Católica Boliviana o una infraestructura en la nube) está pendiente de decisión; hoy el sistema corre en un servidor de pruebas.
 
 ## Miembros del Equipo (Consultora CodeForge)
 El desarrollo y gestión del proyecto está a cargo de la consultora CodeForge, conformada por los siguientes integrantes:

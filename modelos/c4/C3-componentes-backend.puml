@@ -1,0 +1,83 @@
+@startuml C3-componentes-backend
+' Modelo C4 v2 - Nivel 3: componentes del contenedor "API REST" (backend/src) en la v2.0.
+' Cada componente nombra sus archivos reales: routes/*.routes.js, controllers/*.controller.js,
+' services/*.service.js y middlewares/*.js. Los models/*.model.js (SQL) están dentro de cada componente.
+' Exportar: java -jar plantuml.jar -tpng C3-componentes-backend.puml
+!pragma layout smetana
+!include <C4/C4_Component>
+
+LAYOUT_TOP_DOWN()
+
+title Componentes (C3) - API REST (backend/src) v2.0
+
+Container(spa, "SPA web", "React 19", "Portal público y panel CMS")
+ContainerDb(postgres, "Base de datos", "PostgreSQL 16")
+ContainerDb(redis, "Caché", "Redis 7")
+System_Ext(oci, "Oracle Cloud Object Storage", "API S3")
+
+Container_Boundary(api, "API REST (Node.js 22 + Express 5)") {
+
+  Component(transversal, "Cadena común de peticiones", "app.js, routes/index.js, routes/admin.routes.js", "config/logger.js (pino-http, X-Request-Id), helmet, CORS, middlewares/csrf.js, validar.js (Zod), errores.js, resolverSede.js (slug > req.sede, con caché).")
+
+  Component(auth, "Autenticación y RBAC", "auth.routes / auth.controller / auth.service", "JWT en cookie httpOnly, argon2 (utils/contrasenas.js), middlewares/autenticar.js y autorizar.js (requerirPermiso, filtrarPorSede), constantes/permisos.js, limiteIntentos.service (429).")
+
+  Component(publicaciones, "Publicaciones / CMS", "adminPublicaciones.* / estadoPublicaciones.* / publicaciones.*", "Avisos, noticias y notas de prensa; contenido BlockNote en JSONB (validacion/blocknote.js); estados Borrador > En revisión > Publicado > Archivado; programación de publicación.")
+
+  Component(eventos, "Eventos", "adminEventos.* / eventos.*", "Calendario por sede y detalle enriquecido del evento.")
+
+  Component(proclamas, "Proclamas y observaciones", "adminProclamas.* / proclamasBoletines.controller / proclamas.service / observacionesProclama.service", "Historial público y detalle de proclamas; observaciones anónimas con contacto obligatorio, límite por IP (limiteObservaciones.js) y bandeja del Párroco.")
+
+  Component(boletines, "Boletines", "adminBoletines.* / boletines.service", "Boletines PDF con portada por periodo.")
+
+  Component(multimedia, "Multimedia", "multimedia.* / biblioteca.* / middlewares/recibirArchivo.js", "Validación de tipo (file-type) y tamaño, variantes WebP con sharp, biblioteca y uso de archivos.")
+
+  Component(almacen, "Cliente de almacenamiento", "storage/oci.js", "S3Client hacia OCI; subida por partes desde 16 MB; 503 si no está configurado.")
+
+  Component(sedes, "Sedes y jerarquía", "adminSedes.* / sedes.*", "Parroquia > Capilla > Comunidad; árbol de sedes y datos de contacto por sede.")
+
+  Component(pastoral, "Grupos pastorales y coordinador", "adminGrupos.* / gruposPastorales.service / contenidoPastoral.controller", "Página propia por grupo con contacto y galería. exigirGrupoAsignado y restringirRutasCoordinador limitan al Coordinador a sus grupos, su multimedia y las noticias de sus grupos (redactar y enviar a revisión; nunca publicar ni exportar).")
+
+  Component(parroquia, "Horarios, servicios, videos, páginas y usuarios", "adminHorarios / adminServicios / adminVideos / adminPaginas / adminUsuarios (+ horarios, servicios, videos, paginas, usuarios, catalogos, salud)", "Contenido institucional por sede, sacramentos con noticias relacionadas, videos de YouTube, páginas con bloques JSONB y gestión de usuarios.")
+
+  Component(buscador, "Buscador", "buscar.routes / buscar.controller / buscar.service", "Búsqueda de texto completo por sede (migración 014).")
+
+  Component(exportar, "Exportación CSV", "exportar.controller / exportar.service / utils/csv.js", "Un endpoint /exportar por recurso con requerirPermiso(*_EXPORTAR) (403 si no corresponde) y tope de 10 000 filas.")
+
+  Component(bitacora, "Bitácora y registro de consultas", "bitacora.* / middlewares/registrarConsulta.js", "Cambios INSERT/UPDATE/DELETE/EXPORT/VIEW en la misma transacción; log estructurado de listados y exportaciones sin datos sensibles.")
+
+  Component(cache, "Caché e invalidación", "cache.service / invalidacionCache.service", "Cache-aside con generaciones por sede y recurso; invalida solo después del COMMIT.")
+
+  Component(datos, "Acceso a datos", "db/index.js, db/redis.js, models/*.model.js", "Lo usan todos los componentes de negocio (flechas omitidas para legibilidad). Pool pg con transaccion() y alConfirmar(); cliente ioredis que falla rápido.")
+}
+
+Rel(spa, transversal, "Llama a /api", "HTTPS, JSON")
+Rel(transversal, auth, "Rutas /auth y /admin (autenticar + autorizar)")
+Rel(transversal, publicaciones, "Rutas públicas y /admin/publicaciones")
+Rel(transversal, eventos, "Rutas /sedes/:sede/eventos y /admin/eventos")
+Rel(transversal, proclamas, "Rutas /sedes/:sede/proclamas y /admin/proclamas")
+Rel(transversal, boletines, "Rutas de boletines")
+Rel(transversal, multimedia, "Rutas /admin/multimedia")
+Rel(transversal, sedes, "Rutas /sedes y /admin/sedes")
+Rel(transversal, pastoral, "Rutas de grupos pastorales")
+Rel(transversal, parroquia, "Rutas de horarios, servicios, videos, páginas, usuarios")
+Rel(transversal, buscador, "Ruta /sedes/:sede/buscar")
+Rel(transversal, exportar, "Rutas /admin/*/exportar")
+Rel(transversal, bitacora, "registrarConsulta en cada respuesta; /admin/bitacora")
+
+Rel(exportar, bitacora, "Registra la exportación (EXPORT)")
+Rel(publicaciones, bitacora, "registrarCambio en la transacción")
+Rel(proclamas, bitacora, "Registra la lectura (VIEW) sin datos personales")
+Rel(bitacora, cache, "programarInvalidacion al confirmar")
+Rel(multimedia, almacen, "Sube y borra objetos")
+Rel(publicaciones, pastoral, "Noticias del Coordinador: solo tipo Noticia, etiquetada con sus grupos (usuario_grupo_pastoral)")
+
+Rel(publicaciones, cache, "Lecturas públicas con caché (igual en eventos, proclamas, sedes, buscador y contenido pastoral)")
+Rel(datos, postgres, "SQL", "pg")
+Rel(cache, redis, "GET / SET / INCR", "ioredis")
+Rel(auth, redis, "Contadores de intentos", "ioredis")
+Rel(almacen, oci, "PutObject / Upload / DeleteObjects", "HTTPS, API S3")
+
+Lay_D(publicaciones, datos)
+
+SHOW_LEGEND()
+@enduml
