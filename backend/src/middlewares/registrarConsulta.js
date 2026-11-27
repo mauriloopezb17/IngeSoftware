@@ -82,6 +82,7 @@ export function registrarConsulta(req, res, next) {
       estado: res.statusCode,
       duracionMs,
       ...(sede !== undefined && sede !== null ? { sede } : {}),
+      ...(req.extraConsulta ?? {}),
       reqId: req.id,
     };
 

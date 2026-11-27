@@ -15,3 +15,4 @@ export { useProclamas, useHistorialProclamas, useProclama } from './useProclamas
 export { useGruposPastorales, useGrupoPastoral } from './useGruposPastorales.js';
 export { useVideos } from './useVideos.js';
 export { useCategorias, useCategoriasEvento } from './useCatalogos.js';
+export { useBuscar } from './useBuscar.js';

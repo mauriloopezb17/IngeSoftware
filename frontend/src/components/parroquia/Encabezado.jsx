@@ -5,6 +5,7 @@ import { ChevronDown, Clock3, Menu, MessageCircle, Phone, X } from 'lucide-react
 import { BotonEnlace } from '../portal/Boton.jsx';
 import Contenedor from '../portal/Contenedor.jsx';
 import EnlacePortal from './EnlacePortal.jsx';
+import { BuscadorEncabezado, BuscadorMovil } from './buscador/BuscadorEncabezado.jsx';
 import { IconoRedSocial } from './IconoDinamico.jsx';
 import { useMenuPaginas, useSede } from '../../hooks/index.js';
 import { armarHrefTelefono } from '../../utils/formatoPortal.js';
@@ -136,6 +137,7 @@ function MenuDesplegable({ titulo, enlaces, activo = false, abierto, alAlternar,
 }
 
 function EncabezadoBase({ transparente, rutaActual }) {
+  const enRouter = useInRouterContext();
   const { data: sede } = useSede();
   const { data: paginasMenu = [] } = useMenuPaginas();
 
@@ -358,7 +360,9 @@ function EncabezadoBase({ transparente, rutaActual }) {
             <EnlaceNavPortal to="/contacto">Contacto</EnlaceNavPortal>
           </nav>
 
-          <div className="flex items-center gap-3 lg:hidden">
+          <div className="flex items-center gap-3">
+            {enRouter && <BuscadorEncabezado />}
+
             <button
               ref={botonMenuRef}
               type="button"
@@ -366,7 +370,7 @@ function EncabezadoBase({ transparente, rutaActual }) {
               aria-label="Abrir menú"
               aria-expanded={cajonAbierto}
               aria-controls={idMenuMovil}
-              className="inline-flex size-11 cursor-pointer items-center justify-center rounded-sm bg-gold text-ink shadow-soft transition-colors duration-150 ease-salida hover:bg-gold-dark active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+              className="inline-flex size-11 cursor-pointer items-center justify-center rounded-sm bg-gold text-ink shadow-soft transition-colors duration-150 ease-salida hover:bg-gold-dark active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:hidden"
             >
               <Menu size={22} aria-hidden="true" />
             </button>
@@ -415,7 +419,9 @@ function EncabezadoBase({ transparente, rutaActual }) {
           </Contenedor>
 
           <Contenedor className="flex flex-1 flex-col justify-between py-6">
-            <nav aria-label="Menú móvil" className="flex flex-col divide-y divide-white/10">
+            <div>
+              {enRouter && <BuscadorMovil alNavegar={cerrarTodo} />}
+              <nav aria-label="Menú móvil" className="flex flex-col divide-y divide-white/10">
               <EnlacePortal
                 to="/"
                 onClick={cerrarTodo}
@@ -499,7 +505,8 @@ function EncabezadoBase({ transparente, rutaActual }) {
               >
                 Contacto
               </EnlacePortal>
-            </nav>
+              </nav>
+            </div>
 
             <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6">
               <BotonEnlace to="/horarios" variante="primarioOscuro" onClick={cerrarTodo}>

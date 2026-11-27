@@ -134,3 +134,7 @@ export async function obtenerCategoriasEvento(senal) {
   const { datos } = await clienteHttp.get('/categorias-evento', { senal });
   return datos;
 }
+
+export async function buscarPortal(sede, parametros, senal) {
+  return clienteHttp.get(`/sedes/${sede}/buscar`, { parametros, senal });
+}

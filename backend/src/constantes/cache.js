@@ -17,6 +17,7 @@ export const RECURSOS_CACHE = Object.freeze({
   PROCLAMAS: 'proclamas', // vigentes e historial
   BOLETINES: 'boletines',
   PAGINAS: 'paginas', // menú y detalle por slug
+  BUSQUEDA: 'busqueda',
 });
 
 // TTL (segundos) de cada recurso. Es el tope de antigüedad de una respuesta guardada:
@@ -39,6 +40,7 @@ export const TTL_SEGUNDOS = Object.freeze({
   [RECURSOS_CACHE.PROCLAMAS]: UN_MINUTO,
   [RECURSOS_CACHE.BOLETINES]: DIEZ_MINUTOS,
   [RECURSOS_CACHE.PAGINAS]: DIEZ_MINUTOS,
+  [RECURSOS_CACHE.BUSQUEDA]: UN_MINUTO,
 });
 
 // Todas las claves de la caché empiezan así. Subir la versión descarta de golpe todo lo guardado
