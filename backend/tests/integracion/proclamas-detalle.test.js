@@ -284,7 +284,9 @@ describe('detalle de proclamas (público)', () => {
     const ocultaId = ocultaRes.body.datos.id;
 
     // Lista pública incluye tieneDetalle e imagen, sin detalle ni galeria.
-    const listaRes = await como().get(`/api/sedes/${sede.slug}/proclamas`);
+    const listaRes = await como().get(
+      `/api/sedes/${sede.slug}/proclamas?buscar=${encodeURIComponent(PREFIJO)}&porPagina=100`,
+    );
     expect(listaRes.status).toBe(200);
     const item = listaRes.body.datos.find((p) => p.id === visibleId);
     expect(item).toBeDefined();
