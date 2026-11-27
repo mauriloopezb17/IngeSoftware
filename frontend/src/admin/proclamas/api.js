@@ -13,9 +13,16 @@ export const VISTAS = {
   todas: { etiqueta: 'Todas', vigentes: '', orden: '-fechaMatrimonio' },
 };
 
-export function listarProclamas({ vista = 'vigentes', buscar, anio, pagina, porPagina = POR_PAGINA }, senal) {
+export function parametrosProclamas({ vista = 'vigentes', buscar, anio } = {}) {
   const { vigentes, orden } = VISTAS[vista] ?? VISTAS.vigentes;
-  return clienteHttp.get('/admin/proclamas', { parametros: { vigentes, orden, buscar, anio, pagina, porPagina }, senal });
+  return { vigentes, orden, buscar, anio };
+}
+
+export function listarProclamas({ pagina, porPagina = POR_PAGINA, ...filtros } = {}, senal) {
+  return clienteHttp.get('/admin/proclamas', {
+    parametros: { ...parametrosProclamas(filtros), pagina, porPagina },
+    senal,
+  });
 }
 
 export async function obtenerProclama(id, senal) {

@@ -17,7 +17,7 @@ import {
   useFiltrosListado,
   useToast,
 } from '../ui/index.js';
-import { CLAVE_PROCLAMAS, eliminarProclama, listarProclamas, VISTAS } from './api.js';
+import { CLAVE_PROCLAMAS, eliminarProclama, listarProclamas, parametrosProclamas, VISTAS } from './api.js';
 import { estaPublicada, formatearDia, ordinal } from './fechas.js';
 import PestanasProclamas from './PestanasProclamas.jsx';
 
@@ -158,7 +158,7 @@ export default function ListadoProclamas() {
             <BotonExportarCsv
               recurso="proclamas"
               permiso="proclamas.exportar"
-              filtros={filtrosActivos}
+              filtros={parametrosProclamas(filtrosActivos)}
             />
             {editable && (
               <Boton como={Link} to="/admin/proclamas/nueva" variante="primario" icono={Plus}>

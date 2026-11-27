@@ -17,7 +17,14 @@ import {
   useFiltrosListado,
   useToast,
 } from '../ui/index.js';
-import { CLAVE_EVENTOS, eliminarEvento, ESTADOS_EVENTO, listarEventos, VISTAS } from './api.js';
+import {
+  CLAVE_EVENTOS,
+  eliminarEvento,
+  ESTADOS_EVENTO,
+  listarEventos,
+  parametrosEventos,
+  VISTAS,
+} from './api.js';
 import { formatearCuandoEvento } from './formato.js';
 
 const VARIANTE_ESTADO = {
@@ -171,7 +178,7 @@ export default function ListadoEventos() {
             <BotonExportarCsv
               recurso="eventos"
               permiso="eventos.exportar"
-              filtros={filtrosActivos}
+              filtros={parametrosEventos(filtrosActivos)}
             />
             {editable && (
               <Boton como={Link} to="/admin/eventos/nuevo" variante="primario" icono={Plus}>
