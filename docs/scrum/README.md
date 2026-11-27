@@ -14,11 +14,23 @@ Evidencia de cómo el equipo aplicó Scrum en la Plataforma Web y Sistema de Ges
 
 ## Sprints
 
+Fechas, objetivos y velocidad tomados del tablero de Jira (proyecto PAR).
+
 | Sprint | Inicio | Fin | Duración | Objetivo |
 |---|---|---|---|---|
 | [Sprint 1](sprint-1.md) | 23/09/2026 | 27/10/2026 | 5 semanas | Mockups UI/UX aprobados, modelo de datos PostgreSQL + JSONB definido y prototipo web con datos estáticos listo para validación. |
-| [Sprint 2](sprint-2.md) | 27/10/2026 | 14/11/2026 | 2,5 semanas | Servidor CMS con editor de noticias tipo WordPress operativo, backend y API pública del portal listos, frontend conectado a la API con animaciones fluidas y documentación de avance. |
-| [Sprint 3](sprint-3.md) | 14/11/2026 | 27/11/2026 | 2 semanas | Atender las observaciones del docente (paginación, exportación CSV por rol, logging, pruebas y revisión por PR), aplicar las correcciones del párroco, de los ingenieros y de marketing, abrir las secciones de comunidades, Conoce el templo y Anécdotas, y dejar validada y documentada la entrega. |
+| [Sprint 2](sprint-2.md) | 27/10/2026 | 14/11/2026 | 2,5 semanas | Servidor CMS con editor de noticias tipo WordPress operativo, backend y API pública del portal listos, frontend conectado a la API con animaciones fluidas y documentación de avance (trazabilidad, manual del CMS y plan de despliegue). |
+| [Sprint 3](sprint-3.md) | 14/11/2026 | 27/11/2026 | 2 semanas | Atender las observaciones del docente (paginación, exportación CSV por rol, logging, pruebas y revisión por PR), aplicar las correcciones del párroco, de los ingenieros y de marketing en el portal y el CMS, abrir las secciones de comunidades, Conoce el templo y Anécdotas, y dejar validada y documentada la entrega (SRS v1.1, trazabilidad, manual y transferencia). |
+
+### Velocidad (story points de Jira, al 27/11/2026)
+
+| Sprint | Incidencias | SP en el sprint | SP completados | Cumplimiento |
+|---|---|---|---|---|
+| Sprint 1 | 9 | 37 | 37 | 100 % |
+| Sprint 2 | 12 | 73 | 73 | 100 % |
+| Sprint 3 | 22 | 88 | 77 | 88 % (PAR-170 y PAR-173 «En curso» y PAR-242 «En revisión» al 27/11) |
+
+Los SP corresponden al alcance de cada sprint registrado en Jira al cierre; Jira no guarda en estas incidencias una copia del compromiso inicial, así que no se distingue lo planificado el primer día de lo agregado después.
 
 La duración de los sprints no fue fija: se ajustó a las fechas de evaluación de la materia y a la disponibilidad de la parroquia. Antes del Sprint 1, el 12/08/2026, se creó el repositorio (Acta de Constitución del proyecto).
 
@@ -26,10 +38,10 @@ La duración de los sprints no fue fija: se ajustó a las fechas de evaluación 
 
 | Ceremonia | Cómo se hizo | Evidencia |
 |---|---|---|
-| Sprint Planning | Objetivo del sprint e historias comprometidas en Jira. | Sección «Planning» de cada sprint; tablero de Jira. |
-| Daily | [COMPLETAR con el equipo: frecuencia y canal de las reuniones diarias] | [Plantilla de dailies del Sprint 3](dailies-sprint-3.md). |
+| Sprint Planning | Objetivo del sprint, historias y story points en Jira (tablero «KAN board» del proyecto PAR). | Sección «Planning» de cada sprint, con los datos exportados de Jira. |
+| Daily | Seguimiento diario del tablero de Jira (estados, bloqueos y reasignaciones), a cargo del Scrum Master (historia PAR-180). No se conservaron actas escritas de las reuniones diarias. | [Registro de actividad diaria del Sprint 3](dailies-sprint-3.md), reconstruido desde Git y GitHub. |
 | Sprint Review | Demostración del incremento a la parroquia o al docente. | Sección «Review» de cada sprint; reuniones con la parroquia. |
-| Retrospectiva | Qué salió bien, qué mejorar y acciones con responsable. | Sección «Retrospectiva» de cada sprint (por completar con el equipo). |
+| Retrospectiva | Qué salió bien, qué mejorar y acciones con responsable. | Sección «Retrospectiva» de cada sprint: análisis del Scrum Master a partir de los datos del sprint, con el seguimiento de cada acción en el sprint siguiente. |
 
 ## Herramientas
 
