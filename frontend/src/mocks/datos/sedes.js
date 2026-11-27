@@ -196,10 +196,10 @@ export const paginasExaltacion = {
         contenido: {
           items: [
             {
-              titulo: 'Horarios de Misa',
-              subtitulo: 'Toda la semana',
-              icono: 'clock-3',
-              enlace: '#horarios',
+              titulo: 'Noticias',
+              subtitulo: 'Lo último de la parroquia',
+              icono: 'newspaper',
+              enlace: '/noticias',
             },
             {
               titulo: 'Sacramentos',

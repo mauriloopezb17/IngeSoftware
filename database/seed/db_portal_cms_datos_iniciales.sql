@@ -136,8 +136,8 @@ INSERT INTO bloque (pagina_id, tipo_bloque_id, orden, contenido) VALUES
    (SELECT id FROM tipo_bloque WHERE codigo = 'tarjetas'), 2,
    '{
       "items": [
-        {"titulo": "Horarios de Misa", "subtitulo": "Toda la semana",         "icono": "clock-3",       "enlace": "#horarios"},
-        {"titulo": "Sacramentos",      "subtitulo": "Requisitos y fechas",    "icono": "droplet",       "enlace": "#sacramentos"},
+        {"titulo": "Noticias",         "subtitulo": "Lo último de la parroquia", "icono": "newspaper",     "enlace": "/noticias"},
+        {"titulo": "Sacramentos",      "subtitulo": "Requisitos y fechas",       "icono": "droplet",       "enlace": "#sacramentos"},
         {"titulo": "Calendario",       "subtitulo": "Próximas actividades",   "icono": "calendar-days", "enlace": "#agenda"},
         {"titulo": "Proclamas",        "subtitulo": "Vigentes esta semana",   "icono": "scroll-text",   "enlace": "#proclamas"}
       ]
