@@ -25,30 +25,31 @@ const {
   PROCLAMAS,
   BOLETINES,
   PAGINAS,
+  BUSQUEDA,
 } = RECURSOS_CACHE;
 
 // Recursos de la sede que cambian con cada entidad. "global": recursos sin sede (lista de sedes y
 // resolución del slug). Un arreglo vacío significa que esa entidad no se ve en el portal.
 export const RECURSOS_POR_ENTIDAD = Object.freeze({
-  publicacion: { sede: [PUBLICACIONES] },
-  evento: { sede: [EVENTOS] },
+  publicacion: { sede: [PUBLICACIONES, BUSQUEDA] },
+  evento: { sede: [EVENTOS, BUSQUEDA] },
   horario: { sede: [HORARIOS] },
-  servicio: { sede: [SERVICIOS] },
+  servicio: { sede: [SERVICIOS, BUSQUEDA] },
   pregunta_frecuente: { sede: [SERVICIOS] },
-  grupo_pastoral: { sede: [GRUPOS] },
+  grupo_pastoral: { sede: [GRUPOS, BUSQUEDA] },
   video: { sede: [VIDEOS] },
-  pagina: { sede: [PAGINAS] },
-  bloque: { sede: [PAGINAS] },
+  pagina: { sede: [PAGINAS, BUSQUEDA] },
+  bloque: { sede: [PAGINAS, BUSQUEDA] },
   proclama: { sede: [PROCLAMAS] },
   observacion_proclama: { sede: [] },
-  boletin: { sede: [BOLETINES] },
+  boletin: { sede: [BOLETINES, BUSQUEDA] },
   // Datos, contacto, portada y redes de la sede, y la lista y resolución del slug de las sedes
   // (crear, renombrar, cambiar el slug o desactivar una sede afecta a todas sus rutas).
   sede: { sede: [SEDE], global: [SEDES] },
   sede_red_social: { sede: [SEDE] },
   // El texto alternativo de un archivo se muestra en todo lo que lo usa como imagen o archivo.
   archivo_multimedia: {
-    sede: [PUBLICACIONES, EVENTOS, GRUPOS, PROCLAMAS, BOLETINES, SEDE],
+    sede: [PUBLICACIONES, EVENTOS, GRUPOS, PROCLAMAS, BOLETINES, SEDE, BUSQUEDA],
     global: [SEDES],
   },
   // Los usuarios no aparecen en ninguna lectura pública.
