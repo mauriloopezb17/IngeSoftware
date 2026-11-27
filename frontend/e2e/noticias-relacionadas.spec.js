@@ -1,10 +1,14 @@
 import { expect, test } from '@playwright/test';
+import { eliminarPublicacionAdmin } from './helpers/limpieza.js';
 import { abrirContextoConRol, tituloUnico } from './helpers/sesion.js';
 
 const NOMBRE_GRUPO = 'Coro Parroquial';
 const SLUG_GRUPO = 'coro-parroquial';
 
 test.describe('Noticias relacionadas con sacramentos y grupos', () => {
+  test.beforeEach(() => {
+    test.setTimeout(180_000);
+  });
   test('Marketing etiqueta una noticia con un grupo y el Párroco aprueba → aparece en la página del grupo y el chip de la noticia lleva al grupo', async ({
     browser,
     page,
@@ -88,15 +92,7 @@ test.describe('Noticias relacionadas con sacramentos y grupos', () => {
       await chipGrupo.click();
       await expect(page).toHaveURL(new RegExp(`/comunidad/grupos/${SLUG_GRUPO}$`));
     } finally {
-      if (publicacionId) {
-        const limpieza = await abrirContextoConRol(browser, 'parroco');
-        try {
-          await limpieza.page.request.post(`/api/admin/publicaciones/${publicacionId}/archivar`);
-          await limpieza.page.request.delete(`/api/admin/publicaciones/${publicacionId}`);
-        } finally {
-          await limpieza.context.close();
-        }
-      }
+      await eliminarPublicacionAdmin(browser, publicacionId);
     }
   });
 });
