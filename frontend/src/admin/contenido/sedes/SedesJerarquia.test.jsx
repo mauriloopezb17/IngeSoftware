@@ -109,9 +109,14 @@ describe('gestión de jerarquía de sedes en el panel', () => {
         orden: 1,
       });
     });
+    expect(
+      await screen.findByText('Se actualizó el orden de «Parroquia Señor de la Exaltación».'),
+    ).toBeInTheDocument();
 
     // Abrir diálogo Mover sobre la capilla
-    await usuario.click(screen.getByRole('button', { name: 'Mover «Capilla San Pablo de la Cruz»' }));
+    const btnMover = screen.getByRole('button', { name: 'Mover «Capilla San Pablo de la Cruz»' });
+    await waitFor(() => expect(btnMover).toBeEnabled());
+    await usuario.click(btnMover);
     const dialogo = await screen.findByRole('dialog', {
       name: 'Mover «Capilla San Pablo de la Cruz»',
     });
