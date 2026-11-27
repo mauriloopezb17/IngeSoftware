@@ -163,8 +163,29 @@ describe('gestión de usuarios', () => {
   it('la lista trae la paginación en la raíz, como la API (convenciones §3)', async () => {
     await entrar('admin');
     const respuesta = await clienteHttp.get('/admin/usuarios', { parametros: { porPagina: 2 } });
-    expect(respuesta.paginacion).toEqual({ pagina: 1, porPagina: 2, total: 4, totalPaginas: 2 });
+    expect(respuesta.paginacion).toEqual({ pagina: 1, porPagina: 2, total: 5, totalPaginas: 3 });
     expect(respuesta).not.toHaveProperty('meta');
+  });
+
+  it('permite asignar grupos al crear un Coordinador de grupo', async () => {
+    await entrar('admin');
+    montar();
+    const u = userEvent.setup({ delay: null });
+
+    await screen.findByRole('table', { name: 'Usuarios' });
+    await u.click(screen.getByRole('button', { name: /Nuevo usuario/ }));
+
+    const dialogo = await screen.findByRole('dialog', { name: 'Nuevo usuario' });
+    await u.type(within(dialogo).getByLabelText('Nombre completo'), 'Lucía Coordinadora');
+    await u.type(within(dialogo).getByLabelText('Correo electrónico'), 'lucia@parroquia.test');
+    await u.selectOptions(within(dialogo).getByLabelText('Rol'), 'COORDINADOR');
+
+    const grupoCheck = await within(dialogo).findByLabelText('Monaguillos');
+    await u.click(grupoCheck);
+    await u.type(within(dialogo).getByLabelText('Contraseña inicial'), 'Clave-Segura-2026');
+    await u.click(within(dialogo).getByRole('button', { name: 'Crear usuario' }));
+
+    expect(await screen.findByText('Lucía Coordinadora')).toBeInTheDocument();
   });
 
   it('muestra la paginación cuando hay más de una página', async () => {

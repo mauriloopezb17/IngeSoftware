@@ -2,9 +2,12 @@ import { NavLink } from 'react-router';
 
 import { useResumenObservaciones } from '../proclamas/useResumenObservaciones.js';
 import { GRUPOS_MENU } from '../rutas.js';
+import { useSesion } from '../sesion/SesionContexto.js';
 
 // Lista de enlaces del panel agrupada por dominio. NavLink marca la sección activa con aria-current="page".
 export default function MenuLateral({ secciones, alNavegar }) {
+  const { usuario } = useSesion();
+  const esCoordinador = usuario?.rol?.codigo === 'COORDINADOR';
   const porClave = new Map(secciones.map((s) => [s.clave, s]));
   const { data: resumenObservaciones } = useResumenObservaciones();
   const noLeidas = resumenObservaciones?.noLeidas ?? 0;
@@ -44,7 +47,7 @@ export default function MenuLateral({ secciones, alNavegar }) {
                             />
                           )}
                           <Icono className={`size-4 shrink-0 ${isActive ? 'text-gold' : ''}`} aria-hidden="true" />
-                          <span>{titulo}</span>
+                          <span>{esCoordinador && clave === 'grupos' ? 'Mis grupos' : titulo}</span>
                           {clave === 'proclamas' && noLeidas > 0 && (
                             <span
                               aria-label={`${noLeidas} observaciones sin leer`}

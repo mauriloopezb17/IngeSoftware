@@ -21,6 +21,7 @@ export function crearUsuariosAdminIniciales() {
     correo: u.correo,
     rol: { ...u.rol },
     sede: u.sede ? { ...u.sede } : null,
+    gruposAsignados: u.gruposAsignados ? u.gruposAsignados.map((g) => ({ ...g })) : [],
     activo: true,
     fechaUltimoAcceso: ULTIMO_ACCESO_SEED[u.id] ?? null,
     fechaCreacion: '2026-10-26T10:12:37-04:00',
@@ -172,11 +173,29 @@ export function crearControladorUsuariosAdmin(ctx) {
         });
       }
 
+      const grupoIds = Array.isArray(cuerpo.grupoIds) ? [...new Set(cuerpo.grupoIds.map(Number))] : undefined;
+      if (rolObj?.codigo === 'COORDINADOR' && (!grupoIds || grupoIds.length === 0)) {
+        detalles.push({
+          campo: 'grupoIds',
+          mensaje: 'El coordinador debe tener al menos un grupo asignado.',
+        });
+      } else if (rolObj && rolObj.codigo !== 'COORDINADOR' && grupoIds?.length) {
+        detalles.push({
+          campo: 'grupoIds',
+          mensaje: 'Solo los usuarios con rol Coordinador de grupo pueden tener grupos asignados.',
+        });
+      }
+
       if (detalles.length) return ctx.errorValidacion(detalles);
 
       if (usuarios.some((u) => u.correo.toLowerCase() === correo.toLowerCase())) {
         return ctx.error(409, 'CONFLICTO', `Ya existe un usuario registrado con el correo «${correo}».`);
       }
+
+      const gruposAsignados =
+        rolObj.codigo === 'COORDINADOR'
+          ? (grupoIds ?? []).map((gid) => ({ id: gid, nombre: `Grupo #${gid}`, slug: `grupo-${gid}` }))
+          : [];
 
       const nuevo = {
         id: sigUsuarioId++,
@@ -184,6 +203,7 @@ export function crearControladorUsuariosAdmin(ctx) {
         correo,
         rol: { codigo: rolObj.codigo, nombre: rolObj.nombre },
         sede,
+        gruposAsignados,
         activo: cuerpo.activo !== undefined ? Boolean(cuerpo.activo) : true,
         fechaUltimoAcceso: null,
         fechaCreacion: new Date().toISOString(),
@@ -253,6 +273,23 @@ export function crearControladorUsuariosAdmin(ctx) {
         });
       }
 
+      const grupoIds = Array.isArray(cuerpo.grupoIds) ? [...new Set(cuerpo.grupoIds.map(Number))] : undefined;
+      if (rolObj && rolObj.codigo !== 'COORDINADOR' && grupoIds?.length) {
+        detalles.push({
+          campo: 'grupoIds',
+          mensaje: 'Solo los usuarios con rol Coordinador de grupo pueden tener grupos asignados.',
+        });
+      } else if (
+        rolObj?.codigo === 'COORDINADOR' &&
+        ((recurso.rol.codigo !== 'COORDINADOR' && (!grupoIds || grupoIds.length === 0)) ||
+          (grupoIds !== undefined && grupoIds.length === 0))
+      ) {
+        detalles.push({
+          campo: 'grupoIds',
+          mensaje: 'El coordinador debe tener al menos un grupo asignado.',
+        });
+      }
+
       if (detalles.length) return ctx.errorValidacion(detalles);
 
       if (
@@ -297,6 +334,15 @@ export function crearControladorUsuariosAdmin(ctx) {
       recurso.rol = { codigo: rolObj.codigo, nombre: rolObj.nombre };
       recurso.sede = sede;
       recurso.activo = activoResultante;
+      if (rolObj.codigo !== 'COORDINADOR') {
+        recurso.gruposAsignados = [];
+      } else if (grupoIds !== undefined) {
+        recurso.gruposAsignados = grupoIds.map((gid) => ({
+          id: gid,
+          nombre: `Grupo #${gid}`,
+          slug: `grupo-${gid}`,
+        }));
+      }
 
       return HttpResponse.json({ datos: recurso });
     }),

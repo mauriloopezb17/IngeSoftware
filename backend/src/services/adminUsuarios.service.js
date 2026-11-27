@@ -9,7 +9,7 @@ import { formatearFechaHora } from '../utils/formato.js';
 import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 import { registrarCambio } from './bitacora.service.js';
 
-function aUsuarioAdmin(fila) {
+function aUsuarioAdmin(fila, gruposAsignados = []) {
   return {
     id: fila.id,
     nombreCompleto: fila.nombre_completo,
@@ -18,6 +18,7 @@ function aUsuarioAdmin(fila) {
     sede: fila.sede_id
       ? { id: fila.sede_id, nombre: fila.sede_nombre, slug: fila.sede_slug }
       : null,
+    gruposAsignados,
     activo: fila.activo,
     fechaUltimoAcceso: formatearFechaHora(fila.fecha_ultimo_acceso),
     fechaCreacion: formatearFechaHora(fila.fecha_creacion),
@@ -28,6 +29,46 @@ function exigirSedeSiCorresponde(rolCodigo, sedeId) {
   if (rolCodigo !== 'ADMINISTRADOR' && (sedeId === null || sedeId === undefined)) {
     throw ErrorApp.validacion(undefined, [
       { campo: 'sedeId', mensaje: 'La sede es obligatoria para este rol.' },
+    ]);
+  }
+}
+
+async function validarGruposAsignados(
+  { rolFinal, sedeIdFinal, grupoIds, esCreacion, cambioDeRol },
+  db,
+) {
+  if (rolFinal !== 'COORDINADOR') {
+    if (grupoIds !== undefined && grupoIds.length > 0) {
+      throw ErrorApp.validacion(undefined, [
+        {
+          campo: 'grupoIds',
+          mensaje: 'Solo los usuarios con rol Coordinador de grupo pueden tener grupos asignados.',
+        },
+      ]);
+    }
+    return;
+  }
+
+  if ((esCreacion || cambioDeRol) && (!grupoIds || grupoIds.length === 0)) {
+    throw ErrorApp.validacion(undefined, [
+      { campo: 'grupoIds', mensaje: 'El coordinador debe tener al menos un grupo asignado.' },
+    ]);
+  }
+
+  if (grupoIds === undefined) return;
+  if (grupoIds.length === 0) {
+    throw ErrorApp.validacion(undefined, [
+      { campo: 'grupoIds', mensaje: 'El coordinador debe tener al menos un grupo asignado.' },
+    ]);
+  }
+
+  const validos = await modelo.gruposDeSedePorIds(sedeIdFinal, grupoIds, db);
+  if (validos.length !== grupoIds.length) {
+    throw ErrorApp.validacion(undefined, [
+      {
+        campo: 'grupoIds',
+        mensaje: 'Todos los grupos asignados deben existir y pertenecer a la sede del coordinador.',
+      },
     ]);
   }
 }
@@ -56,8 +97,10 @@ export async function listarUsuarios(consulta) {
     desplazamiento: desplazamiento(consulta.pagina, consulta.porPagina),
   });
 
+  const gruposPorUsuario = await modelo.gruposDeUsuarios(filas.map((f) => f.id));
+
   return {
-    datos: filas.map(aUsuarioAdmin),
+    datos: filas.map((f) => aUsuarioAdmin(f, gruposPorUsuario.get(f.id) ?? [])),
     paginacion: armarPaginacion({
       pagina: consulta.pagina,
       porPagina: consulta.porPagina,
@@ -69,7 +112,8 @@ export async function listarUsuarios(consulta) {
 export async function obtenerUsuario(id) {
   const fila = await modelo.buscarDetalleAdmin(id);
   if (!fila) throw ErrorApp.noEncontrado('El usuario no existe.');
-  return aUsuarioAdmin(fila);
+  const grupos = await modelo.gruposAsignadosDe(id);
+  return aUsuarioAdmin(fila, grupos);
 }
 
 export async function crearUsuario(datos, contexto) {
@@ -91,6 +135,16 @@ export async function crearUsuario(datos, contexto) {
   let idCreado;
   try {
     idCreado = await transaccion(async (db) => {
+      await validarGruposAsignados(
+        {
+          rolFinal: datos.rol,
+          sedeIdFinal: datos.sedeId,
+          grupoIds: datos.grupoIds,
+          esCreacion: true,
+          cambioDeRol: false,
+        },
+        db,
+      );
       const fila = await modelo.crearAdmin(
         {
           rolNombre,
@@ -102,6 +156,9 @@ export async function crearUsuario(datos, contexto) {
         },
         db,
       );
+      if (datos.rol === 'COORDINADOR' && datos.grupoIds?.length) {
+        await modelo.reemplazarGruposAsignados(fila.id, datos.grupoIds, db);
+      }
       await registrarCambio(db, contexto, {
         entidad: 'usuario',
         entidadId: fila.id,
@@ -114,7 +171,7 @@ export async function crearUsuario(datos, contexto) {
     traducirErrorCorreoUnico(err);
   }
 
-  return aUsuarioAdmin(await modelo.buscarDetalleAdmin(idCreado));
+  return obtenerUsuario(idCreado);
 }
 
 export async function actualizarUsuario(usuarioActual, id, datos, contexto) {
@@ -165,6 +222,16 @@ export async function actualizarUsuario(usuarioActual, id, datos, contexto) {
       }
 
       exigirSedeSiCorresponde(rolFinal, sedeIdFinal);
+      await validarGruposAsignados(
+        {
+          rolFinal,
+          sedeIdFinal,
+          grupoIds: datos.grupoIds,
+          esCreacion: false,
+          cambioDeRol: rolFinal !== rolActual,
+        },
+        db,
+      );
 
       let rolId;
       if (datos.rol !== undefined && datos.rol !== rolActual) {
@@ -184,6 +251,12 @@ export async function actualizarUsuario(usuarioActual, id, datos, contexto) {
         db,
       );
 
+      if (rolFinal !== 'COORDINADOR' && rolActual === 'COORDINADOR') {
+        await modelo.reemplazarGruposAsignados(id, [], db);
+      } else if (rolFinal === 'COORDINADOR' && datos.grupoIds !== undefined) {
+        await modelo.reemplazarGruposAsignados(id, datos.grupoIds, db);
+      }
+
       await registrarCambio(db, contexto, {
         entidad: 'usuario',
         entidadId: id,
@@ -196,7 +269,7 @@ export async function actualizarUsuario(usuarioActual, id, datos, contexto) {
     traducirErrorCorreoUnico(err);
   }
 
-  return aUsuarioAdmin(await modelo.buscarDetalleAdmin(id));
+  return obtenerUsuario(id);
 }
 
 export async function restablecerContrasena(id, contrasenaNueva, contexto) {

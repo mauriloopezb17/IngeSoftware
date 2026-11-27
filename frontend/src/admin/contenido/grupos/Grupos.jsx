@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, Inbox, Pencil, Plus, Trash2 } from 'lucide-react';
 import { IconoDinamico } from '../../../components/parroquia/IconoDinamico.jsx';
 import ConfirmarAccion from '../../componentes/ConfirmarAccion.jsx';
 import { usePermisos } from '../../permisos/usePermisos.js';
+import { useSesion } from '../../sesion/SesionContexto.js';
 import {
   Aviso,
   Boton,
@@ -21,8 +22,10 @@ import FormularioGrupo from './FormularioGrupo.jsx';
 
 export default function Grupos() {
   const queryClient = useQueryClient();
+  const { usuario } = useSesion();
   const { puede } = usePermisos();
   const toast = useToast();
+  const esCoordinador = usuario?.rol?.codigo === 'COORDINADOR';
   const puedeGestionar = puede('grupos.gestionar');
   const puedeEditarDetalle = puede('grupos.detalle');
   const puedeAbrirEdicion = puedeGestionar || puedeEditarDetalle;
@@ -178,8 +181,12 @@ export default function Grupos() {
   return (
     <section className="mx-auto max-w-5xl">
       <EncabezadoPantalla
-        titulo="Grupos pastorales"
-        descripcion="Movimientos, ministerios y pastorales de la comunidad parroquial."
+        titulo={esCoordinador ? 'Mis grupos' : 'Grupos pastorales'}
+        descripcion={
+          esCoordinador
+            ? 'Grupos pastorales que tienes asignados para editar su página, galería y contacto.'
+            : 'Movimientos, ministerios y pastorales de la comunidad parroquial.'
+        }
         headingRef={tituloRef}
         acciones={
           <>
