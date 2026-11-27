@@ -175,7 +175,7 @@ export default function ListadoBoletines() {
           onCambiarBusqueda={setBusqueda}
           placeholderBusqueda="Título del boletín"
           filtrosExtra={
-            <div className="w-48">
+            <div className="w-full sm:w-48">
               <CampoTexto
                 etiqueta="Año"
                 type="number"

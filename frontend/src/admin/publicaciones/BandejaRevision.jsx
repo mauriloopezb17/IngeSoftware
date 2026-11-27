@@ -190,7 +190,7 @@ export default function BandejaRevision() {
               : undefined
           }
           filtrosExtra={
-            <div className="min-w-[150px]">
+            <div className="w-full sm:w-auto sm:min-w-[150px]">
               <CampoSelect
                 etiqueta="Tipo"
                 value={valores.tipo}
