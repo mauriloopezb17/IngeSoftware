@@ -1,0 +1,42 @@
+@startuml C1-contexto
+' Modelo C4 v2 - Nivel 1: diagrama de contexto del sistema implementado (v2.0).
+' Fuente: código del repositorio (frontend/src, backend/src, docker-compose.yml, .github/workflows/ci.yml).
+' Exportar: java -jar plantuml.jar -tpng C1-contexto.puml
+!pragma layout smetana
+!include <C4/C4_Context>
+
+LAYOUT_WITH_LEGEND()
+
+title Contexto (C1) - Plataforma Web y Sistema de Gestión Parroquial v2.0
+
+Person(feligres, "Feligrés / visitante", "Consulta horarios, sacramentos, grupos, noticias, calendario, proclamas y boletines. Puede enviar una observación anónima a una proclama.")
+Person(secretaria, "Secretaría", "Gestiona avisos, eventos, horarios, servicios, grupos, proclamas, boletines y páginas de su sede.")
+Person(parroco, "Párroco", "Publica noticias, revisa las observaciones confidenciales de las proclamas y consulta la bitácora.")
+Person(marketing, "Marketing", "Redacta noticias, completa el detalle de eventos, servicios, grupos y proclamas, y gestiona videos y boletines.")
+Person(coordinador, "Coordinador de grupo", "Edita solo el detalle y la galería de los grupos pastorales que tiene asignados.")
+Person(administrador, "Administrador", "Gestiona usuarios y sedes (jerarquía Parroquia > Capilla > Comunidad).")
+
+System(plataforma, "Plataforma Web y Sistema de Gestión Parroquial", "Portal público por sede y panel de administración (CMS) con roles, bajo pasionistas.org.bo.")
+
+System_Ext(oci, "Oracle Cloud Object Storage + CDN", "Guarda y sirve fotos, boletines y videos subidos (cdn.pasionistas.org.bo). API compatible con S3.")
+System_Ext(youtube, "YouTube", "Videos institucionales incrustados en modo de privacidad mejorada (youtube-nocookie.com).")
+System_Ext(maps, "Google Maps", "Mapa incrustado en Contacto y enlace «Cómo llegar».")
+System_Ext(fonts, "Google Fonts", "Tipografías del portal (Cormorant Garamond y Montserrat).")
+System_Ext(redes, "Redes sociales y WhatsApp", "Facebook, Instagram, TikTok, Messenger y WhatsApp (wa.me). Solo enlaces salientes.")
+
+Rel(feligres, plataforma, "Navega el portal y envía observaciones", "HTTPS")
+Rel(secretaria, plataforma, "Administra contenido en el panel", "HTTPS")
+Rel(parroco, plataforma, "Publica y revisa observaciones", "HTTPS")
+Rel(marketing, plataforma, "Redacta y enriquece contenido", "HTTPS")
+Rel(coordinador, plataforma, "Edita sus grupos", "HTTPS")
+Rel(administrador, plataforma, "Gestiona usuarios y sedes", "HTTPS")
+
+Rel(plataforma, oci, "Sube y elimina archivos", "HTTPS / API S3")
+Rel(feligres, oci, "Descarga imágenes y boletines", "HTTPS (CDN)")
+Rel(feligres, youtube, "Reproduce videos incrustados", "HTTPS (iframe)")
+Rel(feligres, maps, "Ve el mapa de la sede", "HTTPS (iframe)")
+Rel(feligres, fonts, "Descarga tipografías", "HTTPS")
+Rel(feligres, redes, "Sigue enlaces de contacto", "HTTPS")
+
+SHOW_LEGEND()
+@enduml
