@@ -145,9 +145,10 @@ beforeAll(async () => {
 
 afterAll(async () => {
   for (const id of publicacionesCreadas) {
-    await consultar("DELETE FROM bitacora_cambio WHERE entidad = 'publicacion' AND entidad_id = $1", [
-      String(id),
-    ]);
+    await consultar(
+      "DELETE FROM bitacora_cambio WHERE entidad = 'publicacion' AND entidad_id = $1",
+      [String(id)],
+    );
     await consultar('DELETE FROM publicacion WHERE id = $1', [id]);
   }
   for (const id of serviciosCreados) {

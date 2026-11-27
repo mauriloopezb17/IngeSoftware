@@ -197,7 +197,17 @@ export async function existeSede(sedeId, db = { consultar }) {
 }
 
 export async function crear(
-  { sedeId, slug, nombre, descripcionCorta, icono, imagenId = null, contenido, detalle = null, visible },
+  {
+    sedeId,
+    slug,
+    nombre,
+    descripcionCorta,
+    icono,
+    imagenId = null,
+    contenido,
+    detalle = null,
+    visible,
+  },
   db = { consultar },
 ) {
   const { rows } = await db.consultar(
