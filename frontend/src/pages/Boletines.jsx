@@ -213,26 +213,28 @@ function Boletines() {
             Ordenados del más reciente al más antiguo por periodo mensual.
           </p>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <label
-              htmlFor="filtro-anio-boletines"
-              className="font-body text-meta font-semibold text-muted"
-            >
-              Año
-            </label>
-            <select
-              id="filtro-anio-boletines"
-              className="min-h-11 rounded-sm border border-sand bg-white px-3 py-2 font-body text-meta font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              value={anioActivo}
-              onChange={(evento) => actualizarFiltros({ anio: evento.target.value })}
-            >
-              <option value="">Todos los años</option>
-              {anios.map((anio) => (
-                <option key={anio} value={anio}>
-                  {anio}
-                </option>
-              ))}
-            </select>
+          <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+            <div className="flex w-full items-center gap-2 sm:w-auto">
+              <label
+                htmlFor="filtro-anio-boletines"
+                className="font-body text-meta font-semibold text-muted"
+              >
+                Año
+              </label>
+              <select
+                id="filtro-anio-boletines"
+                className="min-h-11 flex-1 rounded-sm border border-sand bg-white px-3 py-2 font-body text-meta font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:flex-initial"
+                value={anioActivo}
+                onChange={(evento) => actualizarFiltros({ anio: evento.target.value })}
+              >
+                <option value="">Todos los años</option>
+                {anios.map((anio) => (
+                  <option key={anio} value={anio}>
+                    {anio}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {anioActivo && (
               <button

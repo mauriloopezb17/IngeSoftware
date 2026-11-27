@@ -199,14 +199,14 @@ export default function ListadoProclamas() {
           placeholderBusqueda="Nombre de un contrayente"
           filtrosExtra={
             <>
-              <div role="group" aria-label="Mostrar proclamas" className="flex rounded-md border border-sand bg-panel p-0.5">
+              <div role="group" aria-label="Mostrar proclamas" className="flex w-full rounded-md border border-sand bg-panel p-0.5 sm:w-auto">
                 {Object.entries(VISTAS).map(([clave, { etiqueta }]) => (
                   <button
                     key={clave}
                     type="button"
                     aria-pressed={valores.vista === clave}
                     onClick={() => actualizarFiltro('vista', clave)}
-                    className={`flex-1 rounded px-3 py-2 text-sm font-medium transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-ink motion-reduce:transition-none ${
+                    className={`min-h-11 flex-1 rounded px-3 py-2 text-sm font-medium transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-ink motion-reduce:transition-none lg:min-h-9 lg:py-1.5 ${
                       valores.vista === clave ? 'bg-gold font-semibold text-ink' : 'text-ink hover:bg-white'
                     }`}
                   >
@@ -214,7 +214,7 @@ export default function ListadoProclamas() {
                   </button>
                 ))}
               </div>
-              <div className="w-36">
+              <div className="w-full sm:w-36">
                 <CampoTexto
                   etiqueta="Año del matrimonio"
                   type="number"

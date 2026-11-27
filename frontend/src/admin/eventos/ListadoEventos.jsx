@@ -223,14 +223,14 @@ export default function ListadoEventos() {
           }}
           filtrosExtra={
             <>
-              <div role="group" aria-label="Mostrar eventos" className="flex rounded-md border border-sand bg-panel p-0.5">
+              <div role="group" aria-label="Mostrar eventos" className="flex w-full rounded-md border border-sand bg-panel p-0.5 sm:w-auto">
                 {Object.entries(VISTAS).map(([clave, { etiqueta }]) => (
                   <button
                     key={clave}
                     type="button"
                     aria-pressed={valores.vista === clave}
                     onClick={() => actualizarFiltro('vista', clave)}
-                    className={`flex-1 rounded px-3 py-2 text-sm font-medium transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-ink motion-reduce:transition-none ${
+                    className={`min-h-11 flex-1 rounded px-3 py-2 text-sm font-medium transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-ink motion-reduce:transition-none lg:min-h-9 lg:py-1.5 ${
                       valores.vista === clave ? 'bg-gold font-semibold text-ink' : 'text-ink hover:bg-white'
                     }`}
                   >
@@ -238,7 +238,7 @@ export default function ListadoEventos() {
                   </button>
                 ))}
               </div>
-              <div className="min-w-[160px]">
+              <div className="w-full sm:w-auto sm:min-w-[160px]">
                 <CampoSelect
                   etiqueta="Estado"
                   value={valores.estado}

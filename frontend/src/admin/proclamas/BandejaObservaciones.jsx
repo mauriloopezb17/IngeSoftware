@@ -179,14 +179,14 @@ export default function BandejaObservaciones() {
             claseTabla="min-w-full"
             filtrosExtra={
               <>
-                <div role="group" aria-label="Estado de lectura" className="flex rounded-md border border-sand bg-panel p-0.5">
+                <div role="group" aria-label="Estado de lectura" className="flex w-full rounded-md border border-sand bg-panel p-0.5 sm:w-auto">
                   {ESTADOS.map(({ clave, etiqueta }) => (
                     <button
                       key={clave}
                       type="button"
                       aria-pressed={valores.estado === clave}
                       onClick={() => actualizarFiltro('estado', clave)}
-                      className={`flex-1 rounded px-3 py-2 text-sm font-medium transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-ink motion-reduce:transition-none ${
+                      className={`min-h-11 flex-1 rounded px-3 py-2 text-sm font-medium transition-colors duration-150 ease-salida focus-visible:outline-2 focus-visible:outline-ink motion-reduce:transition-none lg:min-h-9 lg:py-1.5 ${
                         valores.estado === clave ? 'bg-gold font-semibold text-ink' : 'text-ink hover:bg-white'
                       }`}
                     >
@@ -195,15 +195,15 @@ export default function BandejaObservaciones() {
                   ))}
                 </div>
 
-                <div className="min-w-[200px] flex-1">
-                  <label htmlFor={idFiltroProclama} className="mb-1 block text-xs font-semibold text-muted">
+                <div className="w-full sm:w-auto sm:min-w-[200px] sm:flex-1">
+                  <label htmlFor={idFiltroProclama} className="mb-1.5 block text-sm font-semibold text-ink">
                     Filtrar por proclama
                   </label>
                   <select
                     id={idFiltroProclama}
                     value={valores.proclamaId}
                     onChange={(e) => actualizarFiltro('proclamaId', e.target.value)}
-                    className="min-h-10 w-full rounded-md border border-sand bg-white px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
+                    className="min-h-11 w-full rounded-md border border-sand bg-white px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
                   >
                     <option value="">Todas las proclamas</option>
                     {proclamas.map((p) => (
