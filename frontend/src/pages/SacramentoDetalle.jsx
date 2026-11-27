@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ChevronDown, Clock3, MessageCircle, Phone } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 
@@ -5,12 +6,18 @@ import {
   BotonEnlace,
   Contenedor,
   EncabezadoPagina,
+  EncabezadoSeccion,
   EnlaceFlecha,
   Reveal,
+  RevealImagen,
   Seccion,
 } from '../components/portal/index.js';
+import { BloqueVideoYoutube } from '../components/parroquia/BloquesPagina.jsx';
+import ContenidoBlockNote from '../components/parroquia/ContenidoBlockNote.jsx';
 import { CargandoSeccion, ErrorSeccion } from '../components/parroquia/EstadoSeccion.jsx';
 import { IconoDinamico } from '../components/parroquia/IconoDinamico.jsx';
+import { construirAtributosImagen } from '../components/parroquia/imagenSrcSet.js';
+import VisorGaleria from '../components/parroquia/VisorGaleria.jsx';
 import { TIPOS_HORARIO } from '../config/sede.js';
 import { useHorarios, useSede, useServicio, useServicios } from '../hooks/index.js';
 import { armarHrefTelefono, formatearRangoHorario } from '../utils/formatoPortal.js';
@@ -22,6 +29,7 @@ function SacramentoDetalle() {
   const { data: todosServicios = [] } = useServicios();
   const { data: sede } = useSede();
   const { data: horarios = [] } = useHorarios();
+  const [indiceVisor, setIndiceVisor] = useState(null);
 
   const esNoEncontrado = error?.estado === 404 || error?.codigo === 'NO_ENCONTRADO';
 
@@ -35,6 +43,9 @@ function SacramentoDetalle() {
 
   const datos = servicio?.contenido?.datos ?? [];
   const preguntas = servicio?.preguntasFrecuentes ?? [];
+  const tieneContenidoEnriquecido = Boolean(servicio?.detalle?.contenido?.bloques?.length);
+  const videoYoutubeId = servicio?.detalle?.videoYoutubeId ?? null;
+  const galeria = servicio?.galeria ?? [];
   const otrosServicios = todosServicios.filter((item) => item.slug !== slug);
   const secretaria = horarios.find((grupo) => grupo.tipo?.nombre === TIPOS_HORARIO.SECRETARIA);
   const telefono = sede?.telefono;
@@ -85,6 +96,38 @@ function SacramentoDetalle() {
           <Seccion fondo="blanco">
             <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
               <div className="space-y-12 lg:col-span-8">
+                {servicio.imagen && (
+                  <figure className="overflow-hidden rounded-md border border-sand bg-cream">
+                    <RevealImagen lado="izquierda">
+                      <img
+                        {...construirAtributosImagen(
+                          servicio.imagen,
+                          '(min-width: 1024px) 58vw, 100vw',
+                        )}
+                        alt={servicio.imagen.textoAlternativo || servicio.nombre}
+                        width={servicio.imagen.ancho ?? undefined}
+                        height={servicio.imagen.alto ?? undefined}
+                        className="aspect-4/3 w-full object-cover"
+                      />
+                    </RevealImagen>
+                  </figure>
+                )}
+
+                {tieneContenidoEnriquecido && (
+                  <div className="max-w-prose">
+                    <ContenidoBlockNote contenido={servicio.detalle.contenido} />
+                  </div>
+                )}
+
+                {videoYoutubeId && (
+                  <BloqueVideoYoutube
+                    contenido={{
+                      youtube_video_id: videoYoutubeId,
+                      titulo: `Video de ${servicio.nombre}`,
+                    }}
+                  />
+                )}
+
                 <section aria-labelledby="titulo-requisitos">
                   <div className="mb-6 flex items-center gap-3">
                     <span className="inline-flex size-11 items-center justify-center rounded-sm bg-gold-soft text-ink">
@@ -214,6 +257,67 @@ function SacramentoDetalle() {
               </aside>
             </div>
           </Seccion>
+
+          {galeria.length > 0 && (
+            <Seccion fondo="crema">
+              <EncabezadoSeccion eyebrow="Galería" titulo="Fotos y videos" />
+              <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {galeria.map((item, indice) => {
+                  const esVideo = item.tipoMime?.startsWith('video/');
+                  const alt = item.textoAlternativo || `Archivo ${indice + 1} de ${servicio.nombre}`;
+                  return (
+                    <Reveal
+                      key={item.id ?? indice}
+                      as="li"
+                      variante="tarjeta"
+                      retraso={indice * 120}
+                    >
+                      {esVideo ? (
+                        <div className="overflow-hidden rounded-md border border-sand bg-white">
+                          <video
+                            src={item.url}
+                            controls
+                            preload="metadata"
+                            aria-label={alt}
+                            className="aspect-4/3 w-full bg-ink object-cover"
+                          >
+                            Tu navegador no admite la reproducción de video.
+                          </video>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setIndiceVisor(indice)}
+                          aria-label={`Ampliar imagen: ${alt}`}
+                          className="group block w-full cursor-pointer overflow-hidden rounded-md border border-sand bg-white text-left transition-colors duration-200 ease-salida hover:border-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2"
+                        >
+                          <img
+                            {...construirAtributosImagen(
+                              item,
+                              '(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw',
+                            )}
+                            alt={alt}
+                            width={item.ancho ?? undefined}
+                            height={item.alto ?? undefined}
+                            className="aspect-4/3 w-full object-cover transition-transform duration-700 ease-salida group-hover:scale-[1.04] motion-reduce:transition-none"
+                          />
+                        </button>
+                      )}
+                    </Reveal>
+                  );
+                })}
+              </ul>
+            </Seccion>
+          )}
+
+          {indiceVisor !== null && (
+            <VisorGaleria
+              elementos={galeria}
+              indice={indiceVisor}
+              alCambiar={setIndiceVisor}
+              alCerrar={() => setIndiceVisor(null)}
+            />
+          )}
 
           {otrosServicios.length > 0 && (
             <section className="border-t border-sand bg-cream py-16 md:py-24">

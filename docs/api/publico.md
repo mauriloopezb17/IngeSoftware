@@ -467,6 +467,7 @@ Detalle de un servicio para la vista «Ver requisitos». Incluye el `contenido` 
     "descripcionCorta": "Charla pre-bautismal el primer sábado de cada mes. Padres y padrinos se inscriben en secretaría.",
     "icono": "droplet",
     "orden": 1,
+    "imagen": null,
     "contenido": {
       "datos": [
         {
@@ -479,6 +480,8 @@ Detalle de un servicio para la vista «Ver requisitos». Incluye el `contenido` 
         }
       ]
     },
+    "galeria": [],
+    "detalle": null,
     "preguntasFrecuentes": [
       {
         "id": 1,

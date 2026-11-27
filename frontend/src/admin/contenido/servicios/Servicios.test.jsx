@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { useEffect, useRef } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
@@ -14,6 +15,18 @@ import { SesionProvider } from '../../sesion/SesionProvider.jsx';
 import { ProveedorToasts } from '../../ui/index.js';
 import { reiniciarMocksContenido } from '../mocks/handlers.js';
 import Servicios from './Servicios.jsx';
+
+vi.mock('../../publicaciones/editor/EditorContenido.jsx', () => ({
+  default: function EditorLigero({ valorInicial, alIniciar, etiqueta = 'Contenido de la página del sacramento' }) {
+    const iniciado = useRef(false);
+    useEffect(() => {
+      if (iniciado.current) return;
+      iniciado.current = true;
+      alIniciar?.(valorInicial?.bloques ?? []);
+    }, [alIniciar, valorInicial]);
+    return <textarea aria-label={etiqueta} readOnly />;
+  },
+}));
 
 const entrar = (rol = 'secretaria') =>
   clienteHttp.post('/auth/login', {
@@ -196,15 +209,25 @@ describe('gestión de servicios y preguntas frecuentes', () => {
     });
   });
 
-  it('muestra la vista en solo lectura para Marketing', async () => {
+  it('Marketing edita solo la página del sacramento (sin crear, borrar ni cambiar requisitos)', async () => {
     await entrar('marketing');
     montar();
+    const usuario = userEvent.setup();
 
     expect(await within(await screen.findByRole('table')).findByText('Bautismo')).toBeInTheDocument();
-    expect(screen.getByText(/Solo lectura:/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Nuevo servicio' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Editar / })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Eliminar / })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Eliminar/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Preguntas/ })).not.toBeInTheDocument();
+
+    await usuario.click(screen.getByRole('button', { name: 'Editar «Bautismo»' }));
+    const dialogo = await screen.findByRole('dialog', { name: 'Editar servicio' });
+    expect(within(dialogo).getByLabelText('Nombre')).toBeDisabled();
+    expect(within(dialogo).getByRole('heading', { name: 'Página del sacramento' })).toBeInTheDocument();
+    await usuario.type(within(dialogo).getByLabelText('Video de YouTube (opcional)'), 'dQw4w9WgXcQ');
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Guardar cambios' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByText('Se actualizó el servicio «Bautismo».')).toBeInTheDocument();
   });
 });
 

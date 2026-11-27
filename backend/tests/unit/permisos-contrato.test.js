@@ -8,8 +8,8 @@ import { matrizDePermisosDelContrato, rolesDelContrato } from '../apoyo/contrato
 const matriz = matrizDePermisosDelContrato();
 
 describe('matriz de permisos del contrato (sección 7)', () => {
-  it('el contrato lista los 35 permisos', () => {
-    expect(matriz).toHaveLength(35);
+  it('el contrato lista los 36 permisos', () => {
+    expect(matriz).toHaveLength(36);
   });
 
   it('el código define los mismos permisos que el contrato, en el mismo orden', () => {

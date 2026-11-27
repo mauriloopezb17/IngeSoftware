@@ -31,6 +31,8 @@ export default function Servicios() {
   const { puede } = usePermisos();
   const toast = useToast();
   const puedeGestionar = puede('servicios.gestionar');
+  const puedeEditarDetalle = puede('servicios.detalle');
+  const puedeAbrirEdicion = puedeGestionar || puedeEditarDetalle;
 
   const tituloRef = useRef(null);
 
@@ -133,7 +135,7 @@ export default function Servicios() {
         </Insignia>
       ),
     },
-    ...(puedeGestionar
+    ...(puedeAbrirEdicion
       ? [
           {
             id: 'acciones',
@@ -143,7 +145,7 @@ export default function Servicios() {
               const indice = servicios.findIndex((s) => s.id === servicio.id);
               return (
                 <div className="flex flex-wrap justify-end gap-1.5">
-                  {puedeReordenar && (
+                  {puedeGestionar && puedeReordenar && (
                     <>
                       <Boton
                         variante="secundario"
@@ -163,15 +165,17 @@ export default function Servicios() {
                       />
                     </>
                   )}
-                  <Boton
-                    variante="secundario"
-                    tamano="sm"
-                    icono={HelpCircle}
-                    onClick={() => setFaqServicio(servicio)}
-                    aria-label={`Preguntas frecuentes de «${servicio.nombre}»`}
-                  >
-                    Preguntas
-                  </Boton>
+                  {puedeGestionar && (
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
+                      icono={HelpCircle}
+                      onClick={() => setFaqServicio(servicio)}
+                      aria-label={`Preguntas frecuentes de «${servicio.nombre}»`}
+                    >
+                      Preguntas
+                    </Boton>
+                  )}
                   <Boton
                     variante="secundario"
                     tamano="sm"
@@ -181,15 +185,17 @@ export default function Servicios() {
                   >
                     Editar
                   </Boton>
-                  <Boton
-                    variante="secundario"
-                    tamano="sm"
-                    icono={Trash2}
-                    onClick={() => setPorEliminar(servicio)}
-                    aria-label={`Eliminar «${servicio.nombre}»`}
-                  >
-                    Eliminar
-                  </Boton>
+                  {puedeGestionar && (
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
+                      icono={Trash2}
+                      onClick={() => setPorEliminar(servicio)}
+                      aria-label={`Eliminar «${servicio.nombre}»`}
+                    >
+                      Eliminar
+                    </Boton>
+                  )}
                 </div>
               );
             },
@@ -224,7 +230,7 @@ export default function Servicios() {
         }
       />
 
-      {!puedeGestionar && (
+      {!puedeAbrirEdicion && (
         <Aviso tipo="soloLectura" className="mt-4">
           <p>
             <strong className="font-semibold text-ink">Solo lectura:</strong> tu rol puede consultar los servicios, pero
@@ -295,6 +301,7 @@ export default function Servicios() {
       {(creando || editando) && (
         <FormularioServicio
           servicio={editando}
+          soloDetalle={Boolean(editando) && !puedeGestionar}
           onGuardado={(guardado) => {
             const msg = editando
               ? `Se actualizó el servicio «${guardado.nombre}».`

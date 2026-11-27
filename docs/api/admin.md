@@ -707,6 +707,7 @@ Permiso de escritura: `servicios.gestionar`.
   "nombre": "Bautismo",
   "descripcionCorta": "Charla pre-bautismal el primer sábado de cada mes. Padres y padrinos se inscriben en secretaría.",
   "icono": "droplet",
+  "imagen": null,
   "contenido": {
     "datos": [
       {
@@ -719,6 +720,7 @@ Permiso de escritura: `servicios.gestionar`.
       }
     ]
   },
+  "detalle": null,
   "orden": 1,
   "visible": true,
   "preguntasFrecuentes": [
@@ -739,6 +741,7 @@ Permiso de escritura: `servicios.gestionar`.
 | `GET /api/admin/servicios/:id`                                     | Un servicio con sus preguntas frecuentes (activas e inactivas).                                                                            |
 | `POST /api/admin/servicios`                                        | Crea. `201`.                                                                                                                               |
 | `PATCH /api/admin/servicios/:id`                                   | Edita.                                                                                                                                     |
+| `PATCH /api/admin/servicios/:id/detalle`                           | Edita solo `imagenId` y `detalle` (`contenido` BlockNote, `galeria` máx. 24, `videoYoutubeId`). Requiere `servicios.detalle`.              |
 | `DELETE /api/admin/servicios/:id`                                  | Elimina el servicio. Sus preguntas frecuentes quedan sin servicio asociado: las sigue usando el asistente virtual.                         |
 | `POST /api/admin/servicios/reordenar`                              | `{ "ids": [1, 2, 3, 4, 5, 6] }`.                                                                                                           |
 | `POST /api/admin/servicios/:id/preguntas-frecuentes`               | Crea una pregunta: `{ "pregunta", "respuesta", "activa" }`.                                                                                |
