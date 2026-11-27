@@ -20,14 +20,17 @@ import {
   listarObservaciones,
   listarProclamas,
   marcarObservacionLeida,
+  obtenerObservacion,
 } from './api.js';
 import { armarHrefCorreo, armarHrefWhatsApp, formatearFechaRelativa } from './observacionesEnlaces.js';
 import PestanasProclamas from './PestanasProclamas.jsx';
 
 const ESTADOS = [
-  { clave: 'no-leidas', etiqueta: 'No leídas' },
+  { clave: 'no-leidas', etiqueta: 'Nuevas' },
   { clave: 'todas', etiqueta: 'Todas' },
 ];
+
+const nombreObservacion = (obs) => obs?.nombreCompleto || 'Anónima';
 
 export default function BandejaObservaciones() {
   const idFiltroProclama = useId();
@@ -89,6 +92,19 @@ export default function BandejaObservaciones() {
 
   function abrirObservacion(obs) {
     setSeleccionada(obs);
+    obtenerObservacion(obs.id)
+      .then((detalle) => {
+        setSeleccionada((actual) =>
+          actual?.id === detalle.id
+            ? {
+                ...detalle,
+                leida: actual.leida || detalle.leida,
+                leidoEn: actual.leidoEn ?? detalle.leidoEn,
+              }
+            : actual,
+        );
+      })
+      .catch(() => {});
     if (!obs.leida) {
       marcar.mutate({ id: obs.id, leida: true });
     }
@@ -122,8 +138,8 @@ export default function BandejaObservaciones() {
                 {noLeida && (
                   <span aria-hidden="true" className="size-2.5 shrink-0 rounded-full bg-gold" />
                 )}
-                <span className={noLeida ? 'font-bold' : 'font-semibold'}>{obs.nombreCompleto}</span>
-                {noLeida && <Insignia variante="programado">Sin leer</Insignia>}
+                <span className={noLeida ? 'font-bold' : 'font-semibold'}>{nombreObservacion(obs)}</span>
+                {noLeida && <Insignia variante="programado">Nueva</Insignia>}
               </span>
               <span className="text-xs text-muted">
                 {formatearFechaRelativa(obs.fechaEnvio)} · {formatearFecha(obs.fechaEnvio)}
@@ -228,12 +244,12 @@ export default function BandejaObservaciones() {
         <div className="lg:col-span-6">
           {seleccionada ? (
             <article
-              aria-label={`Observación de ${seleccionada.nombreCompleto}`}
+              aria-label={`Observación de ${nombreObservacion(seleccionada)}`}
               className="rounded-lg border border-sand bg-white p-5 sm:p-6"
             >
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-sand pb-4">
                 <div>
-                  <h2 className="text-base font-semibold text-ink">{seleccionada.nombreCompleto}</h2>
+                  <h2 className="text-base font-semibold text-ink">{nombreObservacion(seleccionada)}</h2>
                   <p className="mt-0.5 text-sm text-muted">
                     Sobre: {seleccionada.proclama.contrayente1} y {seleccionada.proclama.contrayente2}
                   </p>
@@ -241,7 +257,7 @@ export default function BandejaObservaciones() {
                     {formatearFechaRelativa(seleccionada.fechaEnvio)} · {formatearFecha(seleccionada.fechaEnvio)}
                   </p>
                 </div>
-                {seleccionada.leida && (
+                {seleccionada.leida ? (
                   <Boton
                     variante="secundario"
                     tamano="sm"
@@ -249,7 +265,17 @@ export default function BandejaObservaciones() {
                     cargando={marcar.isPending}
                     onClick={() => marcar.mutate({ id: seleccionada.id, leida: false })}
                   >
-                    Marcar como no leída
+                    Marcar como nueva
+                  </Boton>
+                ) : (
+                  <Boton
+                    variante="secundario"
+                    tamano="sm"
+                    icono={MailOpen}
+                    cargando={marcar.isPending}
+                    onClick={() => marcar.mutate({ id: seleccionada.id, leida: true })}
+                  >
+                    Marcar como revisada
                   </Boton>
                 )}
               </div>

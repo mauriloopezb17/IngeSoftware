@@ -329,6 +329,21 @@ export const handlersPortal = [
     return HttpResponse.json({ datos: detalle });
   }),
 
+  http.get(api('/sedes/:sede/proclamas/:id/observaciones/verificacion'), ({ params }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const detalle = esSedePrincipal(params.sede) ? obtenerDetalleProclamaExaltacion(params.id) : null;
+    if (!detalle) {
+      return HttpResponse.json(
+        { error: { codigo: 'NO_ENCONTRADO', mensaje: 'La proclama no existe.', detalles: [] } },
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json({ datos: { token: `mock.${params.id}.firma` } });
+  }),
+
   http.post(api('/sedes/:sede/proclamas/:id/observaciones'), async ({ params, request }) => {
     const fallo = validarSede(params.sede);
     if (fallo) return fallo;
@@ -351,6 +366,23 @@ export const handlersPortal = [
     if (!cuerpo || typeof cuerpo !== 'object') {
       return HttpResponse.json(
         { error: { codigo: 'VALIDACION', mensaje: 'Cuerpo inválido.', detalles: [] } },
+        { status: 400 },
+      );
+    }
+    if (!cuerpo.verificacion?.trim()) {
+      return HttpResponse.json(
+        {
+          error: {
+            codigo: 'VALIDACION',
+            mensaje: 'Los datos enviados no son válidos.',
+            detalles: [
+              {
+                campo: 'verificacion',
+                mensaje: 'No pudimos verificar el envío. Vuelve a cargar la página e inténtalo de nuevo.',
+              },
+            ],
+          },
+        },
         { status: 400 },
       );
     }

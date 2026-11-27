@@ -98,6 +98,18 @@ function crearObservacionesIniciales() {
       leida: true,
       leidoEn: matrimonio(-4, '10:00'),
     },
+    {
+      id: 4,
+      proclamaId: 1,
+      sedeSlug: SEDE_PRINCIPAL.slug,
+      nombreCompleto: null,
+      correo: null,
+      telefono: '+591 7000-1122',
+      mensaje: 'Prefiero mantener mi nombre en reserva; dejo mi celular para conversar.',
+      fechaEnvio: matrimonio(-3, '09:30'),
+      leida: true,
+      leidoEn: matrimonio(-2, '12:00'),
+    },
   ];
 }
 
@@ -329,6 +341,15 @@ export const handlersProclamas = [
 
     const pagina = paginar(filtradas, paginacion);
     return HttpResponse.json({ ...pagina, datos: pagina.datos.map(serializarObservacion) });
+  }),
+
+  http.get(api('/admin/proclamas/observaciones/:id'), ({ params }) => {
+    const auth = autorizar('proclamas.observaciones', 'Solo el párroco puede consultar las observaciones.');
+    if (auth.respuesta) return auth.respuesta;
+    const slug = auth.usuario.sede?.slug ?? SEDE_PRINCIPAL.slug;
+    const obs = observaciones.find((o) => o.id === Number(params.id) && o.sedeSlug === slug);
+    if (!obs) return respuestaError({ estado: 404, codigo: 'NO_ENCONTRADO', mensaje: 'La observación no existe.' });
+    return HttpResponse.json({ datos: serializarObservacion(obs) });
   }),
 
   http.patch(api('/admin/proclamas/observaciones/:id'), async ({ request, params }) => {
