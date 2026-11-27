@@ -115,10 +115,15 @@ describe('saneamiento de endpoints nuevos del sprint 3', () => {
     sinFugas(res);
   });
 
-  // HALLAZGO: GET /api/sedes/:sede/grupos-pastorales/:slug responde 500 con byte nulo (%00) porque no valida el formato del slug antes de consultar PostgreSQL.
-  it.fails('público — grupo slug con byte nulo no debe responder 500', async () => {
-    const res = await request(app).get(`/api/sedes/${sede.slug}/grupos-pastorales/coro%00x`);
-    expect([400, 404]).toContain(res.status);
+  // Un slug con byte nulo (%00) respondía 500: ahora se valida el formato antes de consultar.
+  it.each([
+    'grupos-pastorales/coro%00x',
+    'grupos-pastorales/coro%00x/noticias',
+    'servicios/bautismo%00x/noticias',
+  ])('público — %s con byte nulo responde 404, no 500', async (ruta) => {
+    const res = await request(app).get(`/api/sedes/${sede.slug}/${ruta}`);
+    expect(res.status).toBe(404);
+    sinFugas(res);
   });
 
   const CASOS_ADMIN = [
