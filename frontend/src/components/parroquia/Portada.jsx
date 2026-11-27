@@ -119,7 +119,7 @@ function Portada() {
       {/* Accesos rápidos sobre el borde inferior del hero */}
       {tarjetas.length > 0 && (
         <Contenedor className="relative z-20 -mt-10 pb-8 md:-mt-12 md:pb-12">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div data-portada-tarjetas="" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {tarjetas.map(({ titulo, subtitulo, icono, enlace }, indice) => (
               <Reveal key={titulo} variante="tarjeta" retraso={indice * 120}>
                 <EnlacePortal

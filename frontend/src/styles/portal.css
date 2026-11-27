@@ -75,3 +75,10 @@
     transform: scale(1.06);
   }
 }
+
+/* Margen izquierdo en escritorio (1024-1439 px) para que el menú flotante no tape el contenido */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .con-menu-flotante .mx-auto.max-w-7xl {
+    padding-left: 7.5rem;
+  }
+}
