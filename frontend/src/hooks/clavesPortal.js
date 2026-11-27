@@ -28,4 +28,5 @@ export const clavesPortal = {
   videos: (sede) => ['portal', 'sede', sede, 'videos'],
   categorias: () => ['portal', 'categorias'],
   categoriasEvento: () => ['portal', 'categorias-evento'],
+  buscar: (sede, filtros = {}) => ['portal', 'sede', sede, 'buscar', filtros],
 };
