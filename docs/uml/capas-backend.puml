@@ -1,0 +1,181 @@
+@startuml capas-backend
+' Patrón de capas del backend (Controller -> Service -> acceso a datos), con el módulo de publicaciones
+' como ejemplo. Nombres reales de archivos y funciones de backend/src.
+' Exportar: java -jar plantuml.jar -charset UTF-8 -tpng capas-backend.puml
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+hide empty members
+hide circle
+top to bottom direction
+
+title Capas del backend - módulo de publicaciones
+
+package "Rutas (routes/)" as R {
+  class "publicaciones.routes.js" as RPub <<portal /api/sedes/:sede/publicaciones>> {
+    {field} GET /  validar(consultaLista)
+    {field} GET /:slug
+  }
+  class "adminPublicaciones.routes.js" as RAdm <<panel /api/admin/publicaciones>> {
+    {field} GET /  validar + filtrarPorSede
+    {field} GET /exportar  requerirPermiso(PUBLICACIONES_EXPORTAR)
+    {field} POST /  validar(cuerpoCrearPublicacion)
+    {field} PATCH /:id  validar(cuerpoEditarPublicacion)
+    {field} DELETE /:id
+    {field} POST /:id/enviar-revision | aprobar | rechazar
+    {field} POST /:id/publicar | archivar | restaurar
+  }
+}
+
+package "Middlewares (middlewares/)" as M {
+  class "csrf.js" as Csrf {
+    protegerCsrf()
+  }
+  class "resolverSede.js" as Sede {
+    resolverSede()  «slug -> req.sede»
+  }
+  class "autenticar.js" as Aut {
+    autenticar()  «cookie JWT -> req.usuario»
+  }
+  class "autorizar.js" as Autz {
+    requerirPermiso()
+    filtrarPorSede()
+    restringirRutasCoordinador()
+  }
+  class "validar.js" as Val {
+    validar({ params, query, body })  «Zod -> req.validado»
+  }
+}
+
+package "Controladores (controllers/)" as C {
+  class "publicaciones.controller.js" as CPub {
+    listar()
+    detalle()
+  }
+  class "adminPublicaciones.controller.js" as CAdm {
+    listar()
+    detalle()
+    crear()  «201 + Location»
+    editar()
+    eliminar()  «204»
+  }
+  class "estadoPublicaciones.controller.js" as CEst {
+    enviarRevision()
+    aprobar() / rechazar()
+    publicar() / archivar() / restaurar()
+  }
+}
+
+package "Servicios (services/)" as S {
+  class "publicaciones.service.js" as SPub {
+    listarPublicaciones(sedeId, consulta)
+    obtenerPublicacion(sedeId, slug)
+  }
+  class "adminPublicaciones.service.js" as SAdm {
+    listarPublicaciones(usuario, sedeFiltro, consulta)
+    obtenerPublicacion(usuario, id)
+    crearPublicacion(usuario, cuerpo, contexto)
+    editarPublicacion(usuario, id, cambios, contexto)
+    eliminarPublicacion(usuario, id, contexto)
+    publicacionParaModificar(usuario, id, db)
+  }
+  class "estadoPublicaciones.service.js" as SEst {
+    cambiarEstado(usuario, id, accion, cuerpo, contexto)
+  }
+  class "cache.service.js" as SCache {
+    responderConCache()
+  }
+  class "bitacora.service.js" as SBit {
+    registrarCambio(db, contexto, cambio)
+  }
+  class "invalidacionCache.service.js" as SInv {
+    programarInvalidacion(db, cambio)
+  }
+  class "referencias.service.js" as SRef {
+    sedeDelRecursoNuevo()
+    verificarArchivos()
+  }
+  class "utils/accionesPublicacion.js" as UAcc {
+    puedeCrear(rol, tipo)
+    exigirAccion(accion, situacion, usuario)
+  }
+}
+
+package "Acceso a datos (models/ y db/)" as D {
+  class "publicaciones.model.js" as MPub {
+    listarVigentes()
+    obtenerVigentePorSlug()
+  }
+  class "adminPublicaciones.model.js" as MAdm {
+    listar() / buscarPorId()
+    bloquearParaModificar()  «SELECT … FOR UPDATE»
+    insertar()
+    reemplazarServiciosRelacionados()
+    reemplazarGruposRelacionados()
+  }
+  class "comunes.model.js" as MCom {
+    actualizarFila() / eliminarFila()
+  }
+  class "db/index.js" as Db {
+    consultar(texto, parametros)
+    transaccion(fn)  «BEGIN / COMMIT / ROLLBACK»
+    alConfirmar(clave, tarea)
+  }
+  class "db/redis.js" as Redis {
+    obtenerRedis()
+  }
+}
+
+class "PostgreSQL 16" as PG <<base de datos>>
+class "Redis 7" as RD <<caché>>
+
+RPub --> Sede
+RPub --> Val
+RPub --> CPub
+RAdm --> Aut : (montado en admin.routes.js)
+RAdm --> Autz
+RAdm --> Val
+RAdm --> CAdm
+RAdm --> CEst
+Csrf .. RAdm : «app.js, toda /api»
+
+CPub --> SCache
+CPub --> SPub
+CAdm --> SAdm
+CEst --> SEst
+
+SAdm --> UAcc
+SAdm --> SRef
+SAdm --> SBit
+SAdm --> MAdm
+SAdm --> Db
+SEst --> UAcc
+SEst --> SAdm
+SEst --> MCom
+SEst --> SBit
+SEst --> Db
+SBit --> SInv
+SInv --> Db : alConfirmar
+SPub --> MPub
+SCache --> Redis
+
+MPub --> Db
+MAdm --> Db
+MCom --> Db
+Db --> PG
+Redis --> RD
+
+note right of SAdm
+  Reglas de negocio: permiso por tipo y rol (puedeCrear),
+  alcance por sede, slug único, referencias a archivos,
+  restricciones del Coordinador de grupo, y todo cambio
+  con su registro de bitácora en la MISMA transacción.
+end note
+
+note right of SInv
+  La caché pública se invalida solo
+  después del COMMIT (alConfirmar):
+  incrementa la generación del recurso
+  en Redis para la sede afectada.
+end note
+@enduml
