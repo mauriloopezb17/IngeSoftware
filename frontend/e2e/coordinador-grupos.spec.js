@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { eliminarGrupoAdmin, eliminarPublicacionAdmin } from './helpers/limpieza.js';
+import {
+  desactivarUsuarioAdmin,
+  eliminarGrupoAdmin,
+  eliminarPublicacionAdmin,
+} from './helpers/limpieza.js';
 import { abrirContextoConRol, tituloUnico } from './helpers/sesion.js';
 
 test.describe('Coordinador de grupo', () => {
@@ -17,6 +21,7 @@ test.describe('Coordinador de grupo', () => {
     const claveCoord = 'Clave-Coord-2026!';
     let grupoId;
     let noticiaId;
+    let usuarioId;
 
     const secretaria = await abrirContextoConRol(browser, 'secretaria');
     try {
@@ -59,6 +64,7 @@ test.describe('Coordinador de grupo', () => {
         dialogoUsuario.getByRole('button', { name: 'Crear usuario' }).click(),
       ]);
       expect(respCrearUsuario.status()).toBe(201);
+      usuarioId = (await respCrearUsuario.json())?.datos?.id;
       await expect(dialogoUsuario).toBeHidden();
     } finally {
       await admin.context.close();
@@ -164,6 +170,7 @@ test.describe('Coordinador de grupo', () => {
     } finally {
       await eliminarPublicacionAdmin(browser, noticiaId);
       await eliminarGrupoAdmin(browser, grupoId);
+      await desactivarUsuarioAdmin(browser, usuarioId);
     }
   });
 });
