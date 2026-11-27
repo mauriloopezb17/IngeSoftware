@@ -20,7 +20,8 @@ test.describe('Menú flotante de accesos rápidos en escritorio', () => {
     // Desplegar e ir a Calendario
     await botonAccesos.click();
     await expect(botonAccesos).toHaveAttribute('aria-expanded', 'true');
-    const enlaceCalendario = page.getByRole('link', { name: 'Ir a Calendario' });
+    const menuFlotante = page.getByRole('navigation', { name: 'Accesos rápidos' });
+    const enlaceCalendario = menuFlotante.getByRole('link', { name: 'Ir a Calendario' });
     await expect(enlaceCalendario).toBeVisible();
     await enlaceCalendario.click();
 
