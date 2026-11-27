@@ -150,7 +150,7 @@ async function contarTablasCriticas() {
   const [usuarios, publicaciones, bitacora] = await Promise.all([
     consultar('SELECT COUNT(*)::int AS n FROM usuario'),
     consultar('SELECT COUNT(*)::int AS n FROM publicacion'),
-    consultar('SELECT COUNT(*)::int AS n FROM bitacora_cambio'),
+    consultar("SELECT COUNT(*)::int AS n FROM bitacora_cambio WHERE accion <> 'VIEW'"),
   ]);
   return {
     usuario: usuarios.rows[0].n,

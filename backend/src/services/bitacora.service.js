@@ -107,7 +107,7 @@ export async function registrarCambio(
   await programarInvalidacion(db, { entidad, anterior, nuevo });
 }
 
-// ---- Registro de exportación (EXPORT) ----
+// ---- Registro de exportación (EXPORT) y consulta (VIEW) ----
 
 export async function registrarExportacion(contexto, { entidad, filtros, filas }) {
   await modelo.insertar({
@@ -117,6 +117,21 @@ export async function registrarExportacion(contexto, { entidad, filtros, filas }
     accion: 'EXPORT',
     datosAnteriores: null,
     datosNuevos: { filtros, filas },
+    direccionIp: normalizarIp(contexto?.ip),
+  });
+}
+
+export async function registrarConsulta(
+  contexto,
+  { entidad, entidadId = '*', datosNuevos = null },
+) {
+  await modelo.insertar({
+    usuarioId: contexto?.usuarioId ?? null,
+    entidad,
+    entidadId: String(entidadId),
+    accion: 'VIEW',
+    datosAnteriores: null,
+    datosNuevos,
     direccionIp: normalizarIp(contexto?.ip),
   });
 }

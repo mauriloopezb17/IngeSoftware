@@ -998,10 +998,13 @@ Permiso: `proclamas.observaciones` (solo `PARROCO`, limitado a su sede; otro rol
 
 | Método y ruta                                         | Descripción                                                                                                     |
 | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `GET /api/admin/proclamas/observaciones`              | Lista paginada (`estado=no-leidas\|todas`, `proclamaId`, `buscar` en nombre o mensaje, `pagina`, `porPagina`), más reciente primero. |
+| `GET /api/admin/proclamas/observaciones`              | Lista paginada (`estado=no-leidas\|todas`, `proclamaId`, `buscar` en nombre o mensaje, `pagina`, `porPagina`), más reciente primero. Registra `VIEW` en la bitácora (`entidad = 'observacion_proclama'`, `entidadId = '*'`, sin `buscar`). |
 | `GET /api/admin/proclamas/observaciones/resumen`      | Devuelve `{ "datos": { "noLeidas": N } }` para la insignia del menú.                                            |
+| `GET /api/admin/proclamas/observaciones/:id`          | Devuelve una observación y registra `VIEW` en la bitácora con su id (sin datos personales).                    |
 | `PATCH /api/admin/proclamas/observaciones/:id`        | `{ "leida": true \| false }`. Guarda o borra `leidoEn` y `leidoPor`.                                            |
 | `DELETE /api/admin/proclamas/observaciones/:id`       | Elimina la observación (`204`). En la bitácora solo se registra la acción y el id, nunca los datos personales. |
+
+- `nombreCompleto` puede ser `null` cuando la observación fue enviada de forma anónima; en el panel y en el CSV se muestra como `"Anónima"`.
 
 ---
 
@@ -1186,7 +1189,7 @@ Paginada. Orden: `-fecha` (más recientes primero).
 | `entidad`             | Nombre de la tabla: `publicacion`, `evento`, `horario`, `usuario`, etc. |
 | `entidadId`           | Id del registro (texto).                                                |
 | `usuario`             | Id del usuario que hizo el cambio.                                      |
-| `accion`              | `INSERT`, `UPDATE`, `DELETE` o `EXPORT`.                                |
+| `accion`              | `INSERT`, `UPDATE`, `DELETE`, `EXPORT` o `VIEW`.                        |
 | `desde`, `hasta`      | Fechas `YYYY-MM-DD`, ambas incluidas.                                   |
 | `pagina`, `porPagina` | Paginación estándar.                                                    |
 

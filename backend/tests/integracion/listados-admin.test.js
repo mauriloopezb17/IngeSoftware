@@ -3,6 +3,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { cerrarPool, consultar } from '../../src/db/index.js';
+import { emitirTokenObservacion } from '../../src/services/observacionesProclama.service.js';
 import { cerrarRedis } from '../../src/db/redis.js';
 import { limpiarContadoresDeIntentos } from '../apoyo/limite.js';
 import { crearPanel, sedePrincipal } from '../apoyo/panel.js';
@@ -252,6 +253,7 @@ beforeAll(async () => {
         nombreCompleto,
         correo: `obs${idx}@ejemplo.test`,
         mensaje: `Observación de prueba ${PREFIJO} ${idx + 1}`,
+        verificacion: emitirTokenObservacion(creados.proclamas[0], { ahora: Date.now() - 5000 }),
       });
     expect(resObs.status, JSON.stringify(resObs.body)).toBe(201);
     creados.observaciones.push(resObs.body.datos.id);
