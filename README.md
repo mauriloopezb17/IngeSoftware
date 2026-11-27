@@ -23,6 +23,10 @@ El desarrollo y gestión del proyecto está a cargo de la consultora CodeForge, 
 * **Daniela:** Encargada de Secretaría y usuaria principal del sistema administrativo.
 * **Álvaro:** Encargado de Medios de Comunicación, línea gráfica y diseño.
 
+## Instalación local
+
+Pasos completos, desde el `git clone` hasta los datos iniciales y de demostración: [docs/operacion/instalacion-local.md](docs/operacion/instalacion-local.md).
+
 ## Cómo trabajamos
 
 Todo cambio entra a `main` mediante un pull request (PR) revisado por otro integrante del equipo.
