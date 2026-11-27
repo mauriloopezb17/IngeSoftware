@@ -115,6 +115,26 @@ Se verificó en el código del repositorio que estos requisitos no están implem
 | RF-08 | Igual que RF-07. | Depende de RF-07. |
 | RF-12 | Solo existe la columna `evento.id_externo_m365`, que la API devuelve, sin ninguna sincronización con Microsoft Graph. | Depende del acceso al tenant de Microsoft 365 de la parroquia. |
 
+### **2.2 Requisitos funcionales incorporados en el Sprint 3 (v1.1)**
+
+La numeración coincide con las etiquetas de las historias en Jira.
+
+| ID | Descripción del Requisito Funcional | Fuente | Prioridad | Historia Jira | Estado v2.0 |
+| ----- | ----- | ----- | ----- | ----- | ----- |
+| RF-15 | Todos los listados del portal y del panel deben paginarse en el servidor (parámetros `pagina` y `porPagina`, traducidos a LIMIT/OFFSET, con un máximo por página) y aceptar filtros por categoría o tipo, devolviendo el total de registros y de páginas. | Docente | Must Have | PAR-158 | Implementado |
+| RF-16 | Cada pantalla de listado del panel debe permitir exportar a CSV los registros con los mismos filtros aplicados, solo a los roles que tienen el permiso de exportación de ese recurso; los demás deben recibir 403. | Docente | Must Have | PAR-159 | Implementado |
+| RF-17 | Cada evento del calendario debe tener una página de detalle (contenido enriquecido, dirección, enlace de mapa, programa, responsable y enlaces), y el rol Marketing debe poder editar ese detalle. | Párroco | Should Have | PAR-163 | Implementado |
+| RF-18 | El portal debe permitir enviar una observación a una proclama vigente sin identificarse, exigiendo un celular o un correo de contacto; la observación solo debe ser visible para el párroco en el panel. | Párroco | Must Have | PAR-164 | Implementado |
+| RF-19 | Cada proclama debe poder mostrar información adicional (descripción, lugar) y fotografías de los novios (foto principal y galería). | Párroco | Could Have | PAR-165 | Implementado |
+| RF-20 | Cada sacramento (servicio) y cada grupo pastoral deben poder personalizarse con foto principal, galería y contenido enriquecido, y mostrar las noticias relacionadas con ellos. | Párroco | Should Have | PAR-166 | Implementado |
+| RF-21 | Los boletines deben abrirse en un visor superpuesto dentro del portal, con un botón para descargar el archivo. | Párroco | Should Have | PAR-167 | Implementado |
+| RF-22 | El portal debe ofrecer un buscador global de texto completo, sin distinguir tildes, sobre publicaciones, eventos, sacramentos, grupos, boletines y páginas de la sede. | Marketing | Should Have | PAR-170 | Implementado |
+| RF-23 | Las sedes deben organizarse en una jerarquía Parroquia → Capilla → Comunidad, administrable desde el panel y navegable en el portal. | Ingenieros de la parroquia | Must Have | PAR-171 | Implementado |
+| RF-24 | Cada grupo pastoral debe tener una página propia en el portal con su descripción, horario de reunión y datos de contacto (responsable, WhatsApp y correo). | Ingenieros de la parroquia | Should Have | PAR-172 | Implementado |
+| RF-25 | El sistema debe ofrecer el rol Coordinador de grupo, que solo pueda editar el detalle de los grupos pastorales que tiene asignados, redactar noticias de esos grupos (para revisión) y gestionar su multimedia; cualquier otra operación del panel debe responder 403. | Ingenieros de la parroquia | Should Have | PAR-173 | Implementado |
+| RF-26 | El portal debe incluir una sección «Conoce el templo» con objetos del templo y su historia, accesibles mediante códigos QR (versión beta). | Ingenieros de la parroquia | Could Have | PAR-174 | Planificado (no existe en el código) |
+| RF-27 | El portal debe incluir una sección «Anécdotas e historias» de padres y pasionistas, publicadas después de una moderación. | Ingenieros de la parroquia | Could Have | PAR-175 | Planificado (no existe en el código) |
+
 &nbsp;
 
 # **3\. Requisitos No Funcionales (RNF)**
@@ -130,7 +150,10 @@ Los requisitos no funcionales especifican atributos de calidad del sistema, reda
 | RNF-05 | Mantenibilidad (Almacenamiento) | El almacenamiento multimedia debe soportar hasta 50 GB totales, admitiendo fotografías de hasta 30 MB y videos en alta calidad de hasta 2 GB por archivo, sin requerir cambios de arquitectura al ampliar el plan. | Inspección de configuración del servicio de almacenamiento en la nube | Should Have | Implementado parcialmente: límites por archivo cumplidos; la capacidad está configurada en 20 GB (capa gratuita de OCI, ver ADR-04) |
 | RNF-06 | Mantenibilidad (CMS) | Las secciones de contenido dinámico del CMS deben poder modificarse mediante columnas JSONB indexadas, sin requerir despliegue de código ni migraciones DDL recurrentes. | Prueba funcional de alta/edición de un bloque de contenido sin despliegue | Must Have | Implementado |
 
-*Nota v1.1:* en RNF-06 se retira la mención a las notas marginales, que pasan a estar pospuestas junto con RF-03.
+| RNF-07 | Trazabilidad operativa | Cada consulta de listado y cada exportación debe registrarse en un log estructurado con la ruta, los filtros enviados, el usuario (o «anónimo»), el código de estado y la duración en milisegundos, sin incluir contraseñas, cookies ni datos personales. | Inspección del log de la API y prueba automatizada de ausencia de datos sensibles | Should Have | Implementado (PAR-160) |
+| RNF-08 | Usabilidad (móvil) | La navegación del portal debe diseñarse primero para móvil, con un menú flotante accesible que mantenga visibles los botones principales y pueda plegarse. | Prueba en viewport móvil (e2e) y revisión de accesibilidad del menú | Should Have | Implementado (PAR-168) |
+
+*Nota v1.1:* en RNF-06 se retira la mención a las notas marginales, que pasan a estar pospuestas junto con RF-03. RNF-07 (fuente: docente) y RNF-08 (fuente: ingenieros de la parroquia y marketing) se incorporan en el Sprint 3.
 
 &nbsp;
 
@@ -163,6 +186,17 @@ Registro de control de auditoría por cada requerimiento: prioridad, estabilidad
 
 &nbsp;
 
-# **5\. Trazabilidad**
+# **5\. Fuentes de elicitación del Sprint 3**
+
+Los requisitos RF-15 a RF-27, RNF-07 y RNF-08 surgen de las observaciones recibidas en el Sprint 3:
+
+* **Docente:** informe de evaluación del 18/11/2026 (paginación, exportación CSV por rol, registro de consultas, pruebas y revisión por pull request).
+* **Párroco, ingenieros de la parroquia y marketing:** reuniones de validación del prototipo de la semana del 16/11/2026, según el Segundo Informe de Avance.
+
+[COMPLETAR: acta de las reuniones con el párroco, marketing e ingenieros — fecha, asistentes, acuerdos]
+
+&nbsp;
+
+# **6\. Trazabilidad**
 
 La matriz de trazabilidad bidireccional se mantiene en `docs/trazabilidad/Matriz_Trazabilidad.md`.
