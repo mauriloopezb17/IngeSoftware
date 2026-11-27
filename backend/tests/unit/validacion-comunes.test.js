@@ -178,9 +178,19 @@ describe('listas separadas por comas', () => {
 
 describe('esquemaListado', () => {
   const esquema = esquemaListado({
+    conBuscar: true,
     filtros: { categoria: slug.optional() },
     ordenes: ['titulo', '-titulo', 'fechaPublicacion'],
     ordenPredeterminado: '-titulo',
+  });
+
+  it('rechaza buscar por defecto cuando conBuscar no está habilitado', () => {
+    const sinBuscar = esquemaListado();
+    const resultado = sinBuscar.safeParse({ buscar: 'misa' });
+    expect(resultado.success).toBe(false);
+    expect(errorDeZod(resultado.error, 'query').detalles).toEqual([
+      { campo: 'query.buscar', mensaje: 'Campo no permitido.' },
+    ]);
   });
 
   it('aplica valores por defecto de paginación y orden predeterminado', () => {

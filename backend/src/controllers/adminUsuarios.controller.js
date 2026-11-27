@@ -3,7 +3,11 @@ import * as servicio from '../services/adminUsuarios.service.js';
 import { contextoDe } from '../services/bitacora.service.js';
 
 export async function listar(req, res) {
-  const resultado = await servicio.listarUsuarios(req.validado.query);
+  const consulta =
+    req.sedeFiltro !== undefined
+      ? { ...req.validado.query, sede: req.sedeFiltro }
+      : req.validado.query;
+  const resultado = await servicio.listarUsuarios(consulta);
   res.json(resultado);
 }
 

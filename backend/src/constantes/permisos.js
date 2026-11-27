@@ -30,6 +30,20 @@ const MATRIZ = [
   ['paginas.gestionar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
   ['usuarios.gestionar', [ADMINISTRADOR]],
   ['bitacora.ver', [ADMINISTRADOR, PARROCO]],
+  ['publicaciones.exportar', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING]],
+  ['eventos.exportar', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING]],
+  ['boletines.exportar', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING]],
+  ['multimedia.exportar', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING]],
+  ['videos.exportar', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING]],
+  ['proclamas.exportar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
+  ['horarios.exportar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
+  ['servicios.exportar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
+  ['grupos.exportar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
+  ['paginas.exportar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
+  ['observaciones.exportar', [PARROCO]],
+  ['usuarios.exportar', [ADMINISTRADOR, PARROCO]],
+  ['sedes.exportar', [ADMINISTRADOR, PARROCO]],
+  ['bitacora.exportar', [ADMINISTRADOR, PARROCO]],
 ];
 
 // Nombres de los permisos, para usarlos sin escribir el texto a mano (PERMISOS.MULTIMEDIA_SUBIR).

@@ -23,6 +23,19 @@ export const PERMISOS_POR_ROL = {
     'paginas.gestionar',
     'usuarios.gestionar',
     'bitacora.ver',
+    'publicaciones.exportar',
+    'eventos.exportar',
+    'boletines.exportar',
+    'multimedia.exportar',
+    'videos.exportar',
+    'proclamas.exportar',
+    'horarios.exportar',
+    'servicios.exportar',
+    'grupos.exportar',
+    'paginas.exportar',
+    'usuarios.exportar',
+    'sedes.exportar',
+    'bitacora.exportar',
   ],
   PARROCO: [
     'multimedia.subir',
@@ -43,6 +56,20 @@ export const PERMISOS_POR_ROL = {
     'boletines.gestionar',
     'paginas.gestionar',
     'bitacora.ver',
+    'publicaciones.exportar',
+    'eventos.exportar',
+    'boletines.exportar',
+    'multimedia.exportar',
+    'videos.exportar',
+    'proclamas.exportar',
+    'horarios.exportar',
+    'servicios.exportar',
+    'grupos.exportar',
+    'paginas.exportar',
+    'observaciones.exportar',
+    'usuarios.exportar',
+    'sedes.exportar',
+    'bitacora.exportar',
   ],
   SECRETARIA: [
     'multimedia.subir',
@@ -59,6 +86,16 @@ export const PERMISOS_POR_ROL = {
     'proclamas.detalle',
     'boletines.gestionar',
     'paginas.gestionar',
+    'publicaciones.exportar',
+    'eventos.exportar',
+    'boletines.exportar',
+    'multimedia.exportar',
+    'videos.exportar',
+    'proclamas.exportar',
+    'horarios.exportar',
+    'servicios.exportar',
+    'grupos.exportar',
+    'paginas.exportar',
   ],
   MARKETING: [
     'multimedia.subir',
@@ -68,13 +105,18 @@ export const PERMISOS_POR_ROL = {
     'videos.gestionar',
     'proclamas.detalle',
     'boletines.gestionar',
+    'publicaciones.exportar',
+    'eventos.exportar',
+    'boletines.exportar',
+    'multimedia.exportar',
+    'videos.exportar',
   ],
 };
 
 // Todos los roles pueden CONSULTAR los recursos de su sede, salvo estas dos secciones,
 // que además exigen un permiso para entrar (el contrato las excluye de la lectura general).
 const PERMISO_PARA_ENTRAR = {
-  usuarios: 'usuarios.gestionar',
+  usuarios: ['usuarios.gestionar', 'usuarios.exportar'],
   bitacora: 'bitacora.ver',
 };
 
@@ -87,7 +129,10 @@ export function puede(usuario, permiso) {
 export function puedeVerSeccion(usuario, clave) {
   if (!usuario) return false;
   const requerido = PERMISO_PARA_ENTRAR[clave];
-  return requerido ? puede(usuario, requerido) : true;
+  if (!requerido) return true;
+  return Array.isArray(requerido)
+    ? requerido.some((permiso) => puede(usuario, permiso))
+    : puede(usuario, requerido);
 }
 
 // «multimedia.eliminar»: fuera del Administrador, cada usuario solo elimina los archivos que subió.

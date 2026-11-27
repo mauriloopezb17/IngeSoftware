@@ -3,10 +3,13 @@
 import { Router } from 'express';
 import { PERMISOS } from '../constantes/permisos.js';
 import * as controlador from '../controllers/adminEventos.controller.js';
+import { exportarRecurso } from '../controllers/exportar.controller.js';
 import { filtrarPorSede, requerirPermiso } from '../middlewares/autorizar.js';
+import { marcarConsulta } from '../middlewares/registrarConsulta.js';
 import { validar } from '../middlewares/validar.js';
 import {
   consultaEventos,
+  consultaEventosExportar,
   cuerpoCrearEvento,
   cuerpoDetalleEvento,
   cuerpoEditarEvento,
@@ -18,6 +21,14 @@ const gestionar = requerirPermiso(PERMISOS.EVENTOS_GESTIONAR);
 const editarDetalle = requerirPermiso(PERMISOS.EVENTOS_DETALLE);
 
 router.get('/', validar({ query: consultaEventos }), filtrarPorSede, controlador.listar);
+router.get(
+  '/exportar',
+  requerirPermiso(PERMISOS.EVENTOS_EXPORTAR),
+  marcarConsulta('exportacion'),
+  validar({ query: consultaEventosExportar }),
+  filtrarPorSede,
+  exportarRecurso('eventos'),
+);
 router.get('/:id', validar({ params }), controlador.detalle);
 router.post('/', gestionar, validar({ body: cuerpoCrearEvento }), controlador.crear);
 router.patch('/:id', gestionar, validar({ params, body: cuerpoEditarEvento }), controlador.editar);

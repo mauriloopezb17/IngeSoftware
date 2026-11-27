@@ -10,6 +10,7 @@ export const CODIGOS_ERROR = Object.freeze({
   CONFLICTO: 409,
   ARCHIVO_DEMASIADO_GRANDE: 413,
   TIPO_NO_PERMITIDO: 415,
+  DEMASIADOS_REGISTROS: 422,
   DEMASIADAS_SOLICITUDES: 429,
   ERROR_INTERNO: 500,
   SERVICIO_NO_DISPONIBLE: 503,
@@ -52,6 +53,13 @@ export class ErrorApp extends Error {
   // 503: un servicio externo (ej. el almacenamiento de archivos) no está disponible.
   static servicioNoDisponible(mensaje) {
     return new ErrorApp('SERVICIO_NO_DISPONIBLE', mensaje);
+  }
+
+  // 422: exportación excede el máximo permitido.
+  static demasiadosRegistros(
+    mensaje = 'Hay demasiados registros para exportar. Aplica más filtros.',
+  ) {
+    return new ErrorApp('DEMASIADOS_REGISTROS', mensaje);
   }
 
   // 429 con la cabecera Retry-After (segundos que faltan), que pone el manejador de errores.

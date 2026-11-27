@@ -9,6 +9,7 @@ import { usePermisos } from '../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoTexto,
   EncabezadoPantalla,
   Insignia,
@@ -16,7 +17,7 @@ import {
   useFiltrosListado,
   useToast,
 } from '../ui/index.js';
-import { CLAVE_PROCLAMAS, eliminarProclama, listarProclamas, VISTAS } from './api.js';
+import { CLAVE_PROCLAMAS, eliminarProclama, listarProclamas, parametrosProclamas, VISTAS } from './api.js';
 import { estaPublicada, formatearDia, ordinal } from './fechas.js';
 import PestanasProclamas from './PestanasProclamas.jsx';
 
@@ -153,11 +154,18 @@ export default function ListadoProclamas() {
         descripcion="Proclamas matrimoniales y su historial de publicaciones."
         headingRef={tituloRef}
         acciones={
-          editable && (
-            <Boton como={Link} to="/admin/proclamas/nueva" variante="primario" icono={Plus}>
-              Nueva proclama
-            </Boton>
-          )
+          <>
+            <BotonExportarCsv
+              recurso="proclamas"
+              permiso="proclamas.exportar"
+              filtros={parametrosProclamas(filtrosActivos)}
+            />
+            {editable && (
+              <Boton como={Link} to="/admin/proclamas/nueva" variante="primario" icono={Plus}>
+                Nueva proclama
+              </Boton>
+            )}
+          </>
         }
       />
 

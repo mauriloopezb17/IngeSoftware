@@ -1,5 +1,6 @@
 export { default as Aviso } from './Aviso.jsx';
 export { default as Boton } from './Boton.jsx';
+export { default as BotonExportarCsv } from './BotonExportarCsv.jsx';
 export { CampoArea, CampoCasilla, CampoSelect, CampoTexto } from './Campo.jsx';
 export { default as EncabezadoPantalla } from './EncabezadoPantalla.jsx';
 export { EsqueletoFormulario, EsqueletoTabla, EsqueletoTarjetas } from './Esqueleto.jsx';

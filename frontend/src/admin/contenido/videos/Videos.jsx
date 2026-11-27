@@ -7,6 +7,7 @@ import { usePermisos } from '../../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoSelect,
   EncabezadoPantalla,
   Insignia,
@@ -197,15 +198,22 @@ export default function Videos() {
         descripcion="Videos de YouTube mostrados en el portal parroquial."
         headingRef={tituloRef}
         acciones={
-          puedeGestionar && (
-            <Boton
-              variante="primario"
-              icono={Plus}
-              onClick={() => setCreando(true)}
-            >
-              Nuevo video
-            </Boton>
-          )
+          <>
+            <BotonExportarCsv
+              recurso="videos"
+              permiso="videos.exportar"
+              filtros={filtrosActivos}
+            />
+            {puedeGestionar && (
+              <Boton
+                variante="primario"
+                icono={Plus}
+                onClick={() => setCreando(true)}
+              >
+                Nuevo video
+              </Boton>
+            )}
+          </>
         }
       />
 

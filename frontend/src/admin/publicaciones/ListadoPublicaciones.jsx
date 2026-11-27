@@ -8,6 +8,7 @@ import { usePermisos } from '../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoCasilla,
   CampoSelect,
   EncabezadoPantalla,
@@ -186,6 +187,11 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
         }
         acciones={
           <>
+            <BotonExportarCsv
+              recurso="publicaciones"
+              permiso="publicaciones.exportar"
+              filtros={filtrosApi}
+            />
             {!esAvisos && puede('noticias.publicar') && (
               <Boton como={Link} to="/admin/publicaciones/revision" variante="secundario" icono={ClipboardCheck}>
                 Bandeja de revisión

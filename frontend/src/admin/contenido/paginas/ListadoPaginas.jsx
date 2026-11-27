@@ -8,6 +8,7 @@ import { usePermisos } from '../../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoSelect,
   EncabezadoPantalla,
   Insignia,
@@ -164,15 +165,22 @@ export default function ListadoPaginas() {
         descripcion="Páginas institucionales del portal y sus bloques de contenido."
         headingRef={tituloRef}
         acciones={
-          puedeGestionar && (
-            <Boton
-              variante="primario"
-              icono={Plus}
-              onClick={() => setCreando(true)}
-            >
-              Nueva página
-            </Boton>
-          )
+          <>
+            <BotonExportarCsv
+              recurso="paginas"
+              permiso="paginas.exportar"
+              filtros={filtrosActivos}
+            />
+            {puedeGestionar && (
+              <Boton
+                variante="primario"
+                icono={Plus}
+                onClick={() => setCreando(true)}
+              >
+                Nueva página
+              </Boton>
+            )}
+          </>
         }
       />
 

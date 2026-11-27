@@ -2,8 +2,11 @@
 import { Router } from 'express';
 import { PERMISOS } from '../constantes/permisos.js';
 import * as controlador from '../controllers/adminHorarios.controller.js';
+import { exportarRecurso } from '../controllers/exportar.controller.js';
 import { filtrarPorSede, requerirPermiso } from '../middlewares/autorizar.js';
+import { marcarConsulta } from '../middlewares/registrarConsulta.js';
 import { validar } from '../middlewares/validar.js';
+import { esquemaExportacion } from '../validacion/comunes.js';
 import {
   consultaHorarios,
   cuerpoCrearHorario,
@@ -14,6 +17,14 @@ import {
 const router = Router();
 
 router.get('/', validar({ query: consultaHorarios }), filtrarPorSede, controlador.listar);
+router.get(
+  '/exportar',
+  requerirPermiso(PERMISOS.HORARIOS_EXPORTAR),
+  marcarConsulta('exportacion'),
+  validar({ query: esquemaExportacion(consultaHorarios) }),
+  filtrarPorSede,
+  exportarRecurso('horarios'),
+);
 router.get('/:id', validar({ params: paramsHorario }), controlador.detalle);
 
 router.post(

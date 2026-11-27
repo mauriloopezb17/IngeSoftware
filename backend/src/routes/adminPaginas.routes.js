@@ -3,8 +3,11 @@
 import { Router } from 'express';
 import { PERMISOS } from '../constantes/permisos.js';
 import * as controlador from '../controllers/adminPaginas.controller.js';
+import { exportarRecurso } from '../controllers/exportar.controller.js';
 import { filtrarPorSede, requerirPermiso } from '../middlewares/autorizar.js';
+import { marcarConsulta } from '../middlewares/registrarConsulta.js';
 import { validar } from '../middlewares/validar.js';
+import { esquemaExportacion } from '../validacion/comunes.js';
 import {
   consultaPaginas,
   cuerpoCrearBloque,
@@ -20,6 +23,14 @@ const router = Router();
 const gestionar = requerirPermiso(PERMISOS.PAGINAS_GESTIONAR);
 
 router.get('/', validar({ query: consultaPaginas }), filtrarPorSede, controlador.listar);
+router.get(
+  '/exportar',
+  requerirPermiso(PERMISOS.PAGINAS_EXPORTAR),
+  marcarConsulta('exportacion'),
+  validar({ query: esquemaExportacion(consultaPaginas) }),
+  filtrarPorSede,
+  exportarRecurso('paginas'),
+);
 router.get('/:id', validar({ params }), controlador.detalle);
 router.post('/', gestionar, validar({ body: cuerpoCrearPagina }), controlador.crear);
 router.patch('/:id', gestionar, validar({ params, body: cuerpoEditarPagina }), controlador.editar);

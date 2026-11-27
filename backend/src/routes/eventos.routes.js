@@ -5,6 +5,7 @@ import { validar } from '../middlewares/validar.js';
 import { esquemaListado, fecha, listaIds } from '../validacion/comunes.js';
 
 const consultaLista = esquemaListado({
+  conBuscar: true,
   filtros: {
     desde: fecha.optional(),
     hasta: fecha.optional(),

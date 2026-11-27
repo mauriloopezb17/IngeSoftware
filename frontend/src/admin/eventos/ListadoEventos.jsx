@@ -9,6 +9,7 @@ import { CLAVE_CATALOGOS, obtenerCatalogos } from '../publicaciones/api.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoSelect,
   EncabezadoPantalla,
   Insignia,
@@ -16,7 +17,14 @@ import {
   useFiltrosListado,
   useToast,
 } from '../ui/index.js';
-import { CLAVE_EVENTOS, eliminarEvento, ESTADOS_EVENTO, listarEventos, VISTAS } from './api.js';
+import {
+  CLAVE_EVENTOS,
+  eliminarEvento,
+  ESTADOS_EVENTO,
+  listarEventos,
+  parametrosEventos,
+  VISTAS,
+} from './api.js';
 import { formatearCuandoEvento } from './formato.js';
 
 const VARIANTE_ESTADO = {
@@ -166,11 +174,18 @@ export default function ListadoEventos() {
         descripcion="Calendario parroquial. Los eventos se publican directamente, sin revisión."
         headingRef={tituloRef}
         acciones={
-          editable && (
-            <Boton como={Link} to="/admin/eventos/nuevo" variante="primario" icono={Plus}>
-              Nuevo evento
-            </Boton>
-          )
+          <>
+            <BotonExportarCsv
+              recurso="eventos"
+              permiso="eventos.exportar"
+              filtros={parametrosEventos(filtrosActivos)}
+            />
+            {editable && (
+              <Boton como={Link} to="/admin/eventos/nuevo" variante="primario" icono={Plus}>
+                Nuevo evento
+              </Boton>
+            )}
+          </>
         }
       />
 

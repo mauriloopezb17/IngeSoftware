@@ -28,6 +28,7 @@ const descripcion = z
 export const paramsHorario = z.object({ id });
 
 export const consultaHorarios = esquemaListado({
+  conBuscar: true,
   filtros: {
     sede: slug.optional(),
     tipo: listaIds.optional(),

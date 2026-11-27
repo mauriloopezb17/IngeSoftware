@@ -126,3 +126,46 @@ describe('Paginación, filtros y validación estricta en todos los listados (PAR
     },
   );
 });
+
+describe('Filtro buscar: solo en los listados que lo implementan (PAR-159 / arrastre PAR-158)', () => {
+  const CON_BUSCAR = [
+    ...LISTADOS_PORTAL.filter(
+      (x) => !x.ruta.endsWith('/proclamas/historial') && !x.ruta.endsWith('/boletines'),
+    ),
+    ...LISTADOS_ADMIN.filter((x) => !x.ruta.endsWith('/bitacora')),
+  ];
+
+  const SIN_BUSCAR = [
+    { ruta: `/api/sedes/${SEDE_PRINCIPAL}/proclamas/historial` },
+    { ruta: `/api/sedes/${SEDE_PRINCIPAL}/boletines` },
+    { ruta: '/api/admin/bitacora', admin: true },
+  ];
+
+  it.each(CON_BUSCAR)(
+    'búsqueda sin coincidencias devuelve total: 0 en $ruta',
+    async ({ ruta, parroco }) => {
+      const req = request(app).get(`${ruta}?buscar=sincoincidenciaxyz999`);
+      if (ruta.startsWith('/api/admin')) {
+        req.set('Cookie', parroco ? cookieParroco : cookieAdmin);
+      }
+      const res = await req;
+      expect(res.status).toBe(200);
+      expect(res.body.datos).toEqual([]);
+      expect(res.body.paginacion.total).toBe(0);
+    },
+  );
+
+  it.each(SIN_BUSCAR)(
+    'rechaza buscar con 400 en query.buscar en $ruta',
+    async ({ ruta, admin }) => {
+      const req = request(app).get(`${ruta}?buscar=algo`);
+      if (admin) req.set('Cookie', cookieAdmin);
+      const res = await req;
+      expect(res.status).toBe(400);
+      expect(res.body.error.codigo).toBe('VALIDACION');
+      expect(res.body.error.detalles).toEqual([
+        { campo: 'query.buscar', mensaje: 'Campo no permitido.' },
+      ]);
+    },
+  );
+});

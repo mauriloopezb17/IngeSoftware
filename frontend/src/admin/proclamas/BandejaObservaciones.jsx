@@ -7,6 +7,7 @@ import { formatearFecha } from '../multimedia/formato.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   EncabezadoPantalla,
   Insignia,
   TablaListado,
@@ -145,6 +146,13 @@ export default function BandejaObservaciones() {
       <EncabezadoPantalla
         titulo="Proclamas"
         descripcion="Observaciones confidenciales recibidas para el párroco."
+        acciones={
+          <BotonExportarCsv
+            recurso="proclamas/observaciones"
+            permiso="observaciones.exportar"
+            filtros={filtrosActivos}
+          />
+        }
       />
 
       <PestanasProclamas />
