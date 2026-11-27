@@ -383,8 +383,8 @@ const CASOS_ADMIN = [
     nombre: 'proclamas/observaciones',
     ruta: '/api/admin/proclamas/observaciones',
     filtro: 'estado=todas',
-    ordenAsc: null,
-    ordenDesc: null,
+    ordenAsc: 'fechaEnvio',
+    ordenDesc: '-fechaEnvio',
     buscar: PREFIJO,
     parroco: true,
   },
@@ -392,8 +392,8 @@ const CASOS_ADMIN = [
     nombre: 'boletines',
     ruta: '/api/admin/boletines',
     filtro: 'anio=2029',
-    ordenAsc: null,
-    ordenDesc: null,
+    ordenAsc: 'periodo',
+    ordenDesc: '-periodo',
     buscar: PREFIJO,
   },
   {
@@ -525,32 +525,4 @@ describe('Listados del panel: total, página 2, filtros, orden y página fuera d
       expect(fuera.body.paginacion.total).toBe(p1.body.paginacion.total);
     },
   );
-
-  // HALLAZGO: consultaObservaciones (validacion/proclamas.js) acepta orden=fechaEnvio|-fechaEnvio,
-  // pero observacionesProclama.model.js fija ORDER BY o.fecha_envio DESC, o.id DESC e ignora orden.
-  it.fails('proclamas/observaciones respeta orden=fechaEnvio vs -fechaEnvio', async () => {
-    const asc = await request(app)
-      .get('/api/admin/proclamas/observaciones?orden=fechaEnvio&pagina=1&porPagina=1')
-      .set('Cookie', cookieParroco);
-    const desc = await request(app)
-      .get('/api/admin/proclamas/observaciones?orden=-fechaEnvio&pagina=1&porPagina=1')
-      .set('Cookie', cookieParroco);
-    expect(asc.status).toBe(200);
-    expect(desc.status).toBe(200);
-    expect(asc.body.datos[0].id).not.toBe(desc.body.datos[0].id);
-  });
-
-  // HALLAZGO: consultaBoletines (validacion/boletines.js) acepta orden=periodo|-periodo|fechaPublicacion|-fechaPublicacion,
-  // pero boletines.model.js fija ORDER BY b.periodo DESC, b.id DESC e ignora orden.
-  it.fails('boletines respeta orden=periodo vs -periodo', async () => {
-    const asc = await request(app)
-      .get('/api/admin/boletines?orden=periodo&pagina=1&porPagina=1')
-      .set('Cookie', cookieAdmin);
-    const desc = await request(app)
-      .get('/api/admin/boletines?orden=-periodo&pagina=1&porPagina=1')
-      .set('Cookie', cookieAdmin);
-    expect(asc.status).toBe(200);
-    expect(desc.status).toBe(200);
-    expect(asc.body.datos[0].id).not.toBe(desc.body.datos[0].id);
-  });
 });
