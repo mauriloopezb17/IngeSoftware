@@ -4,14 +4,14 @@
 // se cambia solo este archivo.
 import { ROLES } from './catalogos.js';
 
-const { ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING } = Object.fromEntries(
+const { ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING, COORDINADOR } = Object.fromEntries(
   ROLES.codigos.map((codigo) => [codigo, codigo]),
 );
 
 // [permiso, roles que lo tienen], en el orden de la matriz del contrato.
 const MATRIZ = [
-  ['multimedia.subir', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING]],
-  ['multimedia.eliminar', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING]],
+  ['multimedia.subir', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING, COORDINADOR]],
+  ['multimedia.eliminar', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING, COORDINADOR]],
   ['avisos.gestionar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
   ['noticias.redactar', [ADMINISTRADOR, PARROCO, MARKETING]],
   ['noticias.publicar', [ADMINISTRADOR, PARROCO]],
@@ -20,7 +20,7 @@ const MATRIZ = [
   ['horarios.gestionar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
   ['servicios.gestionar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
   ['grupos.gestionar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
-  ['grupos.detalle', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING]],
+  ['grupos.detalle', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING, COORDINADOR]],
   ['videos.gestionar', [ADMINISTRADOR, PARROCO, SECRETARIA, MARKETING]],
   ['sede.editar', [ADMINISTRADOR, PARROCO, SECRETARIA]],
   ['sedes.gestionar', [ADMINISTRADOR]],

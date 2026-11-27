@@ -5,6 +5,7 @@
 //   router.get('/', validar({ query }), filtrarPorSede, controlador);   // req.sedeFiltro
 import { tienePermiso } from '../constantes/permisos.js';
 import { ErrorApp } from '../errores/ErrorApp.js';
+import { tieneGrupoAsignado } from '../models/usuarios.model.js';
 import { sedeDeConsulta } from '../utils/alcanceSede.js';
 
 // Si una ruta olvida poner autenticar antes, no se autoriza nada: es un error de programación
@@ -54,4 +55,24 @@ export function filtrarPorSede(req, _res, next) {
   } catch (error) {
     next(error);
   }
+}
+
+// Si el usuario es Coordinador de grupo, exige que el grupo indicado en params esté asignado
+// en usuario_grupo_pastoral (consultado contra la base en cada petición).
+export function exigirGrupoAsignado(parametroId = 'id') {
+  return async function comprobarGrupoAsignado(req, _res, next) {
+    try {
+      const usuario = usuarioDeLaSesion(req);
+      if (usuario.rol !== 'COORDINADOR') return next();
+      const grupoId = Number(req.validado?.params?.[parametroId] ?? req.params?.[parametroId]);
+      if (!Number.isInteger(grupoId) || !(await tieneGrupoAsignado(usuario.id, grupoId))) {
+        return next(
+          ErrorApp.sinPermiso('Solo puedes editar los grupos pastorales que tienes asignados.'),
+        );
+      }
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  };
 }

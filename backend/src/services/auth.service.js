@@ -22,7 +22,7 @@ const MENSAJE_SESION_EXPIRADA = 'Tu sesión expiró. Vuelve a iniciar sesión.';
 
 // Objeto de usuario que devuelven el login y /auth/yo. "sede" es null si el usuario no tiene
 // (solo el Administrador puede no tener sede).
-export function aUsuarioSesion(fila, sesionExpiraEn) {
+export function aUsuarioSesion(fila, sesionExpiraEn, gruposAsignados = []) {
   const rol = ROLES.aEnumeracion(fila.rol_nombre);
 
   return {
@@ -35,9 +35,17 @@ export function aUsuarioSesion(fila, sesionExpiraEn) {
         ? null
         : { id: fila.sede_id, nombre: fila.sede_nombre, slug: fila.sede_slug },
     permisos: [...permisosDe(rol.codigo)],
+    ...(rol.codigo === 'COORDINADOR' ? { gruposAsignados } : {}),
     fechaUltimoAcceso: formatearFechaHora(fila.fecha_ultimo_acceso),
     sesionExpiraEn: formatearFechaHora(sesionExpiraEn),
   };
+}
+
+export async function obtenerUsuarioSesion(fila, sesionExpiraEn) {
+  const rolCodigo = ROLES.codigoDe(fila.rol_nombre);
+  const gruposAsignados =
+    rolCodigo === 'COORDINADOR' ? await usuarios.gruposAsignadosDe(fila.id) : [];
+  return aUsuarioSesion(fila, sesionExpiraEn, gruposAsignados);
 }
 
 // Valida el token de una petición y vuelve a leer al usuario de la base: así desactivarlo o
@@ -104,15 +112,22 @@ export async function iniciarSesion({ correo, contrasena }) {
   }
 
   const fechaUltimoAcceso = await usuarios.registrarAcceso(usuario.id);
+  const rolCodigo = ROLES.codigoDe(usuario.rol_nombre);
+  const gruposAsignados =
+    rolCodigo === 'COORDINADOR' ? await usuarios.gruposAsignadosDe(usuario.id) : [];
   const { token, duracionSegundos, expiraEn } = firmarToken({
     id: usuario.id,
-    rol: ROLES.codigoDe(usuario.rol_nombre),
+    rol: rolCodigo,
     sede: usuario.sede_id,
   });
 
   return {
     token,
     duracionSegundos,
-    usuario: aUsuarioSesion({ ...usuario, fecha_ultimo_acceso: fechaUltimoAcceso }, expiraEn),
+    usuario: aUsuarioSesion(
+      { ...usuario, fecha_ultimo_acceso: fechaUltimoAcceso },
+      expiraEn,
+      gruposAsignados,
+    ),
   };
 }

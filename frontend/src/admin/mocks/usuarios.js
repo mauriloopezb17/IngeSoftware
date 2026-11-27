@@ -152,6 +152,15 @@ export const usuariosSeed = [
       'videos.exportar',
     ],
   },
+  {
+    id: 5,
+    nombreCompleto: 'Coordinador (desarrollo)',
+    correo: 'coordinador@parroquia.test',
+    rol: { codigo: 'COORDINADOR', nombre: 'Coordinador de grupo' },
+    sede: SEDE_PRINCIPAL,
+    permisos: ['multimedia.subir', 'multimedia.eliminar', 'grupos.detalle'],
+    gruposAsignados: [{ id: 1, nombre: 'Monaguillos', slug: 'monaguillos' }],
+  },
 ];
 
 // Fecha ISO con el desfase de Bolivia (-04:00), como en los ejemplos del contrato.

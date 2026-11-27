@@ -43,6 +43,28 @@ export async function actualizarContrasena(id, hashContrasena, db = { consultar 
   await db.consultar('UPDATE usuario SET hash_contrasena = $2 WHERE id = $1', [id, hashContrasena]);
 }
 
+export async function gruposAsignadosDe(usuarioId, db = { consultar }) {
+  const { rows } = await db.consultar(
+    `SELECT g.id, g.nombre, g.slug
+       FROM usuario_grupo_pastoral ugp
+       JOIN grupo_pastoral g ON g.id = ugp.grupo_pastoral_id
+      WHERE ugp.usuario_id = $1
+      ORDER BY g.orden ASC, g.id ASC`,
+    [usuarioId],
+  );
+  return rows;
+}
+
+export async function tieneGrupoAsignado(usuarioId, grupoId, db = { consultar }) {
+  const { rows } = await db.consultar(
+    `SELECT 1
+       FROM usuario_grupo_pastoral
+      WHERE usuario_id = $1 AND grupo_pastoral_id = $2`,
+    [usuarioId, grupoId],
+  );
+  return Boolean(rows[0]);
+}
+
 // Anota el acceso y devuelve la fecha registrada (timestamptz como Date).
 export async function registrarAcceso(id) {
   const { rows } = await consultar(

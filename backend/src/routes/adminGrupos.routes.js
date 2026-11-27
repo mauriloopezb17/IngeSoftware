@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { PERMISOS } from '../constantes/permisos.js';
 import * as controlador from '../controllers/adminGrupos.controller.js';
 import { exportarRecurso } from '../controllers/exportar.controller.js';
-import { filtrarPorSede, requerirPermiso } from '../middlewares/autorizar.js';
+import { exigirGrupoAsignado, filtrarPorSede, requerirPermiso } from '../middlewares/autorizar.js';
 import { marcarConsulta } from '../middlewares/registrarConsulta.js';
 import { validar } from '../middlewares/validar.js';
 import { esquemaExportacion } from '../validacion/comunes.js';
@@ -41,7 +41,7 @@ router.post(
   validar({ body: cuerpoReordenarGrupos }),
   controlador.reordenar,
 );
-router.get('/:id', validar({ params: paramsGrupo }), controlador.detalle);
+router.get('/:id', validar({ params: paramsGrupo }), exigirGrupoAsignado(), controlador.detalle);
 
 router.post('/', exigirPermiso, validar({ body: cuerpoCrearGrupo }), controlador.crear);
 router.patch(
@@ -54,6 +54,7 @@ router.patch(
   '/:id/detalle',
   exigirEditarDetalle,
   validar({ params: paramsGrupo, body: cuerpoEditarDetalleGrupo }),
+  exigirGrupoAsignado(),
   controlador.editarDetalle,
 );
 router.delete('/:id', exigirPermiso, validar({ params: paramsGrupo }), controlador.eliminar);

@@ -114,7 +114,16 @@ const UNIONES_ADMIN = `
   LEFT JOIN archivo_multimedia am ON am.id = g.imagen_id`;
 
 export async function listarAdmin(
-  { sedeSlug, sedeId, visible, buscar, orden = 'orden', limite = null, desplazamiento = 0 } = {},
+  {
+    sedeSlug,
+    sedeId,
+    coordinadorUsuarioId,
+    visible,
+    buscar,
+    orden = 'orden',
+    limite = null,
+    desplazamiento = 0,
+  } = {},
   db = { consultar },
 ) {
   const parametros = [];
@@ -126,6 +135,11 @@ export async function listarAdmin(
 
   if (sedeSlug !== undefined) condiciones.push(`s.slug = ${agregar(sedeSlug)}`);
   if (sedeId !== undefined) condiciones.push(`g.sede_id = ${agregar(sedeId)}`);
+  if (coordinadorUsuarioId !== undefined) {
+    condiciones.push(
+      `EXISTS (SELECT 1 FROM usuario_grupo_pastoral ugp WHERE ugp.grupo_pastoral_id = g.id AND ugp.usuario_id = ${agregar(coordinadorUsuarioId)})`,
+    );
+  }
   if (visible !== undefined) condiciones.push(`g.visible = ${agregar(visible)}`);
   if (buscar) {
     const p = agregar(patronBusqueda(buscar));

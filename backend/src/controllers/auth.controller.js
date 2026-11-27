@@ -36,12 +36,11 @@ export function logout(_req, res) {
   res.set('Cache-Control', SIN_CACHE).status(204).end();
 }
 
-export function yo(req, res) {
+export async function yo(req, res) {
   const { fila, sesionExpiraEn } = req.usuario;
+  const datos = await servicio.obtenerUsuarioSesion(fila, sesionExpiraEn);
 
-  res
-    .set('Cache-Control', SIN_CACHE)
-    .json({ datos: servicio.aUsuarioSesion(fila, sesionExpiraEn) });
+  res.set('Cache-Control', SIN_CACHE).json({ datos });
 }
 
 // Comparte el límite de intentos con el login: mismos contadores, por IP y correo del usuario.

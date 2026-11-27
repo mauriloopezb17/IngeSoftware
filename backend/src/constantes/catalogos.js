@@ -67,4 +67,5 @@ export const ROLES = new Catalogo('rol', {
   PARROCO: 'Párroco',
   SECRETARIA: 'Secretaría',
   MARKETING: 'Marketing',
+  COORDINADOR: 'Coordinador de grupo',
 });

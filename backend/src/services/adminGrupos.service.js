@@ -96,11 +96,12 @@ function traducirErrorUnicoSlug(err, slugValor) {
   throw err;
 }
 
-export async function listarGrupos(sedeFiltro, consulta = {}) {
+export async function listarGrupos(sedeFiltro, consulta = {}, coordinadorUsuarioId = undefined) {
   const pagina = consulta.pagina ?? 1;
   const porPagina = consulta.porPagina ?? 10;
   const { filas, total } = await modelo.listarAdmin({
     sedeSlug: sedeFiltro,
+    coordinadorUsuarioId,
     visible: consulta.visible,
     buscar: consulta.buscar,
     orden: consulta.orden,
