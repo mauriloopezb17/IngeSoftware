@@ -4,8 +4,11 @@ import { ErrorApp } from '../errores/ErrorApp.js';
 import * as modelo from '../models/servicios.model.js';
 import { generarSlug, reordenarPorSede } from '../utils/adminContenido.js';
 import { exigirSedeDelRecurso, sedeParaCrear } from '../utils/alcanceSede.js';
+import { imagen } from '../utils/formato.js';
 import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
+import { archivosDelContenido, tieneContenido } from '../validacion/blocknote.js';
 import { registrarCambio } from './bitacora.service.js';
+import { verificarArchivos } from './referencias.service.js';
 
 function aServicioAdmin(fila) {
   return {
@@ -15,11 +18,53 @@ function aServicioAdmin(fila) {
     nombre: fila.nombre,
     descripcionCorta: fila.descripcion_corta,
     icono: fila.icono,
+    imagen: fila.imagen_id
+      ? imagen({
+          id: fila.imagen_id,
+          url: fila.imagen_url,
+          textoAlternativo: fila.imagen_texto_alternativo,
+          ancho: fila.imagen_ancho,
+          alto: fila.imagen_alto,
+        })
+      : null,
     contenido: fila.contenido,
+    detalle: fila.detalle ?? null,
     orden: fila.orden,
     visible: fila.visible,
     preguntasFrecuentes: fila.preguntas_frecuentes,
   };
+}
+
+function normalizarDetalle(detalle) {
+  if (detalle === undefined || detalle === null) return detalle;
+  const contenido = tieneContenido(detalle.contenido) ? detalle.contenido : null;
+  const galeria = detalle.galeria ?? [];
+  const videoYoutubeId = detalle.videoYoutubeId ?? null;
+  if (!contenido && galeria.length === 0 && !videoYoutubeId) return null;
+  return { contenido, galeria, videoYoutubeId };
+}
+
+async function validarReferenciasDetalle(sedeId, { imagenId, detalle }, db) {
+  const referencias = [];
+  if (imagenId !== undefined && imagenId !== null) {
+    referencias.push({ campo: 'imagenId', clase: 'IMAGEN', id: imagenId });
+  }
+  if (detalle?.galeria?.length) {
+    detalle.galeria.forEach((archivoId, indice) => {
+      referencias.push({
+        campo: `detalle.galeria.${indice}`,
+        clase: ['IMAGEN', 'VIDEO'],
+        id: archivoId,
+      });
+    });
+  }
+  if (detalle?.contenido) {
+    referencias.push(...archivosDelContenido(detalle.contenido, 'detalle.contenido'));
+  }
+  if (referencias.length === 0) return;
+
+  const { detalles } = await verificarArchivos(sedeId, referencias, db);
+  if (detalles.length > 0) throw ErrorApp.validacion(undefined, detalles);
 }
 
 function aPreguntaAdmin(fila) {
@@ -92,10 +137,12 @@ export async function crearServicio(usuario, datos, contexto) {
   }
 
   const slugFinal = resolverSlugServicio(datos.slug, datos.nombre);
+  const detalle = normalizarDetalle(datos.detalle) ?? null;
 
   let idCreado;
   try {
     idCreado = await transaccion(async (db) => {
+      await validarReferenciasDetalle(sedeId, { imagenId: datos.imagenId, detalle }, db);
       const fila = await modelo.crear(
         {
           sedeId,
@@ -103,7 +150,9 @@ export async function crearServicio(usuario, datos, contexto) {
           nombre: datos.nombre,
           descripcionCorta: datos.descripcionCorta,
           icono: datos.icono,
+          imagenId: datos.imagenId ?? null,
           contenido: datos.contenido,
+          detalle,
           visible: datos.visible,
         },
         db,
@@ -124,13 +173,21 @@ export async function crearServicio(usuario, datos, contexto) {
 }
 
 export async function actualizarServicio(usuario, id, datos, contexto) {
-  await servicioDelUsuario(usuario, id);
+  const actual = await servicioDelUsuario(usuario, id);
+  const detalleNormalizado =
+    datos.detalle !== undefined ? normalizarDetalle(datos.detalle) : undefined;
 
   let slugObjetivo;
   try {
     await transaccion(async (db) => {
       const anterior = await modelo.filaParaModificar(id, db);
       if (!anterior) throw ErrorApp.noEncontrado('El servicio no existe.');
+
+      await validarReferenciasDetalle(
+        actual.sede_id,
+        { imagenId: datos.imagenId, detalle: detalleNormalizado },
+        db,
+      );
 
       const nombreFinal = datos.nombre ?? anterior.nombre;
       slugObjetivo =
@@ -143,7 +200,9 @@ export async function actualizarServicio(usuario, id, datos, contexto) {
           slug: slugObjetivo,
           descripcionCorta: datos.descripcionCorta,
           icono: datos.icono,
+          imagenId: datos.imagenId,
           contenido: datos.contenido,
+          detalle: detalleNormalizado,
           visible: datos.visible,
         },
         db,
@@ -160,6 +219,36 @@ export async function actualizarServicio(usuario, id, datos, contexto) {
   } catch (err) {
     traducirErrorUnicoSlug(err, slugObjetivo ?? '');
   }
+
+  return aServicioAdmin(await modelo.buscarPorId(id));
+}
+
+export async function actualizarDetalleServicio(usuario, id, datos, contexto) {
+  const actual = await servicioDelUsuario(usuario, id);
+  const cambios = {
+    ...(datos.imagenId !== undefined ? { imagenId: datos.imagenId } : {}),
+    ...(datos.detalle !== undefined ? { detalle: normalizarDetalle(datos.detalle) } : {}),
+  };
+
+  await transaccion(async (db) => {
+    const anterior = await modelo.filaParaModificar(id, db);
+    if (!anterior) throw ErrorApp.noEncontrado('El servicio no existe.');
+
+    await validarReferenciasDetalle(
+      actual.sede_id,
+      { imagenId: cambios.imagenId, detalle: cambios.detalle },
+      db,
+    );
+
+    const nuevo = await modelo.actualizar(id, cambios, db);
+    await registrarCambio(db, contexto, {
+      entidad: 'servicio',
+      entidadId: id,
+      accion: 'UPDATE',
+      anterior,
+      nuevo,
+    });
+  });
 
   return aServicioAdmin(await modelo.buscarPorId(id));
 }

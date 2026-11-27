@@ -61,7 +61,17 @@ const USOS = `
   UNION ALL
   SELECT 15, 'CONTENIDO_GRUPO', g.nombre
     FROM grupo_pastoral g
-   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND (g.detalle -> 'contenido')::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'`;
+   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND (g.detalle -> 'contenido')::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'
+  UNION ALL
+  SELECT 16, 'IMAGEN_SERVICIO', sv.nombre FROM servicio sv WHERE sv.imagen_id = m.id
+  UNION ALL
+  SELECT 17, 'GALERIA_SERVICIO', sv.nombre
+    FROM servicio sv
+   WHERE sv.detalle -> 'galeria' @> to_jsonb(m.id)
+  UNION ALL
+  SELECT 18, 'CONTENIDO_SERVICIO', sv.nombre
+    FROM servicio sv
+   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND (sv.detalle -> 'contenido')::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'`;
 
 const SELECCION = `
   SELECT ${COLUMNAS_ARCHIVO},

@@ -1,6 +1,8 @@
 // Validación de servicios y preguntas frecuentes en el panel CMS (docs/api/admin.md, sección 6).
 import { z } from 'zod';
 import '../config/zod.js';
+import { extraerYoutubeId } from './adminVideos.js';
+import { contenidoBlockNote } from './blocknote.js';
 import { booleanoQuery, esquemaListado, id, slug } from './comunes.js';
 
 const ENTERO_MAXIMO_PG = 2_147_483_647;
@@ -57,6 +59,34 @@ const contenidoServicio = z.strictObject({
   datos: z.array(filaContenido).max(20, 'El contenido puede tener hasta 20 elementos.'),
 });
 
+const videoYoutubeOpcional = z.preprocess(
+  vacioANulo,
+  z
+    .string({ error: 'Debe ser un texto.' })
+    .trim()
+    .transform((valor, ctx) => {
+      const youtubeId = extraerYoutubeId(valor);
+      if (!youtubeId) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Ingresa un identificador o URL válida de YouTube.',
+        });
+        return z.NEVER;
+      }
+      return youtubeId;
+    })
+    .nullable(),
+);
+
+export const detalleServicio = z.strictObject({
+  contenido: contenidoBlockNote.nullable().optional(),
+  galeria: z
+    .array(idEntero, { error: 'Debe ser una lista.' })
+    .max(24, 'La galería puede tener hasta 24 archivos.')
+    .optional(),
+  videoYoutubeId: videoYoutubeOpcional.optional(),
+});
+
 const preguntaTexto = z
   .string()
   .trim()
@@ -89,7 +119,9 @@ export const cuerpoCrearServicio = z.strictObject({
   slug: slugServicio.optional().default(null),
   descripcionCorta,
   icono: iconoLucide.optional().default(null),
+  imagenId: idEntero.nullable().optional().default(null),
   contenido: contenidoServicio.optional().default({ datos: [] }),
+  detalle: detalleServicio.nullable().optional().default(null),
   visible: z.boolean().optional().default(true),
 });
 
@@ -98,8 +130,15 @@ export const cuerpoEditarServicio = z.strictObject({
   slug: slugServicio.optional(),
   descripcionCorta: descripcionCorta.optional(),
   icono: iconoLucide.optional(),
+  imagenId: idEntero.nullable().optional(),
   contenido: contenidoServicio.optional(),
+  detalle: detalleServicio.nullable().optional(),
   visible: z.boolean().optional(),
+});
+
+export const cuerpoEditarDetalleServicio = z.strictObject({
+  imagenId: idEntero.nullable().optional(),
+  detalle: detalleServicio.nullable().optional(),
 });
 
 export const cuerpoReordenar = z.strictObject({

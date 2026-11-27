@@ -669,6 +669,26 @@ export const handlersContenido = [
     return HttpResponse.json({ datos: recurso });
   }),
 
+  http.patch(api('/admin/servicios/:id/detalle'), async ({ request, params }) => {
+    const auth = autenticar('servicios.detalle', 'Tu rol no tiene permiso para editar la página de los servicios.');
+    if (auth.respuesta) return auth.respuesta;
+
+    const { recurso, respuesta } = leerPorId(servicios, params.id, auth.usuario, 'El servicio no existe.');
+    if (respuesta) return respuesta;
+
+    const cuerpo = await request.json().catch(() => null);
+    if (!cuerpo) return errorValidacion([{ campo: 'cuerpo', mensaje: 'El cuerpo JSON no es válido.' }]);
+
+    if (cuerpo.imagenId !== undefined) {
+      recurso.imagen = cuerpo.imagenId === null ? null : buscarImagenEnBiblioteca(Number(cuerpo.imagenId));
+    }
+    if (cuerpo.detalle !== undefined) {
+      recurso.detalle = cuerpo.detalle;
+    }
+
+    return HttpResponse.json({ datos: recurso });
+  }),
+
   http.delete(api('/admin/servicios/:id'), ({ params }) => {
     const auth = autenticar('servicios.gestionar', 'Tu rol no tiene permiso para gestionar servicios.');
     if (auth.respuesta) return auth.respuesta;

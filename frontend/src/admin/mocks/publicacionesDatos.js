@@ -60,6 +60,8 @@ const base = (datos) => ({
   fechaPublicacion: null,
   fechaExpiracion: null,
   revision: null,
+  serviciosRelacionados: [],
+  gruposRelacionados: [],
   ...datos,
 });
 

@@ -46,6 +46,10 @@ export async function obtenerServicio(sede, slug, senal) {
   return datos;
 }
 
+export async function obtenerNoticiasServicio(sede, slug, parametros, senal) {
+  return clienteHttp.get(`/sedes/${sede}/servicios/${slug}/noticias`, { parametros, senal });
+}
+
 export async function obtenerEventos(sede, parametros, senal) {
   return clienteHttp.get(`/sedes/${sede}/eventos`, { parametros, senal });
 }
@@ -109,6 +113,10 @@ export async function obtenerGrupoPastoral(sede, slug, senal) {
   return datos;
 }
 
+export async function obtenerNoticiasGrupo(sede, slug, parametros, senal) {
+  return clienteHttp.get(`/sedes/${sede}/grupos-pastorales/${slug}/noticias`, { parametros, senal });
+}
+
 export async function obtenerVideos(sede, senal) {
   const { datos } = await clienteHttp.get(`/sedes/${sede}/videos`, {
     parametros: { porPagina: 100 },
@@ -125,4 +133,8 @@ export async function obtenerCategorias(senal) {
 export async function obtenerCategoriasEvento(senal) {
   const { datos } = await clienteHttp.get('/categorias-evento', { senal });
   return datos;
+}
+
+export async function buscarPortal(sede, parametros, senal) {
+  return clienteHttp.get(`/sedes/${sede}/buscar`, { parametros, senal });
 }

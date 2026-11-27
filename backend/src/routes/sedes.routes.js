@@ -13,6 +13,7 @@ import { limitarObservaciones } from '../middlewares/limiteObservaciones.js';
 import { validar } from '../middlewares/validar.js';
 import { anio, booleanoQuery, esquemaListado, id, listaIds } from '../validacion/comunes.js';
 import { cuerpoCrearObservacion } from '../validacion/proclamas.js';
+import { consultaNoticiasRelacionadas } from '../validacion/publicaciones.js';
 import eventosRoutes from './eventos.routes.js';
 import publicacionesRoutes from './publicaciones.routes.js';
 
@@ -60,11 +61,21 @@ deSede.get('/horarios', validar({ query: consultaHorariosPortal }), horarios.lis
 deSede.get('/servicios', validar({ query: consultaPastoralPortal }), pastoral.listarServicios);
 deSede.get('/servicios/:slug', pastoral.detalleServicio);
 deSede.get(
+  '/servicios/:slug/noticias',
+  validar({ query: consultaNoticiasRelacionadas }),
+  pastoral.noticiasDeServicio,
+);
+deSede.get(
   '/grupos-pastorales',
   validar({ query: consultaPastoralPortal }),
   pastoral.listarGruposPastorales,
 );
 deSede.get('/grupos-pastorales/:slug', pastoral.detalleGrupoPastoral);
+deSede.get(
+  '/grupos-pastorales/:slug/noticias',
+  validar({ query: consultaNoticiasRelacionadas }),
+  pastoral.noticiasDeGrupoPastoral,
+);
 deSede.get('/videos', validar({ query: consultaVideosPortal }), pastoral.listarVideos);
 deSede.use('/publicaciones', publicacionesRoutes);
 deSede.use('/eventos', eventosRoutes);

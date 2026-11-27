@@ -121,9 +121,11 @@ describe('GET /api/admin/servicios', () => {
       nombre: 'Bautismo',
       descripcionCorta: expect.any(String),
       icono: 'droplet',
+      imagen: null,
       contenido: {
         datos: expect.any(Array),
       },
+      detalle: null,
       orden: 1,
       visible: true,
       preguntasFrecuentes: expect.arrayContaining([

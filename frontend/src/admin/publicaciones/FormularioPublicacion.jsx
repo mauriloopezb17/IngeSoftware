@@ -18,9 +18,12 @@ import {
   TIPO_AVISO,
   TIPOS_DE_ESTA_PANTALLA,
 } from './api.js';
+import { CLAVE_GRUPOS, listarGrupos } from '../contenido/grupos/api.js';
+import { CLAVE_SERVICIOS, listarServicios } from '../contenido/servicios/api.js';
 import { aContenido } from './contenido.js';
 import { aCampoFecha, deCampoFecha } from './fechas.js';
 import PreviaPublicacion from './PreviaPublicacion.jsx';
+import SelectorRelacionados from './SelectorRelacionados.jsx';
 
 // BlockNote es pesado: el editor se descarga solo cuando se abre este formulario.
 const EditorContenido = lazy(() => import('./editor/EditorContenido.jsx'));
@@ -40,11 +43,19 @@ function camposDe(publicacion, tipoInicial = 'NOTICIA') {
     fechaExpiracion: aCampoFecha(publicacion?.fechaExpiracion),
     urlExterna: publicacion?.urlExterna ?? '',
     abrirEnlaceDirecto: Boolean(publicacion?.urlExterna && publicacion?.abrirEnlaceDirecto),
+    serviciosRelacionados: publicacion?.serviciosRelacionados ?? [],
+    gruposRelacionados: publicacion?.gruposRelacionados ?? [],
   };
 }
 
 // Lo que cuenta para saber si hay cambios sin guardar.
-const huella = (campos) => JSON.stringify({ ...campos, portada: campos.portada?.id ?? null });
+const huella = (campos) =>
+  JSON.stringify({
+    ...campos,
+    portada: campos.portada?.id ?? null,
+    serviciosRelacionados: campos.serviciosRelacionados.map((s) => s.id),
+    gruposRelacionados: campos.gruposRelacionados.map((g) => g.id),
+  });
 
 // El campo del detalle de un error 400 -> el campo del formulario que lo muestra.
 const CAMPO_DE_ERROR = {
@@ -58,6 +69,8 @@ const CAMPO_DE_ERROR = {
   fechaExpiracion: 'fechaExpiracion',
   contenido: 'contenido',
   'contenido.bloques': 'contenido',
+  servicioIds: 'relacionados',
+  grupoIds: 'relacionados',
 };
 
 function validarLocal(campos) {
@@ -120,6 +133,18 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
 
   const catalogos = useQuery({ queryKey: CLAVE_CATALOGOS, queryFn: obtenerCatalogos, staleTime: 5 * 60 * 1000 });
   const categorias = catalogos.data?.categorias ?? [];
+  const serviciosQuery = useQuery({
+    queryKey: CLAVE_SERVICIOS,
+    queryFn: () => listarServicios(),
+    enabled: !esAviso,
+    staleTime: 5 * 60 * 1000,
+  });
+  const gruposQuery = useQuery({
+    queryKey: CLAVE_GRUPOS,
+    queryFn: () => listarGrupos(),
+    enabled: !esAviso,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // ---- Cambios sin guardar ----
   const hayCambios =
@@ -180,6 +205,12 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
     destacada: campos.destacada,
     fechaPublicacion: deCampoFecha(campos.fechaPublicacion),
     fechaExpiracion: deCampoFecha(campos.fechaExpiracion),
+    ...(esAviso
+      ? {}
+      : {
+          servicioIds: campos.serviciosRelacionados.map((s) => s.id),
+          grupoIds: campos.gruposRelacionados.map((g) => g.id),
+        }),
   });
 
   // ---- Publicar directamente (avisos: sin revisión) ----
@@ -452,6 +483,24 @@ export default function FormularioPublicacion({ publicacion, tipoInicial = 'NOTI
           checked={campos.destacada}
           onChange={(e) => cambiar({ destacada: e.target.checked })}
         />
+
+        {!esAviso && (
+          <Grupo
+            legend="Sacramentos y grupos relacionados"
+            error={errores.relacionados}
+            ayuda="Opcional. La noticia aparecerá también en las páginas seleccionadas (máx. 10 de cada tipo)."
+          >
+            <SelectorRelacionados
+              servicios={serviciosQuery.data ?? []}
+              grupos={gruposQuery.data ?? []}
+              serviciosSeleccionados={campos.serviciosRelacionados}
+              gruposSeleccionados={campos.gruposRelacionados}
+              alCambiarServicios={(serviciosRelacionados) => cambiar({ serviciosRelacionados })}
+              alCambiarGrupos={(gruposRelacionados) => cambiar({ gruposRelacionados })}
+              cargando={serviciosQuery.isPending || gruposQuery.isPending}
+            />
+          </Grupo>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-sand pt-5">

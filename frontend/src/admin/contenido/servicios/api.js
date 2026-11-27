@@ -29,6 +29,11 @@ export async function actualizarServicio(id, cuerpo) {
   return datos;
 }
 
+export async function actualizarDetalleServicio(id, cuerpo) {
+  const { datos } = await clienteHttp.patch(`/admin/servicios/${id}/detalle`, cuerpo);
+  return datos;
+}
+
 export function eliminarServicio(id) {
   return clienteHttp.delete(`/admin/servicios/${id}`);
 }
