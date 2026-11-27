@@ -4,6 +4,7 @@ import * as modelo from '../models/gruposPastorales.model.js';
 import { imagen, urlPublica, variantesDe } from '../utils/formato.js';
 import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 import { tieneContenido } from '../validacion/blocknote.js';
+import { slug as esquemaSlug } from '../validacion/comunes.js';
 
 function tieneDetalle(fila) {
   if (fila.imagen_id) return true;
@@ -98,8 +99,11 @@ export async function listarGruposPastorales(sedeId, consulta = {}) {
 }
 
 // GET /api/sedes/:sede/grupos-pastorales/:slug
+// Un slug con formato imposible (por ejemplo, con un byte nulo) responde 404 sin consultar la base.
 export async function obtenerGrupoPastoral(sedeId, slug) {
-  const fila = await modelo.buscarPorSlugVisible(sedeId, slug);
+  const fila = esquemaSlug.safeParse(slug).success
+    ? await modelo.buscarPorSlugVisible(sedeId, slug)
+    : null;
   if (!fila) {
     throw ErrorApp.noEncontrado(`No existe el grupo pastoral «${String(slug).slice(0, 120)}».`);
   }

@@ -45,19 +45,6 @@ function MenuFlotante() {
   const tarjetasVisiblesRef = useRef(true);
 
   const activo = esEscritorio && tarjetas.length > 0;
-  const visible = activo && !tarjetasVisibles && !ocultoPorScroll;
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return undefined;
-    const contenedor = document.querySelector('.con-menu-flotante');
-    if (!contenedor) return undefined;
-    if (visible) {
-      contenedor.setAttribute('data-menu-flotante-visible', 'true');
-    } else {
-      contenedor.removeAttribute('data-menu-flotante-visible');
-    }
-    return () => contenedor.removeAttribute('data-menu-flotante-visible');
-  }, [visible]);
 
   // Observa la fila de tarjetas de la portada para no mostrar ambos a la vez.
   useEffect(() => {
@@ -166,6 +153,8 @@ function MenuFlotante() {
   }, [abierto]);
 
   if (!activo) return null;
+
+  const visible = !tarjetasVisibles && !ocultoPorScroll;
 
   const manejarTeclaLista = (evento) => {
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(evento.key)) return;
