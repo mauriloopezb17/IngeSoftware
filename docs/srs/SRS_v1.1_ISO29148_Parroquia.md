@@ -24,7 +24,7 @@ Versión 1.1 — Bajo estándar ISO/IEC/IEEE 29148:2018
 
 | Versión | Fecha | Autor | Motivo del cambio |
 | ----- | ----- | ----- | ----- |
-| 1.0 | Septiembre 2026 | Ian Jamid Coaquira Uriarte | Línea base inicial a partir del relevamiento con la parroquia. Se conserva sin cambios en `docs/srs/SRS_v1.0_ISO29148_Parroquia.md`. |
+| 1.0 | Septiembre 2026 | Ian Jamid Coaquira Uriarte | Línea base inicial a partir del relevamiento con la parroquia. Reemplazada por la v1.1; el texto original queda en el historial de Git. |
 | 1.1 | 27/11/2026 | Ian Jamid Coaquira Uriarte | Correcciones del Sprint 3: observaciones del docente (paginación, exportación CSV por rol, registro de consultas), del párroco, de los ingenieros de la parroquia y de marketing. Se pospone fuera de la v2.0 lo que no se implementó (notas marginales, bot e integración con Microsoft 365) y se actualizan los componentes al modelo C4 v2. |
 
 &nbsp;
@@ -75,7 +75,7 @@ El sistema comprende: (a) un Portal Web público por sede; (b) un Panel de Admin
 
 * `docs/arquitectura/ADRs.md` — ADR-01 (PostgreSQL + JSONB), ADR-02 (Redis), ADR-03 (stack Node.js y PostgreSQL) y ADR-04 (almacenamiento en OCI).
 
-* `docs/arquitectura/Arquitectura C4.md` — modelo C4 v2 (fuentes en `modelos/c4/v2/`).
+* `docs/arquitectura/Arquitectura C4.md` — modelo C4 v2 (fuentes en `modelos/c4/`).
 
 * `docs/uml/` — paquete UML (clases del dominio y diagramas de secuencia).
 
@@ -159,7 +159,7 @@ Los requisitos no funcionales especifican atributos de calidad del sistema, reda
 
 # **4\. Matriz de Atributos de Requisitos**
 
-Registro de control de auditoría por cada requerimiento: prioridad, estabilidad, nivel de riesgo, método de verificación y componente asociado. En la v1.1 los componentes usan los nombres del **modelo C4 v2** (`modelos/c4/v2/`): contenedores del C2 (SPA web, API REST, Base de datos, Caché, Oracle Cloud Object Storage + CDN) y componentes del C3 dentro de la API REST.
+Registro de control de auditoría por cada requerimiento: prioridad, estabilidad, nivel de riesgo, método de verificación y componente asociado. En la v1.1 los componentes usan los nombres del **modelo C4 v2** (`modelos/c4/`): contenedores del C2 (SPA web, API REST, Base de datos, Caché, Oracle Cloud Object Storage + CDN) y componentes del C3 dentro de la API REST.
 
 | ID Req. | Prioridad | Estabilidad | Riesgo | Método de Verificación | Componente(s) C4 v2 Asociado(s) |
 | ----- | ----- | ----- | ----- | ----- | ----- |
