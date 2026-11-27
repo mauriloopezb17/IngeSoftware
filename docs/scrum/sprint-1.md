@@ -2,50 +2,62 @@
 
 ## Planning
 
-**Objetivo:** Mockups UI/UX aprobados, modelo de datos PostgreSQL + JSONB definido y prototipo web con datos estáticos listo para validación.
+**Objetivo (Jira):** Mockups UI/UX aprobados, modelo de datos PostgreSQL + JSONB definido y prototipo web con datos estáticos listo para validación.
 
-| Historias comprometidas | Story points comprometidos |
-|---|---|
-| [COMPLETAR por Ian: historias del Sprint 1 en Jira, con su clave PAR-xxx] | [COMPLETAR por Ian: SP comprometidos, del informe de velocidad de Jira] |
+**Incidencias del sprint en Jira** (9 incidencias, 37 SP):
+
+| Clave | Tipo | Incidencia | Responsable | SP | Estado |
+|---|---|---|---|---|---|
+| PAR-15 | Historia | Diseño de los mockups UI/UX de la página web | Mauricio López | 5 | Finalizado |
+| PAR-16 | Historia | Diseño y modelado de las bases de datos del proyecto (PostgreSQL + JSONB) | Mauricio López | 8 | Finalizado |
+| PAR-17 | Historia | Prototipo de la página web con datos estáticos | Samiel Trujillo | 5 | Finalizado |
+| PAR-42 | Tarea | Diagrama C4 Nivel 1 · Contexto | Ian Coaquira | 2 | Finalizado |
+| PAR-43 | Tarea | Diagrama C4 Nivel 2 · Contenedores | Ian Coaquira | 3 | Finalizado |
+| PAR-44 | Tarea | Diagrama C4 Nivel 3 · Componentes | Ian Coaquira | 3 | Finalizado |
+| PAR-45 | Tarea | Documentar la arquitectura C4 y registrar ADR-01 y ADR-02 | Ian Coaquira | 3 | Finalizado |
+| PAR-46 | Tarea | Redactar el SRS v1.0 (ISO/IEC/IEEE 29148) | Ian Coaquira | 5 | Finalizado |
+| PAR-48 | Tarea | Elaborar la matriz de trazabilidad | Ian Coaquira | 3 | Finalizado |
+
+Story points por integrante: Ian 19, Mauricio 13, Samiel 5.
 
 ## Review: qué se entregó
 
-Resumen del historial de Git de `main` en el rango del sprint:
-
 | Fecha | Entregable | Autor | Evidencia |
 |---|---|---|---|
-| 23/09/2026 | Documentación de la primera evaluación: SRS v1.0, modelo C4 inicial, ADR-01 y ADR-02, matriz de trazabilidad y minuta de entrevista con la parroquia | Ian Coaquira | commit `e2f0c1e` |
-| 25/10/2026 | Estructura inicial de la landing parroquial con React, Tailwind CSS y componentes por sección (prototipo con datos estáticos) | Samiel Trujillo | PR #1 |
-
-Entregables del objetivo sin evidencia en el repositorio:
-
-* Mockups UI/UX aprobados: [COMPLETAR: dónde están los mockups (Figma u otro) y quién los aprobó]
-* Modelo de datos PostgreSQL + JSONB: los scripts de creación de las bases y sus seeds entraron a `main` el 28/10/2026 (commit `9fdab0c`, ya en el Sprint 2). [COMPLETAR: si el modelo se presentó antes en otro formato]
+| 23/09/2026 | Documentación de la primera evaluación: SRS v1.0, modelo C4 inicial, ADR-01 y ADR-02, matriz de trazabilidad y minuta de entrevista con la parroquia | Ian Coaquira | commit `e2f0c1e`; PAR-42 a PAR-48 |
+| Sprint 1 | Mockups UI/UX de la página web | Mauricio López | PAR-15 finalizada en Jira. Los archivos de los mockups no se versionaron en el repositorio; el sistema de diseño vigente se documentó después en `DESIGN.md` (17/11/2026). |
+| Sprint 1 | Modelo de datos PostgreSQL + JSONB de las tres bases (portal y CMS, gestión parroquial y gestión local) | Mauricio López | PAR-16 finalizada en Jira; los scripts de creación y los seeds entraron a `main` el 28/10/2026 (commit `9fdab0c`, al inicio del Sprint 2). |
+| 25/10/2026 | Estructura inicial de la landing parroquial con React, Tailwind CSS y componentes por sección (prototipo con datos estáticos) | Samiel Trujillo | PR #1; PAR-17 |
 
 **Demostración a la parroquia:** la validación del prototipo prevista para el 26/10/2026 se reprogramó a la semana del 16/11/2026 por disponibilidad del párroco (Segundo Informe de Avance, sección 4).
 
 ## Retrospectiva
 
-Preguntas para completar con el equipo (no se registran opiniones que el equipo no dio):
+Análisis del Scrum Master a partir de los datos del sprint (Jira, Git y el Segundo Informe de Avance). Cada acción indica si se cumplió en el sprint siguiente.
 
-| Pregunta | Respuestas del equipo |
-|---|---|
-| ¿Qué salió bien? | [COMPLETAR con el equipo] |
-| ¿Qué se debe mejorar? | [COMPLETAR con el equipo] |
-| Acciones de mejora (acción, responsable, fecha) | [COMPLETAR con el equipo] |
+**Qué salió bien**
+* Se completaron las 9 incidencias comprometidas (37 de 37 SP).
+* La documentación de la primera evaluación (SRS, C4, ADR y trazabilidad) se entregó completa el primer día del sprint.
+* El prototipo con datos estáticos quedó listo antes del cierre (PR #1, 25/10).
 
-**Hechos observables (insumo para la discusión):**
-
-* Solo 2 commits llegaron a `main` en las 5 semanas del sprint, en 2 días distintos (23/09 y 25/10).
-* Hubo 1 pull request fusionado (#1, de Samiel) y no tuvo una revisión aprobada registrada en GitHub.
-* Mauricio no tuvo commits en `main` dentro del rango; su primer aporte de base de datos entró el 28/10, ya en el Sprint 2.
+**Qué mejorar**
+* Casi nada del trabajo quedó en el repositorio: 2 commits en 5 semanas. Los mockups no se versionaron y el modelo de datos llegó a `main` recién en el Sprint 2.
 * La validación con la parroquia no se hizo dentro del sprint.
+* No existía todavía un flujo de pull requests, integración continua ni convención de commits.
+
+**Acciones**
+
+| Acción | Responsable | Seguimiento en el Sprint 2 |
+|---|---|---|
+| Versionar en el repositorio todo entregable técnico (modelo de datos, entorno, CI) | Mauricio López | Cumplida: scripts de bases de datos (28/10), docker-compose, plantilla de PR y CI (PR #3 a #6). |
+| Conectar el prototipo a una API real | Mauricio López y Samiel Trujillo | Cumplida: API y portal conectados (PR #8 a #35). |
+| Reprogramar la validación con el párroco | Ian Coaquira | Cumplida con atraso: se presentó el 17/11, ya en el Sprint 3. |
 
 ## Velocidad
 
-| Story points comprometidos | Story points completados |
-|---|---|
-| [COMPLETAR por Ian: del informe de velocidad de Jira] | [COMPLETAR por Ian: del informe de velocidad de Jira] |
+| Story points en el sprint | Story points completados | Cumplimiento |
+|---|---|---|
+| 37 | 37 | 100 % |
 
 ## Estadísticas del sprint
 

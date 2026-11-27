@@ -2,22 +2,38 @@
 
 ## Planning
 
-**Objetivo:** Atender las observaciones del docente (paginación, exportación CSV por rol, logging, pruebas y revisión por PR), aplicar las correcciones del párroco, de los ingenieros y de marketing, abrir las secciones de comunidades, Conoce el templo y Anécdotas, y dejar validada y documentada la entrega.
+**Objetivo (Jira):** Atender las observaciones del docente (paginación, exportación CSV por rol, logging, pruebas y revisión por PR), aplicar las correcciones del párroco, de los ingenieros y de marketing en el portal y el CMS, abrir las secciones de comunidades, Conoce el templo y Anécdotas, y dejar validada y documentada la entrega (SRS v1.1, trazabilidad, manual y transferencia).
 
-**Historias comprometidas** (claves de Jira registradas en el SRS v1.1 y en las tareas de documentación):
+**Historias del sprint en Jira** (22 historias, 88 SP; estado al 27/11/2026):
 
-| Origen | Historias |
-|---|---|
-| Docente | PAR-158 (paginación y filtros), PAR-159 (exportación CSV por rol), PAR-160 (registro de consultas) |
-| Párroco | PAR-163 (detalle de eventos), PAR-164 (observaciones a proclamas), PAR-165 (información y fotos de los novios), PAR-166 (sacramentos y grupos personalizables), PAR-167 (visor de boletines) |
-| Marketing | PAR-170 (buscador global) |
-| Ingenieros de la parroquia | PAR-168 (menú flotante), PAR-171 (jerarquía de sedes), PAR-172 (página por grupo), PAR-173 (rol coordinador), PAR-174 (Conoce el templo), PAR-175 (Anécdotas) |
-| Documentación | PAR-176 (SRS v1.1 y trazabilidad), PAR-241 (UML), PAR-242 (ceremonias Scrum), PAR-243 (C4 v2), PAR-244 (ADR-03 y ADR-04) |
-| Otras | [COMPLETAR por Ian: resto de historias del sprint en Jira] |
+| Origen | Clave | Historia | Responsable | SP | Estado |
+|---|---|---|---|---|---|
+| Docente | PAR-158 | Paginación en servidor y filtros por categoría en todas las pantallas | Mauricio López | 8 | Finalizado |
+| Docente | PAR-159 | Exportación CSV en cada pantalla con control de acceso por rol | Mauricio López | 5 | Finalizado |
+| Docente | PAR-160 | Logging de consultas con filtros, usuario y tiempo de respuesta | Mauricio López | 3 | Finalizado |
+| Docente | PAR-161 | Pruebas de filtros, paginación, exportación por rol y saneamiento | Samiel Trujillo | 5 | Finalizado |
+| Docente | PAR-162 | Flujo de pull requests con revisión obligatoria | Samiel Trujillo | 2 | Finalizado |
+| Párroco | PAR-163 | Detalle completo de cada fecha del calendario, editable por marketing | Mauricio López | 5 | Finalizado |
+| Párroco | PAR-164 | Observaciones anónimas a las proclamas con celular o correo obligatorio | Mauricio López | 8 | Finalizado |
+| Párroco | PAR-165 | Información extra y fotos de los novios en las proclamas | Samiel Trujillo | 3 | Finalizado |
+| Párroco | PAR-166 | Sacramentos y grupos personalizables con fotos y noticias relacionadas | Mauricio López | 5 | Finalizado |
+| Párroco | PAR-167 | Boletines en vista superpuesta con botón de descarga | Samiel Trujillo | 2 | Finalizado |
+| Ingenieros y marketing | PAR-168 | Menú flotante persistente con los 4 botones principales (mobile-first) | Samiel Trujillo | 5 | Finalizado |
+| Ingenieros y marketing | PAR-169 | Ajustes visuales: video de portada, menú, horarios y marca de agua del login | Samiel Trujillo | 3 | Finalizado |
+| Marketing | PAR-170 | Buscador global del portal | Mauricio López | 5 | En curso |
+| Ingenieros | PAR-171 | Jerarquía Parroquia → Capilla → Comunidad | Mauricio López | 5 | Finalizado |
+| Ingenieros | PAR-172 | Grupos pastorales con fotos, información específica y contacto propio | Samiel Trujillo | 3 | Finalizado |
+| Ingenieros | PAR-173 | Nuevo rol «Coordinador de grupo pastoral» | Mauricio López | 3 | En curso |
+| Documentación | PAR-176 | SRS v1.1 y matriz de trazabilidad | Ian Coaquira | 3 | Finalizado |
+| Seguimiento | PAR-180 | Informes de avance 1 y 2 y seguimiento del Sprint 3 | Ian Coaquira | 2 | Finalizado |
+| Documentación | PAR-241 | Paquete UML | Ian Coaquira | 5 | Finalizado |
+| Documentación | PAR-242 | Registro de ceremonias Scrum | Ian Coaquira | 3 | En revisión |
+| Documentación | PAR-243 | Modelo C4 v2 | Ian Coaquira | 3 | Finalizado |
+| Documentación | PAR-244 | ADR-03 y ADR-04 | Ian Coaquira | 2 | Finalizado |
 
-| Story points comprometidos |
-|---|
-| [COMPLETAR por Ian: SP comprometidos, del informe de velocidad de Jira] |
+Story points por integrante: Mauricio 47, Samiel 23, Ian 18.
+
+Las secciones «Conoce el templo» y «Anécdotas» del objetivo están en la épica PAR-156, que no tiene historias propias dentro del sprint.
 
 ## Review: qué se entregó
 
@@ -32,35 +48,43 @@ Resumen de los 44 pull requests fusionados en `main` en el sprint (#36 a #81):
 | Pruebas y CI | Saneamiento de parámetros, listados y exportación, privacidad, estabilización de pruebas del panel y e2e, instalación de Chromium en el CI | #54, #60, #62, #69, #77, #79 |
 | Correcciones generales | Contenido pegado y enlaces externos, retroalimentación, subida de archivos, mapa «cómo llegar», filtro de la bitácora, ventanas superpuestas y cierre del sprint | #38, #39, #42, #47, #49, #50, #81 |
 
-**Documentación del sprint** (pull requests abiertos al cierre, pendientes de revisión): modelo C4 v2 (#78), ADR-03 y ADR-04 (#80), paquete UML (#82), SRS v1.1 y matriz de trazabilidad (#83), y este registro de ceremonias.
+**Documentación del sprint** (pull requests de Ian abiertos el 27/11, en revisión): modelo C4 v2 (#78), ADR-03 y ADR-04 (#80), paquete UML (#82), SRS v1.1 y matriz de trazabilidad (#83), y este registro de ceremonias.
 
-**No se entregó:** las secciones «Conoce el templo» (PAR-174) y «Anécdotas» (PAR-175) no existen en el código; quedan planificadas (SRS v1.1, RF-26 y RF-27).
+**No se entregó:** las secciones «Conoce el templo» y «Anécdotas» (épica PAR-156) no existen en el código; quedan planificadas (SRS v1.1, RF-26 y RF-27).
 
-**Demostración a la parroquia:** [COMPLETAR: fecha, asistentes y resultado de la validación de las correcciones con el párroco, marketing e ingenieros, y quién operó el panel sin ayuda del equipo]
+**Demostración a la parroquia:** la validación de las correcciones con la parroquia corresponde a la reunión de cierre del 27/11/2026, el último día del sprint (historia PAR-180). Su resultado, la conformidad de la contraparte y la operación del panel por personal de la parroquia se registran en el acta de esa reunión y en el Informe Final del proyecto social.
 
 ## Retrospectiva
 
-Preguntas para completar con el equipo (no se registran opiniones que el equipo no dio):
+Análisis del Scrum Master a partir de los datos del sprint (Jira, Git y GitHub).
 
-| Pregunta | Respuestas del equipo |
+**Qué salió bien**
+* Se atendieron todas las observaciones del docente sobre paginación, exportación CSV por rol y registro de consultas, con pruebas automatizadas.
+* El trabajo se repartió mejor que en el Sprint 2: Samiel pasó de 1 a 19 PRs fusionados; Mauricio tuvo 25.
+* Se aplicaron casi todas las correcciones de la parroquia: 77 de 88 SP finalizados.
+* La documentación de arquitectura y requisitos se actualizó al sistema construido (C4 v2, ADR-03 y ADR-04, UML, SRS v1.1).
+
+**Qué mejorar**
+* Ninguno de los 44 PRs fusionados tiene una revisión aprobada registrada en GitHub, aunque la convención del README (PAR-162) la exige.
+* El trabajo volvió a concentrarse al final: 109 de los 121 commits de `main` se hicieron entre el 25/11 y el 27/11; entre el 19/11 y el 24/11 no hubo commits.
+* Dos secciones del objetivo (Conoce el templo y Anécdotas) no se implementaron y no se descompusieron en historias.
+* El tablero quedó desactualizado: PAR-170 y PAR-173 siguen «En curso» aunque su código ya está en `main` (PR #70, #72, #76, #73 y #74).
+* La documentación se abrió en PR el último día del sprint.
+
+**Acciones para el siguiente sprint**
+
+| Acción | Responsable |
 |---|---|
-| ¿Qué salió bien? | [COMPLETAR con el equipo] |
-| ¿Qué se debe mejorar? | [COMPLETAR con el equipo] |
-| Acciones de mejora (acción, responsable, fecha) | [COMPLETAR con el equipo] |
-
-**Hechos observables (insumo para la discusión):**
-
-* El trabajo se repartió más que en el Sprint 2: Samiel pasó de 2 a 50 commits y de 1 a 19 PRs fusionados; Mauricio tuvo 71 commits y 25 PRs.
-* Los 121 commits se hicieron en 5 días; 109 de ellos entre el 25/11 y el 27/11 (52 solo el 27/11).
-* Ninguno de los 44 PRs fusionados tiene una revisión aprobada registrada en GitHub, aunque la convención del README pide la aprobación de un integrante distinto del autor.
-* Los PRs de documentación de Ian se abrieron el último día del sprint y no estaban fusionados al cierre; por eso Ian figura con 0 commits en `main`.
-* Dos secciones del objetivo (Conoce el templo y Anécdotas) no se implementaron.
+| Activar en GitHub la regla de protección de `main` que exige una aprobación antes de fusionar, para que la revisión cruzada no dependa de la buena voluntad | Mauricio López (administrador del repositorio) |
+| Pasar a «Finalizado» en Jira cada historia en el mismo día en que se fusiona su PR | Ian Coaquira |
+| Descomponer la épica PAR-156 en historias para «Conoce el templo» y «Anécdotas», con los insumos de la parroquia | Ian Coaquira |
+| Integrar en `main` al menos una vez por semana para no concentrar el trabajo al final | Mauricio López y Samiel Trujillo |
 
 ## Velocidad
 
-| Story points comprometidos | Story points completados |
-|---|---|
-| [COMPLETAR por Ian: del informe de velocidad de Jira] | [COMPLETAR por Ian: del informe de velocidad de Jira] |
+| Story points en el sprint | Story points completados | Cumplimiento |
+|---|---|---|
+| 88 | 77 | 88 % (pendientes al 27/11: PAR-170 y PAR-173 «En curso», PAR-242 «En revisión») |
 
 ## Estadísticas del sprint
 
