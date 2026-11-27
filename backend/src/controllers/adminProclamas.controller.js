@@ -72,7 +72,23 @@ export async function quitarPublicacion(req, res) {
 }
 
 export async function listarObservaciones(req, res) {
-  res.json(await observaciones.listarObservaciones(req.usuario.sedeId, req.validado.query));
+  res.json(
+    await observaciones.listarObservaciones(
+      req.usuario.sedeId,
+      req.validado.query,
+      contextoDe(req),
+    ),
+  );
+}
+
+export async function obtenerObservacion(req, res) {
+  res.json({
+    datos: await observaciones.obtenerObservacion(
+      req.usuario,
+      req.validado.params.id,
+      contextoDe(req),
+    ),
+  });
 }
 
 export async function resumenObservaciones(req, res) {

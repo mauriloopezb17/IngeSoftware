@@ -9,6 +9,7 @@ import { crearLogger, establecerLogger, reiniciarLogger } from '../../src/config
 import { cerrarPool, consultar } from '../../src/db/index.js';
 import { cerrarRedis } from '../../src/db/redis.js';
 import { crearPanel, sedePrincipal } from '../apoyo/panel.js';
+import { emitirTokenObservacion } from '../../src/services/observacionesProclama.service.js';
 
 function crearCaptura() {
   const crudo = [];
@@ -98,6 +99,7 @@ describe('ocultamiento de datos sensibles en logs (PAR-160.2)', () => {
       telefono: '+591 76543210',
       mensaje: 'Observación confidencial de prueba para verificar los logs.',
       sitioWeb: '',
+      verificacion: emitirTokenObservacion(proclamaId, { ahora: Date.now() - 5000 }),
     };
 
     const respuesta = await request(app)

@@ -24,6 +24,8 @@ export default function Grupos() {
   const { puede } = usePermisos();
   const toast = useToast();
   const puedeGestionar = puede('grupos.gestionar');
+  const puedeEditarDetalle = puede('grupos.detalle');
+  const puedeAbrirEdicion = puedeGestionar || puedeEditarDetalle;
 
   const tituloRef = useRef(null);
 
@@ -115,7 +117,7 @@ export default function Grupos() {
         </Insignia>
       ),
     },
-    ...(puedeGestionar
+    ...(puedeAbrirEdicion
       ? [
           {
             id: 'acciones',
@@ -125,7 +127,7 @@ export default function Grupos() {
               const indice = grupos.findIndex((g) => g.id === grupo.id);
               return (
                 <div className="flex flex-wrap justify-end gap-1.5">
-                  {puedeReordenar && (
+                  {puedeGestionar && puedeReordenar && (
                     <>
                       <Boton
                         variante="secundario"
@@ -150,19 +152,21 @@ export default function Grupos() {
                     tamano="sm"
                     icono={Pencil}
                     onClick={() => setEditando(grupo)}
-                    aria-label={`Editar «${grupo.nombre}»`}
+                    aria-label={puedeGestionar ? `Editar «${grupo.nombre}»` : `Editar página de «${grupo.nombre}»`}
                   >
-                    Editar
+                    {puedeGestionar ? 'Editar' : 'Editar página'}
                   </Boton>
-                  <Boton
-                    variante="secundario"
-                    tamano="sm"
-                    icono={Trash2}
-                    onClick={() => setPorEliminar(grupo)}
-                    aria-label={`Eliminar «${grupo.nombre}»`}
-                  >
-                    Eliminar
-                  </Boton>
+                  {puedeGestionar && (
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
+                      icono={Trash2}
+                      onClick={() => setPorEliminar(grupo)}
+                      aria-label={`Eliminar «${grupo.nombre}»`}
+                    >
+                      Eliminar
+                    </Boton>
+                  )}
                 </div>
               );
             },
@@ -197,12 +201,18 @@ export default function Grupos() {
         }
       />
 
-      {!puedeGestionar && (
+      {!puedeGestionar && !puedeEditarDetalle && (
         <Aviso tipo="soloLectura" className="mt-4">
           <p>
             <strong className="font-semibold text-ink">Solo lectura:</strong> tu rol puede consultar los grupos
             pastorales, pero no realizar cambios.
           </p>
+        </Aviso>
+      )}
+
+      {!puedeGestionar && puedeEditarDetalle && (
+        <Aviso tipo="info" className="mt-4">
+          <p>Puedes editar la página, galería, horario y contacto de cada grupo pastoral.</p>
         </Aviso>
       )}
 
@@ -268,6 +278,7 @@ export default function Grupos() {
       {(creando || editando) && (
         <FormularioGrupo
           grupo={editando}
+          soloDetalle={Boolean(editando && !puedeGestionar)}
           onGuardado={(guardado) => {
             const msg = editando
               ? `Se actualizó el grupo «${guardado.nombre}».`

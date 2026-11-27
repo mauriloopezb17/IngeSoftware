@@ -124,10 +124,13 @@ describe('GET /api/sedes/:sede/grupos-pastorales', () => {
     expect(respuesta.body.datos).toEqual([
       {
         id: expect.any(Number),
+        slug: expect.any(String),
         nombre: GRUPO_CON_IMAGEN,
         descripcion: null,
         horarioReunion: null,
-        contacto: null,
+        responsable: null,
+        whatsapp: null,
+        correo: null,
         icono: 'users',
         imagen: {
           id: 3,
@@ -138,6 +141,7 @@ describe('GET /api/sedes/:sede/grupos-pastorales', () => {
           alto: 1057,
           variantes: [],
         },
+        tieneDetalle: true,
         orden: 1,
       },
     ]);

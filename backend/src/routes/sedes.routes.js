@@ -64,6 +64,7 @@ deSede.get(
   validar({ query: consultaPastoralPortal }),
   pastoral.listarGruposPastorales,
 );
+deSede.get('/grupos-pastorales/:slug', pastoral.detalleGrupoPastoral);
 deSede.get('/videos', validar({ query: consultaVideosPortal }), pastoral.listarVideos);
 deSede.use('/publicaciones', publicacionesRoutes);
 deSede.use('/eventos', eventosRoutes);
@@ -81,6 +82,11 @@ deSede.get(
   '/proclamas/:id',
   validar({ params: z.object({ id }) }),
   proclamasBoletines.detalleProclama,
+);
+deSede.get(
+  '/proclamas/:id/observaciones/verificacion',
+  validar({ params: z.object({ id }) }),
+  proclamasBoletines.verificacionObservacion,
 );
 deSede.post(
   '/proclamas/:id/observaciones',

@@ -40,6 +40,12 @@ router.get(
   exportarRecurso('observaciones'),
 );
 router.get('/observaciones/resumen', verObservaciones, controlador.resumenObservaciones);
+router.get(
+  '/observaciones/:id',
+  verObservaciones,
+  validar({ params }),
+  controlador.obtenerObservacion,
+);
 router.patch(
   '/observaciones/:id',
   verObservaciones,

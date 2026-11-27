@@ -27,6 +27,16 @@ export async function editar(req, res) {
   res.json({ datos });
 }
 
+export async function editarDetalle(req, res) {
+  const datos = await servicio.actualizarDetalleGrupo(
+    req.usuario,
+    req.validado.params.id,
+    req.validado.body,
+    contextoDe(req),
+  );
+  res.json({ datos });
+}
+
 export async function eliminar(req, res) {
   await servicio.eliminarGrupo(req.usuario, req.validado.params.id, contextoDe(req));
   res.status(204).end();

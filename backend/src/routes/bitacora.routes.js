@@ -24,8 +24,8 @@ const consultaBitacoraBase = esquemaListado({
       .optional(),
     usuario: id.optional(),
     accion: z
-      .enum(['INSERT', 'UPDATE', 'DELETE', 'EXPORT'], {
-        error: 'Debe ser INSERT, UPDATE, DELETE o EXPORT.',
+      .enum(['INSERT', 'UPDATE', 'DELETE', 'EXPORT', 'VIEW'], {
+        error: 'Debe ser INSERT, UPDATE, DELETE, EXPORT o VIEW.',
       })
       .optional(),
     desde: fecha.optional(),

@@ -2,14 +2,13 @@ import { expect, test } from '@playwright/test';
 import { abrirContextoConRol, tituloUnico } from './helpers/sesion.js';
 
 test.describe('Observaciones confidenciales de proclamas', () => {
-  test('una persona deja una observación → el Párroco la ve, la marca leída y los enlaces de correo y WhatsApp son correctos; Secretaría no ve la bandeja', async ({
+  test('una persona deja una observación anónima → el Párroco la ve como Anónima, la marca revisada y los enlaces de correo y WhatsApp son correctos; Secretaría no ve la bandeja', async ({
     browser,
     page,
   }) => {
     const novio = tituloUnico('Novio Obs E2E');
     const novia = 'Lucía E2E';
-    const remitente = tituloUnico('Testigo E2E');
-    const mensaje = tituloUnico('Observación confidencial de prueba para el párroco');
+    const mensaje = tituloUnico('Observación confidencial anónima para el párroco');
 
     // Secretaría crea una proclama vigente con publicación alcanzada
     const secretaria = await abrirContextoConRol(browser, 'secretaria');
@@ -35,34 +34,45 @@ test.describe('Observaciones confidenciales de proclamas', () => {
 
     const idProclama = proclamaUrl.match(/\/admin\/proclamas\/(\d+)\/editar/)[1];
 
-    // Visitante abre la proclama y envía una observación
+    // Visitante abre la proclama, espera el token y la espera mínima de 3s, y envía una observación anónima
+    const esperaToken = page.waitForResponse(
+      (res) =>
+        res.url().includes(`/proclamas/${idProclama}/observaciones/verificacion`) &&
+        res.status() === 200,
+    );
     await page.goto(`/proclamas/${idProclama}`);
+    await esperaToken;
+    const emitidoEn = Date.now();
     await expect(
       page.getByRole('heading', { name: '¿Conoces algún impedimento para este matrimonio?' }),
     ).toBeVisible();
 
-    await page.getByLabel('Nombre completo').fill(remitente);
     await page.getByLabel('Correo electrónico').fill('testigo@ejemplo.test');
     await page.getByLabel('Teléfono').fill('71234567');
     await page.getByLabel('Mensaje').fill(mensaje);
-    await page.getByRole('button', { name: 'Enviar al párroco' }).click();
 
+    // Esperar a que pasen los 3s mínimos desde la emisión del token sin reenviar antes de tiempo
+    await expect
+      .poll(() => Date.now() - emitidoEn, { timeout: 6000, intervals: [250] })
+      .toBeGreaterThanOrEqual(3100);
+    await page.getByRole('button', { name: 'Enviar al párroco' }).click();
     await expect(page.getByText('Gracias. Tu mensaje llegó al párroco.')).toBeVisible();
 
-    // Párroco abre la bandeja, lee la observación (se marca leída) y verifica enlaces correo/WhatsApp
+    // Párroco abre la bandeja, ve la observación anónima, la marca revisada y verifica enlaces correo/WhatsApp
     const parroco = await abrirContextoConRol(browser, 'parroco');
     try {
       await parroco.page.goto('/admin/proclamas/observaciones');
-      const botonObs = parroco.page.getByRole('button', { name: new RegExp(remitente) });
+      const botonObs = parroco.page.getByRole('button', { name: new RegExp(mensaje) });
       await expect(botonObs).toBeVisible();
+      await expect(botonObs).toContainText('Anónima');
       await botonObs.click();
 
       const detalle = parroco.page.getByRole('article', {
-        name: new RegExp(`Observación de ${remitente}`),
+        name: /Observación de Anónima/,
       });
       await expect(detalle).toBeVisible();
       await expect(detalle.getByText(mensaje)).toBeVisible();
-      await expect(detalle.getByRole('button', { name: 'Marcar como no leída' })).toBeVisible();
+      await expect(detalle.getByRole('button', { name: 'Marcar como nueva' })).toBeVisible();
 
       await expect(detalle.getByRole('link', { name: 'Enviar correo' })).toHaveAttribute(
         'href',

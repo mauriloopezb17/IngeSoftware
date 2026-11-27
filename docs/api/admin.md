@@ -772,7 +772,7 @@ Reglas: `nombre` obligatorio (hasta 100 caracteres); `descripcionCorta` obligato
 
 ## 7. Grupos pastorales
 
-Permiso de escritura: `grupos.gestionar`.
+Permisos de escritura: `grupos.gestionar` (CRUD completo, orden y visibilidad) y `grupos.detalle` (descripción, horario, contacto, imagen y detalle de la página, incluyendo Marketing).
 
 ### Objeto grupo pastoral
 
@@ -784,41 +784,54 @@ Permiso de escritura: `grupos.gestionar`.
     "nombre": "Parroquia Señor de la Exaltación",
     "slug": "senor-de-la-exaltacion"
   },
+  "slug": "pastoral-juvenil",
   "nombre": "Pastoral Juvenil",
   "descripcion": null,
   "horarioReunion": "Viernes · 18:30",
-  "contacto": null,
+  "responsable": null,
+  "whatsapp": null,
+  "correo": null,
   "icono": "users",
   "imagen": null,
+  "detalle": null,
   "orden": 4,
   "visible": true
 }
 ```
 
-| Método y ruta                                 | Descripción                                           |
-| --------------------------------------------- | ----------------------------------------------------- |
-| `GET /api/admin/grupos-pastorales`            | Paginado (`porPagina` hasta 100). Filtros: `sede`, `visible`, `buscar`. Orden: `orden` (defecto), `-orden`, `nombre`, `-nombre`. |
-| `GET /api/admin/grupos-pastorales/:id`        | Un grupo.                                             |
-| `POST /api/admin/grupos-pastorales`           | Crea. `201`.                                          |
-| `PATCH /api/admin/grupos-pastorales/:id`      | Edita.                                                |
-| `DELETE /api/admin/grupos-pastorales/:id`     | Elimina.                                              |
-| `POST /api/admin/grupos-pastorales/reordenar` | `{ "ids": [1, 2, 3, 4, 5, 6] }`.                      |
+| Método y ruta                                    | Descripción                                                                                                               |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/admin/grupos-pastorales`               | Paginado (`porPagina` hasta 100). Filtros: `sede`, `visible`, `buscar`. Orden: `orden` (defecto), `-orden`, `nombre`, `-nombre`. |
+| `GET /api/admin/grupos-pastorales/:id`           | Un grupo.                                                                                                                 |
+| `POST /api/admin/grupos-pastorales`              | Crea (`grupos.gestionar`). `201`.                                                                                         |
+| `PATCH /api/admin/grupos-pastorales/:id`         | Edita (`grupos.gestionar`).                                                                                               |
+| `PATCH /api/admin/grupos-pastorales/:id/detalle` | Edita solo descripción, horario, responsable, WhatsApp, correo, foto principal y `detalle` (`grupos.detalle`).            |
+| `DELETE /api/admin/grupos-pastorales/:id`        | Elimina (`grupos.gestionar`).                                                                                             |
+| `POST /api/admin/grupos-pastorales/reordenar`    | `{ "ids": [1, 2, 3, 4, 5, 6] }` (`grupos.gestionar`).                                                                     |
 
 **Cuerpo de `POST`:**
 
 ```json
 {
   "nombre": "Pastoral Juvenil",
+  "slug": "pastoral-juvenil",
   "descripcion": "Jóvenes de 15 a 25 años que se reúnen a compartir, rezar y servir.",
   "horarioReunion": "Viernes · 18:30",
-  "contacto": "Coordinación juvenil: escribir por Messenger",
+  "responsable": "Coordinación juvenil",
+  "whatsapp": "+591 71234567",
+  "correo": "juvenil@parroquia.test",
   "icono": "users",
   "imagenId": null,
+  "detalle": {
+    "contenido": null,
+    "galeria": [],
+    "videoYoutubeId": null
+  },
   "visible": true
 }
 ```
 
-Reglas: `nombre` obligatorio (hasta 100); `horarioReunion` texto libre (hasta 100); `contacto` hasta 120; `descripcion` texto plano hasta 2000.
+Reglas: `nombre` obligatorio (hasta 100); `slug` opcional (se genera desde el nombre si no se envía; único por sede, hasta 120); `horarioReunion` texto libre (hasta 100); `responsable` hasta 120; `whatsapp` teléfono válido (7–15 dígitos con `+`, dígitos, espacios o guiones); `correo` email válido (hasta 120); `descripcion` texto plano hasta 2000; `detalle` acepta `contenido` (BlockNote), `galeria` (hasta 24 ids de imágenes o videos de la misma sede) y `videoYoutubeId` (id o URL de YouTube).
 
 ---
 
@@ -1015,10 +1028,13 @@ Permiso: `proclamas.observaciones` (solo `PARROCO`, limitado a su sede; otro rol
 
 | Método y ruta                                         | Descripción                                                                                                     |
 | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `GET /api/admin/proclamas/observaciones`              | Lista paginada (`estado=no-leidas\|todas`, `proclamaId`, `buscar` en nombre o mensaje, `pagina`, `porPagina`), más reciente primero. |
+| `GET /api/admin/proclamas/observaciones`              | Lista paginada (`estado=no-leidas\|todas`, `proclamaId`, `buscar` en nombre o mensaje, `pagina`, `porPagina`), más reciente primero. Registra `VIEW` en la bitácora (`entidad = 'observacion_proclama'`, `entidadId = '*'`, sin `buscar`). |
 | `GET /api/admin/proclamas/observaciones/resumen`      | Devuelve `{ "datos": { "noLeidas": N } }` para la insignia del menú.                                            |
+| `GET /api/admin/proclamas/observaciones/:id`          | Devuelve una observación y registra `VIEW` en la bitácora con su id (sin datos personales).                    |
 | `PATCH /api/admin/proclamas/observaciones/:id`        | `{ "leida": true \| false }`. Guarda o borra `leidoEn` y `leidoPor`.                                            |
 | `DELETE /api/admin/proclamas/observaciones/:id`       | Elimina la observación (`204`). En la bitácora solo se registra la acción y el id, nunca los datos personales. |
+
+- `nombreCompleto` puede ser `null` cuando la observación fue enviada de forma anónima; en el panel y en el CSV se muestra como `"Anónima"`.
 
 ---
 
@@ -1203,7 +1219,7 @@ Paginada. Orden: `-fecha` (más recientes primero).
 | `entidad`             | Nombre de la tabla: `publicacion`, `evento`, `horario`, `usuario`, etc. |
 | `entidadId`           | Id del registro (texto).                                                |
 | `usuario`             | Id del usuario que hizo el cambio.                                      |
-| `accion`              | `INSERT`, `UPDATE`, `DELETE` o `EXPORT`.                                |
+| `accion`              | `INSERT`, `UPDATE`, `DELETE`, `EXPORT` o `VIEW`.                        |
 | `desde`, `hasta`      | Fechas `YYYY-MM-DD`, ambas incluidas.                                   |
 | `pagina`, `porPagina` | Paginación estándar.                                                    |
 

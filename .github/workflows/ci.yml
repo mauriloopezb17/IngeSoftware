@@ -178,9 +178,20 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # El runner trae configurado el repositorio apt de Microsoft, que no aporta nada a Chromium.
+      # Cuando ese repositorio responde 403, `apt-get update` falla y con él toda la instalación,
+      # así que se quita antes de instalar. Los paquetes de Chromium salen de los repositorios de Ubuntu,
+      # y se reintenta por si algún espejo falla un momento.
       - name: Instalar Chromium para Playwright
         working-directory: frontend
-        run: npx playwright install --with-deps chromium
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list /etc/apt/sources.list.d/microsoft-prod.sources
+          for intento in 1 2 3; do
+            npx playwright install --with-deps chromium && exit 0
+            echo "::warning::La instalación de Chromium falló (intento $intento de 3); se reintenta en 15 s."
+            sleep 15
+          done
+          exit 1
 
       - name: Ejecutar pruebas e2e
         working-directory: frontend
