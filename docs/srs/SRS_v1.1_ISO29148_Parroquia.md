@@ -159,30 +159,45 @@ Los requisitos no funcionales especifican atributos de calidad del sistema, reda
 
 # **4\. Matriz de Atributos de Requisitos**
 
-Registro de control de auditoría por cada requerimiento: prioridad, estabilidad, nivel de riesgo, método de verificación y componente C4 asociado.
+Registro de control de auditoría por cada requerimiento: prioridad, estabilidad, nivel de riesgo, método de verificación y componente asociado. En la v1.1 los componentes usan los nombres del **modelo C4 v2** (`modelos/c4/v2/`): contenedores del C2 (SPA web, API REST, Base de datos, Caché, Oracle Cloud Object Storage + CDN) y componentes del C3 dentro de la API REST.
 
-| ID Req. | Prioridad | Estabilidad | Riesgo | Método de Verificación | Componente(s) C4 Asociado(s) |
+| ID Req. | Prioridad | Estabilidad | Riesgo | Método de Verificación | Componente(s) C4 v2 Asociado(s) |
 | ----- | ----- | ----- | ----- | ----- | ----- |
-| RF-01 | Must Have | Estable | Bajo | Prueba funcional | Portal Web |
-| RF-02 | Must Have | Estable | Alto | Prueba funcional / Inspección | Portal Web; Módulo de Sacramentos y Proclamas |
-| RF-03 | Must Have | Estable | Alto | Prueba funcional | Módulo de Sacramentos y Proclamas; Base de Datos Relacional |
-| RF-04 | Must Have | Estable | Medio | Demostración | Panel de Administración; Módulo de Contenido y Calendario (CMS) |
-| RF-05 | Should Have | Firme | Bajo | Prueba funcional | Portal Web; Servicio YouTube (externo) |
-| RF-06 | Should Have | Firme | Medio | Prueba funcional | Panel de Administración; Almacenamiento Multimedia |
-| RF-07 | Should Have | Volátil | Medio | Prueba funcional | Widget / Bot Asistente; Módulo de Integraciones y Notificaciones |
-| RF-08 | Should Have | Volátil | Medio | Prueba funcional | Módulo de Integraciones y Notificaciones; Base de Datos Relacional |
-| RF-09 | Must Have | Estable | Bajo | Prueba funcional | Módulo de Contenido y Calendario (CMS); Caché en Memoria (Redis) |
-| RF-10 | Could Have | Volátil | Bajo | Inspección | Módulo de Integraciones y Notificaciones; Tenant Microsoft & Meta |
-| RF-11 | Must Have | Estable | Alto | Inspección / Prueba de seguridad | API Gateway & Router de Autenticación |
-| RF-12 | Could Have | Volátil | Medio | Análisis | Módulo de Integraciones y Notificaciones; Tenant Microsoft & Meta |
-| RF-13 | Should Have | Firme | Bajo | Demostración | Portal Web; Panel de Administración |
-| RF-14 | Won't Have | N/A | N/A | N/A (fuera de alcance v1.0) | N/A |
-| RNF-01 | Must Have | Estable | Medio | Prueba de carga | Caché en Memoria (Redis); Base de Datos Relacional |
-| RNF-02 | Must Have | Estable | Alto | Inspección de tráfico / Pentest | API Gateway & Router de Autenticación |
-| RNF-03 | Should Have | Volátil | Medio | Análisis de infraestructura | Toda la plataforma (Infraestructura de hosting) |
-| RNF-04 | Must Have | Estable | Medio | Prueba de usabilidad | Panel de Administración |
-| RNF-05 | Should Have | Firme | Bajo | Inspección | Almacenamiento Multimedia |
-| RNF-06 | Must Have | Estable | Bajo | Prueba funcional | Base de Datos Relacional (JSONB); Módulo de Contenido y Calendario (CMS) |
+| RF-01 | Must Have | Estable | Bajo | Prueba automatizada (integración y e2e) | SPA web; API REST › Horarios, servicios, videos, páginas y usuarios; API REST › Sedes y jerarquía |
+| RF-02 | Must Have | Estable | Alto | Prueba automatizada / Inspección | SPA web; API REST › Proclamas y observaciones; Base de datos |
+| RF-03 | Won't Have (v2.0) | Volátil | Alto | N/A (pospuesto) | Ninguno (pospuesto) |
+| RF-04 | Must Have | Estable | Medio | Prueba automatizada (integración y e2e) / Demostración | SPA web (panel /admin); API REST › Publicaciones / CMS; API REST › Horarios, servicios, videos, páginas y usuarios; API REST › Grupos pastorales y coordinador |
+| RF-05 | Should Have | Firme | Bajo | Prueba automatizada | SPA web; API REST › Horarios, servicios, videos, páginas y usuarios; YouTube (externo) |
+| RF-06 | Should Have | Firme | Medio | Prueba automatizada (integración con S3 simulado) | SPA web (panel /admin); API REST › Multimedia; API REST › Cliente de almacenamiento; API REST › Boletines; Oracle Cloud Object Storage + CDN |
+| RF-07 | Won't Have (v2.0) | Volátil | Medio | N/A (pospuesto) | Ninguno (pospuesto) |
+| RF-08 | Won't Have (v2.0) | Volátil | Medio | N/A (pospuesto) | Ninguno (pospuesto) |
+| RF-09 | Must Have | Estable | Bajo | Prueba automatizada | SPA web; API REST › Eventos; API REST › Caché e invalidación; Caché |
+| RF-10 | Could Have | Volátil | Bajo | Inspección | SPA web; API REST › Sedes y jerarquía (redes sociales por sede); Redes sociales y WhatsApp (enlaces externos) |
+| RF-11 | Must Have | Estable | Alto | Prueba automatizada de seguridad (matriz de permisos, tokens forjados, expiración) | API REST › Autenticación y RBAC; API REST › Cadena común de peticiones; SPA web (panel /admin) |
+| RF-12 | Won't Have (v2.0) | Volátil | Medio | N/A (pospuesto) | Ninguno (pospuesto) |
+| RF-13 | Should Have | Firme | Bajo | Prueba automatizada / Demostración | SPA web; API REST › Cadena común de peticiones (resolverSede); API REST › Sedes y jerarquía |
+| RF-14 | Won't Have | N/A | N/A | N/A (fuera de alcance) | N/A |
+| RF-15 | Must Have | Estable | Medio | Prueba automatizada (integración y e2e) | API REST › Cadena común de peticiones (validar); API REST › Acceso a datos; SPA web |
+| RF-16 | Must Have | Estable | Alto | Prueba automatizada por rol (integración y e2e) | API REST › Exportación CSV; API REST › Autenticación y RBAC; API REST › Bitácora y registro de consultas; SPA web (panel /admin) |
+| RF-17 | Should Have | Firme | Bajo | Prueba automatizada (integración y e2e) | API REST › Eventos; SPA web |
+| RF-18 | Must Have | Estable | Alto | Prueba automatizada (integración y e2e) / Inspección de privacidad | API REST › Proclamas y observaciones; API REST › Bitácora y registro de consultas; SPA web |
+| RF-19 | Could Have | Firme | Bajo | Prueba automatizada | API REST › Proclamas y observaciones; API REST › Multimedia; SPA web |
+| RF-20 | Should Have | Firme | Medio | Prueba automatizada (integración y e2e) | API REST › Horarios, servicios, videos, páginas y usuarios; API REST › Grupos pastorales y coordinador; API REST › Publicaciones / CMS; SPA web |
+| RF-21 | Should Have | Firme | Bajo | Prueba automatizada (componente y e2e) | SPA web; API REST › Boletines; Oracle Cloud Object Storage + CDN |
+| RF-22 | Should Have | Firme | Medio | Prueba automatizada (integración y e2e) | API REST › Buscador; Base de datos (índices GIN de texto completo); SPA web |
+| RF-23 | Must Have | Firme | Medio | Prueba automatizada (integración y e2e) | API REST › Sedes y jerarquía; SPA web |
+| RF-24 | Should Have | Firme | Bajo | Prueba automatizada (integración y e2e) | API REST › Grupos pastorales y coordinador; SPA web |
+| RF-25 | Should Have | Firme | Alto | Prueba automatizada de permisos (integración y e2e) | API REST › Autenticación y RBAC (restringirRutasCoordinador, exigirGrupoAsignado); API REST › Grupos pastorales y coordinador; API REST › Publicaciones / CMS |
+| RF-26 | Could Have | Volátil | Medio | Por definir (planificado) | Por definir (no implementado) |
+| RF-27 | Could Have | Volátil | Medio | Por definir (planificado) | Por definir (no implementado) |
+| RNF-01 | Must Have | Estable | Medio | Prueba automatizada de caché; [COMPLETAR: prueba de carga] | API REST › Caché e invalidación; Caché; Base de datos |
+| RNF-02 | Must Have | Estable | Alto | Prueba automatizada de seguridad; inspección de HTTPS en el servidor definitivo | API REST › Autenticación y RBAC; API REST › Cadena común de peticiones (helmet, CORS, CSRF) |
+| RNF-03 | Should Have | Volátil | Medio | Monitoreo de uptime en el hosting definitivo | Todos los contenedores (infraestructura de hosting por definir) |
+| RNF-04 | Must Have | Estable | Medio | Prueba de usabilidad con la secretaría | SPA web (panel /admin) |
+| RNF-05 | Should Have | Firme | Medio | Prueba automatizada de límites por archivo; inspección de la capacidad configurada | API REST › Multimedia; API REST › Cliente de almacenamiento; Oracle Cloud Object Storage + CDN |
+| RNF-06 | Must Have | Estable | Bajo | Prueba automatizada (validación de contenido BlockNote y bloques) | Base de datos (JSONB); API REST › Publicaciones / CMS; API REST › Horarios, servicios, videos, páginas y usuarios |
+| RNF-07 | Should Have | Estable | Medio | Prueba automatizada del log de consultas y de ausencia de datos sensibles | API REST › Bitácora y registro de consultas; API REST › Cadena común de peticiones (pino) |
+| RNF-08 | Should Have | Firme | Bajo | Prueba automatizada (componente y e2e en móvil) | SPA web |
 
 &nbsp;
 
