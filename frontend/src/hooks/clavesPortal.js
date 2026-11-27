@@ -23,6 +23,7 @@ export const clavesPortal = {
     filtros,
   ],
   gruposPastorales: (sede) => ['portal', 'sede', sede, 'grupos-pastorales'],
+  grupoPastoral: (sede, slug) => ['portal', 'sede', sede, 'grupos-pastorales', slug],
   videos: (sede) => ['portal', 'sede', sede, 'videos'],
   categorias: () => ['portal', 'categorias'],
   categoriasEvento: () => ['portal', 'categorias-evento'],

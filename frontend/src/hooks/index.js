@@ -7,6 +7,6 @@ export { useEvento, useEventos } from './useEventos.js';
 export { usePublicaciones, usePublicacion } from './usePublicaciones.js';
 export { useBoletines } from './useBoletines.js';
 export { useProclamas, useHistorialProclamas, useProclama } from './useProclamas.js';
-export { useGruposPastorales } from './useGruposPastorales.js';
+export { useGruposPastorales, useGrupoPastoral } from './useGruposPastorales.js';
 export { useVideos } from './useVideos.js';
 export { useCategorias, useCategoriasEvento } from './useCatalogos.js';
