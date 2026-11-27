@@ -1,0 +1,72 @@
+@startuml secuencia-exportar-csv
+' Secuencia: un usuario del panel exporta a CSV un listado con filtros (ejemplo: publicaciones).
+' Todos los recursos siguen el mismo patrón: GET /api/admin/<recurso>/exportar con
+' requerirPermiso(<RECURSO>_EXPORTAR) -> marcarConsulta('exportacion') -> validar -> exportarRecurso.
+' Sigue el código real de backend/src (RF-16, RF-11, RNF-07).
+' Exportar: java -jar plantuml.jar -charset UTF-8 -tpng secuencia-exportar-csv.puml
+!pragma teoz true
+skinparam sequenceMessageAlign left
+autonumber "<b>0."
+
+title Exportación CSV de un listado con permiso por rol (RF-16, RF-11, RNF-07)
+
+actor "Usuario del panel\n(p. ej. Secretaría)" as U
+participant "Panel CMS\n(botón «Exportar CSV»)" as SPA
+participant "app.js\nregistrarConsulta\nprotegerCsrf" as App
+participant "admin.routes\nautenticar\nrestringirRutasCoordinador" as RA
+participant "adminPublicaciones.routes\nrequerirPermiso(PUBLICACIONES_EXPORTAR)\nmarcarConsulta('exportacion')\nvalidar(esquemaExportacion(...))" as R
+participant "exportar.controller\nexportarRecurso('publicaciones')" as C
+participant "exportar.service\nexportarCsv" as S
+participant "adminPublicaciones.service\nlistarPublicaciones" as L
+participant "utils/csv.js\ngenerarCsv" as CSV
+participant "bitacora.service\nregistrarExportacion" as Bit
+database "PostgreSQL 16" as PG
+participant "config/logger.js\n(pino)" as Log
+
+U -> SPA : aplica filtros (estado, categoría, buscar…)\ny pulsa «Exportar CSV»
+SPA -> App : GET /api/admin/publicaciones/exportar?estado=PUBLICADO&…
+App -> App : registrarConsulta: toma la hora de inicio\ny espera el evento «finish» de la respuesta
+App -> RA
+RA -> PG : autenticar (cookie JWT + usuario activo)
+alt sin sesión válida
+  RA --> SPA : 401 NO_AUTENTICADO
+else Coordinador de grupo
+  RA --> SPA : 403 SIN_PERMISO (restringirRutasCoordinador:\nsolo grupos, sus noticias y multimedia)
+else sesión válida
+  RA -> R : req.usuario
+  alt el rol no tiene publicaciones.exportar\n(ver constantes/permisos.js)
+    R --> SPA : 403 SIN_PERMISO
+  else con permiso
+    R -> R : marcarConsulta('exportacion')\n(req.tipoConsulta)
+    alt filtros inválidos (Zod)
+      R --> SPA : 400 VALIDACION
+    else válidos
+      R -> C : manejarExportacion(req)
+      C -> S : exportarCsv('publicaciones',\n{ usuario, sedeFiltro, consulta, contexto })
+      S -> L : listar con los MISMOS filtros, alcance por sede\ny orden que la pantalla (porPagina = 10 001)
+      L -> PG : SELECT … LIMIT / OFFSET
+      L --> S : { datos, paginacion }
+      alt más de 10 000 filas
+        S --> SPA : 422 DEMASIADOS_REGISTROS (afinar los filtros)
+      else hasta 10 000 filas
+        S -> CSV : generarCsv(columnas, datos)
+        CSV -> CSV : BOM UTF-8, separador «;», CRLF,\nfechas en hora de Bolivia, prefijo «'» en celdas\nque empiezan con = + - @ (CSV injection)
+        S -> Bit : registrarExportacion(contexto,\n{ entidad, filtros, filas })
+        Bit -> PG : INSERT bitacora_cambio (accion EXPORT,\nentidad_id «*», filtros y n.° de filas, IP)
+        S --> C : { csv, nombreArchivo }
+        C --> SPA : 200 text/csv\nContent-Disposition: attachment;\nfilename="publicaciones-AAAA-MM-DD.csv"\nCache-Control: no-store
+        SPA --> U : se descarga el archivo
+      end
+    end
+  end
+end
+
+App -> Log : al terminar la respuesta (cualquier estado):\n{ evento: "consulta", tipo: "exportacion", ruta: "/api/admin/publicaciones/exportar",\n filtros enviados, usuario { id, rol }, estado, duracionMs, sede, reqId }
+note right of Log
+  Nivel info (2xx), warn (4xx) o error (5xx).
+  pino oculta cookies, contraseñas y los datos
+  personales del cuerpo (nombre, correo, teléfono,
+  mensaje). Para las observaciones a proclamas,
+  la bitácora omite además el filtro «buscar».
+end note
+@enduml

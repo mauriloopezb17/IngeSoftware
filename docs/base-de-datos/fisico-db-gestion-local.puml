@@ -1,0 +1,134 @@
+@startuml
+!pragma layout smetana
+hide circle
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #4A4A4A
+  HeaderBackgroundColor #E7E6E6
+}
+title Diagrama físico · db_gestion_local (database/db_gestion_local.sql)
+
+legend right
+  Asterisco (*) antes de la columna = NOT NULL · PK = clave primaria · FK = clave foránea · UQ = único
+endlegend
+
+entity "certificado_emitido" as certificado_emitido {
+  {field} * id : serial <<PK>>
+  --
+  {field} * partida_id : int <<FK>>
+  {field} * emitido_por : int <<FK>>
+  {field} * solicitante : varchar(150)
+  {field} * fecha_emision : timestamp
+}
+
+entity "configuracion_parroquia" as configuracion_parroquia {
+  {field} * id : smallint <<PK>>
+  --
+  {field} * nombre_parroquia : varchar(120)
+  {field} * arquidiocesis : varchar(120)
+  {field}   vicaria : varchar(120)
+  {field}   direccion : varchar(200)
+  {field} * ciudad : varchar(60)
+  {field} * nombre_parroco : varchar(150)
+  {field}   ruta_logo : varchar(255)
+}
+
+entity "libro" as libro {
+  {field} * id : serial <<PK>>
+  --
+  {field} * tipo_sacramento_id : int <<FK>>
+  {field} * numero_libro : smallint
+  {field} * anio : smallint
+  {field}   fecha_cierre : date
+  .. UQ (tipo_sacramento_id, numero_libro) ..
+}
+
+entity "ministro" as ministro {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre_completo : varchar(150)
+  {field}   titulo : varchar(30)
+  {field} * activo : boolean
+}
+
+entity "nota_marginal" as nota_marginal {
+  {field} * id : serial <<PK>>
+  --
+  {field} * uuid : uuid <<UQ>>
+  {field} * partida_id : int <<FK>>
+  {field} * registrado_por : int <<FK>>
+  {field} * tipo : varchar(30)
+  {field} * fecha_hecho : date
+  {field}   lugar_hecho : varchar(150)
+  {field} * descripcion : text
+  {field} * fecha_registro : timestamp
+  {field} * exportado : boolean
+}
+
+entity "participante" as participante {
+  {field} * partida_id : int <<PK, FK>>
+  {field} * persona_id : int <<PK, FK>>
+  {field} * rol : varchar(20) <<PK>>
+  --
+}
+
+entity "partida" as partida {
+  {field} * id : serial <<PK>>
+  --
+  {field} * uuid : uuid <<UQ>>
+  {field} * libro_id : int <<FK>>
+  {field} * ministro_id : int <<FK>>
+  {field} * registrado_por : int <<FK>>
+  {field} * numero_partida : int
+  {field} * folio : smallint
+  {field} * fecha_celebracion : date
+  {field}   observaciones : text
+  {field} * fecha_registro : timestamp
+  {field} * exportado : boolean
+  .. UQ (libro_id, numero_partida) ..
+}
+
+entity "persona" as persona {
+  {field} * id : serial <<PK>>
+  --
+  {field} * uuid : uuid <<UQ>>
+  {field} * nombres : varchar(100)
+  {field}   apellido_paterno : varchar(60)
+  {field}   apellido_materno : varchar(60)
+  {field} * sexo : char(1)
+  {field}   fecha_nacimiento : date
+  {field}   lugar_nacimiento : varchar(150)
+  {field}   documento_identidad : varchar(20)
+}
+
+entity "tipo_sacramento" as tipo_sacramento {
+  {field} * id : serial <<PK>>
+  --
+  {field} * codigo : varchar(10) <<UQ>>
+  {field} * nombre : varchar(40) <<UQ>>
+}
+
+entity "usuario" as usuario {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre_usuario : varchar(40) <<UQ>>
+  {field} * nombre_completo : varchar(120)
+  {field} * hash_contrasena : varchar(255)
+  {field} * es_administrador : boolean
+  {field} * activo : boolean
+}
+
+partida ||--|{ certificado_emitido : partida_id
+usuario ||--|{ certificado_emitido : emitido_por
+tipo_sacramento ||--|{ libro : tipo_sacramento_id
+partida ||--|{ nota_marginal : partida_id
+usuario ||--|{ nota_marginal : registrado_por
+partida ||--|{ participante : partida_id
+persona ||--|{ participante : persona_id
+libro ||--|{ partida : libro_id
+ministro ||--|{ partida : ministro_id
+usuario ||--|{ partida : registrado_por
+@enduml

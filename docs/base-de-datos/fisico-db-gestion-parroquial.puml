@@ -1,0 +1,274 @@
+@startuml
+!pragma layout smetana
+hide circle
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #4A4A4A
+  HeaderBackgroundColor #E7E6E6
+}
+title Diagrama físico · db_gestion_parroquial (database/db_gestion_parroquial.sql)
+
+legend right
+  Asterisco (*) antes de la columna = NOT NULL · PK = clave primaria · FK = clave foránea · UQ = único
+endlegend
+
+entity "bitacora_cambio" as bitacora_cambio {
+  {field} * id : bigserial <<PK>>
+  --
+  {field}   usuario_id : int <<FK>>
+  {field} * entidad : varchar(60)
+  {field} * entidad_id : varchar(40)
+  {field} * accion : varchar(10)
+  {field}   datos_anteriores : jsonb
+  {field}   datos_nuevos : jsonb
+  {field}   direccion_ip : inet
+  {field} * fecha : timestamptz
+}
+
+entity "certificado" as certificado {
+  {field} * id : serial <<PK>>
+  --
+  {field} * partida_id : int <<FK>>
+  {field} * emitido_por : int <<FK>>
+  {field} * codigo_verificacion : varchar(20) <<UQ>>
+  {field} * incluye_notas_marginales : boolean
+  {field} * solicitante : varchar(150)
+  {field}   motivo : varchar(150)
+  {field}   url_pdf : varchar(500)
+  {field} * fecha_emision : timestamptz
+}
+
+entity "estado_tramite" as estado_tramite {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre : varchar(40) <<UQ>>
+}
+
+entity "intencion_misa" as intencion_misa {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field} * registrado_por : int <<FK>>
+  {field} * fecha_misa : timestamptz
+  {field} * tipo : varchar(20)
+  {field} * intencion : varchar(300)
+  {field}   solicitante : varchar(150)
+  {field}   telefono_solicitante : varchar(30)
+  {field}   ofrenda_bs : numeric(10,2)
+  {field} * fecha_registro : timestamptz
+}
+
+entity "libro_sacramental" as libro_sacramental {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field} * tipo_sacramento_id : int <<FK>>
+  {field} * numero_libro : smallint
+  {field} * anio : smallint
+  {field} * fecha_apertura : date
+  {field}   fecha_cierre : date
+  {field}   fecha_empastado : date
+  .. UQ (sede_id, tipo_sacramento_id, numero_libro) ..
+}
+
+entity "ministro" as ministro {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre_completo : varchar(150)
+  {field} * titulo : varchar(30)
+  {field}   cargo : varchar(60)
+  {field}   congregacion : varchar(60)
+  {field} * activo : boolean
+}
+
+entity "nota_marginal" as nota_marginal {
+  {field} * id : serial <<PK>>
+  --
+  {field} * uuid : uuid <<UQ>>
+  {field} * partida_id : int <<FK>>
+  {field} * tipo_nota_marginal_id : int <<FK>>
+  {field}   partida_relacionada_id : int <<FK>>
+  {field} * registrado_por : int <<FK>>
+  {field} * fecha_hecho : date
+  {field}   parroquia_hecho : varchar(150)
+  {field} * descripcion : text
+  {field} * fecha_registro : timestamptz
+}
+
+entity "participante_partida" as participante_partida {
+  {field} * partida_id : int <<PK, FK>>
+  {field} * persona_id : int <<PK, FK>>
+  {field} * tipo_participacion_id : int <<PK, FK>>
+  --
+}
+
+entity "partida" as partida {
+  {field} * id : serial <<PK>>
+  --
+  {field} * uuid : uuid <<UQ>>
+  {field} * libro_id : int <<FK>>
+  {field}   tramite_id : int <<FK, UQ>>
+  {field} * ministro_id : int <<FK>>
+  {field} * registrado_por : int <<FK>>
+  {field} * numero_partida : int
+  {field} * folio : smallint
+  {field} * fecha_celebracion : date
+  {field}   observaciones : text
+  {field} * anulada : boolean
+  {field}   motivo_anulacion : varchar(300)
+  {field} * fecha_registro : timestamptz
+  .. UQ (libro_id, numero_partida) ..
+}
+
+entity "persona" as persona {
+  {field} * id : serial <<PK>>
+  --
+  {field} * uuid : uuid <<UQ>>
+  {field} * nombres : varchar(100)
+  {field}   apellido_paterno : varchar(60)
+  {field}   apellido_materno : varchar(60)
+  {field} * sexo : char(1)
+  {field}   fecha_nacimiento : date
+  {field}   lugar_nacimiento : varchar(150)
+  {field}   documento_identidad : varchar(20) <<UQ>>
+  {field}   telefono : varchar(30)
+  {field}   correo : varchar(120)
+  {field} * fecha_registro : timestamptz
+}
+
+entity "proclama" as proclama {
+  {field} * id : serial <<PK>>
+  --
+  {field} * tramite_id : int <<FK>>
+  {field} * numero_proclama : smallint
+  {field} * fecha_publicacion : date
+  {field}   fecha_envio_portal : timestamptz
+  .. UQ (tramite_id, numero_proclama) ..
+}
+
+entity "requisito" as requisito {
+  {field} * id : serial <<PK>>
+  --
+  {field} * tipo_sacramento_id : int <<FK>>
+  {field} * nombre : varchar(150)
+  {field}   descripcion : varchar(300)
+  {field} * obligatorio : boolean
+  {field} * orden : smallint
+}
+
+entity "rol" as rol {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre : varchar(40) <<UQ>>
+  {field}   descripcion : varchar(200)
+}
+
+entity "sede" as sede {
+  {field} * id : serial <<PK>>
+  --
+  {field} * codigo : varchar(20) <<UQ>>
+  {field} * nombre : varchar(120)
+  {field} * tipo : varchar(20)
+  {field} * arquidiocesis : varchar(120)
+  {field}   vicaria : varchar(120)
+  {field}   direccion : varchar(200)
+  {field}   telefono : varchar(30)
+  {field} * activo : boolean
+}
+
+entity "tipo_nota_marginal" as tipo_nota_marginal {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre : varchar(60) <<UQ>>
+}
+
+entity "tipo_participacion" as tipo_participacion {
+  {field} * id : serial <<PK>>
+  --
+  {field} * nombre : varchar(40) <<UQ>>
+}
+
+entity "tipo_sacramento" as tipo_sacramento {
+  {field} * id : serial <<PK>>
+  --
+  {field} * codigo : varchar(10) <<UQ>>
+  {field} * nombre : varchar(40) <<UQ>>
+}
+
+entity "tramite" as tramite {
+  {field} * id : serial <<PK>>
+  --
+  {field} * sede_id : int <<FK>>
+  {field} * tipo_sacramento_id : int <<FK>>
+  {field} * estado_tramite_id : int <<FK>>
+  {field} * registrado_por : int <<FK>>
+  {field} * fecha_solicitud : date
+  {field}   fecha_programada : timestamptz
+  {field}   observaciones : text
+}
+
+entity "tramite_persona" as tramite_persona {
+  {field} * tramite_id : int <<PK, FK>>
+  {field} * persona_id : int <<PK, FK>>
+  {field} * tipo_participacion_id : int <<PK, FK>>
+  --
+}
+
+entity "tramite_requisito" as tramite_requisito {
+  {field} * tramite_id : int <<PK, FK>>
+  {field} * requisito_id : int <<PK, FK>>
+  --
+  {field} * fecha_entrega : date
+  {field}   url_documento : varchar(500)
+  {field}   verificado_por : int <<FK>>
+}
+
+entity "usuario" as usuario {
+  {field} * id : serial <<PK>>
+  --
+  {field} * rol_id : int <<FK>>
+  {field} * sede_id : int <<FK>>
+  {field} * nombre_completo : varchar(120)
+  {field} * correo : varchar(120) <<UQ>>
+  {field} * hash_contrasena : varchar(255)
+  {field} * activo : boolean
+  {field}   fecha_ultimo_acceso : timestamptz
+  {field} * fecha_creacion : timestamptz
+}
+
+usuario |o--o{ bitacora_cambio : usuario_id
+partida ||--|{ certificado : partida_id
+usuario ||--|{ certificado : emitido_por
+sede ||--|{ intencion_misa : sede_id
+usuario ||--|{ intencion_misa : registrado_por
+sede ||--|{ libro_sacramental : sede_id
+tipo_sacramento ||--|{ libro_sacramental : tipo_sacramento_id
+partida ||--|{ nota_marginal : partida_id
+partida |o--o{ nota_marginal : partida_relacionada_id
+tipo_nota_marginal ||--|{ nota_marginal : tipo_nota_marginal_id
+usuario ||--|{ nota_marginal : registrado_por
+partida ||--|{ participante_partida : partida_id
+persona ||--|{ participante_partida : persona_id
+tipo_participacion ||--|{ participante_partida : tipo_participacion_id
+libro_sacramental ||--|{ partida : libro_id
+ministro ||--|{ partida : ministro_id
+tramite |o--o| partida : tramite_id
+usuario ||--|{ partida : registrado_por
+tramite ||--|{ proclama : tramite_id
+tipo_sacramento ||--|{ requisito : tipo_sacramento_id
+estado_tramite ||--|{ tramite : estado_tramite_id
+persona ||--|{ tramite_persona : persona_id
+tipo_participacion ||--|{ tramite_persona : tipo_participacion_id
+tramite ||--|{ tramite_persona : tramite_id
+requisito ||--|{ tramite_requisito : requisito_id
+tramite ||--|{ tramite_requisito : tramite_id
+usuario |o--o{ tramite_requisito : verificado_por
+sede ||--|{ tramite : sede_id
+tipo_sacramento ||--|{ tramite : tipo_sacramento_id
+usuario ||--|{ tramite : registrado_por
+rol ||--|{ usuario : rol_id
+sede ||--|{ usuario : sede_id
+@enduml
