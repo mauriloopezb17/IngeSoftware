@@ -1461,3 +1461,72 @@ Una página publicada con sus bloques **visibles**, ordenados por `orden`. Cada 
 - El portal debe ignorar un bloque de `tipo` desconocido en vez de fallar. Así se pueden agregar tipos nuevos sin romperlo.
 
 **Errores:** `404 NO_ENCONTRADO` si el slug no existe en la sede o la página no está en estado `PUBLICADO`.
+
+---
+
+## Búsqueda
+
+### `GET /api/sedes/:sede/buscar`
+
+Búsqueda de texto completo en español (sin tildes ni distinción de mayúsculas, con *stemming*) sobre todo el contenido **público y vigente** de la sede: noticias, notas de prensa, eventos publicados, servicios/sacramentos visibles, grupos pastorales visibles, boletines publicados y páginas publicadas.
+
+**Nunca** indexa proclamas matrimoniales, observaciones confidenciales, usuarios, borradores ni avisos internos. Límite por IP: 30 búsquedas por minuto (`429 DEMASIADAS_SOLICITUDES`). Respuesta cacheada en Redis e invalidada automáticamente al publicar o editar cualquiera de los recursos indexados.
+
+**Parámetros de query:**
+
+| Parámetro | Regla |
+|---|---|
+| `q` | Obligatorio; 2–100 caracteres tras `trim`, sin caracteres de control. Admite la sintaxis de `websearch_to_tsquery`: `"frase exacta"`, `-excluir`, `palabra OR otra`. |
+| `tipo` | Opcional; lista separada por comas de `noticia`, `evento`, `sacramento`, `grupo`, `boletin`, `pagina`. |
+| `desde`, `hasta` | Opcionales; fechas `AAAA-MM-DD` (zona horaria `America/La_Paz`), con `hasta >= desde`. |
+| `orden` | `relevancia` (predeterminado), `reciente` o `antiguo`. |
+| `pagina`, `porPagina` | Paginación estándar; `porPagina` predeterminado `10`, máximo `30`. |
+
+**Respuesta `200`** para `GET /api/sedes/senor-de-la-exaltacion/buscar?q=fiesta+patronal`:
+
+```json
+{
+  "datos": [
+    {
+      "tipo": "noticia",
+      "id": 12,
+      "titulo": "Fiesta patronal 2026",
+      "fragmento": [
+        { "texto": "… la ", "resaltado": false },
+        { "texto": "fiesta", "resaltado": true },
+        { "texto": " del Señor …", "resaltado": false }
+      ],
+      "url": "/noticias/fiesta-patronal-2026",
+      "fecha": "2026-09-14T10:00:00-04:00",
+      "imagen": {
+        "id": 31,
+        "url": "https://cdn.pasionistas.org.bo/sedes/senor-de-la-exaltacion/2026/09/portada.webp",
+        "textoAlternativo": "Procesión patronal",
+        "ancho": 1600,
+        "alto": 1067,
+        "variantes": []
+      }
+    }
+  ],
+  "paginacion": {
+    "pagina": 1,
+    "porPagina": 10,
+    "total": 23,
+    "totalPaginas": 3
+  },
+  "totalesPorTipo": {
+    "noticia": 15,
+    "evento": 4,
+    "sacramento": 1,
+    "grupo": 2,
+    "boletin": 1,
+    "pagina": 0
+  }
+}
+```
+
+- `fragmento`: lista de segmentos `{ texto, resaltado }` (nunca HTML).
+- `totalesPorTipo`: se calcula con los mismos filtros (`q`, `desde`, `hasta`) salvo `tipo`.
+- `url`: ruta del portal (`/noticias/:slug`, `/calendario/:id`, `/sacramentos/:slug`, `/comunidad/grupos/:slug`, `/boletines/AAAA-MM`, `/paginas/:slug`). `fecha` puede ser `null` (sacramentos, grupos, páginas).
+- **Errores:** `400 VALIDACION` en `query.<campo>`; `429 DEMASIADAS_SOLICITUDES`; `404 NO_ENCONTRADO` si la sede no existe.
+- **Escalabilidad:** con índices GIN por expresión en cada tabla, la búsqueda escala adecuadamente a decenas de miles de documentos; si el volumen crece mucho más en el futuro, el siguiente paso es una tabla única de documentos mantenida por triggers.

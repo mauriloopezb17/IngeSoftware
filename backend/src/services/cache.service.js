@@ -110,6 +110,18 @@ export function reiniciarEstadoDeRedis() {
   invalidacionesPendientes.clear();
 }
 
+export async function obtenerGeneraciones(sedeId, recursos) {
+  if (!cacheActiva() || !puedeUsarRedis() || !recursos.length) return {};
+  try {
+    const valores = await obtenerRedis().mget(
+      recursos.map((recurso) => claveDeGeneracion(sedeId, recurso)),
+    );
+    return Object.fromEntries(recursos.map((recurso, i) => [recurso, valores[i] ?? '0']));
+  } catch {
+    return {};
+  }
+}
+
 function invalidarGeneracion(redis, sedeId, recurso) {
   return redis.eval(SCRIPT_INVALIDAR, 1, claveDeGeneracion(sedeId, recurso));
 }
