@@ -53,32 +53,3 @@ Mapeo bidireccional que conecta cada requisito del [SRS v1.1](../srs/SRS_v1.1_IS
 | RNF-06 | ADR-01 | PAR-53, PAR-57 | Base de datos (JSONB); API REST › Publicaciones / CMS; API REST › Horarios, servicios, videos, páginas y usuarios | Clases del dominio (columnas jsonb) | `backend/src/validacion/blocknote.js`, `backend/src/validacion/bloques.js`, `backend/src/services/adminPaginas.service.js` | Unitaria: `backend/tests/unit/blocknote.test.js`, `backend/tests/unit/bloques.test.js`. Integración: `backend/tests/integracion/admin-paginas.test.js` | Implementado |
 | RNF-07 | Docente | PAR-160 | API REST › Bitácora y registro de consultas; API REST › Cadena común de peticiones | Secuencia de exportación CSV | `backend/src/middlewares/registrarConsulta.js`, `backend/src/config/logger.js` | Integración: `backend/tests/integracion/registro-consultas.test.js`, `backend/tests/integracion/logs-sensibles.test.js` | Implementado |
 | RNF-08 | Ingenieros de la parroquia y marketing | PAR-168 | SPA web | — | `frontend/src/components/parroquia/MenuFlotante.jsx` | Frontend: `frontend/src/components/parroquia/menuFlotante.test.jsx`. E2E: `frontend/e2e/menu-flotante.spec.js`, `frontend/e2e/portal-navegacion.spec.js` | Implementado |
-
-&nbsp;
-
-## Histórico: matriz v1.0
-
-Se conserva sin cambios la matriz de la línea base v1.0. Sus identificadores de historia (PARR-1xx) y de caso de prueba (CP-xx) eran provisionales; los reemplazan las historias reales de Jira (PAR-xx) y las pruebas automatizadas de las secciones 1 y 2.
-
-| ID Req. | Fuente de Elicitación | Historia de Usuario (Jira) | Componente C4 | Caso de Prueba |
-| ----- | ----- | ----- | ----- | ----- |
-| RF-01 | Transcripción Audio (18/ago); Req. Sec.2 | PARR-101 | Portal Web | CP-01 |
-| RF-02 | Transcripción Audio (18/ago); Req. Sec.2/3 | PARR-102 | Portal Web; Módulo de Sacramentos y Proclamas | CP-02 |
-| RF-03 | Req. Sec.4; ADR-01 | PARR-103 | Módulo de Sacramentos y Proclamas; Base de Datos Relacional | CP-03 |
-| RF-04 | Req. Sec.3; Transcripción Audio | PARR-104 | Panel de Administración; Módulo de Contenido y Calendario (CMS) | CP-04 |
-| RF-05 | Transcripción Audio (18/ago) | PARR-105 | Portal Web; Servicio YouTube | CP-05 |
-| RF-06 | Transcripción Audio (18/ago) | PARR-106 | Panel de Administración; Almacenamiento Multimedia | CP-06 |
-| RF-07 | Transcripción Audio (18/ago) | PARR-107 | Widget / Bot Asistente; Módulo de Integraciones | CP-07 |
-| RF-08 | Transcripción Audio (18/ago) | PARR-108 | Módulo de Integraciones; Base de Datos Relacional | CP-08 |
-| RF-09 | Transcripción Audio (18/ago) | PARR-109 | Módulo de Contenido y Calendario (CMS); Redis | CP-09 |
-| RF-10 | Req. Sec.2 | PARR-110 | Módulo de Integraciones; Tenant Microsoft & Meta | CP-10 |
-| RF-11 | ADR-02; Diagrama C3 | PARR-111 | API Gateway & Router de Autenticación | CP-11 |
-| RF-12 | Transcripción Audio (18/ago) | PARR-112 | Módulo de Integraciones; Tenant Microsoft & Meta | CP-12 |
-| RF-13 | Req. Sec.1 | PARR-113 | Portal Web; Panel de Administración | CP-13 |
-| RF-14 | Transcripción Audio (18/ago) | PARR-114 | N/A (fuera de alcance) | N/A |
-| RNF-01 | ADR-02 | PARR-115 | Caché en Memoria (Redis); Base de Datos Relacional | CP-15 |
-| RNF-02 | Diagrama C3; ADR-02 | PARR-116 | API Gateway & Router de Autenticación | CP-16 |
-| RNF-03 | Req. Sec.5; Transcripción Audio | PARR-117 | Infraestructura de hosting | CP-17 |
-| RNF-04 | Req. Sec.3; Transcripción Audio | PARR-118 | Panel de Administración | CP-18 |
-| RNF-05 | Transcripción Audio (18/ago) | PARR-119 | Almacenamiento Multimedia | CP-19 |
-| RNF-06 | ADR-01 | PARR-120 | Base de Datos Relacional (JSONB) | CP-20 |
