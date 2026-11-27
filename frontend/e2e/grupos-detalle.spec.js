@@ -7,7 +7,7 @@ test.describe('Página de cada grupo pastoral', () => {
     page,
   }) => {
     const nombreGrupo = tituloUnico('Grupo E2E');
-    let grupoId = null;
+    let grupoId;
 
     const secretaria = await abrirContextoConRol(browser, 'secretaria');
     try {
