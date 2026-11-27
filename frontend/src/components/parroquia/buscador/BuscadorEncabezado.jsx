@@ -117,7 +117,7 @@ export function BuscadorEncabezado() {
       {abierto && (
         <div
           id={idPanel}
-          className="absolute top-full right-0 z-[45] mt-2 w-88 origin-top-right rounded-md border border-sand bg-white p-3 text-ink shadow-soft transition-[opacity,transform] duration-150 ease-salida motion-reduce:transition-none"
+          className="absolute top-full right-0 z-[45] mt-2 w-96 origin-top-right rounded-md border border-sand bg-white p-3 text-ink shadow-soft transition-[opacity,transform] duration-150 ease-salida motion-reduce:transition-none"
         >
           <form role="search" aria-label="Buscar en el portal" onSubmit={enviar} className="flex items-center gap-2">
             <label htmlFor={idInput} className="sr-only">
@@ -135,7 +135,7 @@ export function BuscadorEncabezado() {
                   setAvisoCorto(false);
                 }
               }}
-              placeholder="Buscar noticias, sacramentos…"
+              placeholder="Buscar en el portal…"
               className="min-h-11 min-w-0 flex-1 rounded-sm border border-sand bg-white px-3 py-2 font-body text-meta text-ink placeholder:text-muted focus-visible:border-ink focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
             />
             <button

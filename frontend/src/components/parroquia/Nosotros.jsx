@@ -37,6 +37,8 @@ function Nosotros() {
                   <img
                     src={textoImagen.url_imagen}
                     alt={textoImagen.texto_alternativo || textoImagen.titulo}
+                    width={1888}
+                    height={1059}
                     className="foto-hover aspect-[4/3] w-full object-cover"
                     loading="lazy"
                   />

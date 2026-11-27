@@ -21,5 +21,6 @@ describe('Encabezado del portal', () => {
     await usuario.click(botonMenu);
     expect(botonMenu).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('dialog', { name: 'Menú de navegación' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Horarios de misa' })).not.toBeInTheDocument();
   });
 });
