@@ -371,9 +371,7 @@ describe('observaciones de proclamas (admin)', () => {
   });
 
   it('ordena observaciones por fechaEnvio y -fechaEnvio', async () => {
-    const asc = await como('parroco').get(
-      `${RUTA_ADM}?estado=todas&porPagina=50&orden=fechaEnvio`,
-    );
+    const asc = await como('parroco').get(`${RUTA_ADM}?estado=todas&porPagina=50&orden=fechaEnvio`);
     const desc = await como('parroco').get(
       `${RUTA_ADM}?estado=todas&porPagina=50&orden=-fechaEnvio`,
     );
