@@ -12,7 +12,7 @@ test.describe('Noticias relacionadas con sacramentos y grupos', () => {
     const titulo = tituloUnico('Noticia grupo E2E');
     const resumen = 'Resumen breve de prueba para noticias relacionadas.';
     const cuerpo = 'Cuerpo de noticia de prueba vinculada al coro parroquial.';
-    let publicacionId = null;
+    let publicacionId;
 
     const marketing = await abrirContextoConRol(browser, 'marketing');
     try {
