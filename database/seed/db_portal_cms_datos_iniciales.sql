@@ -93,7 +93,7 @@ INSERT INTO archivo_multimedia (sede_id, subido_por, nombre_original, url, tipo_
    'pastoral-familiar.jpg', '/media/seed/pastoral-familiar.jpg', 'image/jpeg', 185283, 1137, 1383,
    'Afiche del encuentro de Pastoral Familiar sobre el duelo y la pérdida de un ser querido'),
   ((SELECT id FROM sede WHERE slug = 'senor-de-la-exaltacion'), (SELECT id FROM usuario WHERE correo = 'admin@parroquia.test'),
-   'portada-final.mp4', '/media/seed/portada-final.mp4', 'video/mp4', 58916372, 1920, 1080,
+   'portada-final.mp4', '/media/seed/portada-final.mp4', 'video/mp4', 4822236, 1280, 720,
    'Video institucional: recorrido por el templo de la Parroquia Señor de la Exaltación');
 
 INSERT INTO tipo_bloque (codigo, nombre, esquema_validacion) VALUES
@@ -126,7 +126,7 @@ INSERT INTO bloque (pagina_id, tipo_bloque_id, orden, contenido) VALUES
       "url_video": "/media/seed/portada-final.mp4",
       "url_poster": "/media/seed/exterior-parroquia.webp",
       "texto_video": "Video institucional",
-      "detalle_video": "Recorrido aéreo · 0:30",
+      "detalle_video": "Recorrido aéreo · 0:27",
       "botones": [
         {"texto": "Ver horarios de misa", "enlace": "#horarios"},
         {"texto": "Conócenos", "enlace": "#nosotros"}

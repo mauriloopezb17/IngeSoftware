@@ -182,7 +182,7 @@ export const paginasExaltacion = {
           url_video: '/media/seed/portada-final.mp4',
           url_poster: '/media/seed/exterior-parroquia.webp',
           texto_video: 'Video institucional',
-          detalle_video: 'Recorrido aéreo · 0:30',
+          detalle_video: 'Recorrido aéreo · 0:27',
           botones: [
             { texto: 'Ver horarios de misa', enlace: '#horarios' },
             { texto: 'Conócenos', enlace: '#nosotros' },
