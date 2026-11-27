@@ -4,6 +4,7 @@ import Nosotros from '../components/parroquia/Nosotros.jsx';
 import Horarios from '../components/parroquia/Horarios.jsx';
 import Sacramentos from '../components/parroquia/Sacramentos.jsx';
 import Agenda from '../components/parroquia/Agenda.jsx';
+import MenuFlotante from '../components/parroquia/MenuFlotante.jsx';
 import VidaParroquial from '../components/parroquia/VidaParroquial.jsx';
 import Proclamas from '../components/parroquia/Proclamas.jsx';
 
@@ -15,9 +16,10 @@ function InicioParroquia() {
   const descripcion = paginaInicio?.descripcionSeo || DESCRIPCION_INICIO_DEFECTO;
 
   return (
-    <>
+    <div className="con-menu-flotante">
       <title>Inicio | Parroquia Señor de la Exaltación</title>
       <meta name="description" content={descripcion} />
+      <MenuFlotante />
       <Portada />
       <Nosotros />
       <Horarios />
@@ -25,7 +27,7 @@ function InicioParroquia() {
       <Agenda />
       <VidaParroquial />
       <Proclamas />
-    </>
+    </div>
   );
 }
 
