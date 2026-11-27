@@ -467,6 +467,7 @@ Detalle de un servicio para la vista «Ver requisitos». Incluye el `contenido` 
     "descripcionCorta": "Charla pre-bautismal el primer sábado de cada mes. Padres y padrinos se inscriben en secretaría.",
     "icono": "droplet",
     "orden": 1,
+    "imagen": null,
     "contenido": {
       "datos": [
         {
@@ -479,6 +480,8 @@ Detalle de un servicio para la vista «Ver requisitos». Incluye el `contenido` 
         }
       ]
     },
+    "galeria": [],
+    "detalle": null,
     "preguntasFrecuentes": [
       {
         "id": 1,
@@ -977,7 +980,9 @@ Detalle de una publicación publicada y vigente, con su `contenido` en formato B
           "children": []
         }
       ]
-    }
+    },
+    "serviciosRelacionados": [],
+    "gruposRelacionados": []
   }
 }
 ```
@@ -985,6 +990,22 @@ Detalle de una publicación publicada y vigente, con su `contenido` en formato B
 El seed solo tiene un párrafo por publicación porque la landing no tiene textos más largos. En [contenido.md](contenido.md#ejemplo-completo) hay un documento con todos los tipos de bloque.
 
 **Errores:** `404 NO_ENCONTRADO` si el slug no existe en la sede, o si la publicación existe pero no está publicada o ya no está vigente. Así el portal no revela borradores.
+
+---
+
+## `GET /api/sedes/:sede/servicios/:slug/noticias`
+
+Noticias y notas de prensa publicadas y vigentes relacionadas con un sacramento o servicio visible, ordenadas por `fechaPublicacion` descendente. Paginado (`porPagina` por defecto 10, máximo 12).
+
+**Errores:** `404 NO_ENCONTRADO` si la sede, o el servicio visible con ese slug, no existen.
+
+---
+
+## `GET /api/sedes/:sede/grupos-pastorales/:slug/noticias`
+
+Noticias y notas de prensa publicadas y vigentes relacionadas con un grupo pastoral visible, ordenadas por `fechaPublicacion` descendente. Paginado (`porPagina` por defecto 10, máximo 12).
+
+**Errores:** `404 NO_ENCONTRADO` si la sede, o el grupo visible con ese slug, no existen.
 
 ---
 

@@ -11,6 +11,7 @@ import {
   consultaServicios,
   cuerpoCrearPregunta,
   cuerpoCrearServicio,
+  cuerpoEditarDetalleServicio,
   cuerpoEditarPregunta,
   cuerpoEditarServicio,
   cuerpoReordenar,
@@ -22,6 +23,10 @@ const router = Router();
 const exigirPermiso = requerirPermiso(
   PERMISOS.SERVICIOS_GESTIONAR,
   'Tu rol no tiene permiso para gestionar servicios.',
+);
+const exigirEditarDetalle = requerirPermiso(
+  PERMISOS.SERVICIOS_DETALLE,
+  'Tu rol no tiene permiso para editar la página de los servicios.',
 );
 
 router.get('/', validar({ query: consultaServicios }), filtrarPorSede, controlador.listar);
@@ -42,6 +47,12 @@ router.patch(
   exigirPermiso,
   validar({ params: paramsServicio, body: cuerpoEditarServicio }),
   controlador.editar,
+);
+router.patch(
+  '/:id/detalle',
+  exigirEditarDetalle,
+  validar({ params: paramsServicio, body: cuerpoEditarDetalleServicio }),
+  controlador.editarDetalle,
 );
 router.delete('/:id', exigirPermiso, validar({ params: paramsServicio }), controlador.eliminar);
 

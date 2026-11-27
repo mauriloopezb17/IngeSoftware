@@ -1,6 +1,7 @@
 // Avisos, noticias y notas de prensa vigentes (contrato: docs/api/publico.md).
 import { ESTADOS_PUBLICACION, TIPOS_PUBLICACION } from '../constantes/catalogos.js';
 import { ErrorApp } from '../errores/ErrorApp.js';
+import { obtenerRelacionados } from '../models/adminPublicaciones.model.js';
 import * as modelo from '../models/publicaciones.model.js';
 import { patronBusqueda } from '../utils/busqueda.js';
 import { formatearFechaHora, imagen } from '../utils/formato.js';
@@ -72,5 +73,65 @@ export async function obtenerPublicacion(sedeId, slug) {
     throw ErrorApp.noEncontrado(`No existe la publicación «${String(slug).slice(0, 120)}».`);
   }
 
-  return { ...aResumen(fila), contenido: fila.contenido };
+  const relacionados = await obtenerRelacionados(fila.id, { soloVisibles: true });
+  return {
+    ...aResumen(fila),
+    contenido: fila.contenido,
+    serviciosRelacionados: relacionados.serviciosRelacionados,
+    gruposRelacionados: relacionados.gruposRelacionados,
+  };
+}
+
+const TIPOS_NOTICIAS = () => [
+  TIPOS_PUBLICACION.nombreDe('NOTICIA'),
+  TIPOS_PUBLICACION.nombreDe('NOTA_DE_PRENSA'),
+];
+
+async function listarNoticiasRelacionadas(opciones, consulta = {}) {
+  const pagina = consulta.pagina ?? 1;
+  const porPagina = consulta.porPagina ?? 10;
+  const resultado = await modelo.listarVigentesPorRelacion({
+    ...opciones,
+    estadoPublicado: ESTADOS_PUBLICACION.nombreDe('PUBLICADO'),
+    tipos: TIPOS_NOTICIAS(),
+    limite: porPagina,
+    desplazamiento: desplazamiento(pagina, porPagina),
+  });
+
+  if (!resultado) {
+    throw ErrorApp.noEncontrado(opciones.mensajeNoEncontrado);
+  }
+
+  return {
+    datos: resultado.filas.map(aResumen),
+    paginacion: armarPaginacion({ total: resultado.total, pagina, porPagina }),
+  };
+}
+
+export function listarNoticiasPorServicio(sedeId, servicioSlug, consulta = {}) {
+  return listarNoticiasRelacionadas(
+    {
+      tablaRelacion: 'publicacion_servicio',
+      columnaRelacion: 'servicio_id',
+      tablaDestino: 'servicio',
+      sedeId,
+      slugDestino: servicioSlug,
+      mensajeNoEncontrado: `No existe el servicio «${String(servicioSlug).slice(0, 120)}».`,
+    },
+    consulta,
+  );
+}
+
+export function listarNoticiasPorGrupo(sedeId, grupoSlug, consulta = {}) {
+  return listarNoticiasRelacionadas(
+    {
+      tablaRelacion: 'publicacion_grupo_pastoral',
+      columnaRelacion: 'grupo_pastoral_id',
+      tablaDestino: 'grupo_pastoral',
+      sedeId,
+      slugDestino: grupoSlug,
+      mensajeNoEncontrado: `No existe el grupo pastoral «${String(grupoSlug).slice(0, 120)}».`,
+    },
+    consulta,
+  );
 }

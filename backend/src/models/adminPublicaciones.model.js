@@ -173,3 +173,75 @@ export async function idDeEstado(nombre, db) {
   ]);
   return rows[0].id;
 }
+
+export async function serviciosExistentesEnSede(sedeId, ids, db = { consultar }) {
+  if (ids.length === 0) return [];
+  const { rows } = await db.consultar(
+    'SELECT id FROM servicio WHERE sede_id = $1 AND id = ANY($2::int[])',
+    [sedeId, ids],
+  );
+  return rows.map((r) => r.id);
+}
+
+export async function gruposExistentesEnSede(sedeId, ids, db = { consultar }) {
+  if (ids.length === 0) return [];
+  const { rows } = await db.consultar(
+    'SELECT id FROM grupo_pastoral WHERE sede_id = $1 AND id = ANY($2::int[])',
+    [sedeId, ids],
+  );
+  return rows.map((r) => r.id);
+}
+
+export async function reemplazarServiciosRelacionados(publicacionId, ids, db) {
+  await db.consultar('DELETE FROM publicacion_servicio WHERE publicacion_id = $1', [publicacionId]);
+  const unicos = [...new Set(ids)];
+  if (unicos.length === 0) return;
+  await db.consultar(
+    `INSERT INTO publicacion_servicio (publicacion_id, servicio_id)
+     SELECT $1, unnest($2::int[])`,
+    [publicacionId, unicos],
+  );
+}
+
+export async function reemplazarGruposRelacionados(publicacionId, ids, db) {
+  await db.consultar('DELETE FROM publicacion_grupo_pastoral WHERE publicacion_id = $1', [
+    publicacionId,
+  ]);
+  const unicos = [...new Set(ids)];
+  if (unicos.length === 0) return;
+  await db.consultar(
+    `INSERT INTO publicacion_grupo_pastoral (publicacion_id, grupo_pastoral_id)
+     SELECT $1, unnest($2::int[])`,
+    [publicacionId, unicos],
+  );
+}
+
+export async function obtenerRelacionados(
+  publicacionId,
+  { soloVisibles = false } = {},
+  db = { consultar },
+) {
+  const filtroVisible = soloVisibles ? 'AND t.visible' : '';
+  const [serviciosRes, gruposRes] = await Promise.all([
+    db.consultar(
+      `SELECT t.id, t.slug, t.nombre
+         FROM publicacion_servicio ps
+         JOIN servicio t ON t.id = ps.servicio_id
+        WHERE ps.publicacion_id = $1 ${filtroVisible}
+        ORDER BY t.orden, t.id`,
+      [publicacionId],
+    ),
+    db.consultar(
+      `SELECT t.id, t.slug, t.nombre
+         FROM publicacion_grupo_pastoral pg
+         JOIN grupo_pastoral t ON t.id = pg.grupo_pastoral_id
+        WHERE pg.publicacion_id = $1 ${filtroVisible}
+        ORDER BY t.orden, t.id`,
+      [publicacionId],
+    ),
+  ]);
+  return {
+    serviciosRelacionados: serviciosRes.rows,
+    gruposRelacionados: gruposRes.rows,
+  };
+}

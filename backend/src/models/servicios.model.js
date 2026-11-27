@@ -49,11 +49,17 @@ export async function listarVisibles(
   return { filas: pagina.rows, total: conteo.rows[0].total };
 }
 
-// Servicio visible por slug, con su contenido y sus preguntas frecuentes activas (misma consulta).
+// Servicio visible por slug, con su contenido, imagen, detalle y preguntas frecuentes activas.
 export async function obtenerVisiblePorSlug(sedeId, slug) {
   const { rows } = await consultar(
     `SELECT ${COLUMNAS},
             s.contenido,
+            s.detalle,
+            am.id AS imagen_id,
+            am.url AS imagen_url,
+            am.texto_alternativo AS imagen_texto_alternativo,
+            am.ancho_px AS imagen_ancho,
+            am.alto_px AS imagen_alto,
             COALESCE(
               (SELECT json_agg(
                         json_build_object('id', pf.id, 'pregunta', pf.pregunta, 'respuesta', pf.respuesta)
@@ -63,10 +69,22 @@ export async function obtenerVisiblePorSlug(sedeId, slug) {
               '[]'::json
             ) AS preguntas_frecuentes
        FROM servicio s
+       LEFT JOIN archivo_multimedia am ON am.id = s.imagen_id
       WHERE s.sede_id = $1 AND s.slug = $2 AND s.visible`,
     [sedeId, slug],
   );
   return rows[0] ?? null;
+}
+
+export async function archivosPorIds(sedeId, ids) {
+  if (!ids.length) return [];
+  const { rows } = await consultar(
+    `SELECT id, url, tipo_mime, ancho_px, alto_px, texto_alternativo
+       FROM archivo_multimedia
+      WHERE sede_id = $1 AND id = ANY($2::int[])`,
+    [sedeId, ids],
+  );
+  return rows;
 }
 
 const COLUMNAS_ADMIN = `
@@ -76,11 +94,17 @@ const COLUMNAS_ADMIN = `
   s.descripcion_corta,
   s.icono,
   s.contenido,
+  s.detalle,
   s.orden,
   s.visible,
   se.id     AS sede_id,
   se.nombre AS sede_nombre,
   se.slug   AS sede_slug,
+  am.id     AS imagen_id,
+  am.url    AS imagen_url,
+  am.texto_alternativo AS imagen_texto_alternativo,
+  am.ancho_px AS imagen_ancho,
+  am.alto_px  AS imagen_alto,
   COALESCE(
     (SELECT json_agg(
               json_build_object(
@@ -98,7 +122,8 @@ const COLUMNAS_ADMIN = `
 
 const UNIONES_ADMIN = `
   FROM servicio s
-  JOIN sede se ON se.id = s.sede_id`;
+  JOIN sede se ON se.id = s.sede_id
+  LEFT JOIN archivo_multimedia am ON am.id = s.imagen_id`;
 
 const ORDENES_ADMIN = {
   orden: 's.orden ASC, s.id ASC',
@@ -172,23 +197,45 @@ export async function existeSede(sedeId, db = { consultar }) {
 }
 
 export async function crear(
-  { sedeId, slug, nombre, descripcionCorta, icono, contenido, visible },
+  {
+    sedeId,
+    slug,
+    nombre,
+    descripcionCorta,
+    icono,
+    imagenId = null,
+    contenido,
+    detalle = null,
+    visible,
+  },
   db = { consultar },
 ) {
   const { rows } = await db.consultar(
-    `INSERT INTO servicio (sede_id, slug, nombre, descripcion_corta, icono, contenido, orden, visible)
+    `INSERT INTO servicio (sede_id, slug, nombre, descripcion_corta, icono, imagen_id, contenido, detalle, orden, visible)
      VALUES (
        $1,
        $2,
        $3,
        $4,
        $5,
-       $6::jsonb,
+       $6,
+       $7::jsonb,
+       $8::jsonb,
        COALESCE((SELECT MAX(orden) FROM servicio WHERE sede_id = $1), 0) + 1,
-       $7
+       $9
      )
      RETURNING *`,
-    [sedeId, slug, nombre, descripcionCorta, icono, JSON.stringify(contenido), visible],
+    [
+      sedeId,
+      slug,
+      nombre,
+      descripcionCorta,
+      icono,
+      imagenId,
+      JSON.stringify(contenido),
+      detalle ? JSON.stringify(detalle) : null,
+      visible,
+    ],
   );
   return rows[0];
 }
@@ -198,6 +245,7 @@ const COLUMNAS_ACTUALIZABLES = {
   nombre: 'nombre',
   descripcionCorta: 'descripcion_corta',
   icono: 'icono',
+  imagenId: 'imagen_id',
   visible: 'visible',
 };
 
@@ -207,9 +255,9 @@ export async function actualizar(id, cambios, db = { consultar }) {
 
   for (const [clave, valor] of Object.entries(cambios)) {
     if (valor === undefined) continue;
-    if (clave === 'contenido') {
-      valores.push(JSON.stringify(valor));
-      asignaciones.push(`contenido = $${valores.length}::jsonb`);
+    if (clave === 'contenido' || clave === 'detalle') {
+      valores.push(valor ? JSON.stringify(valor) : null);
+      asignaciones.push(`${clave} = $${valores.length}::jsonb`);
     } else if (clave in COLUMNAS_ACTUALIZABLES) {
       valores.push(valor);
       asignaciones.push(`${COLUMNAS_ACTUALIZABLES[clave]} = $${valores.length}`);

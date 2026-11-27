@@ -138,6 +138,34 @@ export const handlersPortal = [
     return HttpResponse.json({ datos });
   }),
 
+  http.get(api('/sedes/:sede/servicios/:slug/noticias'), ({ params, request }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const servicio = esSedePrincipal(params.sede)
+      ? serviciosExaltacion.find((item) => item.slug === params.slug)
+      : null;
+
+    if (!servicio) {
+      return errorJson(404, 'NO_ENCONTRADO', `No existe el servicio «${params.slug}».`);
+    }
+
+    const url = new URL(request.url);
+    const porPaginaParam = Number(url.searchParams.get('porPagina') ?? 10);
+    if (!Number.isInteger(porPaginaParam) || porPaginaParam < 1 || porPaginaParam > 12) {
+      return errorJson(400, 'VALIDACION', 'Los parámetros de consulta no son válidos.', [
+        { campo: 'query.porPagina', mensaje: 'Debe ser un entero entre 1 y 12.' },
+      ]);
+    }
+
+    const lista = obtenerPublicacionesExaltacion().filter((item) =>
+      (item.serviciosRelacionados ?? []).some((s) => s.slug === params.slug),
+    );
+    const resumen = lista.map((item) => omitirCampos(item, ['contenido']));
+    const resultado = paginar(resumen, url);
+    return resultado.error ?? resultado.respuesta;
+  }),
+
   http.get(api('/sedes/:sede/servicios/:slug'), ({ params }) => {
     const fallo = validarSede(params.sede);
     if (fallo) return fallo;
@@ -160,6 +188,34 @@ export const handlersPortal = [
     return HttpResponse.json({
       datos: esSedePrincipal(params.sede) ? gruposPastoralesExaltacion : [],
     });
+  }),
+
+  http.get(api('/sedes/:sede/grupos-pastorales/:slug/noticias'), ({ params, request }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const grupo = esSedePrincipal(params.sede)
+      ? gruposPastoralesExaltacion.find((item) => item.slug === params.slug)
+      : null;
+
+    if (!grupo) {
+      return errorJson(404, 'NO_ENCONTRADO', `No existe el grupo pastoral «${params.slug}».`);
+    }
+
+    const url = new URL(request.url);
+    const porPaginaParam = Number(url.searchParams.get('porPagina') ?? 10);
+    if (!Number.isInteger(porPaginaParam) || porPaginaParam < 1 || porPaginaParam > 12) {
+      return errorJson(400, 'VALIDACION', 'Los parámetros de consulta no son válidos.', [
+        { campo: 'query.porPagina', mensaje: 'Debe ser un entero entre 1 y 12.' },
+      ]);
+    }
+
+    const lista = obtenerPublicacionesExaltacion().filter((item) =>
+      (item.gruposRelacionados ?? []).some((g) => g.slug === params.slug),
+    );
+    const resumen = lista.map((item) => omitirCampos(item, ['contenido']));
+    const resultado = paginar(resumen, url);
+    return resultado.error ?? resultado.respuesta;
   }),
 
   http.get(api('/sedes/:sede/grupos-pastorales/:slug'), ({ params }) => {

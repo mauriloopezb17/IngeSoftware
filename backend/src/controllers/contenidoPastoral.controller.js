@@ -3,6 +3,7 @@
 import { RECURSOS_CACHE } from '../constantes/cache.js';
 import { responderConCache } from '../services/cache.service.js';
 import * as grupos from '../services/gruposPastorales.service.js';
+import * as publicaciones from '../services/publicaciones.service.js';
 import * as servicios from '../services/servicios.service.js';
 import * as videos from '../services/videos.service.js';
 
@@ -20,6 +21,19 @@ export async function detalleServicio(req, res) {
   }));
 }
 
+export async function noticiasDeServicio(req, res) {
+  const { slug } = req.params;
+  const { query } = req.validado;
+  const clave = {
+    recurso: RECURSOS_CACHE.PUBLICACIONES,
+    sedeId: req.sede.id,
+    variante: { servicio: slug, ...query },
+  };
+  await responderConCache(req, res, clave, () =>
+    publicaciones.listarNoticiasPorServicio(req.sede.id, slug, query),
+  );
+}
+
 export async function listarGruposPastorales(req, res) {
   const { query } = req.validado;
   const clave = { recurso: RECURSOS_CACHE.GRUPOS, sedeId: req.sede.id, variante: query };
@@ -32,6 +46,19 @@ export async function detalleGrupoPastoral(req, res) {
   await responderConCache(req, res, clave, async () => ({
     datos: await grupos.obtenerGrupoPastoral(req.sede.id, slug),
   }));
+}
+
+export async function noticiasDeGrupoPastoral(req, res) {
+  const { slug } = req.params;
+  const { query } = req.validado;
+  const clave = {
+    recurso: RECURSOS_CACHE.PUBLICACIONES,
+    sedeId: req.sede.id,
+    variante: { grupo: slug, ...query },
+  };
+  await responderConCache(req, res, clave, () =>
+    publicaciones.listarNoticiasPorGrupo(req.sede.id, slug, query),
+  );
 }
 
 export async function listarVideos(req, res) {
