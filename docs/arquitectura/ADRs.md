@@ -78,3 +78,57 @@ Se aplicará el patrón **Cache-Aside (Lazy Loading)** para:
 * **Negativas / Mitigaciones:**
   * **Riesgo de inconsistencia temporal (Stale Data):** Un cambio en los horarios o en el calendario realizado por la secretaría podría tardar en reflejarse si la caché no expira. Se mitiga implementando invalidación activa de llaves específicas (`cache invalidation`) en los controladores de mutación (POST/PUT/DELETE) del backend, complementado con un TTL prudente (ej. $15$ a $30\text{ minutos}$).
   * **Componente adicional en el despliegue:** Requiere aprovisionar y monitorear un servicio Redis (mediante Docker Compose en el servidor UCB o servicio gestionado tipo Redis Cloud).
+
+---
+
+## ADR 03: Stack Node.js/Express + PostgreSQL frente al stack de referencia de la materia (.NET 8 + SQL Server 2022 + xUnit/Moq + Flutter/Web)
+
+### Estado
+**Aprobado** (registrado en el Sprint 3, con la decisión ya implementada desde el Sprint 1)
+
+### Contexto
+El formulario de auditoría de la materia SIS-213 toma como referencia un stack concreto: un proyecto de base de datos `.sqlproj` de SQL Server 2022, una Web API en .NET 8 con Controllers, Services y documentación Swagger, pruebas unitarias con xUnit y Moq, y un cliente Flutter/Web. El equipo construyó el sistema con otro stack, y la auditoría necesita saber por qué y dónde está cada pieza equivalente.
+
+Antecedentes:
+1. **ADR-01** eligió PostgreSQL con columnas `JSONB` para combinar integridad relacional con contenido flexible del CMS (bloques de BlockNote y bloques de página).
+2. **ADR-02** eligió Redis como caché cache-aside y almacén de contadores para el límite de intentos.
+3. En la entrevista con la parroquia (Acta N.° 01, `docs/entrevistas/`) el responsable de infraestructura recomendó frameworks JavaScript (Vue/React) frente a un CMS rígido, y el hosting previsto son servidores de la UCB o una nube gratuita o económica.
+
+### Alternativas Consideradas
+* **Alternativa A: Stack de referencia (.NET 8 Web API + SQL Server 2022 + xUnit/Moq + Flutter/Web):**
+  * *Ventajas:* Coincide literalmente con el formulario de auditoría; tipado estático en C#; Swagger generado automáticamente.
+  * *Desventajas:* SQL Server no tiene un tipo equivalente a `JSONB` indexable con GIN (guarda JSON como texto `NVARCHAR` y lo consulta con funciones), lo que contradice el ADR-01; la licencia y los requisitos de memoria de SQL Server encarecen el hosting fuera de la capa gratuita; dos lenguajes (C# en el servidor y Dart en el cliente) para un equipo de tres personas; Flutter Web genera una aplicación pesada para un portal público que debe cargar rápido en celulares.
+* **Alternativa B: Node.js 22 + Express 5 + PostgreSQL 16 + Vitest + React (stack elegido):**
+  * *Ventajas:* Un solo lenguaje (JavaScript) en el backend, el frontend y las pruebas; `JSONB` nativo; todo el stack es de código abierto y corre en contenedores sin licencias.
+  * *Desventajas:* Se aparta del stack de referencia del curso; JavaScript no tiene tipado estático.
+* **Alternativa C: CMS existente (WordPress u otro):**
+  * *Ventajas:* Panel de administración listo.
+  * *Desventajas:* Descartado en la entrevista con la parroquia por rigidez, compatibilidad de integraciones y animaciones.
+
+### Decisión
+Se adopta **Node.js 22 con Express 5** para la API REST, **PostgreSQL 16** como base de datos, **Vitest** (con Supertest) para las pruebas del backend y **React 19** (con Vite) para el cliente web. Cada pieza del stack de referencia tiene un equivalente verificable en el repositorio:
+
+| Stack de referencia | Equivalente en el repositorio | Dónde verificarlo |
+|---|---|---|
+| Proyecto de base de datos `.sqlproj` (SQL Server 2022) | Esquema base en SQL, migraciones numeradas y datos iniciales; un único script los aplica en orden | `database/db_portal_cms.sql`, `database/migrations/001_…sql` a `015_…sql`, `database/seed/`, `database/docker/00-iniciar-portal-cms.sh` (lo usan `docker-compose.yml` y el CI) |
+| Web API .NET 8 con Controllers y Services | API REST en Express 5 con la cadena routes → middlewares → controllers → services → models | `backend/src/routes/`, `backend/src/middlewares/`, `backend/src/controllers/`, `backend/src/services/`, `backend/src/models/` |
+| Validación con Data Annotations | Esquemas Zod por endpoint, aplicados por un middleware | `backend/src/validacion/`, `backend/src/middlewares/validar.js` |
+| Swagger / OpenAPI | Contrato de la API en Markdown con ejemplos JSON; las pruebas comparan las respuestas reales con esos ejemplos | `docs/api/` (contrato), `backend/tests/apoyo/contrato.js` |
+| xUnit | Vitest | `backend/vitest.config.js`, `backend/tests/unit/` (29 archivos) y `backend/tests/integracion/` (59 archivos) |
+| Moq | `vi.mock`, `vi.spyOn` y `vi.stubEnv` de Vitest; `aws-sdk-client-mock` para el cliente S3 | Por ejemplo `backend/tests/unit/admin-usuarios.test.js`, `backend/tests/unit/cache-redis-caido.test.js`, `backend/tests/unit/almacenamiento.test.js` |
+| Pruebas de integración con `WebApplicationFactory` | Supertest contra la aplicación Express real, con PostgreSQL 16 y Redis 7 reales en el CI | `backend/src/app.js` (`createApp`, sin escuchar puerto), `backend/tests/integracion/`, job `backend` de `.github/workflows/ci.yml` |
+| Cliente Flutter/Web | SPA en React 19 con Vite (portal público y panel CMS en `/admin`); pruebas con Vitest y Testing Library, y de punta a punta con Playwright | `frontend/src/`, `frontend/e2e/`, `frontend/playwright.config.js` |
+| Transacciones ACID (`TransactionScope` / `BeginTransaction`) | Helper `transaccion(fn)`: `BEGIN`, `COMMIT` si `fn` termina bien y `ROLLBACK` si lanza un error; `alConfirmar` ejecuta tareas solo después del `COMMIT` (invalidar la caché) | `backend/src/db/index.js` (función `transaccion`). La usan los servicios de escritura del panel: `adminBoletines`, `adminEventos`, `adminGrupos`, `adminHorarios`, `adminPaginas`, `adminProclamas`, `adminPublicaciones`, `adminSedes`, `adminServicios`, `adminUsuarios`, `adminVideos`, `auth`, `biblioteca`, `bitacora`, `estadoPublicaciones`, `multimedia` y `observacionesProclama` (todos en `backend/src/services/`), además de `backend/src/models/usuarios.model.js` y `backend/src/utils/adminContenido.js`. Cada cambio y su registro en la bitácora se guardan en la misma transacción. |
+| Migraciones transaccionales | Cada migración SQL va envuelta en `BEGIN; … COMMIT;` | `database/migrations/*.sql` |
+
+### Consecuencias
+* **Positivas:**
+  * **`JSONB` nativo:** el contenido de las publicaciones y los bloques de página se guardan y validan sin crear tablas por cada tipo de bloque (ADR-01).
+  * **Un solo lenguaje:** los tres integrantes trabajan en JavaScript en el backend, el frontend y las pruebas, y pueden revisarse los pull requests entre sí.
+  * **Experiencia del equipo:** el equipo ya conocía JavaScript y React, lo que permitió entregar el prototipo en el primer mes, como se acordó con la parroquia.
+  * **Costo de hosting:** PostgreSQL, Redis y Node.js son de código abierto y corren en contenedores sin licencias, compatibles con los servidores de la UCB o una nube gratuita o económica.
+* **Negativas / Mitigaciones:**
+  * **Diferencia con el estándar del curso:** el formulario de auditoría espera artefactos concretos (`.sqlproj`, Swagger, xUnit/Moq, Flutter). Se mitiga con la tabla de equivalencias de este ADR, que señala para cada artefacto su archivo equivalente en el repositorio.
+  * **Sin tipado estático:** JavaScript no detecta errores de tipo al compilar. Se mitiga con validación Zod en cada entrada de la API y de las variables de entorno (`backend/src/config/entorno.js`), ESLint y Prettier en el CI, y pruebas automatizadas de unidad, integración y e2e.
+  * **Sin documentación interactiva generada:** no hay una interfaz Swagger para probar la API. Se mitiga manteniendo el contrato de `docs/api/` como fuente de verdad, verificado por las pruebas.
+
