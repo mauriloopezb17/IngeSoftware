@@ -13,7 +13,7 @@ Person(feligres, "Feligrés / visitante", "Consulta horarios, sacramentos, grupo
 Person(secretaria, "Secretaría", "Gestiona avisos, eventos, horarios, servicios, grupos, proclamas, boletines y páginas de su sede.")
 Person(parroco, "Párroco", "Publica noticias, revisa las observaciones confidenciales de las proclamas y consulta la bitácora.")
 Person(marketing, "Marketing", "Redacta noticias, completa el detalle de eventos, servicios, grupos y proclamas, y gestiona videos y boletines.")
-Person(coordinador, "Coordinador de grupo", "Edita solo el detalle y la galería de los grupos pastorales que tiene asignados.")
+Person(coordinador, "Coordinador de grupo", "Edita el detalle y la galería de los grupos pastorales que tiene asignados y redacta noticias de esos grupos, que envía a revisión (no las publica).")
 Person(administrador, "Administrador", "Gestiona usuarios y sedes (jerarquía Parroquia > Capilla > Comunidad).")
 
 System(plataforma, "Plataforma Web y Sistema de Gestión Parroquial", "Portal público por sede y panel de administración (CMS) con roles, bajo pasionistas.org.bo.")
@@ -28,7 +28,7 @@ Rel(feligres, plataforma, "Navega el portal y envía observaciones", "HTTPS")
 Rel(secretaria, plataforma, "Administra contenido en el panel", "HTTPS")
 Rel(parroco, plataforma, "Publica y revisa observaciones", "HTTPS")
 Rel(marketing, plataforma, "Redacta y enriquece contenido", "HTTPS")
-Rel(coordinador, plataforma, "Edita sus grupos", "HTTPS")
+Rel(coordinador, plataforma, "Edita sus grupos y redacta sus noticias", "HTTPS")
 Rel(administrador, plataforma, "Gestiona usuarios y sedes", "HTTPS")
 
 Rel(plataforma, oci, "Sube y elimina archivos", "HTTPS / API S3")

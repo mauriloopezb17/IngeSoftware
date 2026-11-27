@@ -76,7 +76,7 @@ La v1 se diseñó en septiembre, a partir del relevamiento y antes de escribir c
 
 | Elemento nuevo | Nivel | Por qué |
 |---|---|---|
-| Roles Coordinador de grupo y Administrador | C1 | El Coordinador lo pidieron los ingenieros de la parroquia (Sprint 3); el Administrador gestiona usuarios y sedes. |
+| Roles Coordinador de grupo y Administrador | C1, C3 | El Coordinador lo pidieron los ingenieros de la parroquia (Sprint 3): edita sus grupos pastorales y redacta noticias de esos grupos, que envía a revisión (PR #74). El Administrador gestiona usuarios y sedes. |
 | Google Maps y Google Fonts | C1, C2 | Los usa el portal: mapa incrustado en Contacto y tipografías institucionales. |
 | Redes sociales y WhatsApp como enlaces salientes | C1 | Reemplazan la integración con Meta: son enlaces directos, sin API. |
 | GitHub Actions (CI) | C2 | Jobs `convencion`, `backend`, `frontend` y `e2e` que protegen `main` (observación del docente). |

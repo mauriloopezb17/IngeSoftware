@@ -35,7 +35,7 @@ Container_Boundary(api, "API REST (Node.js 22 + Express 5)") {
 
   Component(sedes, "Sedes y jerarquía", "adminSedes.* / sedes.*", "Parroquia > Capilla > Comunidad; árbol de sedes y datos de contacto por sede.")
 
-  Component(pastoral, "Grupos pastorales y coordinador", "adminGrupos.* / gruposPastorales.service / contenidoPastoral.controller", "Página propia por grupo con contacto y galería; exigirGrupoAsignado y restringirRutasCoordinador limitan al Coordinador a sus grupos.")
+  Component(pastoral, "Grupos pastorales y coordinador", "adminGrupos.* / gruposPastorales.service / contenidoPastoral.controller", "Página propia por grupo con contacto y galería. exigirGrupoAsignado y restringirRutasCoordinador limitan al Coordinador a sus grupos, su multimedia y las noticias de sus grupos (redactar y enviar a revisión; nunca publicar ni exportar).")
 
   Component(parroquia, "Horarios, servicios, videos, páginas y usuarios", "adminHorarios / adminServicios / adminVideos / adminPaginas / adminUsuarios (+ horarios, servicios, videos, paginas, usuarios, catalogos, salud)", "Contenido institucional por sede, sacramentos con noticias relacionadas, videos de YouTube, páginas con bloques JSONB y gestión de usuarios.")
 
@@ -69,6 +69,7 @@ Rel(publicaciones, bitacora, "registrarCambio en la transacción")
 Rel(proclamas, bitacora, "Registra la lectura (VIEW) sin datos personales")
 Rel(bitacora, cache, "programarInvalidacion al confirmar")
 Rel(multimedia, almacen, "Sube y borra objetos")
+Rel(publicaciones, pastoral, "Noticias del Coordinador: solo tipo Noticia, etiquetada con sus grupos (usuario_grupo_pastoral)")
 
 Rel(publicaciones, cache, "Lecturas públicas con caché (igual en eventos, proclamas, sedes, buscador y contenido pastoral)")
 Rel(datos, postgres, "SQL", "pg")
