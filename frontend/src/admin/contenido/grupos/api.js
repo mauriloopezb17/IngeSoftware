@@ -24,6 +24,11 @@ export async function actualizarGrupo(id, cuerpo) {
   return datos;
 }
 
+export async function actualizarDetalleGrupo(id, cuerpo) {
+  const { datos } = await clienteHttp.patch(`/admin/grupos-pastorales/${id}/detalle`, cuerpo);
+  return datos;
+}
+
 export function eliminarGrupo(id) {
   return clienteHttp.delete(`/admin/grupos-pastorales/${id}`);
 }
@@ -32,4 +37,3 @@ export async function reordenarGrupos(ids) {
   const { datos } = await clienteHttp.post('/admin/grupos-pastorales/reordenar', { ids });
   return datos;
 }
-

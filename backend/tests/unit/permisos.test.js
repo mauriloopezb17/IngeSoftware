@@ -37,6 +37,8 @@ describe('matriz de permisos', () => {
     ['MARKETING', 'avisos.gestionar', false],
     ['MARKETING', 'eventos.gestionar', false],
     ['MARKETING', 'eventos.detalle', true],
+    ['MARKETING', 'grupos.gestionar', false],
+    ['MARKETING', 'grupos.detalle', true],
     ['MARKETING', 'videos.gestionar', true],
     ['MARKETING', 'boletines.gestionar', true],
     ['MARKETING', 'multimedia.subir', true],

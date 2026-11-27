@@ -160,6 +160,27 @@ export const handlersPortal = [
     });
   }),
 
+  http.get(api('/sedes/:sede/grupos-pastorales/:slug'), ({ params }) => {
+    const fallo = validarSede(params.sede);
+    if (fallo) return fallo;
+
+    const grupo = esSedePrincipal(params.sede)
+      ? gruposPastoralesExaltacion.find((item) => item.slug === params.slug)
+      : null;
+
+    if (!grupo) {
+      return errorJson(404, 'NO_ENCONTRADO', `No existe el grupo pastoral «${params.slug}».`);
+    }
+
+    return HttpResponse.json({
+      datos: {
+        ...grupo,
+        galeria: grupo.galeria ?? [],
+        detalle: grupo.detalle ?? null,
+      },
+    });
+  }),
+
   http.get(api('/sedes/:sede/eventos'), ({ params, request }) => {
     const fallo = validarSede(params.sede);
     if (fallo) return fallo;

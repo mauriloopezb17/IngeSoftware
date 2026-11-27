@@ -99,6 +99,11 @@ export async function obtenerGruposPastorales(sede, senal) {
   return datos;
 }
 
+export async function obtenerGrupoPastoral(sede, slug, senal) {
+  const { datos } = await clienteHttp.get(`/sedes/${sede}/grupos-pastorales/${slug}`, { senal });
+  return datos;
+}
+
 export async function obtenerVideos(sede, senal) {
   const { datos } = await clienteHttp.get(`/sedes/${sede}/videos`, {
     parametros: { porPagina: 100 },
