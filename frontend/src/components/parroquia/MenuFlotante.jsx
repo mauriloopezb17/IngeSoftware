@@ -91,7 +91,9 @@ function MenuFlotante() {
 
     const manejarScroll = () => {
       if (rafIdRef.current !== null) return;
+      let ejecutado = false;
       rafIdRef.current = window.requestAnimationFrame(() => {
+        ejecutado = true;
         rafIdRef.current = null;
         const actualY = window.scrollY;
         const delta = actualY - ultimoScrollYRef.current;
@@ -111,6 +113,7 @@ function MenuFlotante() {
         }
         ultimoScrollYRef.current = actualY;
       });
+      if (ejecutado) rafIdRef.current = null;
     };
 
     window.addEventListener('scroll', manejarScroll, { passive: true });
@@ -181,7 +184,7 @@ function MenuFlotante() {
       ref={contenedorRef}
       aria-label="Accesos rápidos"
       aria-hidden={!visible}
-      className={`fixed top-1/2 left-3 z-30 hidden -translate-y-1/2 transition-[opacity,transform] duration-200 ease-salida motion-reduce:transition-none lg:block ${
+      className={`fixed top-1/2 left-3 z-30 -translate-y-1/2 transition-[opacity,transform] duration-200 ease-salida motion-reduce:transition-none ${
         visible ? 'opacity-100 translate-x-0' : 'invisible pointer-events-none -translate-x-2 opacity-0'
       }`}
     >
