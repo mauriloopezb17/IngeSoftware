@@ -61,7 +61,7 @@ function EncabezadoPagina({
                   {miga.enlace && !esUltima ? (
                     <Link
                       to={miga.enlace}
-                      className={`inline-flex min-h-11 items-center underline-offset-4 transition-colors duration-150 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                      className={`inline-flex min-h-11 min-w-11 items-center justify-center underline-offset-4 transition-colors duration-150 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 ${
                         esFoto
                           ? 'text-white/90 hover:text-white focus-visible:outline-gold'
                           : 'text-ink/80 hover:text-ink focus-visible:outline-ink'

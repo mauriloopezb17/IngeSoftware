@@ -136,8 +136,8 @@ function PiePagina() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 lg:col-span-8 lg:grid-cols-[1fr_1fr_1fr_1.45fr]">
-            <div>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:col-span-8 lg:grid-cols-[1fr_1fr_1fr_1.45fr]">
+            <div className="min-w-0">
               <h3 className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-gold">
                 Parroquia
               </h3>
@@ -191,7 +191,7 @@ function PiePagina() {
               </ul>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <h3 className="font-body text-eyebrow font-semibold uppercase tracking-[0.2em] text-gold">
                 Secretaría
               </h3>
@@ -205,7 +205,7 @@ function PiePagina() {
                           href={href}
                           target={href.startsWith('https') ? '_blank' : undefined}
                           rel={href.startsWith('https') ? 'noopener noreferrer' : undefined}
-                          className="inline-flex min-h-9 items-center font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                          className="inline-flex min-h-9 max-w-full items-center [overflow-wrap:anywhere] font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
                         >
                           {indiceArroba > 0 ? (
                             <span>
