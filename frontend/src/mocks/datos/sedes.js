@@ -45,6 +45,53 @@ export const sedesLista = [
   },
 ];
 
+export const sedesArbol = {
+  parroquias: [
+    {
+      ...sedesLista[0],
+      capillas: [
+        {
+          ...sedesLista[2],
+          comunidades: [
+            {
+              id: 4,
+              nombre: 'Comunidad San Gabriel (de ejemplo)',
+              slug: 'comunidad-san-gabriel-ejemplo',
+              tipo: { codigo: 'COMUNIDAD', nombre: 'Comunidad' },
+              sedePadre: {
+                id: 3,
+                nombre: 'Capilla San Pablo de la Cruz',
+                slug: 'capilla-san-pablo-de-la-cruz',
+              },
+              direccion: 'Obrajes, La Paz',
+              imagenPortada: null,
+              enlaceComoLlegar: null,
+            },
+          ],
+        },
+      ],
+      comunidades: [],
+    },
+    {
+      ...sedesLista[1],
+      capillas: [],
+      comunidades: [],
+    },
+  ],
+  comunidadesPasionistas: [
+    {
+      id: 5,
+      nombre: 'Comunidad Pasionista de Obrajes (de ejemplo)',
+      slug: 'comunidad-pasionista-obrajes-ejemplo',
+      tipo: { codigo: 'COMUNIDAD_PASIONISTA', nombre: 'Comunidad pasionista' },
+      sedePadre: null,
+      direccion: 'Av. Héctor Ormachea, Obrajes, La Paz',
+      imagenPortada: null,
+      enlaceComoLlegar: null,
+    },
+  ],
+};
+
 export const sedesDetalle = {
   'senor-de-la-exaltacion': {
     id: 1,

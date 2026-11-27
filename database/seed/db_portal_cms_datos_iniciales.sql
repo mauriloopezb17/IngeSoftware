@@ -4,7 +4,7 @@
 
 BEGIN;
 
-INSERT INTO tipo_sede (nombre) VALUES ('Parroquia'), ('Capilla');
+INSERT INTO tipo_sede (nombre) VALUES ('Parroquia'), ('Capilla') ON CONFLICT (nombre) DO NOTHING;
 
 -- Sedes. Los datos de la sede principal salen de la landing (Encabezado, Contacto,
 -- PiePagina y Comunidades). Las otras dos solo muestran nombre, tipo y "La Paz" en la landing.

@@ -53,7 +53,9 @@ Todos los catálogos en una sola respuesta, para llenar los selectores de los fo
     ],
     "tiposSede": [
       { "id": 1, "codigo": "PARROQUIA", "nombre": "Parroquia" },
-      { "id": 2, "codigo": "CAPILLA", "nombre": "Capilla" }
+      { "id": 2, "codigo": "CAPILLA", "nombre": "Capilla" },
+      { "id": 3, "codigo": "COMUNIDAD", "nombre": "Comunidad" },
+      { "id": 4, "codigo": "COMUNIDAD_PASIONISTA", "nombre": "Comunidad pasionista" }
     ],
     "estadosPublicacion": [
       { "id": 1, "codigo": "BORRADOR", "nombre": "Borrador" },
@@ -770,7 +772,7 @@ Reglas: `nombre` obligatorio (hasta 100 caracteres); `descripcionCorta` obligato
 
 ## 7. Grupos pastorales
 
-Permiso de escritura: `grupos.gestionar`.
+Permisos de escritura: `grupos.gestionar` (CRUD completo, orden y visibilidad) y `grupos.detalle` (descripción, horario, contacto, imagen y detalle de la página, incluyendo Marketing).
 
 ### Objeto grupo pastoral
 
@@ -782,41 +784,54 @@ Permiso de escritura: `grupos.gestionar`.
     "nombre": "Parroquia Señor de la Exaltación",
     "slug": "senor-de-la-exaltacion"
   },
+  "slug": "pastoral-juvenil",
   "nombre": "Pastoral Juvenil",
   "descripcion": null,
   "horarioReunion": "Viernes · 18:30",
-  "contacto": null,
+  "responsable": null,
+  "whatsapp": null,
+  "correo": null,
   "icono": "users",
   "imagen": null,
+  "detalle": null,
   "orden": 4,
   "visible": true
 }
 ```
 
-| Método y ruta                                 | Descripción                                           |
-| --------------------------------------------- | ----------------------------------------------------- |
-| `GET /api/admin/grupos-pastorales`            | Paginado (`porPagina` hasta 100). Filtros: `sede`, `visible`, `buscar`. Orden: `orden` (defecto), `-orden`, `nombre`, `-nombre`. |
-| `GET /api/admin/grupos-pastorales/:id`        | Un grupo.                                             |
-| `POST /api/admin/grupos-pastorales`           | Crea. `201`.                                          |
-| `PATCH /api/admin/grupos-pastorales/:id`      | Edita.                                                |
-| `DELETE /api/admin/grupos-pastorales/:id`     | Elimina.                                              |
-| `POST /api/admin/grupos-pastorales/reordenar` | `{ "ids": [1, 2, 3, 4, 5, 6] }`.                      |
+| Método y ruta                                    | Descripción                                                                                                               |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/admin/grupos-pastorales`               | Paginado (`porPagina` hasta 100). Filtros: `sede`, `visible`, `buscar`. Orden: `orden` (defecto), `-orden`, `nombre`, `-nombre`. |
+| `GET /api/admin/grupos-pastorales/:id`           | Un grupo.                                                                                                                 |
+| `POST /api/admin/grupos-pastorales`              | Crea (`grupos.gestionar`). `201`.                                                                                         |
+| `PATCH /api/admin/grupos-pastorales/:id`         | Edita (`grupos.gestionar`).                                                                                               |
+| `PATCH /api/admin/grupos-pastorales/:id/detalle` | Edita solo descripción, horario, responsable, WhatsApp, correo, foto principal y `detalle` (`grupos.detalle`).            |
+| `DELETE /api/admin/grupos-pastorales/:id`        | Elimina (`grupos.gestionar`).                                                                                             |
+| `POST /api/admin/grupos-pastorales/reordenar`    | `{ "ids": [1, 2, 3, 4, 5, 6] }` (`grupos.gestionar`).                                                                     |
 
 **Cuerpo de `POST`:**
 
 ```json
 {
   "nombre": "Pastoral Juvenil",
+  "slug": "pastoral-juvenil",
   "descripcion": "Jóvenes de 15 a 25 años que se reúnen a compartir, rezar y servir.",
   "horarioReunion": "Viernes · 18:30",
-  "contacto": "Coordinación juvenil: escribir por Messenger",
+  "responsable": "Coordinación juvenil",
+  "whatsapp": "+591 71234567",
+  "correo": "juvenil@parroquia.test",
   "icono": "users",
   "imagenId": null,
+  "detalle": {
+    "contenido": null,
+    "galeria": [],
+    "videoYoutubeId": null
+  },
   "visible": true
 }
 ```
 
-Reglas: `nombre` obligatorio (hasta 100); `horarioReunion` texto libre (hasta 100); `contacto` hasta 120; `descripcion` texto plano hasta 2000.
+Reglas: `nombre` obligatorio (hasta 100); `slug` opcional (se genera desde el nombre si no se envía; único por sede, hasta 120); `horarioReunion` texto libre (hasta 100); `responsable` hasta 120; `whatsapp` teléfono válido (7–15 dígitos con `+`, dígitos, espacios o guiones); `correo` email válido (hasta 120); `descripcion` texto plano hasta 2000; `detalle` acepta `contenido` (BlockNote), `galeria` (hasta 24 ids de imágenes o videos de la misma sede) y `videoYoutubeId` (id o URL de YouTube).
 
 ---
 
@@ -860,16 +875,31 @@ El mismo objeto del [endpoint público](publico.md#get-apisedessedevideos), más
 
 ### Objeto sede (vista del panel)
 
-El mismo objeto de [`GET /api/sedes/:sede`](publico.md#get-apisedessede), más `activo`. Además, `redesSociales` incluye el `id` de la red y `configuracion` trae todas las claves guardadas.
+El mismo objeto de [`GET /api/sedes/:sede`](publico.md#get-apisedessede), más `activo` y `orden` (posición entre sedes hermanas, entero `>= 0`). Además, `redesSociales` incluye el `id` de la red y `configuracion` trae todas las claves guardadas.
+
+### Reglas de jerarquía
+
+| Tipo (`tipo.codigo`)   | Sede superior permitida (`sedePadreId`) |
+| ---------------------- | --------------------------------------- |
+| `PARROQUIA`            | Ninguna (`null`)                        |
+| `CAPILLA`              | Una `PARROQUIA`                         |
+| `COMUNIDAD`            | Una `PARROQUIA` o una `CAPILLA`         |
+| `COMUNIDAD_PASIONISTA` | Ninguna (`null`, entidad aparte)        |
+
+- No se permiten ciclos (una sede no puede depender de sí misma ni de sus descendientes).
+- No se puede cambiar el `tipo` de una sede si sus sedes dependientes dejarían de cumplir la tabla (`409 CONFLICTO`).
+- No se puede desactivar (`activo: false`) una sede que tenga sedes dependientes activas (`409 CONFLICTO`).
 
 ### Endpoints
 
-| Método y ruta                | Permiso                                       | Descripción                                                                                                                 |
-| ---------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/admin/sedes`       | todos                                         | Paginado (`porPagina` hasta 100). Filtros: `tipo`, `activo`, `buscar`. Orden: `id` (defecto), `-id`, `nombre`, `-nombre`. El Administrador ve todas, incluidas las inactivas; los demás roles solo la suya. |
-| `GET /api/admin/sedes/:id`   | todos                                         | Una sede.                                                                                                                   |
-| `POST /api/admin/sedes`      | `sedes.gestionar`                             | Crea una sede. `201`.                                                                                                       |
-| `PATCH /api/admin/sedes/:id` | `sede.editar` (la propia) o `sedes.gestionar` | Edita datos, configuración y redes sociales. Solo `sedes.gestionar` puede cambiar `slug`, `tipo`, `sedePadreId` y `activo`. |
+| Método y ruta                    | Permiso                                       | Descripción                                                                                                                               |
+| -------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/admin/sedes`           | todos                                         | Paginado (`porPagina` hasta 100). Filtros: `tipo`, `activo`, `buscar`. Orden: `id` (defecto), `-id`, `nombre`, `-nombre`, `orden`, `-orden`. El Administrador ve todas, incluidas las inactivas; los demás roles solo la suya. |
+| `GET /api/admin/sedes/arbol`     | todos                                         | Devuelve `{ datos: { parroquias: [...], comunidadesPasionistas: [...] } }` ordenado por `orden` y `nombre`, con `capillas` y `comunidades` anidadas. |
+| `GET /api/admin/sedes/:id`       | todos                                         | Una sede.                                                                                                                                 |
+| `POST /api/admin/sedes`          | `sedes.gestionar`                             | Crea una sede. `201`. Valida la jerarquía.                                                                                                |
+| `PATCH /api/admin/sedes/:id`     | `sede.editar` (la propia) o `sedes.gestionar` | Edita datos, configuración y redes sociales. Solo `sedes.gestionar` puede cambiar `slug`, `tipo`, `sedePadreId`, `orden` y `activo`.      |
+| `POST /api/admin/sedes/:id/mover`| `sedes.gestionar`                             | Mueve la sede en la jerarquía (`{ sedePadreId, orden? }`) aplicando las reglas de jerarquía y sin ciclos.                                 |
 
 **Cuerpo de `PATCH`** (Secretaría actualiza el aviso de la barra superior, el WhatsApp y las redes):
 
@@ -998,10 +1028,13 @@ Permiso: `proclamas.observaciones` (solo `PARROCO`, limitado a su sede; otro rol
 
 | Método y ruta                                         | Descripción                                                                                                     |
 | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `GET /api/admin/proclamas/observaciones`              | Lista paginada (`estado=no-leidas\|todas`, `proclamaId`, `buscar` en nombre o mensaje, `pagina`, `porPagina`), más reciente primero. |
+| `GET /api/admin/proclamas/observaciones`              | Lista paginada (`estado=no-leidas\|todas`, `proclamaId`, `buscar` en nombre o mensaje, `pagina`, `porPagina`), más reciente primero. Registra `VIEW` en la bitácora (`entidad = 'observacion_proclama'`, `entidadId = '*'`, sin `buscar`). |
 | `GET /api/admin/proclamas/observaciones/resumen`      | Devuelve `{ "datos": { "noLeidas": N } }` para la insignia del menú.                                            |
+| `GET /api/admin/proclamas/observaciones/:id`          | Devuelve una observación y registra `VIEW` en la bitácora con su id (sin datos personales).                    |
 | `PATCH /api/admin/proclamas/observaciones/:id`        | `{ "leida": true \| false }`. Guarda o borra `leidoEn` y `leidoPor`.                                            |
 | `DELETE /api/admin/proclamas/observaciones/:id`       | Elimina la observación (`204`). En la bitácora solo se registra la acción y el id, nunca los datos personales. |
+
+- `nombreCompleto` puede ser `null` cuando la observación fue enviada de forma anónima; en el panel y en el CSV se muestra como `"Anónima"`.
 
 ---
 
@@ -1186,7 +1219,7 @@ Paginada. Orden: `-fecha` (más recientes primero).
 | `entidad`             | Nombre de la tabla: `publicacion`, `evento`, `horario`, `usuario`, etc. |
 | `entidadId`           | Id del registro (texto).                                                |
 | `usuario`             | Id del usuario que hizo el cambio.                                      |
-| `accion`              | `INSERT`, `UPDATE`, `DELETE` o `EXPORT`.                                |
+| `accion`              | `INSERT`, `UPDATE`, `DELETE`, `EXPORT` o `VIEW`.                        |
 | `desde`, `hasta`      | Fechas `YYYY-MM-DD`, ambas incluidas.                                   |
 | `pagina`, `porPagina` | Paginación estándar.                                                    |
 

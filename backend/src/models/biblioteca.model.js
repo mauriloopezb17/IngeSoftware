@@ -53,7 +53,15 @@ const USOS = `
     FROM proclama pr
    WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND (pr.detalle -> 'contenido')::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'
   UNION ALL
-  SELECT 13, 'PORTADA_BOLETIN', b.titulo FROM boletin b WHERE b.portada_id = m.id`;
+  SELECT 13, 'PORTADA_BOLETIN', b.titulo FROM boletin b WHERE b.portada_id = m.id
+  UNION ALL
+  SELECT 14, 'GALERIA_GRUPO', g.nombre
+    FROM grupo_pastoral g
+   WHERE g.detalle -> 'galeria' @> to_jsonb(m.id)
+  UNION ALL
+  SELECT 15, 'CONTENIDO_GRUPO', g.nombre
+    FROM grupo_pastoral g
+   WHERE ${UUID_DE_LA_CLAVE} IS NOT NULL AND (g.detalle -> 'contenido')::text LIKE '%' || ${UUID_DE_LA_CLAVE} || '%'`;
 
 const SELECCION = `
   SELECT ${COLUMNAS_ARCHIVO},

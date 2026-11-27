@@ -5,6 +5,11 @@ export async function obtenerSedes(senal) {
   return datos;
 }
 
+export async function obtenerArbolSedes(senal) {
+  const { datos } = await clienteHttp.get('/sedes/arbol', { senal });
+  return datos;
+}
+
 export async function obtenerSede(sede, senal) {
   const { datos } = await clienteHttp.get(`/sedes/${sede}`, { senal });
   return datos;
@@ -75,6 +80,13 @@ export async function obtenerProclama(sede, id, senal) {
   return datos;
 }
 
+export async function obtenerVerificacionObservacion(sede, id, senal) {
+  const { datos } = await clienteHttp.get(`/sedes/${sede}/proclamas/${id}/observaciones/verificacion`, {
+    senal,
+  });
+  return datos;
+}
+
 export async function enviarObservacionProclama(sede, id, cuerpo) {
   const { datos } = await clienteHttp.post(`/sedes/${sede}/proclamas/${id}/observaciones`, cuerpo);
   return datos;
@@ -89,6 +101,11 @@ export async function obtenerGruposPastorales(sede, senal) {
     parametros: { porPagina: 100 },
     senal,
   });
+  return datos;
+}
+
+export async function obtenerGrupoPastoral(sede, slug, senal) {
+  const { datos } = await clienteHttp.get(`/sedes/${sede}/grupos-pastorales/${slug}`, { senal });
   return datos;
 }
 

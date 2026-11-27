@@ -1,10 +1,11 @@
 // Pruebas de integración de observaciones privadas sobre proclamas (migración 007).
 import { Writable } from 'node:stream';
 import pino from 'pino';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { cerrarPool, consultar } from '../../src/db/index.js';
 import { cerrarRedis } from '../../src/db/redis.js';
+import { emitirTokenObservacion } from '../../src/services/observacionesProclama.service.js';
 import { crearPanel, registrosDe, sedePrincipal } from '../apoyo/panel.js';
 
 const app = createApp();
@@ -92,9 +93,11 @@ afterAll(async () => {
 const RUTA_PUB = (id, sedeSlug = sede.slug) =>
   `/api/sedes/${sedeSlug}/proclamas/${id}/observaciones`;
 const RUTA_ADM = '/api/admin/proclamas/observaciones';
+const tokenValido = (id = proclamaVigenteId) =>
+  emitirTokenObservacion(id, { ahora: Date.now() - 5000 });
 
 describe('observaciones de proclamas (público)', () => {
-  it('acepta solo correo o solo teléfono, no devuelve los datos y detalle informa aceptaObservaciones', async () => {
+  it('acepta solo correo o solo teléfono, anónima sin nombre, no devuelve los datos y detalle informa aceptaObservaciones', async () => {
     const detVigente = await como().get(`/api/sedes/${sede.slug}/proclamas/${proclamaVigenteId}`);
     expect(detVigente.status).toBe(200);
     expect(detVigente.body.datos.aceptaObservaciones).toBe(true);
@@ -103,6 +106,11 @@ describe('observaciones de proclamas (público)', () => {
     expect(detPasada.status).toBe(200);
     expect(detPasada.body.datos.aceptaObservaciones).toBe(false);
 
+    const verifRes = await como().get(`${RUTA_PUB(proclamaVigenteId)}/verificacion`);
+    expect(verifRes.status).toBe(200);
+    expect(verifRes.headers['cache-control']).toContain('no-store');
+    expect(typeof verifRes.body.datos.token).toBe('string');
+
     const soloCorreo = await como()
       .post(RUTA_PUB(proclamaVigenteId), {
         nombreCompleto: '  Juan   Pérez  ',
@@ -110,6 +118,7 @@ describe('observaciones de proclamas (público)', () => {
         telefono: '',
         mensaje: 'Observación confidencial enviada solo con correo.',
         sitioWeb: '',
+        verificacion: tokenValido(),
       })
       .set('X-Forwarded-For', '10.10.10.1');
     expect(soloCorreo.status, JSON.stringify(soloCorreo.body)).toBe(201);
@@ -120,10 +129,81 @@ describe('observaciones de proclamas (público)', () => {
         nombreCompleto: 'Ana Gómez',
         telefono: '+591 7123-4567',
         mensaje: 'Observación confidencial enviada solo con teléfono.',
+        verificacion: tokenValido(),
       })
       .set('X-Forwarded-For', '10.10.10.2');
     expect(soloTel.status, JSON.stringify(soloTel.body)).toBe(201);
     expect(soloTel.body).toEqual({ datos: { recibido: true } });
+
+    const anonima = await como()
+      .post(RUTA_PUB(proclamaVigenteId), {
+        correo: 'anonima.obs@ejemplo.com',
+        mensaje: 'Observación anónima sin nombre completo.',
+        verificacion: tokenValido(),
+      })
+      .set('X-Forwarded-For', '10.10.10.11');
+    expect(anonima.status, JSON.stringify(anonima.body)).toBe(201);
+
+    const { rows: filasAnonimas } = await consultar(
+      'SELECT nombre_completo FROM observacion_proclama WHERE correo = $1',
+      ['anonima.obs@ejemplo.com'],
+    );
+    expect(filasAnonimas).toHaveLength(1);
+    expect(filasAnonimas[0].nombre_completo).toBeNull();
+  });
+
+  it('valida token ausente, inválido, de otra proclama, demasiado rápido y vencido', async () => {
+    const base = {
+      correo: 'verif@ejemplo.com',
+      mensaje: 'Observación válida para probar verificación.',
+    };
+
+    const sinToken = await como()
+      .post(RUTA_PUB(proclamaVigenteId), base)
+      .set('X-Forwarded-For', '10.10.10.21');
+    expect(sinToken.status).toBe(400);
+    expect(sinToken.body.error.detalles[0].campo).toBe('verificacion');
+
+    const invalido = await como()
+      .post(RUTA_PUB(proclamaVigenteId), { ...base, verificacion: 'token.falso.123' })
+      .set('X-Forwarded-For', '10.10.10.22');
+    expect(invalido.status).toBe(400);
+    expect(invalido.body.error.detalles[0].campo).toBe('verificacion');
+
+    const otraProclama = await como()
+      .post(RUTA_PUB(proclamaVigenteId), {
+        ...base,
+        verificacion: tokenValido(proclamaPasadaId),
+      })
+      .set('X-Forwarded-For', '10.10.10.23');
+    expect(otraProclama.status).toBe(400);
+    expect(otraProclama.body.error.detalles[0].campo).toBe('verificacion');
+
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      const inicio = new Date('2026-11-27T10:00:00-04:00');
+      vi.setSystemTime(inicio);
+      const tokenFresco = (await como().get(`${RUTA_PUB(proclamaVigenteId)}/verificacion`)).body
+        .datos.token;
+
+      // Antes de 3 segundos -> 400
+      vi.setSystemTime(new Date(inicio.getTime() + 2500));
+      const muyRapido = await como()
+        .post(RUTA_PUB(proclamaVigenteId), { ...base, verificacion: tokenFresco })
+        .set('X-Forwarded-For', '10.10.10.24');
+      expect(muyRapido.status).toBe(400);
+      expect(muyRapido.body.error.detalles[0].campo).toBe('verificacion');
+
+      // Más de 2 horas -> 400
+      vi.setSystemTime(new Date(inicio.getTime() + 2 * 60 * 60 * 1000 + 1000));
+      const vencido = await como()
+        .post(RUTA_PUB(proclamaVigenteId), { ...base, verificacion: tokenFresco })
+        .set('X-Forwarded-For', '10.10.10.25');
+      expect(vencido.status).toBe(400);
+      expect(vencido.body.error.detalles[0].campo).toBe('verificacion');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('valida contacto obligatorio, mensaje corto/largo, campos extra, 404 no visible y 409 boda pasada', async () => {
@@ -133,6 +213,7 @@ describe('observaciones de proclamas (público)', () => {
         correo: '',
         telefono: '',
         mensaje: 'Mensaje válido de más de diez caracteres.',
+        verificacion: tokenValido(),
       })
       .set('X-Forwarded-For', '10.10.10.3');
     expect(sinContacto.status).toBe(400);
@@ -143,6 +224,7 @@ describe('observaciones de proclamas (público)', () => {
         nombreCompleto: 'Luis Rojas',
         correo: 'luis@ejemplo.com',
         mensaje: 'Corto',
+        verificacion: tokenValido(),
       })
       .set('X-Forwarded-For', '10.10.10.4');
     expect(corto.status).toBe(400);
@@ -153,6 +235,7 @@ describe('observaciones de proclamas (público)', () => {
         nombreCompleto: 'Luis Rojas',
         correo: 'luis@ejemplo.com',
         mensaje: 'a'.repeat(2001),
+        verificacion: tokenValido(),
       })
       .set('X-Forwarded-For', '10.10.10.5');
     expect(largo.status).toBe(400);
@@ -163,6 +246,7 @@ describe('observaciones de proclamas (público)', () => {
         nombreCompleto: 'Luis Rojas',
         correo: 'luis@ejemplo.com',
         mensaje: 'Mensaje válido de más de diez caracteres.',
+        verificacion: tokenValido(),
         campoExtra: 'no',
       })
       .set('X-Forwarded-For', '10.10.10.6');
@@ -173,6 +257,7 @@ describe('observaciones de proclamas (público)', () => {
         nombreCompleto: 'Luis Rojas',
         correo: 'luis@ejemplo.com',
         mensaje: 'Mensaje válido de más de diez caracteres.',
+        verificacion: tokenValido(proclamaOcultaId),
       })
       .set('X-Forwarded-For', '10.10.10.7');
     expect(oculta.status).toBe(404);
@@ -182,6 +267,7 @@ describe('observaciones de proclamas (público)', () => {
         nombreCompleto: 'Luis Rojas',
         correo: 'luis@ejemplo.com',
         mensaje: 'Mensaje válido de más de diez caracteres.',
+        verificacion: tokenValido(proclamaPasadaId),
       })
       .set('X-Forwarded-For', '10.10.10.8');
     expect(pasada.status).toBe(409);
@@ -198,6 +284,7 @@ describe('observaciones de proclamas (público)', () => {
         correo: 'bot@ejemplo.com',
         mensaje: 'Mensaje automático enviado por un bot.',
         sitioWeb: 'https://spam.ejemplo.com',
+        verificacion: tokenValido(),
       })
       .set('X-Forwarded-For', '10.10.10.9');
     expect(res.status).toBe(201);
@@ -216,6 +303,7 @@ describe('observaciones de proclamas (público)', () => {
           nombreCompleto: `Persona ${i}`,
           correo: `p${i}@ejemplo.com`,
           mensaje: 'Observación válida para probar límite de tasa.',
+          verificacion: tokenValido(),
         })
         .set('X-Forwarded-For', ip);
       expect(ok.status).toBe(201);
@@ -225,6 +313,7 @@ describe('observaciones de proclamas (público)', () => {
         nombreCompleto: 'Persona 6',
         correo: 'p6@ejemplo.com',
         mensaje: 'Observación que excede el límite por hora.',
+        verificacion: tokenValido(),
       })
       .set('X-Forwarded-For', ip);
     expect(bloqueado.status).toBe(429);
@@ -320,6 +409,7 @@ describe('observaciones de proclamas (admin)', () => {
         nombreCompleto: 'Persona Ajena',
         correo: 'ajena@ejemplo.com',
         mensaje: 'Observación en otra sede para verificar aislamiento.',
+        verificacion: tokenValido(proclamaAjenaId),
       })
       .set('X-Forwarded-For', '10.10.10.50');
 
@@ -383,5 +473,45 @@ describe('observaciones de proclamas (admin)', () => {
     const idsAsc = asc.body.datos.map((o) => o.id);
     const idsDesc = desc.body.datos.map((o) => o.id);
     expect(idsDesc).toEqual([...idsAsc].reverse());
+  });
+
+  it('registra VIEW en la bitácora al listar y al abrir una observación sin datos personales, y exporta Anónima en CSV', async () => {
+    const lista = await como('parroco').get(
+      `${RUTA_ADM}?estado=todas&proclamaId=${proclamaVigenteId}&buscar=${encodeURIComponent('Observación anónima sin nombre')}`,
+    );
+    expect(lista.status).toBe(200);
+    const obsAnonima = lista.body.datos.find((o) => o.correo === 'anonima.obs@ejemplo.com');
+    expect(obsAnonima).toBeDefined();
+    expect(obsAnonima.nombreCompleto).toBeNull();
+
+    const detalle = await como('parroco').get(`${RUTA_ADM}/${obsAnonima.id}`);
+    expect(detalle.status).toBe(200);
+    expect(detalle.body.datos.id).toBe(obsAnonima.id);
+
+    // Permisos en GET /:id
+    expect((await como().get(`${RUTA_ADM}/${obsAnonima.id}`)).status).toBe(401);
+    expect((await como('admin').get(`${RUTA_ADM}/${obsAnonima.id}`)).status).toBe(403);
+    expect((await como('secretaria').get(`${RUTA_ADM}/${obsAnonima.id}`)).status).toBe(403);
+    expect((await como('marketing').get(`${RUTA_ADM}/${obsAnonima.id}`)).status).toBe(403);
+
+    const regLista = await registrosDe('observacion_proclama', '*');
+    const viewsLista = regLista.filter((r) => r.accion === 'VIEW');
+    expect(viewsLista.length).toBeGreaterThanOrEqual(1);
+    const ultimoViewLista = viewsLista[0];
+    expect(JSON.stringify(ultimoViewLista.datos_nuevos)).not.toContain('anonima.obs');
+    expect(JSON.stringify(ultimoViewLista.datos_nuevos)).not.toContain('Observación anónima');
+
+    const regDetalle = await registrosDe('observacion_proclama', obsAnonima.id);
+    const viewDetalle = regDetalle.find((r) => r.accion === 'VIEW');
+    expect(viewDetalle).toBeDefined();
+    expect(JSON.stringify(viewDetalle.datos_nuevos)).not.toContain('anonima.obs');
+    expect(JSON.stringify(viewDetalle.datos_nuevos)).not.toContain('Observación anónima');
+
+    // CSV con "Anónima"
+    const csvRes = await como('parroco').get(
+      `${RUTA_ADM}/exportar?estado=todas&proclamaId=${proclamaVigenteId}`,
+    );
+    expect(csvRes.status).toBe(200);
+    expect(csvRes.text).toContain('Anónima');
   });
 });

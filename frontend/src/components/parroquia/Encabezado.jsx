@@ -217,6 +217,7 @@ function EncabezadoBase({ transparente, rutaActual }) {
 
   const enlacesNosotros = [
     { nombre: 'Quiénes somos', enlace: '/nosotros' },
+    { nombre: 'Nuestras comunidades', enlace: '/comunidades' },
     ...paginasNosotros,
   ];
 
