@@ -68,9 +68,10 @@ describe('matriz de permisos', () => {
       }
     });
 
-    it('usuarios solo la ve el Administrador', () => {
+    it('usuarios la ven el Administrador y el Párroco', () => {
       expect(usuariosSeed.filter((u) => puedeVerSeccion(u, 'usuarios')).map((u) => u.rol.codigo)).toEqual([
         'ADMINISTRADOR',
+        'PARROCO',
       ]);
     });
 

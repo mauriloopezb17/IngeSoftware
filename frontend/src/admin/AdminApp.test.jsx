@@ -107,11 +107,11 @@ describe('panel: rutas protegidas y menú por rol', () => {
       expect(await titulosDelMenu()).toEqual(titulos(...todas));
     });
 
-    it('el Párroco ve todo menos Usuarios', async () => {
+    it('el Párroco ve todas las secciones (Usuarios en solo lectura)', async () => {
       await iniciarSesion('parroco@parroquia.test');
       montar('/admin/inicio');
 
-      expect(await titulosDelMenu()).toEqual(titulos(...todas.filter((c) => c !== 'usuarios')));
+      expect(await titulosDelMenu()).toEqual(titulos(...todas));
     });
 
     it('Secretaría y Marketing no ven Usuarios ni Bitácora', async () => {

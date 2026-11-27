@@ -14,6 +14,7 @@ import { usePermisos } from '../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   EncabezadoPantalla,
   EsqueletoTarjetas,
   EstadoVacio,
@@ -84,6 +85,13 @@ export default function Multimedia() {
         titulo="Multimedia"
         descripcion="Imágenes, videos y documentos de la sede."
         headingRef={inicioRef}
+        acciones={
+          <BotonExportarCsv
+            recurso="multimedia"
+            permiso="multimedia.exportar"
+            filtros={filtrosActivos}
+          />
+        }
       />
 
       {puede('multimedia.subir') && <SubidaArchivos />}

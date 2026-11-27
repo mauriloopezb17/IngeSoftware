@@ -24,6 +24,17 @@ export function requerirPermiso(permiso, mensaje) {
   };
 }
 
+// Exige al menos uno de los permisos indicados.
+export function requerirAlgunPermiso(permisos, mensaje) {
+  return function comprobarAlgunPermiso(req, _res, next) {
+    const { rol } = usuarioDeLaSesion(req);
+    if (!permisos.some((permiso) => tienePermiso(rol, permiso))) {
+      return next(ErrorApp.sinPermiso(mensaje));
+    }
+    return next();
+  };
+}
+
 // Exige uno de los roles indicados (códigos de la API: 'ADMINISTRADOR', 'PARROCO', ...).
 export function requerirRol(...roles) {
   return function comprobarRol(req, _res, next) {

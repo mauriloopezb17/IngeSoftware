@@ -24,6 +24,7 @@ export const paramsPublicacionProclama = z.object({
 });
 
 export const consultaProclamas = esquemaListado({
+  conBuscar: true,
   filtros: {
     sede: slug.optional(),
     vigentes: booleanoQuery.optional(),
@@ -153,6 +154,7 @@ export const cuerpoCrearObservacion = z
   });
 
 export const consultaObservaciones = esquemaListado({
+  conBuscar: true,
   filtros: {
     estado: z
       .enum(['no-leidas', 'todas'], { error: 'Debe ser no-leidas o todas.' })

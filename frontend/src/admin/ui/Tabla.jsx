@@ -8,7 +8,7 @@ export function Tabla({
   tenue = false,
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-sand bg-white">
+    <div className="relative overflow-x-auto rounded-lg border border-sand bg-white">
       <table className={`w-full border-collapse text-left text-sm ${claseTabla} ${tenue ? 'opacity-60' : ''}`}>
         {caption && (
           <caption className={captionVisible ? 'border-b border-sand bg-panel px-4 py-2 text-left text-xs text-muted' : 'sr-only'}>
@@ -21,7 +21,7 @@ export function Tabla({
               const texto = typeof encabezado === 'object' && encabezado !== null && 'texto' in encabezado ? encabezado.texto : encabezado;
               const clase = typeof encabezado === 'object' && encabezado !== null && 'clase' in encabezado ? encabezado.clase : '';
               return (
-                <th key={typeof texto === 'string' ? texto : indice} scope="col" className={`px-4 py-3 ${clase}`}>
+                <th key={typeof texto === 'string' ? texto : indice} scope="col" className={`px-3 py-2.5 sm:px-4 sm:py-3 ${clase}`}>
                   {texto}
                 </th>
               );
@@ -44,7 +44,7 @@ export function FilaTabla({ className = '', children, ...props }) {
 
 export function CeldaTabla({ className = '', children, ...props }) {
   return (
-    <td className={`px-4 py-3 align-top text-ink ${className}`} {...props}>
+    <td className={`px-3 py-2.5 align-top text-ink sm:px-4 sm:py-3 ${className}`} {...props}>
       {children}
     </td>
   );

@@ -50,12 +50,29 @@ export function crearControladorUsuariosAdmin(ctx) {
 
   const handlers = [
     http.get(api('/admin/usuarios'), ({ request }) => {
-      const auth = ctx.autenticar('usuarios.gestionar', 'Solo el Administrador puede gestionar usuarios.');
+      const auth = ctx.autenticar();
       if (auth.respuesta) return auth.respuesta;
+      const permisos = auth.usuario.permisos ?? [];
+      if (!permisos.includes('usuarios.gestionar') && !permisos.includes('usuarios.exportar')) {
+        return HttpResponse.json(
+          {
+            error: {
+              codigo: 'SIN_PERMISO',
+              mensaje: 'Tu rol no tiene permiso para consultar usuarios.',
+              detalles: [],
+            },
+          },
+          { status: 403 },
+        );
+      }
 
       const parametros = new URL(request.url).searchParams;
       const rol = parametros.get('rol') || '';
-      const sede = parametros.get('sede') || '';
+      const sedeSolicitada = parametros.get('sede') || '';
+      const sede =
+        auth.usuario.rol.codigo === 'ADMINISTRADOR'
+          ? sedeSolicitada
+          : (auth.usuario.sede?.slug ?? '');
       const activoParam = parametros.get('activo');
       const buscar = normalizarTexto(parametros.get('buscar'));
       const pagina = Math.max(1, Number(parametros.get('pagina') || 1));

@@ -4,6 +4,7 @@ import '../config/zod.js';
 import { contenidoBlockNote } from './blocknote.js';
 import {
   booleanoQuery,
+  esquemaExportacion,
   esquemaListado,
   fecha,
   fechaHoraConZona,
@@ -22,7 +23,8 @@ import {
 
 export const paramsEvento = z.object({ id });
 
-export const consultaEventos = esquemaListado({
+const consultaEventosBase = esquemaListado({
+  conBuscar: true,
   filtros: {
     sede: slug.optional(),
     desde: fecha.optional(),
@@ -33,10 +35,16 @@ export const consultaEventos = esquemaListado({
   },
   ordenes: ['fechaInicio', '-fechaInicio'],
   ordenPredeterminado: 'fechaInicio',
-}).refine(({ desde, hasta }) => !desde || !hasta || hasta >= desde, {
-  path: ['hasta'],
-  message: 'Debe ser igual o posterior a desde.',
 });
+
+const conRangoFechas = (esquema) =>
+  esquema.refine(({ desde, hasta }) => !desde || !hasta || hasta >= desde, {
+    path: ['hasta'],
+    message: 'Debe ser igual o posterior a desde.',
+  });
+
+export const consultaEventos = conRangoFechas(consultaEventosBase);
+export const consultaEventosExportar = conRangoFechas(esquemaExportacion(consultaEventosBase));
 
 const titulo = z
   .string({ error: 'Debe ser un texto.' })

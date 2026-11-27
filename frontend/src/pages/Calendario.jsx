@@ -206,26 +206,28 @@ function Calendario() {
             })}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <label
-              htmlFor="filtro-mes-calendario"
-              className="font-body text-meta font-semibold text-muted"
-            >
-              Mes
-            </label>
-            <select
-              id="filtro-mes-calendario"
-              className="min-h-11 rounded-sm border border-sand bg-white px-3 py-2 font-body text-meta font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              value={mesActivo}
-              onChange={(evento) => actualizarFiltros({ mes: evento.target.value })}
-            >
-              <option value="">Todos los próximos meses</option>
-              {opcionesMeses.map((opcion) => (
-                <option key={opcion.valor} value={opcion.valor}>
-                  {opcion.etiqueta}
-                </option>
-              ))}
-            </select>
+          <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
+            <div className="flex w-full items-center gap-2 sm:w-auto">
+              <label
+                htmlFor="filtro-mes-calendario"
+                className="font-body text-meta font-semibold text-muted"
+              >
+                Mes
+              </label>
+              <select
+                id="filtro-mes-calendario"
+                className="min-h-11 flex-1 rounded-sm border border-sand bg-white px-3 py-2 font-body text-meta font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:flex-initial"
+                value={mesActivo}
+                onChange={(evento) => actualizarFiltros({ mes: evento.target.value })}
+              >
+                <option value="">Todos los próximos meses</option>
+                {opcionesMeses.map((opcion) => (
+                  <option key={opcion.valor} value={opcion.valor}>
+                    {opcion.etiqueta}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {hayFiltrosActivos && (
               <button

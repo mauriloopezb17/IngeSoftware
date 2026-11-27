@@ -85,6 +85,7 @@ const configuracion = z.record(z.string().min(1), z.unknown());
 export const paramsSede = z.object({ id });
 
 export const consultaSedes = esquemaListado({
+  conBuscar: true,
   filtros: {
     tipo: listaCodigos(TIPOS_SEDE.codigos).optional(),
     activo: booleanoQuery.optional(),

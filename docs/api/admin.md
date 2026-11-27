@@ -7,6 +7,7 @@ Endpoints del panel CMS (`frontend/src/admin/`), todos bajo `/api/admin/...`. Si
 - **Sesión y permisos**: sin sesión, `401 NO_AUTENTICADO`. Sin el permiso de la [matriz](autenticacion.md#7-matriz-de-permisos), `403 SIN_PERMISO`. Todos los roles pueden hacer `GET` sobre los recursos de su sede, salvo usuarios y bitácora.
 - **Sede**: las listas aceptan `sede` (slug). Para los roles que no son Administrador, la sede se fuerza a la propia. Al crear, el Administrador indica `sedeId` en el cuerpo; para los demás roles ese campo se ignora y se usa su sede. Un recurso de otra sede responde `403 SIN_PERMISO`.
 - **Lecturas por id**: `GET /api/admin/<recurso>/:id`. Si el id no existe, `404 NO_ENCONTRADO`.
+- **Exportación a CSV**: cada listado del panel (y las observaciones confidenciales en `GET /api/admin/proclamas/observaciones/exportar`) expone `GET /api/admin/<recurso>/exportar` con los mismos filtros, alcance por sede y ordenamiento que el listado, sin `pagina` ni `porPagina`. Responde `200` con `Content-Type: text/csv; charset=utf-8`, `Content-Disposition: attachment; filename="<recurso>-AAAA-MM-DD.csv"` (fecha de Bolivia), `Cache-Control: no-store`, BOM UTF-8, separador `;`, CRLF y protección contra inyección de fórmulas. Si supera 10 000 filas responde `422 DEMASIADOS_REGISTROS`. Cada exportación queda registrada en `bitacora_cambio` con acción `EXPORT`.
 - **`PATCH`**: solo los campos enviados cambian; `null` borra un campo opcional. Responde `200` con el objeto completo.
 - **`DELETE`**: responde `204`. Si otro registro depende del recurso, responde `409 CONFLICTO` y el `mensaje` dice qué lo usa.
 - **Reordenar**: los recursos con `orden` (servicios, preguntas frecuentes, grupos, videos y bloques) tienen `POST .../reordenar` con `{ "ids": [...] }`, que recibe **todos** los ids en el nuevo orden. Responde `200` con la lista ordenada. Si faltan o sobran ids, `400 VALIDACION`.
@@ -1185,7 +1186,7 @@ Paginada. Orden: `-fecha` (más recientes primero).
 | `entidad`             | Nombre de la tabla: `publicacion`, `evento`, `horario`, `usuario`, etc. |
 | `entidadId`           | Id del registro (texto).                                                |
 | `usuario`             | Id del usuario que hizo el cambio.                                      |
-| `accion`              | `INSERT`, `UPDATE` o `DELETE`.                                          |
+| `accion`              | `INSERT`, `UPDATE`, `DELETE` o `EXPORT`.                                |
 | `desde`, `hasta`      | Fechas `YYYY-MM-DD`, ambas incluidas.                                   |
 | `pagina`, `porPagina` | Paginación estándar.                                                    |
 

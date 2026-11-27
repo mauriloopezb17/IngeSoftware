@@ -38,6 +38,7 @@ const iconoLucide = z.preprocess(
 export const paramsGrupo = z.object({ id });
 
 export const consultaGrupos = esquemaListado({
+  conBuscar: true,
   filtros: {
     sede: slug.optional(),
     visible: booleanoQuery.optional(),

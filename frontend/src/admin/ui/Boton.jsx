@@ -9,7 +9,7 @@ const VARIANTES = {
 
 const TAMANOS = {
   md: 'min-h-11 px-4 py-2 text-sm',
-  sm: 'min-h-9 px-3 py-1.5 text-xs',
+  sm: 'min-h-11 px-3 py-2 text-xs lg:min-h-9 lg:py-1.5',
 };
 
 // Botón reutilizable del panel de gestión con variantes, tamaños, estado de carga y soporte polimórfico.

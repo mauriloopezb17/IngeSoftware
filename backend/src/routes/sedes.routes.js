@@ -21,23 +21,27 @@ const consultaPorAnio = esquemaListado({
   porPaginaMaximo: 100,
 });
 const consultaHorariosPortal = esquemaListado({
+  conBuscar: true,
   filtros: { tipo: listaIds.optional() },
   ordenes: ['tipo'],
   ordenPredeterminado: 'tipo',
   porPaginaMaximo: 100,
 });
 const consultaPastoralPortal = esquemaListado({
+  conBuscar: true,
   ordenes: ['orden', '-orden', 'nombre', '-nombre'],
   ordenPredeterminado: 'orden',
   porPaginaMaximo: 100,
 });
 const consultaVideosPortal = esquemaListado({
+  conBuscar: true,
   filtros: { destacado: booleanoQuery.optional() },
   ordenes: ['orden', '-orden', 'fechaPublicacion', '-fechaPublicacion', 'titulo', '-titulo'],
   ordenPredeterminado: 'orden',
   porPaginaMaximo: 100,
 });
 const consultaProclamasVigentes = esquemaListado({
+  conBuscar: true,
   filtros: { anio: anio.optional() },
   ordenes: ['fechaMatrimonio', '-fechaMatrimonio'],
   ordenPredeterminado: 'fechaMatrimonio',

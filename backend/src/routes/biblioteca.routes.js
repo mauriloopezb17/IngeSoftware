@@ -3,15 +3,26 @@
 import { Router } from 'express';
 import { PERMISOS } from '../constantes/permisos.js';
 import * as controlador from '../controllers/biblioteca.controller.js';
+import { exportarRecurso } from '../controllers/exportar.controller.js';
 import { filtrarPorSede, requerirPermiso } from '../middlewares/autorizar.js';
+import { marcarConsulta } from '../middlewares/registrarConsulta.js';
 import { validar } from '../middlewares/validar.js';
 import { exigirAlmacenamiento } from '../storage/oci.js';
 import { consultaBiblioteca, cuerpoEditar, paramsArchivo } from '../validacion/biblioteca.js';
+import { esquemaExportacion } from '../validacion/comunes.js';
 
 const router = Router();
 
 // Ver la biblioteca no pide un permiso aparte: todos los roles del panel pueden subir.
 router.get('/', validar({ query: consultaBiblioteca }), filtrarPorSede, controlador.listar);
+router.get(
+  '/exportar',
+  requerirPermiso(PERMISOS.MULTIMEDIA_EXPORTAR),
+  marcarConsulta('exportacion'),
+  validar({ query: esquemaExportacion(consultaBiblioteca) }),
+  filtrarPorSede,
+  exportarRecurso('multimedia'),
+);
 router.get('/:id', validar({ params: paramsArchivo }), controlador.detalle);
 
 router.patch(

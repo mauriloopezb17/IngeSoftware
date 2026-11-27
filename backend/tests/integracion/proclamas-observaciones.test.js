@@ -369,4 +369,19 @@ describe('observaciones de proclamas (admin)', () => {
     expect(JSON.stringify(registro)).not.toContain('mensaje');
     expect(JSON.stringify(registro)).not.toContain('nombre_completo');
   });
+
+  it('ordena observaciones por fechaEnvio y -fechaEnvio', async () => {
+    const asc = await como('parroco').get(`${RUTA_ADM}?estado=todas&porPagina=50&orden=fechaEnvio`);
+    const desc = await como('parroco').get(
+      `${RUTA_ADM}?estado=todas&porPagina=50&orden=-fechaEnvio`,
+    );
+
+    expect(asc.status).toBe(200);
+    expect(desc.status).toBe(200);
+    expect(asc.body.datos.length).toBeGreaterThanOrEqual(2);
+
+    const idsAsc = asc.body.datos.map((o) => o.id);
+    const idsDesc = desc.body.datos.map((o) => o.id);
+    expect(idsDesc).toEqual([...idsAsc].reverse());
+  });
 });

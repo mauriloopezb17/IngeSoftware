@@ -29,8 +29,16 @@ export async function insertar({ proclamaId, nombreCompleto, correo, telefono, m
   return rows[0];
 }
 
+const ORDENES = Object.freeze({
+  fechaEnvio: 'o.fecha_envio ASC, o.id ASC',
+  '-fechaEnvio': 'o.fecha_envio DESC, o.id DESC',
+});
+
 // buscar: en el nombre de quien escribe y en el mensaje, sin distinguir mayúsculas ni acentos.
-export async function listar({ sedeId, estado, proclamaId, buscar }, { limite, desplazamiento }) {
+export async function listar(
+  { sedeId, estado, proclamaId, buscar },
+  { orden, limite, desplazamiento },
+) {
   const parametros = [];
   const condiciones = ['TRUE'];
   const agregar = (valor) => `$${parametros.push(valor)}`;
@@ -46,12 +54,13 @@ export async function listar({ sedeId, estado, proclamaId, buscar }, { limite, d
   }
 
   const donde = condiciones.join(' AND ');
+  const orderBy = ORDENES[orden] ?? ORDENES['-fechaEnvio'];
 
   const [pagina, conteo] = await Promise.all([
     consultar(
       `SELECT ${COLUMNAS} ${UNIONES}
         WHERE ${donde}
-        ORDER BY o.fecha_envio DESC, o.id DESC
+        ORDER BY ${orderBy}
         LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
       [...parametros, limite, desplazamiento],
     ),

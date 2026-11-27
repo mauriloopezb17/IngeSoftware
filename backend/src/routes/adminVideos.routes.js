@@ -2,8 +2,11 @@
 import { Router } from 'express';
 import { PERMISOS } from '../constantes/permisos.js';
 import * as controlador from '../controllers/adminVideos.controller.js';
+import { exportarRecurso } from '../controllers/exportar.controller.js';
 import { filtrarPorSede, requerirPermiso } from '../middlewares/autorizar.js';
+import { marcarConsulta } from '../middlewares/registrarConsulta.js';
 import { validar } from '../middlewares/validar.js';
+import { esquemaExportacion } from '../validacion/comunes.js';
 import {
   consultaVideos,
   cuerpoCrearVideo,
@@ -19,6 +22,14 @@ const exigirPermiso = requerirPermiso(
 );
 
 router.get('/', validar({ query: consultaVideos }), filtrarPorSede, controlador.listar);
+router.get(
+  '/exportar',
+  requerirPermiso(PERMISOS.VIDEOS_EXPORTAR),
+  marcarConsulta('exportacion'),
+  validar({ query: esquemaExportacion(consultaVideos) }),
+  filtrarPorSede,
+  exportarRecurso('videos'),
+);
 router.post(
   '/reordenar',
   exigirPermiso,

@@ -10,12 +10,18 @@ describe('matriz de permisos', () => {
     expect(permisosDe('SECRETARIA')).toEqual(ejemplo.datos.permisos);
   });
 
-  it('el Administrador tiene todos los permisos salvo proclamas.observaciones (solo Párroco)', () => {
+  it('el Administrador tiene todos los permisos salvo los exclusivos de observaciones (solo Párroco)', () => {
+    const soloParroco = new Set([
+      PERMISOS.PROCLAMAS_OBSERVACIONES,
+      PERMISOS.OBSERVACIONES_EXPORTAR,
+    ]);
     expect(permisosDe('ADMINISTRADOR')).toEqual(
-      Object.values(PERMISOS).filter((permiso) => permiso !== PERMISOS.PROCLAMAS_OBSERVACIONES),
+      Object.values(PERMISOS).filter((permiso) => !soloParroco.has(permiso)),
     );
     expect(tienePermiso('ADMINISTRADOR', PERMISOS.PROCLAMAS_OBSERVACIONES)).toBe(false);
+    expect(tienePermiso('ADMINISTRADOR', PERMISOS.OBSERVACIONES_EXPORTAR)).toBe(false);
     expect(tienePermiso('PARROCO', PERMISOS.PROCLAMAS_OBSERVACIONES)).toBe(true);
+    expect(tienePermiso('PARROCO', PERMISOS.OBSERVACIONES_EXPORTAR)).toBe(true);
   });
 
   it.each([

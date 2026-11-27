@@ -52,7 +52,7 @@ describe('ErrorApp', () => {
     });
   });
 
-  it('tiene los 10 códigos del contrato con su estado', () => {
+  it('tiene los 11 códigos del contrato con su estado', () => {
     expect(CODIGOS_ERROR).toEqual({
       VALIDACION: 400,
       NO_AUTENTICADO: 401,
@@ -61,6 +61,7 @@ describe('ErrorApp', () => {
       CONFLICTO: 409,
       ARCHIVO_DEMASIADO_GRANDE: 413,
       TIPO_NO_PERMITIDO: 415,
+      DEMASIADOS_REGISTROS: 422,
       DEMASIADAS_SOLICITUDES: 429,
       ERROR_INTERNO: 500,
       SERVICIO_NO_DISPONIBLE: 503,
