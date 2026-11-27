@@ -109,7 +109,7 @@ function NoticiaDetalle() {
                 >
                   <Link
                     to="/"
-                    className="inline-flex min-h-11 items-center text-ink/80 underline-offset-4 hover:text-ink hover:underline"
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center text-ink/80 underline-offset-4 hover:text-ink hover:underline"
                   >
                     Inicio
                   </Link>

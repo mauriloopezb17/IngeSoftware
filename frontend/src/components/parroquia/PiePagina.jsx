@@ -146,7 +146,7 @@ function PiePagina() {
                   <li key={texto}>
                     <EnlacePortal
                       to={href}
-                      className="inline-flex min-h-9 items-center font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                      className="inline-flex min-h-11 items-center font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:min-h-9"
                     >
                       {texto}
                     </EnlacePortal>
@@ -164,7 +164,7 @@ function PiePagina() {
                   <li key={texto}>
                     <EnlacePortal
                       to={href}
-                      className="inline-flex min-h-9 items-center font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                      className="inline-flex min-h-11 items-center font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:min-h-9"
                     >
                       {texto}
                     </EnlacePortal>
@@ -182,7 +182,7 @@ function PiePagina() {
                   <li key={texto}>
                     <EnlacePortal
                       to={href}
-                      className="inline-flex min-h-9 items-center font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                      className="inline-flex min-h-11 items-center font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:min-h-9"
                     >
                       {texto}
                     </EnlacePortal>
@@ -205,7 +205,7 @@ function PiePagina() {
                           href={href}
                           target={href.startsWith('https') ? '_blank' : undefined}
                           rel={href.startsWith('https') ? 'noopener noreferrer' : undefined}
-                          className="inline-flex min-h-9 max-w-full items-center [overflow-wrap:anywhere] font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                          className="inline-flex min-h-11 max-w-full items-center [overflow-wrap:anywhere] font-body text-meta text-muted-on-dark transition-colors duration-150 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold lg:min-h-9"
                         >
                           {indiceArroba > 0 ? (
                             <span>

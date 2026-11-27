@@ -193,7 +193,10 @@ beforeAll(async () => {
   );
   ids.boletines.push(bol1[0].id);
 
-  // 6. Página publicada
+  // 6. Página publicada con bloques (uno visible y uno oculto)
+  const { rows: tipoBloqueRows } = await consultar(
+    "SELECT id FROM tipo_bloque WHERE codigo = 'texto_imagen' LIMIT 1",
+  );
   const { rows: pag1 } = await consultar(
     `INSERT INTO pagina (sede_id, estado_publicacion_id, creado_por, slug, titulo, descripcion_seo)
      VALUES ($1, $2, $3, $4, $5, $6)
@@ -208,6 +211,25 @@ beforeAll(async () => {
     ],
   );
   ids.paginas.push(pag1[0].id);
+
+  await consultar(
+    `INSERT INTO bloque (pagina_id, tipo_bloque_id, orden, visible, contenido)
+     VALUES
+       ($1, $2, 1, true, $3::jsonb),
+       ($1, $2, 2, false, $4::jsonb)`,
+    [
+      pag1[0].id,
+      tipoBloqueRows[0].id,
+      JSON.stringify({
+        titulo: 'Objetos del templo',
+        texto: `Anécdotas históricas de la parroquia ${TOKEN_UNICO}.`,
+      }),
+      JSON.stringify({
+        titulo: 'Bloque oculto',
+        texto: `Texto secreto oculto ${TOKEN_UNICO} bloquecerrado.`,
+      }),
+    ],
+  );
 
   // 7. Proclama con el mismo token (NUNCA debe aparecer en búsqueda)
   const { rows: proc1 } = await consultar(
@@ -225,6 +247,7 @@ afterAll(async () => {
       await consultar('DELETE FROM proclama WHERE id = ANY($1::int[])', [ids.proclamas]);
     }
     if (ids.paginas.length) {
+      await consultar('DELETE FROM bloque WHERE pagina_id = ANY($1::int[])', [ids.paginas]);
       await consultar('DELETE FROM pagina WHERE id = ANY($1::int[])', [ids.paginas]);
     }
     if (ids.boletines.length) {
@@ -379,6 +402,49 @@ describe('buscador del portal (PAR-170)', () => {
     expect(otraSede.body.paginacion.total).toBe(0);
   });
 
+  it('busca en el detalle de sacramentos, en los bloques visibles de páginas e invalida caché al editar un sacramento', async () => {
+    // Buscar texto que solo existe en el bloque visible de la página ("objetos del templo")
+    const bloqueVisible = await como().get(
+      `${RUTA()}?q=${encodeURIComponent(`objetos templo ${TOKEN_UNICO}`)}`,
+    );
+    expect(bloqueVisible.status).toBe(200);
+    expect(bloqueVisible.body.paginacion.total).toBe(1);
+    expect(bloqueVisible.body.datos[0].tipo).toBe('pagina');
+
+    // Bloque oculto (visible = false) no aparece
+    const bloqueOculto = await como().get(
+      `${RUTA()}?q=${encodeURIComponent(`bloquecerrado ${TOKEN_UNICO}`)}`,
+    );
+    expect(bloqueOculto.status).toBe(200);
+    expect(bloqueOculto.body.paginacion.total).toBe(0);
+
+    // Calentar caché para término nuevo de sacramento
+    const terminoSac = `sacramentodetalle${Date.now()}`;
+    const urlSac = `${RUTA()}?q=${encodeURIComponent(terminoSac)}`;
+    const antes = await como().get(urlSac);
+    expect(antes.status).toBe(200);
+    expect(antes.headers['x-cache']).toBe('MISS');
+    expect(antes.body.paginacion.total).toBe(0);
+
+    const hit = await como().get(urlSac);
+    expect(hit.headers['x-cache']).toBe('HIT');
+
+    // Editar detalle del sacramento invalida la caché de búsqueda
+    const editSac = await como('admin').patch(`/api/admin/servicios/${ids.servicios[0]}/detalle`, {
+      detalle: {
+        contenido: docBlockNote(`Información detallada ${terminoSac}.`),
+      },
+    });
+    expect(editSac.status, JSON.stringify(editSac.body)).toBe(200);
+
+    const despues = await como().get(urlSac);
+    expect(despues.status).toBe(200);
+    expect(despues.headers['x-cache']).toBe('MISS');
+    expect(despues.body.paginacion.total).toBe(1);
+    expect(despues.body.datos[0].tipo).toBe('sacramento');
+    expect(despues.body.datos[0].id).toBe(ids.servicios[0]);
+  });
+
   it('usa índices GIN en el plan de ejecución de PostgreSQL (EXPLAIN)', async () => {
     const plan = await transaccion(async (db) => {
       await db.consultar('SET LOCAL enable_seqscan = off');
@@ -431,9 +497,9 @@ describe('buscador del portal (PAR-170)', () => {
   it.each(["' OR '1'='1", '100%', 'a_b', 'a\\b', '"comilla sin cerrar'])(
     'maneja entrada especial %s de forma segura sin 500 ni fugas SQL',
     async (entrada) => {
-      const res = await como().get(
-        `${RUTA()}?q=${encodeURIComponent(`${TOKEN_UNICO} ${entrada}`)}`,
-      );
+      const res = await como()
+        .get(`${RUTA()}?q=${encodeURIComponent(`${TOKEN_UNICO} ${entrada}`)}`)
+        .set('X-Forwarded-For', '10.20.30.2');
       expect([200, 400]).toContain(res.status);
       expect(JSON.stringify(res.body)).not.toMatch(/\bSELECT\b|pg_|node_modules/i);
     },

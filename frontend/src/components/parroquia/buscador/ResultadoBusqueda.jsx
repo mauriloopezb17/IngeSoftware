@@ -47,10 +47,10 @@ function ResultadoBusqueda({ resultado }) {
             )}
           </div>
 
-          <h2 className="mt-2 font-display text-h3 font-semibold text-ink">
+          <h2 className="mt-1 font-display text-h3 font-semibold text-ink">
             <EnlacePortal
               to={url}
-              className="inline-flex items-center gap-2 rounded-sm underline-offset-4 transition-colors duration-150 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              className="inline-flex min-h-11 items-center gap-2 rounded-sm underline-offset-4 transition-colors duration-150 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             >
               <span>{titulo}</span>
               <ArrowRight

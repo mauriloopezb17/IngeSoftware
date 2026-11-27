@@ -162,7 +162,7 @@ export const usuariosSeed = [
     correo: 'coordinador@parroquia.test',
     rol: { codigo: 'COORDINADOR', nombre: 'Coordinador de grupo' },
     sede: SEDE_PRINCIPAL,
-    permisos: ['multimedia.subir', 'multimedia.eliminar', 'grupos.detalle'],
+    permisos: ['multimedia.subir', 'multimedia.eliminar', 'noticias.redactar', 'grupos.detalle'],
     gruposAsignados: [{ id: 1, nombre: 'Monaguillos', slug: 'monaguillos' }],
   },
 ];

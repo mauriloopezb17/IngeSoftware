@@ -47,7 +47,13 @@ export default function MenuLateral({ secciones, alNavegar }) {
                             />
                           )}
                           <Icono className={`size-4 shrink-0 ${isActive ? 'text-gold' : ''}`} aria-hidden="true" />
-                          <span>{esCoordinador && clave === 'grupos' ? 'Mis grupos' : titulo}</span>
+                          <span>
+                            {esCoordinador && clave === 'grupos'
+                              ? 'Mis grupos'
+                              : esCoordinador && clave === 'publicaciones'
+                                ? 'Noticias de mis grupos'
+                                : titulo}
+                          </span>
                           {clave === 'proclamas' && noLeidas > 0 && (
                             <span
                               aria-label={`${noLeidas} observaciones sin leer`}

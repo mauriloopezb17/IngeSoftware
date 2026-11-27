@@ -119,10 +119,10 @@ export const PERMISOS_POR_ROL = {
     'multimedia.exportar',
     'videos.exportar',
   ],
-  COORDINADOR: ['multimedia.subir', 'multimedia.eliminar', 'grupos.detalle'],
+  COORDINADOR: ['multimedia.subir', 'multimedia.eliminar', 'noticias.redactar', 'grupos.detalle'],
 };
 
-const SECCIONES_COORDINADOR = new Set(['inicio', 'grupos', 'multimedia']);
+const SECCIONES_COORDINADOR = new Set(['inicio', 'publicaciones', 'grupos', 'multimedia']);
 
 // Todos los roles pueden CONSULTAR los recursos de su sede, salvo estas dos secciones,
 // que además exigen un permiso para entrar (el contrato las excluye de la lectura general).

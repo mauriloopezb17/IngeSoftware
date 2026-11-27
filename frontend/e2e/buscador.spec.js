@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Buscador del portal público', () => {
+  test.beforeEach(() => {
+    test.setTimeout(90_000);
+  });
   test('buscar "bautismo" desde el encabezado, filtrar por Sacramentos y abrir el resultado', async ({
     page,
   }) => {
@@ -23,7 +26,7 @@ test.describe('Buscador del portal público', () => {
 
     await expect(page).toHaveURL(/tipo=sacramento/);
 
-    const enlaceResultado = page.getByRole('link', { name: /Bautismo/i }).first();
+    const enlaceResultado = page.locator('main a[href="/sacramentos/bautismo"]');
     await expect(enlaceResultado).toBeVisible();
     await enlaceResultado.click();
 

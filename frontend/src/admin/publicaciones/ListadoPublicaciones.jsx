@@ -5,6 +5,7 @@ import { ClipboardCheck, Inbox, Pencil, Plus } from 'lucide-react';
 
 import { formatearFecha } from '../multimedia/formato.js';
 import { usePermisos } from '../permisos/usePermisos.js';
+import { useSesion } from '../sesion/SesionContexto.js';
 import {
   Aviso,
   Boton,
@@ -36,7 +37,9 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
   const toast = useToast();
   // Al desaparecer una fila o su botón de acción, el foco vuelve al <h1> de la pantalla.
   const tituloRef = useRef(null);
+  const { usuario } = useSesion();
   const { puede } = usePermisos();
+  const esCoordinador = usuario?.rol?.codigo === 'COORDINADOR';
 
   const configFiltros = useMemo(
     () => ({
@@ -178,12 +181,14 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
   return (
     <section className="mx-auto max-w-6xl">
       <EncabezadoPantalla
-        titulo={esAvisos ? 'Avisos' : 'Publicaciones'}
+        titulo={esAvisos ? 'Avisos' : esCoordinador ? 'Noticias de mis grupos' : 'Publicaciones'}
         headingRef={tituloRef}
         descripcion={
           esAvisos
             ? 'Avisos parroquiales. Se publican directamente, sin revisión, y se pueden programar y archivar.'
-            : 'Noticias y notas de prensa de la sede.'
+            : esCoordinador
+              ? 'Noticias de los grupos pastorales que tienes asignados. Al enviarlas pasan a revisión del párroco.'
+              : 'Noticias y notas de prensa de la sede.'
         }
         acciones={
           <>
@@ -204,14 +209,14 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
             )}
             {!esAvisos && puede('noticias.redactar') && (
               <Boton como={Link} to="/admin/publicaciones/nueva" variante="primario" icono={Plus}>
-                Nueva publicación
+                {esCoordinador ? 'Nueva noticia' : 'Nueva publicación'}
               </Boton>
             )}
           </>
         }
       />
 
-      <PestanasPublicaciones />
+      {!esCoordinador && <PestanasPublicaciones />}
       {esAvisos && !puede('avisos.gestionar') && (
         <Aviso tipo="soloLectura" className="mt-4">
           <p>
@@ -256,7 +261,7 @@ export default function ListadoPublicaciones({ modo = 'noticias' }) {
                 />
               </div>
 
-              {!esAvisos && (
+              {!esAvisos && !esCoordinador && (
                 <div className="w-full sm:w-auto sm:min-w-[150px]">
                   <CampoSelect
                     etiqueta="Tipo"
