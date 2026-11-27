@@ -1,0 +1,102 @@
+@startuml secuencia-observacion-proclama
+' Secuencia: un feligrés envía una observación anónima a una proclama y el párroco la consulta en su
+' bandeja. Sigue el código real de backend/src (RF-18, RF-02).
+' Nota: al crearse, la observación NO se registra en la bitácora (para no guardar datos personales
+' en ella); la bitácora registra las CONSULTAS del párroco (acción VIEW), sin datos personales.
+' Exportar: java -jar plantuml.jar -charset UTF-8 -tpng secuencia-observacion-proclama.puml
+!pragma teoz true
+skinparam sequenceMessageAlign left
+autonumber "<b>0."
+
+title Observación anónima a una proclama y bandeja del párroco (RF-18, RF-02)
+
+actor "Feligrés" as F
+participant "Portal\n(ProclamaDetalle +\nFormularioObservacionProclama)" as P
+participant "app.js\nprotegerCsrf" as App
+participant "sedes.routes\nresolverSede\nlimitarObservaciones\nvalidar(cuerpoCrearObservacion)" as R
+participant "proclamasBoletines.controller\nverificacionObservacion\ncrearObservacion" as C
+participant "observacionesProclama.service" as S
+participant "bitacora.service\nregistrarConsulta" as Bit
+database "PostgreSQL 16" as PG
+actor "Párroco" as Pa
+participant "Panel CMS\n(SPA /admin)" as SPA
+participant "admin.routes + adminProclamas.routes\nautenticar\nrequerirPermiso(PROCLAMAS_OBSERVACIONES)\nvalidar" as RA
+participant "adminProclamas.controller\nlistarObservaciones\nobtenerObservacion" as CA
+
+== 1. El feligrés abre el formulario ==
+F -> P : abre la proclama y pulsa «Enviar observación»
+P -> R : GET /api/sedes/:sede/proclamas/:id/observaciones/verificacion
+R -> C : resolverSede (404 si la sede no existe)
+C -> S : obtenerVerificacionObservacion(sedeId, id)
+S -> PG : proclamas.buscarDetallePorId
+alt la proclama no existe
+  S --> P : 404 NO_ENCONTRADO
+else existe
+  S -> S : emitirTokenObservacion\n(id.emitidoEn.firma HMAC-SHA256)
+  C --> P : 200 { token } (Cache-Control: no-store)
+end
+
+== 2. Envío de la observación ==
+F -> P : mensaje + correo y/o celular\n(nombre opcional: puede ser anónima)
+P -> App : POST /api/sedes/:sede/proclamas/:id/observaciones
+App -> R : origen permitido (si no, 403)
+R -> R : limitarObservaciones\n(express-rate-limit: 5 por hora por IP)
+alt más de 5 envíos en una hora desde la misma IP
+  R --> P : 429 DEMASIADAS_SOLICITUDES + Retry-After
+else dentro del límite
+  R -> R : validar(cuerpoCrearObservacion) con Zod
+  alt sin correo ni teléfono, correo o teléfono mal formado,\nmensaje fuera de 10–2000 caracteres
+    R --> P : 400 VALIDACION (campo «contacto», «correo», «telefono» o «mensaje»)
+  else válido
+    R -> C : crearObservacion(req)
+    C -> S : crearObservacionPublica(sedeId, id, cuerpo)
+    alt campo trampa «sitioWeb» lleno (bot)
+      S --> P : 201 { recibido: true } sin guardar nada
+    else token de verificación inválido, de otra proclama,\nenviado en menos de 3 s o con más de 2 h
+      S --> P : 400 VALIDACION (campo «verificacion»)
+    else proclama inexistente
+      S --> P : 404 NO_ENCONTRADO
+    else la fecha del matrimonio ya pasó
+      S --> P : 409 CONFLICTO
+    else aceptada
+      S -> PG : observacion_proclama.insertar\n(CHECK correo IS NOT NULL OR telefono IS NOT NULL)
+      C --> P : 201 { recibido: true } (no-store)
+      P --> F : «Tu observación fue enviada»
+    end
+  end
+end
+
+== 3. El párroco revisa su bandeja ==
+Pa -> SPA : abre Proclamas → Observaciones
+SPA -> App : GET /api/admin/proclamas/observaciones?estado=…&pagina=…
+App -> RA
+RA -> PG : autenticar
+alt sin sesión válida
+  RA --> SPA : 401 NO_AUTENTICADO
+else rol sin permiso proclamas.observaciones\n(Secretaría, Marketing, Coordinador, Administrador)
+  RA --> SPA : 403 SIN_PERMISO
+else Párroco
+  RA -> CA : listarObservaciones(req)
+  CA -> S : listarObservaciones(sedeId, consulta, contexto)
+  S -> PG : modelo.listar (paginado, de su sede)
+  S -> Bit : registrarConsulta(VIEW, entidadId «*»,\nfiltros sin datos personales y n.° de filas)
+  Bit -> PG : INSERT bitacora_cambio
+  CA --> SPA : 200 { datos, paginacion }
+  Pa -> SPA : abre una observación
+  SPA -> RA : GET /api/admin/proclamas/observaciones/:id
+  RA -> CA : obtenerObservacion(req)
+  CA -> S : obtenerObservacion(usuario, id, contexto)
+  alt no existe o es de otra sede
+    S --> SPA : 404 NO_ENCONTRADO
+  else
+    S -> Bit : registrarConsulta(VIEW, id,\nsolo proclama_id y sede_id)
+    Bit -> PG : INSERT bitacora_cambio
+    CA --> SPA : 200 observación con su contacto
+  end
+end
+
+note over Bit
+  Los contactos (nombre, correo, teléfono, mensaje) nunca se escriben
+  en los logs ni en la bitácora: solo los ve el Párroco en el panel.
+end note
+@enduml
