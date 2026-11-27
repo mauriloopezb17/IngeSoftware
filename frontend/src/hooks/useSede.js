@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { SEDE_ACTUAL } from '../config/sede.js';
-import { obtenerSede, obtenerSedes } from '../services/portal.js';
+import { obtenerArbolSedes, obtenerSede, obtenerSedes } from '../services/portal.js';
 import { clavesPortal } from './clavesPortal.js';
 
 export function useSede(sede = SEDE_ACTUAL) {
@@ -16,5 +16,12 @@ export function useComunidades() {
   return useQuery({
     queryKey: clavesPortal.sedes(),
     queryFn: ({ signal }) => obtenerSedes(signal),
+  });
+}
+
+export function useArbolComunidades() {
+  return useQuery({
+    queryKey: clavesPortal.sedesArbol(),
+    queryFn: ({ signal }) => obtenerArbolSedes(signal),
   });
 }

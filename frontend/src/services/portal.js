@@ -5,6 +5,11 @@ export async function obtenerSedes(senal) {
   return datos;
 }
 
+export async function obtenerArbolSedes(senal) {
+  const { datos } = await clienteHttp.get('/sedes/arbol', { senal });
+  return datos;
+}
+
 export async function obtenerSede(sede, senal) {
   const { datos } = await clienteHttp.get(`/sedes/${sede}`, { senal });
   return datos;

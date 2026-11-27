@@ -1,6 +1,7 @@
 // Fábrica única de query keys para los recursos públicos del portal.
 export const clavesPortal = {
   sedes: () => ['portal', 'sedes'],
+  sedesArbol: () => ['portal', 'sedes', 'arbol'],
   sede: (sede) => ['portal', 'sede', sede],
   menuPaginas: (sede) => ['portal', 'sede', sede, 'paginas'],
   pagina: (sede, slug) => ['portal', 'sede', sede, 'paginas', slug],
