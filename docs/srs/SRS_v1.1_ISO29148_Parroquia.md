@@ -98,7 +98,7 @@ Los siguientes requisitos describen los servicios y funciones que el sistema deb
 | RF-07 | El sistema debe integrar un asistente virtual (bot) para WhatsApp/Web que responda automáticamente consultas frecuentes (requisitos de bautismo, fechas de cursillos prematrimoniales, canales de contacto) las 24 horas del día. | Transcripción Audio (18/ago) | Won't Have (v2.0) | Pospuesto (fuera de la v2.0) |
 | RF-08 | El sistema debe registrar y almacenar las consultas recibidas por el asistente virtual fuera del horario de oficina, dejándolas disponibles para que la secretaría las revise el siguiente día hábil. | Transcripción Audio (18/ago) | Won't Have (v2.0) | Pospuesto (fuera de la v2.0) |
 | RF-09 | El Portal Web debe mostrar un calendario de próximos eventos parroquiales, retirando de la vista de forma automática los eventos cuya fecha ya haya transcurrido. | Transcripción Audio (18/ago) | Must Have | Implementado |
-| RF-10 | El sistema debe permitir enlazar el portal con las redes sociales activas de la parroquia (Facebook, Instagram, TikTok) y con la red institucional de la Arquidiócesis de La Paz / Vicaría Sur. | Requerimientos Proyecto Parroquia \- Sec.2 | Could Have | Implementado parcialmente: cada sede guarda y muestra sus enlaces a redes sociales; no hay integración por API con Meta. [COMPLETAR: confirmar con la parroquia si el enlace a la Arquidiócesis / Vicaría Sur se cargará como red o página] |
+| RF-10 | El sistema debe permitir enlazar el portal con las redes sociales activas de la parroquia (Facebook, Instagram, TikTok) y con la red institucional de la Arquidiócesis de La Paz / Vicaría Sur. | Requerimientos Proyecto Parroquia \- Sec.2 | Could Have | Implementado parcialmente: cada sede guarda y muestra sus enlaces a redes sociales; no hay integración por API con Meta. La relación con la Arquidiócesis de La Paz se cubre con el enlace a su canal de YouTube, cargado en los datos iniciales de la sede; no hay un enlace propio a la Vicaría Sur. |
 | RF-11 | El sistema debe controlar el acceso al Panel de Administración mediante autenticación basada en roles y tokens JWT, restringiendo las funciones disponibles según el perfil del usuario (secretaría, párroco, equipo de marketing). | ADR-02; Diagrama C3 \- Componentes | Must Have | Implementado |
 | RF-12 | El sistema debe permitir sincronizar los eventos del calendario parroquial con Microsoft 365 (Microsoft Graph Calendar) utilizando el tenant institucional de la parroquia. | Transcripción Audio (18/ago) | Won't Have (v2.0) | Pospuesto (fuera de la v2.0) |
 | RF-13 | El Portal Web debe presentar contenido diferenciado por sede (Parroquia Señor de la Exaltación, Parroquia de la Resurrección y capillas dependientes) bajo el dominio institucional pasionistas.org.bo. | Requerimientos Proyecto Parroquia \- Sec.1 | Should Have | Implementado |
@@ -117,7 +117,7 @@ Se verificó en el código del repositorio que estos requisitos no están implem
 
 ### **2.2 Requisitos funcionales incorporados en el Sprint 3 (v1.1)**
 
-La numeración coincide con las etiquetas de las historias en Jira.
+La numeración coincide con las etiquetas `rf-xx` y `rnf-xx` de las historias en Jira (proyecto PAR).
 
 | ID | Descripción del Requisito Funcional | Fuente | Prioridad | Historia Jira | Estado v2.0 |
 | ----- | ----- | ----- | ----- | ----- | ----- |
@@ -132,8 +132,8 @@ La numeración coincide con las etiquetas de las historias en Jira.
 | RF-23 | Las sedes deben organizarse en una jerarquía Parroquia → Capilla → Comunidad, administrable desde el panel y navegable en el portal. | Ingenieros de la parroquia | Must Have | PAR-171 | Implementado |
 | RF-24 | Cada grupo pastoral debe tener una página propia en el portal con su descripción, horario de reunión y datos de contacto (responsable, WhatsApp y correo). | Ingenieros de la parroquia | Should Have | PAR-172 | Implementado |
 | RF-25 | El sistema debe ofrecer el rol Coordinador de grupo, que solo pueda editar el detalle de los grupos pastorales que tiene asignados, redactar noticias de esos grupos (para revisión) y gestionar su multimedia; cualquier otra operación del panel debe responder 403. | Ingenieros de la parroquia | Should Have | PAR-173 | Implementado |
-| RF-26 | El portal debe incluir una sección «Conoce el templo» con objetos del templo y su historia, accesibles mediante códigos QR (versión beta). | Ingenieros de la parroquia | Could Have | PAR-174 | Planificado (no existe en el código) |
-| RF-27 | El portal debe incluir una sección «Anécdotas e historias» de padres y pasionistas, publicadas después de una moderación. | Ingenieros de la parroquia | Could Have | PAR-175 | Planificado (no existe en el código) |
+| RF-26 | El portal debe incluir una sección «Conoce el templo» con objetos del templo y su historia, accesibles mediante códigos QR (versión beta). | Ingenieros de la parroquia | Could Have | PAR-156 (épica, sin historia propia) | Planificado (no existe en el código) |
+| RF-27 | El portal debe incluir una sección «Anécdotas e historias» de padres y pasionistas, publicadas después de una moderación. | Ingenieros de la parroquia | Could Have | PAR-156 (épica, sin historia propia) | Planificado (no existe en el código) |
 
 &nbsp;
 
@@ -143,10 +143,10 @@ Los requisitos no funcionales especifican atributos de calidad del sistema, reda
 
 | ID | Atributo | Descripción del RNF | Métrica de Verificación | Prioridad | Estado v2.0 |
 | ----- | ----- | ----- | ----- | ----- | ----- |
-| RNF-01 | Rendimiento | Las consultas públicas de datos semi-estáticos (horarios, avisos, proclamas vigentes) resueltas mediante caché deben responder en ≤ 5 ms; las consultas no cacheadas contra PostgreSQL no deben exceder 2 s de tiempo de respuesta en el 95% de los casos. | Prueba de carga asíncrona sobre el endpoint cacheado y no cacheado | Must Have | Implementado (caché); [COMPLETAR: resultado de la prueba de carga, no ejecutada] |
+| RNF-01 | Rendimiento | Las consultas públicas de datos semi-estáticos (horarios, avisos, proclamas vigentes) resueltas mediante caché deben responder en ≤ 5 ms; las consultas no cacheadas contra PostgreSQL no deben exceder 2 s de tiempo de respuesta en el 95% de los casos. | Prueba de carga asíncrona sobre el endpoint cacheado y no cacheado | Must Have | Implementado (caché verificada por pruebas de integración); la prueba de carga de los tiempos de respuesta no se ejecutó en la v2.0 |
 | RNF-02 | Seguridad | Toda comunicación entre el Frontend (Portal/Panel) y la API Backend debe cifrarse mediante HTTPS (TLS); el Panel de Administración debe exigir autenticación JWT con expiración de sesión configurable y las contraseñas deben almacenarse con hashing seguro (bcrypt/argon2). | Inspección de tráfico de red y prueba de penetración básica (OWASP) | Must Have | Implementado (JWT, argon2, expiración); HTTPS pendiente del servidor definitivo |
 | RNF-03 | Disponibilidad | El Portal Web público debe mantener una disponibilidad mensual ≥ 99%, considerando las restricciones de infraestructura (servidores UCB o nube gratuita/económica) descritas en el relevamiento. | Monitoreo de uptime durante 30 días continuos | Should Have | Pendiente del hosting definitivo |
-| RNF-04 | Usabilidad | El personal de secretaría, sin perfil técnico, debe poder publicar un aviso, boletín o evento en el CMS en un máximo de 3 pasos y 2 minutos, sin necesidad de capacitación técnica adicional. | Prueba de usabilidad con usuario representativo (secretaría) y cronometraje de tarea | Must Have | Implementado; [COMPLETAR: resultado de la prueba de usabilidad con la secretaría] |
+| RNF-04 | Usabilidad | El personal de secretaría, sin perfil técnico, debe poder publicar un aviso, boletín o evento en el CMS en un máximo de 3 pasos y 2 minutos, sin necesidad de capacitación técnica adicional. | Prueba de usabilidad con usuario representativo (secretaría) y cronometraje de tarea | Must Have | Implementado; sin prueba de usabilidad cronometrada registrada en la v2.0 (los flujos de publicación se verifican con pruebas e2e) |
 | RNF-05 | Mantenibilidad (Almacenamiento) | El almacenamiento multimedia debe soportar hasta 50 GB totales, admitiendo fotografías de hasta 30 MB y videos en alta calidad de hasta 2 GB por archivo, sin requerir cambios de arquitectura al ampliar el plan. | Inspección de configuración del servicio de almacenamiento en la nube | Should Have | Implementado parcialmente: límites por archivo cumplidos; la capacidad está configurada en 20 GB (capa gratuita de OCI, ver ADR-04) |
 | RNF-06 | Mantenibilidad (CMS) | Las secciones de contenido dinámico del CMS deben poder modificarse mediante columnas JSONB indexadas, sin requerir despliegue de código ni migraciones DDL recurrentes. | Prueba funcional de alta/edición de un bloque de contenido sin despliegue | Must Have | Implementado |
 
@@ -190,7 +190,7 @@ Registro de control de auditoría por cada requerimiento: prioridad, estabilidad
 | RF-25 | Should Have | Firme | Alto | Prueba automatizada de permisos (integración y e2e) | API REST › Autenticación y RBAC (restringirRutasCoordinador, exigirGrupoAsignado); API REST › Grupos pastorales y coordinador; API REST › Publicaciones / CMS |
 | RF-26 | Could Have | Volátil | Medio | Por definir (planificado) | Por definir (no implementado) |
 | RF-27 | Could Have | Volátil | Medio | Por definir (planificado) | Por definir (no implementado) |
-| RNF-01 | Must Have | Estable | Medio | Prueba automatizada de caché; [COMPLETAR: prueba de carga] | API REST › Caché e invalidación; Caché; Base de datos |
+| RNF-01 | Must Have | Estable | Medio | Prueba automatizada de caché; prueba de carga pendiente (no ejecutada en la v2.0) | API REST › Caché e invalidación; Caché; Base de datos |
 | RNF-02 | Must Have | Estable | Alto | Prueba automatizada de seguridad; inspección de HTTPS en el servidor definitivo | API REST › Autenticación y RBAC; API REST › Cadena común de peticiones (helmet, CORS, CSRF) |
 | RNF-03 | Should Have | Volátil | Medio | Monitoreo de uptime en el hosting definitivo | Todos los contenedores (infraestructura de hosting por definir) |
 | RNF-04 | Must Have | Estable | Medio | Prueba de usabilidad con la secretaría | SPA web (panel /admin) |
@@ -208,7 +208,13 @@ Los requisitos RF-15 a RF-27, RNF-07 y RNF-08 surgen de las observaciones recibi
 * **Docente:** informe de evaluación del 18/11/2026 (paginación, exportación CSV por rol, registro de consultas, pruebas y revisión por pull request).
 * **Párroco, ingenieros de la parroquia y marketing:** reuniones de validación del prototipo de la semana del 16/11/2026, según el Segundo Informe de Avance.
 
-[COMPLETAR: acta de las reuniones con el párroco, marketing e ingenieros — fecha, asistentes, acuerdos]
+Según el Segundo Informe de Avance (secciones 3 y 9):
+
+| Fecha | Reunión | Asistentes | Acuerdos (requisitos que originó) |
+| ----- | ----- | ----- | ----- |
+| 17/11/2026 | Presentación del avance a la parroquia | Padre Gregorio (párroco); MSc. Ángel Ávila e Ing. Luis Salinas (sistemas de la parroquia); Ian Coaquira (CodeForge, presentó el avance) | Aprobaron el avance y pidieron: detalle por fecha en el calendario (RF-17); observaciones anónimas a proclamas con contacto privado (RF-18); información y fotos de los novios (RF-19); sacramentos y grupos personalizables (RF-20); boletines en vista superpuesta (RF-21); jerarquía Parroquia → Capilla → Comunidad (RF-23); página por grupo con contacto (RF-24); nuevo rol para grupos (RF-25); secciones «Conoce el templo» y «Anécdotas» (RF-26, RF-27); menú flotante con los botones principales (RNF-08). |
+| 18/11/2026 | Reunión con el equipo de marketing de la parroquia | Equipo de marketing de la parroquia; Ian Coaquira (CodeForge) | Buscador global (RF-22); ajustes de navegación (redundancia en horarios de misa, menú hamburguesa poco visible); el cambio de tipografía queda a confirmación de marketing. |
+| 18/11/2026 | Informe de evaluación del docente | Ing. M. Sc. Miguel Angel Pacheco Arteaga | Paginación en servidor y filtros (RF-15); exportación CSV por rol (RF-16); registro de consultas (RNF-07); pruebas y revisión por pull request. |
 
 &nbsp;
 
