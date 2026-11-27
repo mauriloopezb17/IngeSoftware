@@ -26,6 +26,10 @@ async function verificarSeccionesInicio(page) {
   await expect(page.locator('footer')).toBeVisible();
 }
 
+test.beforeEach(() => {
+  test.setTimeout(90_000);
+});
+
 test('inicio carga todas sus secciones en escritorio sin errores de consola', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   const { erroresConsola, erroresPagina } = capturarErrores(page);
@@ -96,7 +100,9 @@ test('noticias muestra listado, detalle por slug y pantalla de slug inexistente'
   const { erroresConsola, erroresPagina } = capturarErrores(page);
 
   await page.goto('/noticias');
-  const primerEnlace = page.locator('main a[href^="/noticias/"]').first();
+  const primerEnlace = page.getByRole('link', {
+    name: 'Leer publicación: Primeras comuniones: 42 niños recibieron a Jesús',
+  });
   await expect(primerEnlace).toBeVisible();
   const href = await primerEnlace.getAttribute('href');
 

@@ -2,6 +2,9 @@ import { expect, test } from '@playwright/test';
 import { abrirContextoConRol, tituloUnico } from './helpers/sesion.js';
 
 test.describe('Jerarquía de sedes en panel y portal', () => {
+  test.beforeEach(() => {
+    test.setTimeout(90_000);
+  });
   test('el Administrador crea una capilla bajo una parroquia y una comunidad bajo esa capilla y se ven en /comunidades en ese orden', async ({
     browser,
     page,

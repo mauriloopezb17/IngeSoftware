@@ -76,9 +76,11 @@
   }
 }
 
-/* Margen izquierdo en escritorio (1024-1439 px) para que el menú flotante no tape el contenido */
+/* Margen izquierdo en escritorio (1024-1439 px) para que el menú flotante no tape el contenido.
+   La portada (#inicio) queda centrada: el menú no aparece mientras se ven sus tarjetas. El margen es
+   fijo en el resto de secciones para que el contenido no se desplace al ocultarse el menú con el scroll. */
 @media (min-width: 1024px) and (max-width: 1439px) {
-  .con-menu-flotante .mx-auto.max-w-7xl {
+  .con-menu-flotante > :not(#inicio) .mx-auto.max-w-7xl {
     padding-left: 7.5rem;
   }
 }

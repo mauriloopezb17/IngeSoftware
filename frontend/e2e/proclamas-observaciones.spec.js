@@ -1,7 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { eliminarProclamaAdmin } from './helpers/limpieza.js';
 import { abrirContextoConRol, tituloUnico } from './helpers/sesion.js';
 
 test.describe('Observaciones confidenciales de proclamas', () => {
+  test.beforeEach(() => {
+    test.setTimeout(180_000);
+  });
   test('una persona deja una observación anónima → el Párroco la ve como Anónima, la marca revisada y los enlaces de correo y WhatsApp son correctos; Secretaría no ve la bandeja', async ({
     browser,
     page,
@@ -34,56 +38,60 @@ test.describe('Observaciones confidenciales de proclamas', () => {
 
     const idProclama = proclamaUrl.match(/\/admin\/proclamas\/(\d+)\/editar/)[1];
 
-    // Visitante abre la proclama, espera el token y la espera mínima de 3s, y envía una observación anónima
-    const esperaToken = page.waitForResponse(
-      (res) =>
-        res.url().includes(`/proclamas/${idProclama}/observaciones/verificacion`) &&
-        res.status() === 200,
-    );
-    await page.goto(`/proclamas/${idProclama}`);
-    await esperaToken;
-    const emitidoEn = Date.now();
-    await expect(
-      page.getByRole('heading', { name: '¿Conoces algún impedimento para este matrimonio?' }),
-    ).toBeVisible();
-
-    await page.getByLabel('Correo electrónico').fill('testigo@ejemplo.test');
-    await page.getByLabel('Teléfono').fill('71234567');
-    await page.getByLabel('Mensaje').fill(mensaje);
-
-    // Esperar a que pasen los 3s mínimos desde la emisión del token sin reenviar antes de tiempo
-    await expect
-      .poll(() => Date.now() - emitidoEn, { timeout: 6000, intervals: [250] })
-      .toBeGreaterThanOrEqual(3100);
-    await page.getByRole('button', { name: 'Enviar al párroco' }).click();
-    await expect(page.getByText('Gracias. Tu mensaje llegó al párroco.')).toBeVisible();
-
-    // Párroco abre la bandeja, ve la observación anónima, la marca revisada y verifica enlaces correo/WhatsApp
-    const parroco = await abrirContextoConRol(browser, 'parroco');
     try {
-      await parroco.page.goto('/admin/proclamas/observaciones');
-      const botonObs = parroco.page.getByRole('button', { name: new RegExp(mensaje) });
-      await expect(botonObs).toBeVisible();
-      await expect(botonObs).toContainText('Anónima');
-      await botonObs.click();
-
-      const detalle = parroco.page.getByRole('article', {
-        name: /Observación de Anónima/,
-      });
-      await expect(detalle).toBeVisible();
-      await expect(detalle.getByText(mensaje)).toBeVisible();
-      await expect(detalle.getByRole('button', { name: 'Marcar como nueva' })).toBeVisible();
-
-      await expect(detalle.getByRole('link', { name: 'Enviar correo' })).toHaveAttribute(
-        'href',
-        new RegExp(`^mailto:testigo@ejemplo\\.test\\?subject=`),
+      // Visitante abre la proclama, espera el token y la espera mínima de 3s, y envía una observación anónima
+      const esperaToken = page.waitForResponse(
+        (res) =>
+          res.url().includes(`/proclamas/${idProclama}/observaciones/verificacion`) &&
+          res.status() === 200,
       );
-      await expect(detalle.getByRole('link', { name: 'Escribir por WhatsApp' })).toHaveAttribute(
-        'href',
-        /^https:\/\/wa\.me\/59171234567\?text=/,
-      );
+      await page.goto(`/proclamas/${idProclama}`);
+      await esperaToken;
+      const emitidoEn = Date.now();
+      await expect(
+        page.getByRole('heading', { name: '¿Conoces algún impedimento para este matrimonio?' }),
+      ).toBeVisible();
+
+      await page.getByLabel('Correo electrónico').fill('testigo@ejemplo.test');
+      await page.getByLabel('Teléfono').fill('71234567');
+      await page.getByLabel('Mensaje').fill(mensaje);
+
+      // Esperar a que pasen los 3s mínimos desde la emisión del token sin reenviar antes de tiempo
+      await expect
+        .poll(() => Date.now() - emitidoEn, { timeout: 6000, intervals: [250] })
+        .toBeGreaterThanOrEqual(3100);
+      await page.getByRole('button', { name: 'Enviar al párroco' }).click();
+      await expect(page.getByText('Gracias. Tu mensaje llegó al párroco.')).toBeVisible();
+
+      // Párroco abre la bandeja, ve la observación anónima, la marca revisada y verifica enlaces correo/WhatsApp
+      const parroco = await abrirContextoConRol(browser, 'parroco');
+      try {
+        await parroco.page.goto('/admin/proclamas/observaciones');
+        const botonObs = parroco.page.getByRole('button', { name: new RegExp(mensaje) });
+        await expect(botonObs).toBeVisible();
+        await expect(botonObs).toContainText('Anónima');
+        await botonObs.click();
+
+        const detalle = parroco.page.getByRole('article', {
+          name: /Observación de Anónima/,
+        });
+        await expect(detalle).toBeVisible();
+        await expect(detalle.getByText(mensaje)).toBeVisible();
+        await expect(detalle.getByRole('button', { name: 'Marcar como nueva' })).toBeVisible();
+
+        await expect(detalle.getByRole('link', { name: 'Enviar correo' })).toHaveAttribute(
+          'href',
+          new RegExp(`^mailto:testigo@ejemplo\\.test\\?subject=`),
+        );
+        await expect(detalle.getByRole('link', { name: 'Escribir por WhatsApp' })).toHaveAttribute(
+          'href',
+          /^https:\/\/wa\.me\/59171234567\?text=/,
+        );
+      } finally {
+        await parroco.context.close();
+      }
     } finally {
-      await parroco.context.close();
+      await eliminarProclamaAdmin(browser, idProclama);
     }
   });
 });

@@ -1,0 +1,43 @@
+@startuml C2-contenedores
+' Modelo C4 v2 - Nivel 2: diagrama de contenedores del sistema implementado (v2.0).
+' Fuente: frontend/package.json, backend/package.json, backend/src/app.js, backend/src/config/entorno.js,
+' backend/src/db, backend/src/storage/oci.js, docker-compose.yml y .github/workflows/ci.yml.
+' Exportar: java -jar plantuml.jar -tpng C2-contenedores.puml
+!pragma layout smetana
+!include <C4/C4_Container>
+
+LAYOUT_WITH_LEGEND()
+
+title Contenedores (C2) - Plataforma Web y Sistema de Gestión Parroquial v2.0
+
+Person(feligres, "Feligrés / visitante", "Usuario anónimo del portal.")
+Person(personal, "Personal de la parroquia", "Administrador, Párroco, Secretaría, Marketing y Coordinador de grupo.")
+
+System_Boundary(plataforma, "Plataforma Web y Sistema de Gestión Parroquial") {
+  Container(spa, "SPA web", "React 19, Vite, React Router 7, TanStack Query, Tailwind CSS 4", "Portal público por sede (pages/, components/parroquia/) y panel CMS en /admin cargado bajo demanda (admin/), con editor BlockNote y visor de PDF (pdf.js).")
+  Container(api, "API REST", "Node.js 22, Express 5, Zod, pino", "Rutas /api pública, /api/auth y /api/admin. Cadena routes > middlewares > controllers > services > models. Helmet, CORS, CSRF, JWT en cookie httpOnly y argon2.")
+  ContainerDb(postgres, "Base de datos", "PostgreSQL 16 (db_portal_cms)", "Esquema relacional con columnas JSONB para contenido BlockNote y bloques de página; bitácora de cambios; búsqueda de texto completo. Esquema base + 15 migraciones + seed.")
+  ContainerDb(redis, "Caché", "Redis 7 (ioredis)", "Caché cache-aside de lecturas públicas con generaciones por sede y recurso; contadores del límite de intentos de inicio de sesión. La API sigue funcionando si Redis cae.")
+}
+
+System_Ext(oci, "Oracle Cloud Object Storage + CDN", "Bucket público compatible con S3; servido por CDN_PUBLIC_URL (cdn.pasionistas.org.bo).")
+System_Ext(youtube, "YouTube", "youtube-nocookie.com")
+System_Ext(maps, "Google Maps", "Mapa incrustado")
+System_Ext(fonts, "Google Fonts", "Tipografías")
+System_Ext(gha, "GitHub Actions (CI)", "Jobs convencion, backend, frontend y e2e sobre servicios PostgreSQL 16 y Redis 7; protege la rama main.")
+
+Rel(feligres, spa, "Usa el portal", "HTTPS")
+Rel(personal, spa, "Usa el panel /admin", "HTTPS")
+Rel(spa, api, "Consulta y modifica datos", "HTTPS, JSON, cookie de sesión")
+Rel(api, postgres, "Lee y escribe en transacciones", "TCP 5432, protocolo PostgreSQL (pg)")
+Rel(api, redis, "Lee y guarda caché; cuenta intentos", "TCP 6379, RESP (ioredis)")
+Rel(api, oci, "Sube (por partes desde 16 MB) y elimina archivos; variantes WebP con sharp", "HTTPS, API S3 (@aws-sdk/client-s3)")
+Rel(spa, oci, "Carga imágenes y boletines", "HTTPS (CDN)")
+Rel(spa, youtube, "Incrusta videos", "HTTPS (iframe)")
+Rel(spa, maps, "Incrusta el mapa de Contacto", "HTTPS (iframe)")
+Rel(spa, fonts, "Carga tipografías", "HTTPS")
+Rel(gha, api, "Ejecuta lint, formato y pruebas Vitest", "npm ci / npm test")
+Rel(gha, spa, "Ejecuta lint, pruebas, build y e2e Playwright", "npm ci / npm run build / test:e2e")
+
+SHOW_LEGEND()
+@enduml

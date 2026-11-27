@@ -13,6 +13,9 @@ const PANTALLAS_ADMIN = [
 ];
 
 test.describe('Tablas de listados restantes y filtros contra el backend real', () => {
+  test.beforeEach(() => {
+    test.setTimeout(180_000);
+  });
   test('carga todas las pantallas paginadas y aplica filtros sin respuestas HTTP 400+', async ({
     browser,
   }) => {

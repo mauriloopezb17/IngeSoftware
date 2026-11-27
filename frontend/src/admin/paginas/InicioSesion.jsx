@@ -94,6 +94,8 @@ export default function InicioSesion() {
           <img
             src={logoBlanco}
             alt="Parroquia Señor de la Exaltación"
+            width={239}
+            height={134}
             className="h-14 w-auto"
           />
         </div>
@@ -123,6 +125,8 @@ export default function InicioSesion() {
             <img
               src={logoColor}
               alt="Parroquia Señor de la Exaltación"
+              width={239}
+              height={134}
               className="h-11 w-auto"
             />
           </div>

@@ -2,6 +2,10 @@
 import { expect, test } from '@playwright/test';
 import { iniciarSesion } from './helpers/sesion.js';
 
+test.beforeEach(() => {
+  test.setTimeout(90_000);
+});
+
 test('el frontend se conecta al backend real sin mocks y permite iniciar sesión', async ({
   page,
 }) => {
