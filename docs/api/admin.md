@@ -399,6 +399,8 @@ Todos los campos del [detalle público](publico.md#get-apisedessedepublicaciones
       }
     ]
   },
+  "serviciosRelacionados": [],
+  "gruposRelacionados": [],
   "autor": { "id": 4, "nombreCompleto": "Marketing (desarrollo)" },
   "revision": null,
   "fechaCreacion": "2026-11-12T10:05:31-04:00",

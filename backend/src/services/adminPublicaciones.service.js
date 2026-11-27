@@ -19,6 +19,7 @@ import { armarPaginacion, desplazamiento } from '../utils/paginacion.js';
 import { slugDesde, slugLibre } from '../utils/slugs.js';
 import { archivosDelContenido } from '../validacion/blocknote.js';
 import { registrarCambio } from './bitacora.service.js';
+import { programarInvalidacion } from './invalidacionCache.service.js';
 import { sedeDelRecursoNuevo, verificarArchivos } from './referencias.service.js';
 
 const ENTIDAD = 'publicacion';
@@ -43,7 +44,7 @@ function aRevision(fila) {
 }
 
 // Objeto publicación del panel. La lista no lleva "contenido".
-function aPublicacion(fila, usuario, { conContenido = false } = {}) {
+function aPublicacion(fila, usuario, { conContenido = false, relacionados } = {}) {
   const publicacion = {
     id: fila.id,
     sede: { id: fila.sede_id, nombre: fila.sede_nombre, slug: fila.sede_slug },
@@ -66,7 +67,11 @@ function aPublicacion(fila, usuario, { conContenido = false } = {}) {
     fechaPublicacion: formatearFechaHora(fila.fecha_publicacion),
     fechaExpiracion: formatearFechaHora(fila.fecha_expiracion),
   };
-  if (conContenido) publicacion.contenido = fila.contenido;
+  if (conContenido) {
+    publicacion.contenido = fila.contenido;
+    publicacion.serviciosRelacionados = relacionados?.serviciosRelacionados ?? [];
+    publicacion.gruposRelacionados = relacionados?.gruposRelacionados ?? [];
+  }
 
   return {
     ...publicacion,
@@ -116,7 +121,8 @@ export async function obtenerPublicacion(usuario, id) {
   const fila = await modelo.buscarPorId(id, publicado());
   if (!fila) throw ErrorApp.noEncontrado('La publicación no existe.');
   exigirSedeDelRecurso(usuario, fila.sede_id);
-  return aPublicacion(fila, usuario, { conContenido: true });
+  const relacionados = await modelo.obtenerRelacionados(id);
+  return aPublicacion(fila, usuario, { conContenido: true, relacionados });
 }
 
 // ---- Apoyo de las modificaciones (también lo usan las acciones de estado) ----
@@ -151,12 +157,53 @@ async function elegirSlug(db, { sedeId, slugPedido, titulo, excluirId = null }) 
 
 // Comprueba las referencias del cuerpo que vienen con valor: la categoría, la imagen de portada
 // (una imagen de la sede) y las imágenes y videos del contenido (archivos de la sede).
-async function verificarReferencias(db, sedeId, { categoriaId, imagenPortadaId, contenido }) {
+async function verificarReferencias(
+  db,
+  sedeId,
+  { tipo, categoriaId, imagenPortadaId, contenido, servicioIds, grupoIds },
+) {
   const detalles = [];
+
+  if (tipo === 'AVISO') {
+    if (servicioIds?.length) {
+      detalles.push({
+        campo: 'servicioIds',
+        mensaje: 'Los avisos no pueden relacionarse con sacramentos ni servicios.',
+      });
+    }
+    if (grupoIds?.length) {
+      detalles.push({
+        campo: 'grupoIds',
+        mensaje: 'Los avisos no pueden relacionarse con grupos pastorales.',
+      });
+    }
+  }
 
   if (categoriaId !== undefined && categoriaId !== null) {
     if (!(await modelo.categoriaExiste(categoriaId, db))) {
       detalles.push({ campo: 'categoriaId', mensaje: 'La categoría no existe.' });
+    }
+  }
+
+  if (servicioIds?.length) {
+    const unicos = [...new Set(servicioIds)];
+    const existentes = new Set(await modelo.serviciosExistentesEnSede(sedeId, unicos, db));
+    if (unicos.some((sid) => !existentes.has(sid))) {
+      detalles.push({
+        campo: 'servicioIds',
+        mensaje: 'Uno o más sacramentos o servicios no existen en esta sede.',
+      });
+    }
+  }
+
+  if (grupoIds?.length) {
+    const unicos = [...new Set(grupoIds)];
+    const existentes = new Set(await modelo.gruposExistentesEnSede(sedeId, unicos, db));
+    if (unicos.some((gid) => !existentes.has(gid))) {
+      detalles.push({
+        campo: 'grupoIds',
+        mensaje: 'Uno o más grupos pastorales no existen en esta sede.',
+      });
     }
   }
 
@@ -218,6 +265,13 @@ export async function crearPublicacion(usuario, cuerpo, contexto) {
         db,
       ),
     );
+
+    if (cuerpo.servicioIds?.length) {
+      await modelo.reemplazarServiciosRelacionados(fila.id, cuerpo.servicioIds, db);
+    }
+    if (cuerpo.grupoIds?.length) {
+      await modelo.reemplazarGruposRelacionados(fila.id, cuerpo.grupoIds, db);
+    }
 
     await registrarCambio(db, contexto, {
       entidad: ENTIDAD,
@@ -321,13 +375,22 @@ export async function editarPublicacion(usuario, id, cambios, contexto) {
       columnas.slug = slug;
     }
 
-    await verificarReferencias(db, fila.sede_id, cambios);
+    await verificarReferencias(db, fila.sede_id, { ...cambios, tipo: situacion.tipo });
     exigirFechasEnOrden(fila, cambios);
     resolverEnlaceDirecto(fila, cambios, columnas);
 
     const nuevo = await conSlugUnico(columnas.slug, () =>
       actualizarFila(db, ENTIDAD, id, columnas, { jsonb: ['contenido'] }),
     );
+    if (cambios.servicioIds !== undefined) {
+      await modelo.reemplazarServiciosRelacionados(id, cambios.servicioIds, db);
+    }
+    if (cambios.grupoIds !== undefined) {
+      await modelo.reemplazarGruposRelacionados(id, cambios.grupoIds, db);
+    }
+    if (cambios.servicioIds !== undefined || cambios.grupoIds !== undefined) {
+      await programarInvalidacion(db, { entidad: ENTIDAD, anterior: fila, nuevo });
+    }
     await registrarCambio(db, contexto, {
       entidad: ENTIDAD,
       entidadId: id,

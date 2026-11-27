@@ -91,3 +91,46 @@ export async function obtenerVigentePorSlug({ sedeId, estadoPublicado, slug }) {
   );
   return rows[0] ?? null;
 }
+
+export async function listarVigentesPorRelacion({
+  tablaRelacion,
+  columnaRelacion,
+  tablaDestino,
+  sedeId,
+  slugDestino,
+  estadoPublicado,
+  tipos,
+  limite,
+  desplazamiento,
+}) {
+  const { rows: destino } = await consultar(
+    `SELECT id FROM ${tablaDestino} WHERE sede_id = $1 AND slug = $2 AND visible`,
+    [sedeId, slugDestino],
+  );
+  if (!destino[0]) return null;
+
+  const destinoId = destino[0].id;
+  const parametros = [sedeId, estadoPublicado, tipos, destinoId];
+  const donde = `${VIGENTES} AND tp.nombre = ANY($3::text[]) AND rel.${columnaRelacion} = $4`;
+
+  const [pagina, conteo] = await Promise.all([
+    consultar(
+      `SELECT ${COLUMNAS}
+         FROM publicacion p ${UNIONES}
+         JOIN ${tablaRelacion} rel ON rel.publicacion_id = p.id
+        WHERE ${donde}
+        ORDER BY p.fecha_publicacion DESC, p.id DESC
+        LIMIT $5 OFFSET $6`,
+      [...parametros, limite, desplazamiento],
+    ),
+    consultar(
+      `SELECT count(*)::int AS total
+         FROM publicacion p ${UNIONES}
+         JOIN ${tablaRelacion} rel ON rel.publicacion_id = p.id
+        WHERE ${donde}`,
+      parametros,
+    ),
+  ]);
+
+  return { filas: pagina.rows, total: conteo.rows[0].total };
+}

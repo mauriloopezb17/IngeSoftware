@@ -8,6 +8,10 @@ import { idDelCuerpo, textoOpcional, urlHttps } from './panel.js';
 
 export const paramsPublicacion = z.object({ id });
 
+export const consultaNoticiasRelacionadas = esquemaListado({
+  porPaginaMaximo: 12,
+});
+
 export const consultaPublicaciones = esquemaListado({
   conBuscar: true,
   filtros: {
@@ -36,6 +40,11 @@ const titulo = z
   .min(3, 'Debe tener de 3 a 200 caracteres.')
   .max(200, 'Debe tener de 3 a 200 caracteres.');
 
+const idsRelacionados = (etiqueta) =>
+  z
+    .array(idDelCuerpo, { error: 'Debe ser una lista.' })
+    .max(10, `Puedes relacionar hasta 10 ${etiqueta}.`);
+
 // Campos editables (los de la creación, salvo el tipo y la sede).
 const campos = {
   titulo,
@@ -49,6 +58,8 @@ const campos = {
   destacada: z.boolean({ error: 'Debe ser true o false.' }),
   fechaPublicacion: fechaHoraConZona.nullable().optional(),
   fechaExpiracion: fechaHoraConZona.nullable().optional(),
+  servicioIds: idsRelacionados('sacramentos o servicios').optional(),
+  grupoIds: idsRelacionados('grupos pastorales').optional(),
 };
 
 // La expiración, si viene junto con la publicación, debe ser posterior.
@@ -90,6 +101,8 @@ export const cuerpoEditarPublicacion = z
     destacada: campos.destacada.optional(),
     fechaPublicacion: campos.fechaPublicacion,
     fechaExpiracion: campos.fechaExpiracion,
+    servicioIds: campos.servicioIds,
+    grupoIds: campos.grupoIds,
   })
   .refine(fechasEnOrden, { path: ['fechaExpiracion'], message: MENSAJE_EXPIRACION });
 
