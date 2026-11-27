@@ -1,13 +1,21 @@
 // Pruebas de integración de página enriquecida y galería de servicios/sacramentos (PAR-166.1).
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createApp } from '../../src/app.js';
-import { cerrarPool, consultar } from '../../src/db/index.js';
-import { cerrarRedis } from '../../src/db/redis.js';
-import { reiniciarEstadoDeRedis } from '../../src/services/cache.service.js';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { limpiarContadoresDeIntentos } from '../apoyo/limite.js';
 import { SEDE_PRINCIPAL, borrarUsuariosDePrueba, crearUsuarioDePrueba } from '../apoyo/usuarios.js';
+
+vi.stubEnv('OCI_S3_ENDPOINT', 'https://espacio.compat.objectstorage.sa-santiago-1.oraclecloud.com');
+vi.stubEnv('OCI_S3_REGION', 'sa-santiago-1');
+vi.stubEnv('OCI_S3_BUCKET_NAME', 'bucket-de-prueba');
+vi.stubEnv('OCI_S3_ACCESS_KEY_ID', 'clave-de-acceso-de-prueba');
+vi.stubEnv('OCI_S3_SECRET_ACCESS_KEY', 'secreto-oci-de-prueba');
+vi.stubEnv('CDN_PUBLIC_URL', 'https://cdn.ejemplo.test');
+
+const { createApp } = await import('../../src/app.js');
+const { cerrarPool, consultar } = await import('../../src/db/index.js');
+const { cerrarRedis } = await import('../../src/db/redis.js');
+const { reiniciarEstadoDeRedis } = await import('../../src/services/cache.service.js');
 
 const app = createApp();
 const prefijo = `sv-${randomUUID().slice(0, 6)}`;
