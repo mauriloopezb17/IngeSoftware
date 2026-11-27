@@ -352,6 +352,104 @@ const controladorBitacora = crearControladorBitacora({
   errorValidacion,
 });
 
+function padresPermitidos(tipoCodigo) {
+  if (tipoCodigo === 'CAPILLA') return ['PARROQUIA'];
+  if (tipoCodigo === 'COMUNIDAD') return ['PARROQUIA', 'CAPILLA'];
+  return [];
+}
+
+function esDescendienteEnSedes(posiblePadreId, sedeId, lista) {
+  let actual = lista.find((s) => s.id === posiblePadreId);
+  const visitados = new Set();
+  while (actual?.sedePadre?.id) {
+    if (actual.sedePadre.id === sedeId) return true;
+    if (visitados.has(actual.id)) break;
+    visitados.add(actual.id);
+    actual = lista.find((s) => s.id === actual.sedePadre.id);
+  }
+  return false;
+}
+
+function validarJerarquiaMock(sedeId, tipoCodigo, sedePadreId, lista) {
+  const permitidos = padresPermitidos(tipoCodigo);
+  if (permitidos.length === 0) {
+    if (sedePadreId !== null && sedePadreId !== undefined) {
+      return { campo: 'sedePadreId', mensaje: 'Este tipo de sede no puede depender de otra sede.' };
+    }
+    return null;
+  }
+  if (sedePadreId === null || sedePadreId === undefined) {
+    return {
+      campo: 'sedePadreId',
+      mensaje:
+        tipoCodigo === 'CAPILLA'
+          ? 'Una capilla debe depender de una parroquia.'
+          : 'Una comunidad debe depender de una parroquia o una capilla.',
+    };
+  }
+  if (sedeId !== undefined && Number(sedePadreId) === sedeId) {
+    return { campo: 'sedePadreId', mensaje: 'Una sede no puede depender de sí misma.' };
+  }
+  const padre = lista.find((s) => s.id === Number(sedePadreId));
+  if (!padre) {
+    return { campo: 'sedePadreId', mensaje: 'La sede superior indicada no existe.' };
+  }
+  if (!permitidos.includes(padre.tipo?.codigo)) {
+    return {
+      campo: 'sedePadreId',
+      mensaje:
+        tipoCodigo === 'CAPILLA'
+          ? 'Una capilla solo puede depender de una parroquia.'
+          : 'Una comunidad solo puede depender de una parroquia o una capilla.',
+    };
+  }
+  if (sedeId !== undefined && esDescendienteEnSedes(padre.id, sedeId, lista)) {
+    return {
+      campo: 'sedePadreId',
+      mensaje: 'Una sede no puede depender de sí misma ni de una de sus descendientes.',
+    };
+  }
+  return null;
+}
+
+function armarArbolSedesMock(lista) {
+  const ordenadas = [...lista].sort(
+    (a, b) => (a.orden ?? 0) - (b.orden ?? 0) || a.nombre.localeCompare(b.nombre) || a.id - b.id,
+  );
+  const nodos = new Map();
+  const parroquias = [];
+  const comunidadesPasionistas = [];
+
+  for (const s of ordenadas) {
+    const codigo = s.tipo?.codigo;
+    const nodo = { ...s };
+    if (codigo === 'PARROQUIA') {
+      nodo.capillas = [];
+      nodo.comunidades = [];
+      parroquias.push(nodo);
+    } else if (codigo === 'CAPILLA') {
+      nodo.comunidades = [];
+    } else if (codigo === 'COMUNIDAD_PASIONISTA') {
+      comunidadesPasionistas.push(nodo);
+    }
+    nodos.set(s.id, { codigo, padreId: s.sedePadre?.id ?? null, nodo });
+  }
+
+  for (const { codigo, padreId, nodo } of nodos.values()) {
+    const padre = nodos.get(padreId);
+    if (codigo === 'CAPILLA' && padre?.codigo === 'PARROQUIA') {
+      padre.nodo.capillas.push(nodo);
+    } else if (
+      codigo === 'COMUNIDAD' &&
+      (padre?.codigo === 'PARROQUIA' || padre?.codigo === 'CAPILLA')
+    ) {
+      padre.nodo.comunidades.push(nodo);
+    }
+  }
+
+  return { parroquias, comunidadesPasionistas };
+}
+
 export const handlersContenido = [
   // ---- §1 Catálogos ----
   http.get(api('/admin/catalogos'), () => {
@@ -976,6 +1074,17 @@ export const handlersContenido = [
     return HttpResponse.json({ datos: lista });
   }),
 
+  http.get(api('/admin/sedes/arbol'), () => {
+    const auth = autenticar();
+    if (auth.respuesta) return auth.respuesta;
+
+    const lista = esAdministrador(auth.usuario)
+      ? sedes
+      : sedes.filter((s) => s.id === auth.usuario.sede.id);
+
+    return HttpResponse.json({ datos: armarArbolSedesMock(lista) });
+  }),
+
   http.get(api('/admin/sedes/:id'), ({ params }) => {
     const auth = autenticar();
     if (auth.respuesta) return auth.respuesta;
@@ -1001,13 +1110,15 @@ export const handlersContenido = [
     }
     const tipoObj = CATALOGOS.tiposSede.find((t) => t.codigo === cuerpo.tipo);
     if (!tipoObj) {
-      detalles.push({ campo: 'tipo', mensaje: 'El tipo de sede debe ser PARROQUIA o CAPILLA.' });
+      detalles.push({ campo: 'tipo', mensaje: 'El tipo de sede indicado no existe.' });
+    } else {
+      const errJerarquia = validarJerarquiaMock(undefined, tipoObj.codigo, cuerpo.sedePadreId ?? null, sedes);
+      if (errJerarquia) detalles.push(errJerarquia);
     }
     let sedePadre = null;
     if (cuerpo.sedePadreId !== undefined && cuerpo.sedePadreId !== null) {
       const padre = sedes.find((s) => s.id === Number(cuerpo.sedePadreId));
-      if (!padre) detalles.push({ campo: 'sedePadreId', mensaje: 'La sede padre indicada no existe.' });
-      else sedePadre = resumenSede(padre);
+      if (padre) sedePadre = resumenSede(padre);
     }
     if (detalles.length) return errorValidacion(detalles);
 
@@ -1165,6 +1276,34 @@ export const handlersContenido = [
       if (tipoNuevo) sede.tipo = { codigo: tipoNuevo.codigo, nombre: tipoNuevo.nombre };
       if (padreNuevo !== undefined) sede.sedePadre = padreNuevo;
     }
+
+    return HttpResponse.json({ datos: sede });
+  }),
+
+  http.post(api('/admin/sedes/:id/mover'), async ({ request, params }) => {
+    const auth = autenticar('sedes.gestionar', 'Solo un administrador puede mover sedes.');
+    if (auth.respuesta) return auth.respuesta;
+
+    const sede = sedes.find((s) => s.id === Number(params.id));
+    if (!sede) return error(404, 'NO_ENCONTRADO', 'La sede no existe.');
+
+    const cuerpo = await request.json().catch(() => null);
+    if (!cuerpo) return errorValidacion([{ campo: 'cuerpo', mensaje: 'El cuerpo JSON no es válido.' }]);
+
+    const errJerarquia = validarJerarquiaMock(
+      sede.id,
+      sede.tipo.codigo,
+      cuerpo.sedePadreId ?? null,
+      sedes,
+    );
+    if (errJerarquia) return errorValidacion([errJerarquia]);
+
+    const padre =
+      cuerpo.sedePadreId !== null && cuerpo.sedePadreId !== undefined
+        ? sedes.find((s) => s.id === Number(cuerpo.sedePadreId))
+        : null;
+    sede.sedePadre = padre ? resumenSede(padre) : null;
+    if (cuerpo.orden !== undefined) sede.orden = Number(cuerpo.orden) || 0;
 
     return HttpResponse.json({ datos: sede });
   }),
