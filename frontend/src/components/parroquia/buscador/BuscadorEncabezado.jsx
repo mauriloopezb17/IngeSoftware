@@ -30,9 +30,6 @@ export function BuscadorEncabezado() {
   const abrir = () => {
     setAbierto(true);
     setAvisoCorto(false);
-    requestAnimationFrame(() => {
-      inputRef.current?.focus();
-    });
   };
 
   const cerrar = ({ devolverFoco = false } = {}) => {
@@ -44,15 +41,18 @@ export function BuscadorEncabezado() {
   };
 
   useEffect(() => {
+    if (abierto) {
+      inputRef.current?.focus();
+    }
+  }, [abierto]);
+
+  useEffect(() => {
     const manejarAtajo = (evento) => {
       if (evento.key !== '/' || evento.ctrlKey || evento.metaKey || evento.altKey) return;
       if (esElementoEditable(document.activeElement)) return;
       evento.preventDefault();
       setAbierto(true);
       setAvisoCorto(false);
-      requestAnimationFrame(() => {
-        inputRef.current?.focus();
-      });
     };
 
     document.addEventListener('keydown', manejarAtajo);

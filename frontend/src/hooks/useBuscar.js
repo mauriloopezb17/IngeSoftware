@@ -11,6 +11,5 @@ export function useBuscar(filtros = {}, sede = SEDE_ACTUAL) {
     queryKey: clavesPortal.buscar(sede, filtros),
     queryFn: ({ signal }) => buscarPortal(sede, filtros, signal),
     enabled: Boolean(sede && consulta.length >= 2),
-    retry: (intentos, error) => error?.estado !== 400 && error?.estado !== 429 && intentos < 2,
   });
 }
