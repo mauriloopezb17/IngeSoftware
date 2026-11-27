@@ -18,10 +18,14 @@ export const VISTAS = {
   todos: { etiqueta: 'Todos', finalizados: '', orden: '-fechaInicio' },
 };
 
-export function listarEventos({ vista = 'proximos', categoria, estado, pagina, porPagina = POR_PAGINA }, senal) {
+export function parametrosEventos({ vista = 'proximos', categoria, estado, buscar } = {}) {
   const { finalizados, orden } = VISTAS[vista] ?? VISTAS.proximos;
+  return { finalizados, orden, categoria, estado, buscar };
+}
+
+export function listarEventos({ pagina, porPagina = POR_PAGINA, ...filtros } = {}, senal) {
   return clienteHttp.get('/admin/eventos', {
-    parametros: { finalizados, orden, categoria, estado, pagina, porPagina },
+    parametros: { ...parametrosEventos(filtros), pagina, porPagina },
     senal,
   });
 }

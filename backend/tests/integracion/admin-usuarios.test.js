@@ -62,11 +62,18 @@ describe('Permisos en /api/admin/usuarios', () => {
     const sinSesion = await request(app).get('/api/admin/usuarios');
     expect(sinSesion.status).toBe(401);
 
-    for (const rol of ['parroco', 'secretaria', 'marketing']) {
+    const listaParroco = await request(app)
+      .get('/api/admin/usuarios')
+      .set('Cookie', sesiones.parroco);
+    expect(listaParroco.status).toBe(200);
+
+    for (const rol of ['secretaria', 'marketing']) {
       const lista = await request(app).get('/api/admin/usuarios').set('Cookie', sesiones[rol]);
       expect(lista.status).toBe(403);
       expect(lista.body.error.codigo).toBe('SIN_PERMISO');
+    }
 
+    for (const rol of ['parroco', 'secretaria', 'marketing']) {
       const crear = await request(app)
         .post('/api/admin/usuarios')
         .set('Cookie', sesiones[rol])

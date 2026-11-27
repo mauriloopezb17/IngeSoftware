@@ -107,6 +107,20 @@ export async function registrarCambio(
   await programarInvalidacion(db, { entidad, anterior, nuevo });
 }
 
+// ---- Registro de exportación (EXPORT) ----
+
+export async function registrarExportacion(contexto, { entidad, filtros, filas }) {
+  await modelo.insertar({
+    usuarioId: contexto?.usuarioId ?? null,
+    entidad,
+    entidadId: '*',
+    accion: 'EXPORT',
+    datosAnteriores: null,
+    datosNuevos: { filtros, filas },
+    direccionIp: normalizarIp(contexto?.ip),
+  });
+}
+
 // ---- Consulta (GET /api/admin/bitacora) ----
 
 function aCambio(fila) {

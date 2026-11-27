@@ -7,6 +7,7 @@ import { idDelCuerpo, textoObligatorio } from './panel.js';
 export const paramsBoletin = z.object({ id });
 
 export const consultaBoletines = esquemaListado({
+  conBuscar: true,
   filtros: {
     sede: slug.optional(),
     anio: anio.optional(),

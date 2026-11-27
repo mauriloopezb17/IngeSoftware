@@ -30,9 +30,15 @@ const UNIONES = `
   JOIN archivo_multimedia am ON am.id = b.archivo_id
   LEFT JOIN archivo_multimedia pt ON pt.id = b.portada_id`;
 
+const ORDENES = Object.freeze({
+  periodo: 'b.periodo ASC, b.id ASC',
+  '-periodo': 'b.periodo DESC, b.id DESC',
+  fechaPublicacion: 'b.fecha_publicacion ASC, b.id ASC',
+  '-fechaPublicacion': 'b.fecha_publicacion DESC, b.id DESC',
+});
+
 // filtros: { sedeSlug?, anio?, buscar? } (buscar: en el título, sin mayúsculas ni acentos).
-// Del periodo más reciente al más antiguo.
-export async function listar(filtros, { limite, desplazamiento }) {
+export async function listar(filtros, { orden, limite, desplazamiento }) {
   const parametros = [];
   const condiciones = ['TRUE'];
   const agregar = (valor) => `$${parametros.push(valor)}`;
@@ -47,12 +53,13 @@ export async function listar(filtros, { limite, desplazamiento }) {
     );
   }
   const donde = condiciones.join(' AND ');
+  const orderBy = ORDENES[orden] ?? ORDENES['-periodo'];
 
   const [pagina, conteo] = await Promise.all([
     consultar(
       `SELECT ${COLUMNAS} ${UNIONES}
         WHERE ${donde}
-        ORDER BY b.periodo DESC, b.id DESC
+        ORDER BY ${orderBy}
         LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`,
       [...parametros, limite, desplazamiento],
     ),

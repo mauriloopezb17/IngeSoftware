@@ -142,6 +142,7 @@ Todo error usa el mismo formato, que el cliente HTTP del frontend (`frontend/src
 | `CONFLICTO`                | 409  | Choca con una restricción de unicidad (slug, correo, boletín del mismo periodo) o con el estado actual (ej. aprobar algo que no está «En revisión»).                        |
 | `ARCHIVO_DEMASIADO_GRANDE` | 413  | El archivo supera el límite de su tipo (RNF-05) o el cuerpo JSON supera el límite.                                                                                          |
 | `TIPO_NO_PERMITIDO`        | 415  | El tipo real del archivo (detectado por su contenido, no por la extensión) no está permitido, o el `Content-Type` de la petición no es el esperado.                         |
+| `DEMASIADOS_REGISTROS`     | 422  | La exportación CSV supera el límite máximo permitido (10 000 filas). Aplica más filtros para acotar el resultado.                                                         |
 | `DEMASIADAS_SOLICITUDES`   | 429  | Se superó el límite de peticiones (ej. intentos de login). Incluye la cabecera `Retry-After` en segundos.                                                                   |
 | `ERROR_INTERNO`            | 500  | Error no previsto. Se registra en el log con el id de la petición.                                                                                                          |
 | `SERVICIO_NO_DISPONIBLE`   | 503  | Un servicio externo del que depende la acción no está configurado o no responde (hoy, el almacenamiento de archivos de multimedia). No se guardó nada: se puede reintentar. |

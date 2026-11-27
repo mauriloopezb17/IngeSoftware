@@ -63,7 +63,7 @@ test.describe('Gestión de contenido y permisos por rol', () => {
 
   const casosPermisos = [
     { rol: 'admin', usuarios: 'Usuarios', bitacora: 'Bitácora' },
-    { rol: 'parroco', usuarios: 'Sin permiso', bitacora: 'Bitácora' },
+    { rol: 'parroco', usuarios: 'Usuarios', bitacora: 'Bitácora' },
     { rol: 'secretaria', usuarios: 'Sin permiso', bitacora: 'Sin permiso' },
     { rol: 'marketing', usuarios: 'Sin permiso', bitacora: 'Sin permiso' },
   ];

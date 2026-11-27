@@ -5,6 +5,7 @@ import { Eye, Inbox, RotateCcw } from 'lucide-react';
 import { useSesion } from '../sesion/SesionContexto.js';
 import {
   Boton,
+  BotonExportarCsv,
   CampoSelect,
   CampoTexto,
   EncabezadoPantalla,
@@ -26,6 +27,7 @@ const VARIANTE_ACCION = {
   INSERT: 'publicado',
   UPDATE: 'programado',
   DELETE: 'rechazado',
+  EXPORT: 'borrador',
 };
 
 export default function Bitacora() {
@@ -127,11 +129,18 @@ export default function Bitacora() {
             : 'Registro de auditoría de los cambios realizados en tu sede.'
         }
         acciones={
-          hayFiltrosActivos && (
-            <Boton variante="secundario" icono={RotateCcw} onClick={limpiarFiltros}>
-              Limpiar filtros
-            </Boton>
-          )
+          <>
+            <BotonExportarCsv
+              recurso="bitacora"
+              permiso="bitacora.exportar"
+              filtros={filtrosActivos}
+            />
+            {hayFiltrosActivos && (
+              <Boton variante="secundario" icono={RotateCcw} onClick={limpiarFiltros}>
+                Limpiar filtros
+              </Boton>
+            )}
+          </>
         }
       />
 

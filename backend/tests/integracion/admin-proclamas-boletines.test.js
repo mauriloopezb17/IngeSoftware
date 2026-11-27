@@ -774,4 +774,29 @@ describe('boletines', () => {
       expect((await como('secretaria').delete(`${RUTA}/${ajeno.id}`)).status).toBe(403);
     });
   });
+
+  describe('GET /api/admin/boletines ordenamiento', () => {
+    it('ordena por periodo, -periodo, fechaPublicacion y -fechaPublicacion', async () => {
+      await crear('secretaria', { periodo: '2035-01' });
+      await crear('secretaria', { periodo: '2035-06' });
+
+      const ascPeriodo = await como('secretaria').get(`${RUTA}?orden=periodo&porPagina=50`);
+      const descPeriodo = await como('secretaria').get(`${RUTA}?orden=-periodo&porPagina=50`);
+      expect(ascPeriodo.status).toBe(200);
+      expect(descPeriodo.status).toBe(200);
+      const periodosAsc = ascPeriodo.body.datos.map((b) => b.periodo);
+      expect(periodosAsc).toEqual([...periodosAsc].sort());
+      expect(descPeriodo.body.datos.map((b) => b.periodo)).toEqual([...periodosAsc].reverse());
+
+      const ascFecha = await como('secretaria').get(`${RUTA}?orden=fechaPublicacion&porPagina=50`);
+      const descFecha = await como('secretaria').get(
+        `${RUTA}?orden=-fechaPublicacion&porPagina=50`,
+      );
+      expect(ascFecha.status).toBe(200);
+      expect(descFecha.status).toBe(200);
+      const idsAsc = ascFecha.body.datos.map((b) => b.id);
+      const idsDesc = descFecha.body.datos.map((b) => b.id);
+      expect(idsDesc).toEqual([...idsAsc].reverse());
+    });
+  });
 });

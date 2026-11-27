@@ -53,10 +53,13 @@ const SEDE_DEL_CAMBIO = `COALESCE(
     WHERE x.entidad = b.entidad AND x.entidad_id = b.entidad_id AND x.accion = 'INSERT'
     ORDER BY x.id
     LIMIT 1),
-  CASE b.entidad
-    ${Object.entries(SEDE_ACTUAL_POR_ENTIDAD)
-      .map(([entidad, sql]) => `WHEN '${entidad}' THEN (${sql})`)
-      .join('\n    ')}
+  CASE
+    WHEN b.accion = 'EXPORT' THEN (SELECT u2.sede_id FROM usuario u2 WHERE u2.id = b.usuario_id)
+    ELSE CASE b.entidad
+      ${Object.entries(SEDE_ACTUAL_POR_ENTIDAD)
+        .map(([entidad, sql]) => `WHEN '${entidad}' THEN (${sql})`)
+        .join('\n      ')}
+    END
   END
 )`;
 

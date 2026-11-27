@@ -6,6 +6,7 @@ import { usePermisos } from '../../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoSelect,
   EncabezadoPantalla,
   EsqueletoFormulario,
@@ -134,15 +135,22 @@ export default function Sedes() {
         titulo={puedeGestionarSedes ? 'Sedes y redes sociales' : 'Datos de la sede'}
         descripcion="Información institucional, contacto, configuración del portal y redes sociales."
         acciones={
-          puedeGestionarSedes && (
-            <Boton
-              variante="primario"
-              icono={Plus}
-              onClick={() => setCreando(true)}
-            >
-              Nueva sede
-            </Boton>
-          )
+          <>
+            <BotonExportarCsv
+              recurso="sedes"
+              permiso="sedes.exportar"
+              filtros={filtrosActivos}
+            />
+            {puedeGestionarSedes && (
+              <Boton
+                variante="primario"
+                icono={Plus}
+                onClick={() => setCreando(true)}
+              >
+                Nueva sede
+              </Boton>
+            )}
+          </>
         }
       />
 

@@ -82,6 +82,7 @@ const duracionSegundos = z
 export const paramsVideo = z.object({ id });
 
 export const consultaVideos = esquemaListado({
+  conBuscar: true,
   filtros: {
     sede: slug.optional(),
     destacado: booleanoQuery.optional(),

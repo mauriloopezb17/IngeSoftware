@@ -7,6 +7,7 @@ import { usePermisos } from '../../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoSelect,
   EncabezadoPantalla,
   Insignia,
@@ -155,16 +156,23 @@ export default function Horarios() {
         descripcion="Horarios de misas, confesiones, adoración y atención en secretaría."
         headingRef={tituloRef}
         acciones={
-          puedeGestionar && (
-            <Boton
-              variante="primario"
-              icono={Plus}
-              disabled={!tiposHorario.length}
-              onClick={() => setCreando(true)}
-            >
-              Nuevo horario
-            </Boton>
-          )
+          <>
+            <BotonExportarCsv
+              recurso="horarios"
+              permiso="horarios.exportar"
+              filtros={filtrosActivos}
+            />
+            {puedeGestionar && (
+              <Boton
+                variante="primario"
+                icono={Plus}
+                disabled={!tiposHorario.length}
+                onClick={() => setCreando(true)}
+              >
+                Nuevo horario
+              </Boton>
+            )}
+          </>
         }
       />
 
@@ -208,7 +216,7 @@ export default function Horarios() {
               : undefined
           }
           filtrosExtra={
-            <div className="min-w-[150px]">
+            <div className="w-full sm:w-auto sm:min-w-[150px]">
               <CampoSelect
                 etiqueta="Estado"
                 value={valores.activo}

@@ -8,6 +8,7 @@ import { usePermisos } from '../../permisos/usePermisos.js';
 import {
   Aviso,
   Boton,
+  BotonExportarCsv,
   CampoSelect,
   EncabezadoPantalla,
   Insignia,
@@ -204,15 +205,22 @@ export default function Servicios() {
         descripcion="Sacramentos, requisitos de inscripción y preguntas frecuentes de la sede."
         headingRef={tituloRef}
         acciones={
-          puedeGestionar && (
-            <Boton
-              variante="primario"
-              icono={Plus}
-              onClick={() => setCreando(true)}
-            >
-              Nuevo servicio
-            </Boton>
-          )
+          <>
+            <BotonExportarCsv
+              recurso="servicios"
+              permiso="servicios.exportar"
+              filtros={filtrosActivos}
+            />
+            {puedeGestionar && (
+              <Boton
+                variante="primario"
+                icono={Plus}
+                onClick={() => setCreando(true)}
+              >
+                Nuevo servicio
+              </Boton>
+            )}
+          </>
         }
       />
 

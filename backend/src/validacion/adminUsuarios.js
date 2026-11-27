@@ -27,6 +27,7 @@ const rolCodigo = z.enum(ROLES.codigos, {
 export const paramsUsuario = z.object({ id });
 
 export const consultaUsuarios = esquemaListado({
+  conBuscar: true,
   filtros: {
     rol: listaCodigos(ROLES.codigos).optional(),
     sede: slug.optional(),

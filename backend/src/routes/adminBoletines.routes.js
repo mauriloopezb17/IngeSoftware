@@ -3,8 +3,11 @@
 import { Router } from 'express';
 import { PERMISOS } from '../constantes/permisos.js';
 import * as controlador from '../controllers/adminBoletines.controller.js';
+import { exportarRecurso } from '../controllers/exportar.controller.js';
 import { filtrarPorSede, requerirPermiso } from '../middlewares/autorizar.js';
+import { marcarConsulta } from '../middlewares/registrarConsulta.js';
 import { validar } from '../middlewares/validar.js';
+import { esquemaExportacion } from '../validacion/comunes.js';
 import {
   consultaBoletines,
   cuerpoCrearBoletin,
@@ -16,6 +19,14 @@ const router = Router();
 const gestionar = requerirPermiso(PERMISOS.BOLETINES_GESTIONAR);
 
 router.get('/', validar({ query: consultaBoletines }), filtrarPorSede, controlador.listar);
+router.get(
+  '/exportar',
+  requerirPermiso(PERMISOS.BOLETINES_EXPORTAR),
+  marcarConsulta('exportacion'),
+  validar({ query: esquemaExportacion(consultaBoletines) }),
+  filtrarPorSede,
+  exportarRecurso('boletines'),
+);
 router.get('/:id', validar({ params }), controlador.detalle);
 router.post('/', gestionar, validar({ body: cuerpoCrearBoletin }), controlador.crear);
 router.patch('/:id', gestionar, validar({ params, body: cuerpoEditarBoletin }), controlador.editar);

@@ -91,7 +91,17 @@ Abre la sesión. Tiene límite de intentos (ver [sección 4](#4-límite-de-inten
       "proclamas.gestionar",
       "proclamas.detalle",
       "boletines.gestionar",
-      "paginas.gestionar"
+      "paginas.gestionar",
+      "publicaciones.exportar",
+      "eventos.exportar",
+      "boletines.exportar",
+      "multimedia.exportar",
+      "videos.exportar",
+      "proclamas.exportar",
+      "horarios.exportar",
+      "servicios.exportar",
+      "grupos.exportar",
+      "paginas.exportar"
     ],
     "fechaUltimoAcceso": "2026-11-12T08:31:05-04:00",
     "sesionExpiraEn": "2026-11-12T16:31:05-04:00"
@@ -249,6 +259,20 @@ Todos los roles pueden **consultar** (`GET`) todos los recursos de su sede en `/
 | `paginas.gestionar`   | CRUD de páginas y de sus bloques (RF-04).                                                                                                                     |       ✓       |    ✓    |     ✓      |     —     |
 | `usuarios.gestionar`  | CRUD de usuarios y restablecer contraseñas.                                                                                                                   |       ✓       |    —    |     —      |     —     |
 | `bitacora.ver`        | Consultar la bitácora de cambios. El Párroco solo ve la de su sede.                                                                                           |       ✓       |    ✓    |     —      |     —     |
+| `publicaciones.exportar` | Exportar a CSV el listado de publicaciones de su sede.                                                                                                     |       ✓       |    ✓    |     ✓      |     ✓     |
+| `eventos.exportar`       | Exportar a CSV el listado de eventos de su sede.                                                                                                           |       ✓       |    ✓    |     ✓      |     ✓     |
+| `boletines.exportar`     | Exportar a CSV el listado de boletines de su sede.                                                                                                         |       ✓       |    ✓    |     ✓      |     ✓     |
+| `multimedia.exportar`    | Exportar a CSV el listado de archivos multimedia de su sede.                                                                                               |       ✓       |    ✓    |     ✓      |     ✓     |
+| `videos.exportar`        | Exportar a CSV el listado de videos de su sede.                                                                                                            |       ✓       |    ✓    |     ✓      |     ✓     |
+| `proclamas.exportar`     | Exportar a CSV el listado de proclamas de su sede (sin observaciones confidenciales).                                                                      |       ✓       |    ✓    |     ✓      |     —     |
+| `horarios.exportar`      | Exportar a CSV el listado de horarios de su sede.                                                                                                          |       ✓       |    ✓    |     ✓      |     —     |
+| `servicios.exportar`     | Exportar a CSV el listado de servicios de su sede.                                                                                                         |       ✓       |    ✓    |     ✓      |     —     |
+| `grupos.exportar`        | Exportar a CSV el listado de grupos pastorales de su sede.                                                                                                 |       ✓       |    ✓    |     ✓      |     —     |
+| `paginas.exportar`       | Exportar a CSV el listado de páginas de su sede.                                                                                                           |       ✓       |    ✓    |     ✓      |     —     |
+| `observaciones.exportar` | Exportar a CSV las observaciones confidenciales de proclamas de su sede.                                                                                   |       —       |    ✓    |     —      |     —     |
+| `usuarios.exportar`      | Exportar a CSV el listado de usuarios (el Párroco solo ve los de su sede en modo solo lectura).                                                             |       ✓       |    ✓    |     —      |     —     |
+| `sedes.exportar`         | Exportar a CSV el listado de sedes (el Párroco solo la suya).                                                                                              |       ✓       |    ✓    |     —      |     —     |
+| `bitacora.exportar`      | Exportar a CSV la bitácora de cambios (el Párroco solo la de su sede).                                                                                     |       ✓       |    ✓    |     —      |     —     |
 
 Reglas que la matriz no alcanza a mostrar (el detalle está en [estados-publicacion.md](estados-publicacion.md)):
 

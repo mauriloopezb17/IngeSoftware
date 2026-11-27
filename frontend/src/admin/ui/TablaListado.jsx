@@ -60,12 +60,12 @@ export default function TablaListado({
   const fin = Math.min(pagina * porPagina, total);
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       {mostrarBarra && (
         <div className="flex flex-wrap items-end gap-3 rounded-lg border border-sand bg-white p-4">
           {onCambiarBusqueda !== undefined && (
-            <div className="min-w-[220px] flex-1">
-              <label htmlFor={idBusqueda} className="mb-1 block text-xs font-semibold text-muted">
+            <div className="w-full min-w-0 sm:min-w-[220px] sm:flex-1">
+              <label htmlFor={idBusqueda} className="mb-1.5 block text-sm font-semibold text-ink">
                 {etiquetaBusqueda}
               </label>
               <div className="relative">
@@ -79,14 +79,14 @@ export default function TablaListado({
                   value={busqueda ?? ''}
                   onChange={(e) => onCambiarBusqueda(e.target.value)}
                   placeholder={placeholderBusqueda}
-                  className="min-h-10 w-full rounded-md border border-sand bg-white py-2 pl-9 pr-9 text-sm text-ink placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                  className="min-h-11 w-full rounded-md border border-sand bg-white py-2 pl-9 pr-11 text-sm text-ink placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 />
                 {busqueda && (
                   <button
                     type="button"
                     onClick={() => onCambiarBusqueda('')}
                     aria-label="Limpiar búsqueda"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
+                    className="absolute right-0 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-md text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
                   >
                     <X className="size-4" aria-hidden="true" />
                   </button>
@@ -96,15 +96,15 @@ export default function TablaListado({
           )}
 
           {categoria && (
-            <div className="min-w-[180px]">
-              <label htmlFor={idCategoria} className="mb-1 block text-xs font-semibold text-muted">
+            <div className="w-full sm:w-auto sm:min-w-[180px]">
+              <label htmlFor={idCategoria} className="mb-1.5 block text-sm font-semibold text-ink">
                 {categoria.etiqueta ?? 'Categoría'}
               </label>
               <select
                 id={idCategoria}
                 value={categoria.valor ?? ''}
                 onChange={(e) => categoria.onCambiar(e.target.value)}
-                className="min-h-10 w-full rounded-md border border-sand bg-white px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="min-h-11 w-full rounded-md border border-sand bg-white px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 <option value="">{categoria.todasEtiqueta ?? 'Todas'}</option>
                 {categoria.opciones.map((op) => (
@@ -165,7 +165,7 @@ export default function TablaListado({
         )
       ) : (
         <>
-          <div ref={tablaContenedorRef} tabIndex={-1} className="outline-none">
+          <div ref={tablaContenedorRef} tabIndex={-1} className="min-w-0 outline-none">
             {total > 0 && (
               <p className="mb-2 text-xs tabular-nums text-muted" aria-live="polite">
                 Mostrando {inicio}–{fin} de {total}

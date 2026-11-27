@@ -8,6 +8,7 @@ import { formatearFecha } from '../multimedia/formato.js';
 import { usePermisos } from '../permisos/usePermisos.js';
 import {
   Boton,
+  BotonExportarCsv,
   CampoSelect,
   EncabezadoPantalla,
   TablaListado,
@@ -159,9 +160,16 @@ export default function BandejaRevision() {
         descripcion="Publicaciones que esperan tu aprobación."
         headingRef={tituloRef}
         acciones={
-          <Boton como={Link} to="/admin/publicaciones" variante="secundario">
-            Volver a publicaciones
-          </Boton>
+          <>
+            <BotonExportarCsv
+              recurso="publicaciones"
+              permiso="publicaciones.exportar"
+              filtros={{ ...filtrosActivos, estado: 'EN_REVISION' }}
+            />
+            <Boton como={Link} to="/admin/publicaciones" variante="secundario">
+              Volver a publicaciones
+            </Boton>
+          </>
         }
       />
 
@@ -190,7 +198,7 @@ export default function BandejaRevision() {
               : undefined
           }
           filtrosExtra={
-            <div className="min-w-[150px]">
+            <div className="w-full sm:w-auto sm:min-w-[150px]">
               <CampoSelect
                 etiqueta="Tipo"
                 value={valores.tipo}

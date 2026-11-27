@@ -9,6 +9,7 @@ export const paramsPagina = z.object({ id });
 export const paramsBloque = z.object({ id, bloqueId: id });
 
 export const consultaPaginas = esquemaListado({
+  conBuscar: true,
   filtros: {
     sede: slug.optional(),
     estado: listaCodigos(['BORRADOR', 'PUBLICADO', 'ARCHIVADO']).optional(),
